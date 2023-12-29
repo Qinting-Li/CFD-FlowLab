@@ -43,8 +43,8 @@ inline int GetNumberOfGhostCellLayers()
     //const int UNSTRUCTGRID = 0;
     //const int STRUCTGRID   = 1;
     //const int MIXGRID      = 2;
-    //
-    ////! Note that sys_gridtype is undefined! Error may occur here!
+
+    //! Note that sys_gridtype is undefined! Error may occur here!
     //int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
     //if (systemGridType == UNSTRUCTGRID)
     //{

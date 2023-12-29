@@ -1388,14 +1388,14 @@ void Simulation::DefineAndCreateSolvers()
                     int isAdaptiveSolver = 0;
                     zone->GetData("isAdaptiveSolver", &isAdaptiveSolver, PHINT, 1);
 
-                    if (isFVMOrFDM == FV_METHOD) //! Add structured FV NS solver.
+                    if (isFVMOrFDM == FV_METHOD)    //! Add structured FV NS solver.
                     {
                         PHSolver *solver = new NSSolverStructFV();
                         solver->SetName("NSSolverStructFV");
                         solver->SetKey(DENSITY_BASED_SOLVER);
                         solverList.push_back(solver);
                     }
-                    else //! Add structured FD NS solver.
+                    else    //! Add structured FD NS solver.
                     {
                         PHSolver *solver = new NSSolverStructFD();
                         solver->SetName("NSSolverStructFD");
@@ -1538,7 +1538,7 @@ void Simulation::DefineAndCreateSolvers()
         {
             maxNumOfSolver = solverList.size();
         }
-    } //! iZone
+    }    //! iZone
     GlobalDataBase::UpdateData("maxNumOfSolver", &maxNumOfSolver, PHINT, 1);
 }
 
@@ -1817,7 +1817,7 @@ void Simulation::MultiGridInitFlow()
     int outIterStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
     if (outIterStep > 0)
     {
-        return; //! Read from flow file.
+        return;    //! Read from flow file.
     }
 
     int flowInitStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("flowInitStep");
@@ -1851,7 +1851,7 @@ void Simulation::MultiGridInitFlow()
                 Controller *controller = new Controller(iSolver, this->region);
                 controller->MultiGridInitFlow(iLevel);
                 controller->PostSolve(iLevel);
-                delete controller;
+                delete controller;    controller = nullptr;
             }
         }
 
@@ -1860,7 +1860,7 @@ void Simulation::MultiGridInitFlow()
         {
             Controller *controller = new Controller(iSolver, this->region);
             controller->InterpolatFineGrid(iSolver, iLevel - 1);
-            delete controller;
+            delete controller;    controller = nullptr;
         }
     }
 

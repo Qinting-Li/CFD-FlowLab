@@ -765,27 +765,28 @@ void BaseBCType::Init()
 {
     using namespace PHSPACE;
 
-    bctypemap.insert(pair<int, int>(BCTypeUserDefined, PHENGLEI::USER_DEFINED        ));
-    bctypemap.insert(pair<int, int>(BCSymmetryPlane  , PHENGLEI::SYMMETRY            ));
-    bctypemap.insert(pair<int, int>(BCInflow         , PHENGLEI::INFLOW              ));
-    bctypemap.insert(pair<int, int>(BCOutflow        , PHENGLEI::OUTFLOW             ));
-    bctypemap.insert(pair<int, int>(BCTunnelOutflow  , PHENGLEI::OUTFLOW             ));
-    bctypemap.insert(pair<int, int>(BCWall           , PHENGLEI::SOLID_SURFACE       ));
-    bctypemap.insert(pair<int, int>(BCWallInviscid   , PHENGLEI::SOLID_SURFACE       ));
-    bctypemap.insert(pair<int, int>(BCWallViscous    , PHENGLEI::SOLID_SURFACE       ));
-    bctypemap.insert(pair<int, int>(BCDegenerateLine , PHENGLEI::POLE                ));
-    bctypemap.insert(pair<int, int>(BCTypeNull       , PHENGLEI::NO_BOUNDARY_CONDITION));
-    bctypemap.insert(pair<int, int>(BCFarfield       , PHENGLEI::FARFIELD            ));
-    bctypemap.insert(pair<int, int>(BCGeneral        , PHENGLEI::GENERIC_1           ));
+    bctypemap.insert(pair<int, int>(BCTypeUserDefined  , PHENGLEI::USER_DEFINED         ));
+    bctypemap.insert(pair<int, int>(BCSymmetryPlane    , PHENGLEI::SYMMETRY             ));
+    bctypemap.insert(pair<int, int>(BCInflow           , PHENGLEI::INFLOW               ));
+    bctypemap.insert(pair<int, int>(BCOutflow          , PHENGLEI::OUTFLOW              ));
+    bctypemap.insert(pair<int, int>(BCTunnelOutflow    , PHENGLEI::OUTFLOW              ));
+    bctypemap.insert(pair<int, int>(BCOutflowSupersonic, PHENGLEI::OUTFLOW              ));
+    bctypemap.insert(pair<int, int>(BCWall             , PHENGLEI::SOLID_SURFACE        ));
+    bctypemap.insert(pair<int, int>(BCWallInviscid     , PHENGLEI::SOLID_SURFACE        ));
+    bctypemap.insert(pair<int, int>(BCWallViscous      , PHENGLEI::SOLID_SURFACE        ));
+    bctypemap.insert(pair<int, int>(BCDegenerateLine   , PHENGLEI::POLE                 ));
+    bctypemap.insert(pair<int, int>(BCTypeNull         , PHENGLEI::NO_BOUNDARY_CONDITION));
+    bctypemap.insert(pair<int, int>(BCFarfield         , PHENGLEI::FARFIELD             ));
+    bctypemap.insert(pair<int, int>(BCGeneral          , PHENGLEI::GENERIC_1            ));
 
     fts2cgns.insert(pair<int, int>(PHENGLEI::USER_DEFINED         , BCTypeUserDefined));
-    fts2cgns.insert(pair<int, int>(PHENGLEI::SYMMETRY             , BCSymmetryPlane ));
-    fts2cgns.insert(pair<int, int>(PHENGLEI::INFLOW               , BCInflow        ));
-    fts2cgns.insert(pair<int, int>(PHENGLEI::OUTFLOW              , BCOutflow       ));
-    fts2cgns.insert(pair<int, int>(PHENGLEI::SOLID_SURFACE        , BCWall          ));
-    fts2cgns.insert(pair<int, int>(PHENGLEI::POLE                 , BCDegenerateLine));
-    fts2cgns.insert(pair<int, int>(PHENGLEI::NO_BOUNDARY_CONDITION, BCTypeNull      ));
-    fts2cgns.insert(pair<int, int>(PHENGLEI::FARFIELD             , BCFarfield      ));
+    fts2cgns.insert(pair<int, int>(PHENGLEI::SYMMETRY             , BCSymmetryPlane  ));
+    fts2cgns.insert(pair<int, int>(PHENGLEI::INFLOW               , BCInflow         ));
+    fts2cgns.insert(pair<int, int>(PHENGLEI::OUTFLOW              , BCOutflow        ));
+    fts2cgns.insert(pair<int, int>(PHENGLEI::SOLID_SURFACE        , BCWall           ));
+    fts2cgns.insert(pair<int, int>(PHENGLEI::POLE                 , BCDegenerateLine ));
+    fts2cgns.insert(pair<int, int>(PHENGLEI::NO_BOUNDARY_CONDITION, BCTypeNull       ));
+    fts2cgns.insert(pair<int, int>(PHENGLEI::FARFIELD             , BCFarfield       ));
 
     int maxNumberOfBody = 20;
     for (int iBody = 0; iBody < maxNumberOfBody; iBody ++)

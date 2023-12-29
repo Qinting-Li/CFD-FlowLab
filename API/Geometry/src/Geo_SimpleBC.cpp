@@ -371,7 +371,7 @@ void GlobalBoundaryCondition::BuildBodyMap()
 
     for (int iBC = 0; iBC < globalBCList->size(); ++ iBC)
     {
-        SimpleBC * boundaryCondition = (*globalBCList)[iBC];
+        SimpleBC *boundaryCondition = (*globalBCList)[iBC];
         int bcType = boundaryCondition->GetBCType();
 
         if (bcType != PHENGLEI::SOLID_SURFACE && bcType != PHENGLEI::ABLATION_SURFACE)
@@ -811,7 +811,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByReynolds(Data_Param *bcParamDB
 
         RDouble cp = 0.0, cv = 0.0;
         int ntmodel = gas->GetTemperatureModel();
-        if (ntmodel > 1)       //! multi-temperature model.
+        if (ntmodel > 1)    //! multi-temperature model.
         {
             gas->ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(speciesCv);
             gas->ComputeMixtureByMassFraction(initMassFraction, speciesCv, cv);
@@ -833,7 +833,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByReynolds(Data_Param *bcParamDB
                 primitiveVar[nNSEqn + numberOfSpecies + 1] = electronEnergy;
             }
         }
-        else                  //! one-temperature model.
+        else    //! one-temperature model.
         {
             gas->ComputeSpeciesConstantPressureSpecificHeatDimensional(nonDimTtr, speciesCv);
             gas->ComputeMixtureByMassFraction(initMassFraction, speciesCv, cp);
@@ -962,7 +962,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByHeight(Data_Param *bcParamDB, 
 
         RDouble cp = 0.0, cv = 0.0;
         int ntmodel = gas->GetTemperatureModel();
-        if (ntmodel > 1)       //! multi-temperature model.
+        if (ntmodel > 1)    //! multi-temperature model.
         {
             gas->ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(speciesCv);
             gas->ComputeMixtureByMassFraction(initMassFraction, speciesCv, cv);
@@ -983,7 +983,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByHeight(Data_Param *bcParamDB, 
                 primitiveVar[nNSEqn + numberOfSpecies + 1] = electronEnergy;
             }
         }
-        else                  //! one-temperature model.
+        else    //! one-temperature model.
         {
             gas->ComputeSpeciesConstantPressureSpecificHeatDimensional(nonDimTtr, speciesCv);
             gas->ComputeMixtureByMassFraction(initMassFraction, speciesCv, cp);
@@ -1081,7 +1081,7 @@ void GlobalBoundaryCondition::SetSpeedDrictionForBC(Data_Param *bcParamDB, RDoub
             }
         }
     }
-    else  //! Attackd and angleSlide
+    else    //! Attackd and angleSlide
     {
         RDouble attackd = 0.0, angleSlide = 0.0;
         if (bcParamDB->IsExist("attackd", PHDOUBLE, 1))
@@ -1312,7 +1312,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByDensity(Data_Param *bcParamDB,
 
         RDouble cp = 0.0, cv = 0.0, speciesCv[MAX_SPECIES_NUM] = {0};
         int ntmodel = gas->GetTemperatureModel();
-        if (ntmodel > 1)       //! multi-temperature model.
+        if (ntmodel > 1)    //! multi-temperature model.
         {
             gas->ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(speciesCv);
             gas->ComputeMixtureByMassFraction(initMassFraction, speciesCv, cv);
@@ -1334,7 +1334,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByDensity(Data_Param *bcParamDB,
                 primitiveVar[nNSEqn + numberOfSpecies + 1] = electronEnergy;
             }
         }
-        else                  //! one-temperature model.
+        else    //! one-temperature model.
         {
             RDouble nonDimTtr = localDimensionalTemperature / refDimensionalTemperature;
             gas->ComputeSpeciesConstantPressureSpecificHeatDimensional(nonDimTtr, speciesCv);
@@ -1463,7 +1463,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByPressure(Data_Param *bcParamDB
         int ntmodel = gas->GetTemperatureModel();
         RDouble cp = 0.0, cv = 0.0, speciesCv[MAX_SPECIES_NUM] = {0};
 
-        if (ntmodel > 1)       //! multi-temperature model.
+        if (ntmodel > 1)    //! multi-temperature model.
         {
             gas->ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(speciesCv);
             gas->ComputeMixtureByMassFraction(initMassFraction, speciesCv, cv);
@@ -1485,7 +1485,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByPressure(Data_Param *bcParamDB
                 primitiveVar[nNSEqn + numberOfSpecies + 1] = electronEnergy;
             }
         }
-        else                  //! one-temperature model.
+        else    //! one-temperature model.
         {
             RDouble nonDimTtr = localDimensionalTemperature / refDimensionalTemperature;
             gas->ComputeSpeciesConstantPressureSpecificHeatDimensional(nonDimTtr, speciesCv);
@@ -1621,7 +1621,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByTotalPressure(Data_Param *bcPa
         localDimensionalVelocity = localMachNumber * sqrt(refGama * gasR * localDimensionalTemperature);
 
         int ntmodel = gas->GetTemperatureModel();
-        if (ntmodel > 1)       //! multi-temperature model.
+        if (ntmodel > 1)    //! multi-temperature model.
         {
             RDouble nonDimTv = localVibrationTemperature / refDimensionalTemperature;
             RDouble vibrationEnergy = gas->GetMixedGasDimensionalVibrationEnergy(nonDimTv, initMassFraction);
@@ -1762,7 +1762,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByMachNumberTemperaturePressure(
 
         RDouble cp = 0.0, cv = 0.0;
         int ntmodel = gas->GetTemperatureModel();
-        if (ntmodel > 1)       //! multi-temperature model.
+        if (ntmodel > 1)    //! multi-temperature model.
         {
             gas->ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(speciesCv);
             gas->ComputeMixtureByMassFraction(initMassFraction, speciesCv, cv);
@@ -1784,7 +1784,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByMachNumberTemperaturePressure(
                 primitiveVar[nNSEqn + numberOfSpecies + 1] = electronEnergy;
             }
         }
-        else                  //! one-temperature model.
+        else    //! one-temperature model.
         {
             gas->ComputeSpeciesConstantPressureSpecificHeatDimensional(nonDimTtr, speciesCv);
             gas->ComputeMixtureByMassFraction(initMassFraction, speciesCv, cp);
@@ -1922,7 +1922,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByWRFData(Data_Param *bcParamDB,
         int ntmodel = gas->GetTemperatureModel();
         RDouble cp = 0.0, cv = 0.0, speciesCv[MAX_SPECIES_NUM] = {0};
 
-        if (ntmodel > 1)       //! multi-temperature model.
+        if (ntmodel > 1)    //! multi-temperature model.
         {
             gas->ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(speciesCv);
             gas->ComputeMixtureByMassFraction(initMassFraction, speciesCv, cv);
@@ -1944,7 +1944,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByWRFData(Data_Param *bcParamDB,
                 primitiveVar[nNSEqn + numberOfSpecies + 1] = electronEnergy;
             }
         }
-        else                  //! one-temperature model.
+        else    //! one-temperature model.
         {
             RDouble nonDimTtr = localDimensionalTemperature / refDimensionalTemperature;
             gas->ComputeSpeciesConstantPressureSpecificHeatDimensional(nonDimTtr, speciesCv);
@@ -2063,7 +2063,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByPrimitive(Data_Param *bcParamD
         RDouble dimTemperature = dimPressure / (gasR * dimDensity);
         RDouble nonDimTv = dimTemperature / refDimensionalTemperature;
 
-        if (ntmodel > 1)       //! multi-temperature model.
+        if (ntmodel > 1)    //! multi-temperature model.
         {
             gas->ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(speciesCv);
             gas->ComputeMixtureByMassFraction(initMassFraction, speciesCv, cv);
@@ -2085,7 +2085,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByPrimitive(Data_Param *bcParamD
                 primitiveVar[nNSEqn + numberOfSpecies + 1] = electronEnergy;
             }
         }
-        else                  //! one-temperature model.
+        else    //! one-temperature model.
         {
             gas->ComputeSpeciesConstantPressureSpecificHeatDimensional(nonDimTv, speciesCv);
             gas->ComputeMixtureByMassFraction(initMassFraction, speciesCv, cp);
@@ -2268,7 +2268,7 @@ void GlobalBoundaryCondition::SetBCDataBaseByGlobalBC()
             while (gridofThisProcessor)
             {
                 int gridtype = gridofThisProcessor->Type();
-    
+
                 if (gridtype == PHSPACE::STRUCTGRID)
                 {
                     StructGrid *grid = StructGridCast(gridofThisProcessor);
@@ -2303,7 +2303,7 @@ void GlobalBoundaryCondition::SetBCDataBaseByGlobalBC()
                     int nBCRegion = unstructBCSet->GetnBCRegion();
                     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
                     {
-                        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+                        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
                         string bcRegionName = bcRegion->GetBCName();
                         int bcRegionType = bcRegion->GetBCType();
 
@@ -2346,11 +2346,11 @@ void GlobalBoundaryCondition::ChangeBCTypeByGlobalBC()
 
     int nZones = PHMPI::GetNumberofGlobalZones();
     int myid   = PHMPI::GetCurrentProcessorID();
-    
+
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int procID = PHMPI::GetZoneProcessorID(iZone);
-    
+
         if (myid == procID)
         {
             Grid *gridofThisProcessor = GetGrid(iZone, 0);
@@ -2385,12 +2385,12 @@ void GlobalBoundaryCondition::ChangeBCTypeByGlobalBC()
                 UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
                 if (!unstructBCSet) continue;
                 int nBCRegion = unstructBCSet->GetnBCRegion();
-                
+
                 for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
                 {
-                    UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+                    UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
                     string bcName = bcRegion->GetBCName();
-                   
+
                     set< pair<string, int> >::iterator iter3;
                     for (iter3 = bcnameMap.begin(); iter3 != bcnameMap.end(); ++ iter3)
                     {

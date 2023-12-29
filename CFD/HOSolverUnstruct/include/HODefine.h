@@ -11,13 +11,13 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      HODefine.h
 //! @brief     Constant variables definition for High Order Solver.
-//! @author    
+//! @author    xxx
 
 #pragma once
 #include <vector>
 #include "Precision.h"
 #include "Constants.h"
-#include "cgnslib.h" //ElementType_t
+#include "cgnslib.h"    //! ElementType_t
 #include "../../../PHengLEI/3rdparty/eigen/Eigen/Eigen"
 
 using namespace std;

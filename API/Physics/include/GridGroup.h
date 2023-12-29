@@ -1,3 +1,18 @@
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
+//          P   P  H   H  E      NN   N  G      L      E       I          +
+//          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
+//          P      H   H  E      N  N N  G   G  L      E       I          +
+//          P      H   H  EEEEE  N    N  GGGGG  LLLLL  EEEEE  III         +
+//------------------------------------------------------------------------+
+//          Platform for Hybrid Engineering Simulation of Flows           +
+//          China Aerodynamics Research and Development Center            +
+//                     (C) Copyright, Since 2010                          +
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! @file      GridGroup.h
+//! @brief     Explain this file briefly.
+//! @author    xxx.
+
 #pragma once
 #include "Pointer.h"
 #include "Geo_StructBC.h"
@@ -17,8 +32,8 @@ public:
     GridGroup(int zoneStart = 0);
     ~GridGroup();
 private:
-    int   nzones;
-    int * block_proc_dump;    // Bell 20131124 add
+    int nzones;
+    int * block_proc_dump;    //! Bell 20131124 add
     int * block_proc;
     int * block_proc_grid;
     int * block_type;
@@ -40,7 +55,7 @@ public:
     int GetNZones() const { return nzones; }
     int GetNumberofGrid() const;
     Grid * GetGrid(int iZone) const { return grids[iZone]; }
-    
+
     //void ReadSingleGrid(fstream &file, int iZone);
     void InitZoneLayoutInformation(const string &filename);
 

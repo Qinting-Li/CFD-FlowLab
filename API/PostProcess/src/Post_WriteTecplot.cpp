@@ -407,184 +407,47 @@ void Post_WriteTecplot::StoreUnsFieldVisualData(int zoneIndex, DataContainer *cd
     int numberOfCells = grid->GetNTotalCell();
     int numberOfFaces = grid->GetNTotalFace();
 
-    int numberOfNodesInZone = 0;
-    int numberOfFacesInZone = 0;
-    int numberOfCellsInZone = 0;
-
-    vector<int> keyNodes;
-    vector<int> keyFaces;
-    vector<int> nodeList;
-    vector<int> cellList;
-
-    keyNodes.resize(numberOfNodes);
-    keyFaces.resize(numberOfFaces);
-    nodeList.resize(numberOfNodes);
-    cellList.resize(numberOfCells);
-
-    SetField(keyNodes,  0, numberOfNodes);
-    SetField(keyFaces,  0, numberOfFaces);
-    SetField(nodeList, -1, numberOfNodes);
-    SetField(cellList, -1, numberOfCells);
-
-    int *keyActiveOfCells         = grid->GetBlankIndex();
-
-    int **cellNodeIndexContainer  = grid->GetCell2NodeArray();
-    int * cellNodeNumberContainer = grid->GetNodeNumberOfEachCell();
-
-    int **cellFaceIndexContainer  = grid->GetCell2Face();
-    int * cellFaceNumberContainer = grid->GetFaceNumberOfEachCell();
-
     int *faceNodeNumberContainer  = grid->GetNodeNumberOfEachFace();
     int *faceNodeIndexContainer   = grid->GetFace2Node();
 
     int *leftCellIndexContainer   = grid->GetLeftCellOfFace();
     int *rightCellIndexContainer  = grid->GetRightCellOfFace();
 
-    for (int iCell = 0; iCell < numberOfCells; ++ iCell)
-    {
-        if (keyActiveOfCells[iCell] == 1)
-        {
-            cellList[iCell] = numberOfCellsInZone;
-
-            for (int iNodes = 0; iNodes < cellNodeNumberContainer[iCell]; ++ iNodes)
-            {
-                keyNodes[cellNodeIndexContainer[iCell][iNodes]] = 1;
-            }
-
-            for (int iFaces = 0; iFaces < cellFaceNumberContainer[iCell]; ++ iFaces)
-            {
-                keyFaces[cellFaceIndexContainer[iCell][iFaces]] = 1;
-            }
-            numberOfCellsInZone ++;
-        }
-    }
-
-    for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
-    {
-        if (keyNodes[iNode] == 1)
-        {
-            nodeList[iNode] = numberOfNodesInZone;
-            numberOfNodesInZone ++;
-        }
-    }
-
-    for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
-    {
-        if (keyFaces[iFace] == 1)
-        {
-            numberOfFacesInZone ++;
-        }
-    }
-
     int totalNumFaceNodes = 0;
     for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
-        if (keyFaces[iFace] != 1) continue;
         totalNumFaceNodes += faceNodeNumberContainer[iFace];
-    }
-
-    if (numberOfNodesInZone == 0)
-    {
-        return;
     }
 
     int TecioMission = WriteBlock;
     PHWrite(cdata, TecioMission);
-    PHWrite(cdata, numberOfNodesInZone);
-    PHWrite(cdata, numberOfCellsInZone);
-    PHWrite(cdata, numberOfFacesInZone);
+    PHWrite(cdata, numberOfNodes);
+    PHWrite(cdata, numberOfCells);
+    PHWrite(cdata, numberOfFaces);
     PHWrite(cdata, totalNumFaceNodes);
-
-    int count = 0;
-    for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
-    {
-        if (keyFaces[iFace] != 1) continue;
-
-        int faceNodeNumber = faceNodeNumberContainer[iFace];
-        PHWrite(cdata, faceNodeNumber);
-    }
-
-    PHWrite(cdata, numberOfNodesInZone);
+    PHWrite(cdata, faceNodeNumberContainer, numberOfFaces);
 
     RDouble *x = grid->GetX();
     RDouble *y = grid->GetY();
     RDouble *z = grid->GetZ();
 
-    for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
-    {
-        if (keyNodes[iNode] != 1) continue;
-        PHWrite(cdata, x[iNode]);
-    }
-
-    for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
-    {
-        if (keyNodes[iNode] != 1) continue;
-        PHWrite(cdata, y[iNode]);
-    }
-
-    for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
-    {
-        if (keyNodes[iNode] != 1) continue;
-        PHWrite(cdata, z[iNode]);
-    }
+    PHWrite(cdata, numberOfNodes);
+    PHWrite(cdata, x, numberOfNodes);
+    PHWrite(cdata, y, numberOfNodes);
+    PHWrite(cdata, z, numberOfNodes);
 
     for (int iVarible = 0; iVarible < nVisualVariables; ++ iVarible)
     {
         RDouble *qq = qn[iVarible];
-        for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
-        {
-            if (keyNodes[iNode] != 1) continue;
-            PHWrite(cdata, qq[iNode]);
-        }
+        PHWrite(cdata, qq, numberOfNodes);
     }
 
-    count = 0;
-    for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
-    {
-        int faceNodeNumber = faceNodeNumberContainer[iFace];
+    PHWrite(cdata, faceNodeIndexContainer, totalNumFaceNodes);
 
-        if (keyFaces[iFace] != 1)
-        {
-            count += faceNodeNumber;
-            continue;
-        }
+    PHWrite(cdata, leftCellIndexContainer , numberOfFaces);
+    PHWrite(cdata, rightCellIndexContainer, numberOfFaces);
 
-        for (int iNode = 0; iNode < faceNodeNumberContainer[iFace]; ++ iNode)
-        {
-            int nodeIndex = nodeList[faceNodeIndexContainer[count ++]];
-            PHWrite(cdata, nodeIndex);
-        }
-    }
-
-    //! Left cell.
-    for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
-    {
-        if (keyFaces[iFace] != 1) continue;
-
-        int cellIndex = cellList[leftCellIndexContainer[iFace]];
-        PHWrite(cdata, cellIndex);
-    }
-
-    //! Right cell.
-    for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
-    {
-        int cellIndex;
-
-        if (keyFaces[iFace] == 0) continue;
-
-        int rightCell = rightCellIndexContainer[iFace];
-
-        if (rightCell >= numberOfCells || rightCell < 0)
-        {
-            cellIndex = -1;
-        }
-        else
-        {
-            cellIndex = cellList[rightCell];
-        }
-
-        PHWrite(cdata, cellIndex);
-    }
+    delete []qn;
 }
 
 void Post_WriteTecplot::WriteFile()

@@ -479,7 +479,7 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
     RDouble xtn = 0.0, ytn = 0.0, ztn = 0.0;
     //vector< vector< RDouble > > conservationQ;
 
-    int isViscous = parameters->IsViscous();
+    bool isViscous = parameters->IsViscous();
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
@@ -906,7 +906,7 @@ void HOSolverUnstruct::ComputeQAverage(Grid *gridIn)
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
     int hLevel = grid->GetLevel(); 
     int pLevel     = parameters->pMultiGrid;
-    int isViscous = parameters->IsViscous();
+    bool isViscous = parameters->IsViscous();
     if(pLevel == 1)
     {
         pLevel = 0;
@@ -2085,7 +2085,7 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
     RDouble vgn = 0.0;
     RDouble xtn = 0.0, ytn = 0.0, ztn = 0.0;
 
-    int isViscous = parameters->IsViscous();
+    bool isViscous = parameters->IsViscous();
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
@@ -2446,7 +2446,7 @@ void HOSolverUnstruct::LocalTimeStep(Grid *gridIn)
 
     delete []invSpectrumRadius;
 
-    int isViscous = parameters->IsViscous();
+    bool isViscous = parameters->IsViscous();
     if (isViscous)
     {
         //! Viscous time step.

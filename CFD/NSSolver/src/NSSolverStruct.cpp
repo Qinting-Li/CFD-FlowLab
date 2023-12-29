@@ -2175,9 +2175,9 @@ void NSSolverStruct::ReadRestartFlowH5(ActionKey *actkey)
 
     int ifStartFromSteadyResults = parameters->GetIfStartFromSteadyResults();
     RDouble physicalTime = 0.0;
-    if (!CheckDataExist(grploc, "physicalTime"))
+    if (!CheckDataExist(actkey->filepos, "physicalTime"))
     {
-        ifStartFromSteadyResults = 0;
+        ifStartFromSteadyResults = 1;
     }
 
     if (ifStartFromSteadyResults)
@@ -4564,6 +4564,9 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
 
         TecioMission = 1;
         PHWrite(wallDistributeData, &TecioMission, 1);
+
+        string bcName = structBC->GetBCName();
+        wallDistributeData->write_string(bcName);
 
         int IMxOrNumPts = ied - ist + 1;
         int JMxOrNumElements = jed - jst + 1;
@@ -21060,7 +21063,7 @@ void NSSolverStruct::DecompressDQ(DataContainer *&dataContainer, FieldProxy *fie
             {
                 PHRead(dataContainer, fieldRecv(it, jt, kt, m));
             }
-            if (periodicType == 2)
+            if (periodicType == ROTATIONAL_PERIODICITY)
             {
                 int *ibcregions = structBCSet->GetIFaceInfo();
                 int iBCRegion = ibcregions[iFace];

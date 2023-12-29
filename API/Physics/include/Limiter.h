@@ -169,7 +169,7 @@ private:
     T *data;
     int nsize, neqn, ntotal_size;
 public:
-    // type definitions
+    //! type definitions
     typedef T  value_type;
     typedef T* iterator;
 public:

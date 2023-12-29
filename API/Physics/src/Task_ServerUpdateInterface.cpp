@@ -36,9 +36,9 @@ void MainTaskNonBlocking(ActionKey *actkey)
 
     vector <PH_Request> requestContainer;
 
-    // Each processor runs along the same order, which is from 0 to nZones.
-    // Each simulation zone is looped over to judge if the communication is necessary.
-    // Step 1: Compressing data into actkey and Communication.
+    //! Each processor runs along the same order, which is from 0 to nZones.
+    //! Each simulation zone is looped over to judge if the communication is necessary.
+    //! Step 1: Compressing data into actkey and Communication.
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *zoneNeighbor = zoneConnectivity->GetZoneNeighbor(iZone);
@@ -56,7 +56,7 @@ void MainTaskNonBlocking(ActionKey *actkey)
                 continue;
             }
 
-            // Allocate the buffers for sending and receiving.
+            //! Allocate the buffers for sending and receiving.
             DataContainer *receivedBuffer = 0;
             DataContainer *sendBuffer = 0;
             if(currentProcessorID == receiveProcessID)
@@ -70,18 +70,18 @@ void MainTaskNonBlocking(ActionKey *actkey)
                 sendDataBuffer[iZone].push_back(sendBuffer);
             }
 
-            // Swapping.
+            //! Swapping.
             PH_InterfaceNonBlocking(actkey, sendBuffer, receivedBuffer, iZone, neighborZoneIndex, requestContainer);
         }
     }
 
-    // Step2: MPI waiting for Non-blocking communications.
+    //! Step2: MPI waiting for Non-blocking communications.
     if(PHMPI::GetNumberOfProcessor() > 1)
     {
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }
 
-    // Step3: Translate the data container.
+    //! Step3: Translate the data container.
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *zoneNeighbor = zoneConnectivity->GetZoneNeighbor(iZone);
@@ -106,7 +106,7 @@ void MainTaskNonBlocking(ActionKey *actkey)
         }
     }
 
-    // Step4: Free the buffers.
+    //! Step4: Free the buffers.
     for (std::size_t iDim = 0; iDim < receivedDataBuffer.size(); ++ iDim)
     {
         for (std::size_t jDim = 0; jDim < receivedDataBuffer[iDim].size(); ++ jDim)

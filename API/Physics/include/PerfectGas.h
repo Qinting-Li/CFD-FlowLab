@@ -30,8 +30,8 @@ class PerfectGas :public Gas
 private:
     FluidParameter referenceParameterDimensional;
 private:
-    RDouble coefficientOfStateEquation; //universal gas constant, R
-    int nGasModel; //The gas model, 0 is the earth atmosphere, 1 the Mars atmosphere, 2 the Argon, 3 the Nitrogen.
+    RDouble coefficientOfStateEquation;    //! universal gas constant, R
+    int nGasModel;    //! The gas model, 0 is the earth atmosphere, 1 the Mars atmosphere, 2 the Argon, 3 the Nitrogen.
     RDouble molecularDiameter;
 public:
     PerfectGas();
@@ -42,7 +42,7 @@ public:
     RDouble GetMolecularDiameter() {return this->molecularDiameter;};
     int GetGasModelType() {return this->nGasModel;};
 public:
-    //The primitive variables are transfered to the conservative variables.
+    //! The primitive variables are transfered to the conservative variables.
     //! @param[in ]: q prim indicates the primitive variables.
     //! @param[in ]: gama denotes the specific heat ratio, which is valid in the perfect gas.
     //! @param[in ]: Tv denotes the vibrational temperature(The non-dimensional value).
@@ -51,15 +51,15 @@ public:
     void Primitive2Conservative(RDouble *prim, RDouble gama, RDouble Tv, RDouble Te, RDouble *q);
 
 #ifdef USE_GMRESSOLVER
-    // GMRESPV 
-    // the derivative of primitive variables w.r.t conservative variables
+    //! GMRESPV 
+    //! the derivative of primitive variables w.r.t conservative variables
     void dPrimitive2dConservative(RDouble *prim, RDouble gama, RDouble** dqdcv);
 
-    // GMRESVis
-    // the derivative of primitive variables w.r.t conservative variables
+    //! GMRESVis
+    //! the derivative of primitive variables w.r.t conservative variables
     void dGradient2dPrimitive(RDouble *prim, int sign, RDouble** dgraddq, char direction, RDouble nxs, RDouble nys, RDouble nzs, RDouble ns, RDouble vol,int nPara = 6);
     
-    // GMRESnolim
+    //! GMRESnolim
     void dGradient2dPrimitive4limiter(int sign, RDouble** dgraddq, char direction, RDouble nxs, RDouble nys, RDouble nzs, RDouble ns, RDouble vol);
 #endif
 
@@ -70,13 +70,13 @@ public:
     //! @param[OUT]: totalEnergy denotes the total internal energy of the mixed gas.
     void ComputeInternalEnergy(RDouble *primitiveVariables, RDouble gama, RDouble vibrationTemperature, RDouble electronTemperature, RDouble &totalEnergy);
 
-    //The conservative variables are transfered to the primitive variables.
+    //! The conservative variables are transfered to the primitive variables.
     //! @param[in ]: q indicates the conservative variables.
     //! @param[in ]: gama denotes the specific heat ratio, which is valid in the perfect gas.
     //! @param[out]: prim indicates the primitive variables.
     //! @param[in/out]: temperature denotes the array of temperatures in the current time-advancing step and next time-advancing step.
-    //As input parameter, temperature indicates the temperature of the current time-advancing step. Meanwhile,
-    //it denotes the temperature of the next time-advancing step as output parameter.
+    //! As input parameter, temperature indicates the temperature of the current time-advancing step. Meanwhile,
+    //! it denotes the temperature of the next time-advancing step as output parameter.
     void Conservative2Primitive(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature);
 
     virtual void GetSpecificHeatRatio(RDouble *prim, RDouble &gama);
@@ -132,12 +132,12 @@ public:
 
     void InitOtherParameter();
 
-    //!Obtain the T, p, rho and c by the height (Rg=287.053, gamma=1.4 are used). However, only the T and p is useful. 
-    //!The other two variables will be recomputed to be compatible with the condition of chemical reactions existing.
+    //! Obtain the T, p, rho and c by the height (Rg=287.053, gamma=1.4 are used). However, only the T and p is useful. 
+    //! The other two variables will be recomputed to be compatible with the condition of chemical reactions existing.
     void SetAirInformationByDataBase();
 
-    //!Obtain the T, p, rho and c by the T0, P0, Ma (Rg=287.053, gamma=1.4 are used). However, only the T and p is useful. 
-    //!The other two variables will be recomputed to be compatible with the condition of chemical reactions existing.
+    //! Obtain the T, p, rho and c by the T0, P0, Ma (Rg=287.053, gamma=1.4 are used). However, only the T and p is useful. 
+    //! The other two variables will be recomputed to be compatible with the condition of chemical reactions existing.
     void SetAirInformationByExpData(int useSetting);
     void SetAirInformationByExpData();
 
@@ -160,8 +160,8 @@ public:
 
     void ComputeReferenceReynoldsNumber();
 
-    //!This function is mainly for the average density of the mixture in chemical reactions, 
-    //!the value of mixture density has little difference with that of no chemical reaction, which can be ignored.
+    //! This function is mainly for the average density of the mixture in chemical reactions, 
+    //! the value of mixture density has little difference with that of no chemical reaction, which can be ignored.
     void NormalizeAirInformation();
 
     void ComputePressureInGasStateEquation();

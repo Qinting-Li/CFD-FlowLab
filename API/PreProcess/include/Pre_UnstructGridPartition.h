@@ -115,6 +115,11 @@ private:
     void ReconInterfaces(Grid **grids, int iZone);
     void BuildInterfaceLink(Grid **grids, int maxProcessor);
 
+    //! Get neighborzone and ghost cell for periodic boundary, used for interface reconstruct.
+    void SetPeriodInfo(Grid **grids, int iZone);
+    void MatchPeriodicFace(Grid **grids, int iZone, int iBFace, RDouble *xlist, RDouble *ylist, RDouble *zlist, int &FaceIndex);
+    void ResetFace2Face(Grid **grids);
+
     void FillnTCellofEachZone(int *&nTCellOfZones);
 
     void DumpParallelPartitionGrid(const string &gridFileName, Grid **grids, int nBlocks);

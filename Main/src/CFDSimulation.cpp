@@ -60,7 +60,7 @@ void ShowWelcomeTitle()
         oss << "$#       Computational Aerodynamics Institute          #$" << endl;
         oss << "$#  China Aerodynamics Research and Development Center #$" << endl;
         oss << "$#            (C) Copyright, Since 2010                #$" << endl;
-        oss << "$#                  PHengLEI 2306                      #$" << endl;
+        oss << "$#                  PHengLEI 2312                      #$" << endl;
         oss << "$#                                                     #$" << endl;
         oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
 
@@ -142,7 +142,7 @@ void ParametersSelfCheckForCFD()
         }
     }
 
-    delete[] visualVariables;
+    delete [] visualVariables;
 
     if (isUnsteady)
     {

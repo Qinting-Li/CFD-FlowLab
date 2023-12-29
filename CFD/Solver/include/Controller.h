@@ -139,6 +139,8 @@ public:
     //! Set the boundary condition of flowfield on the level-th multigrid.
     void SetBoundaryValueOfField(int iSolver, int level);
 
+    void MixingPlaneBoundary(int iSolver, int level);
+
     void PreSolveforStructHighOrder(int iSolver, int level);
 
     void GetIndependentVariablesforStructHighOrder(int iSolver, int level);

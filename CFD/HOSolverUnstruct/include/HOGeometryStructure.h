@@ -1,12 +1,17 @@
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
+//          P   P  H   H  E      NN   N  G      L      E       I          +
+//          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
+//          P      H   H  E      N  N N  G   G  L      E       I          +
+//          P      H   H  EEEEE  N    N  GGGGG  LLLLL  EEEEE  III         +
+//------------------------------------------------------------------------+
+//          Platform for Hybrid Engineering Simulation of Flows           +
+//          China Aerodynamics Research and Development Center            +
+//                     (C) Copyright, Since 2010                          +
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      HOGeometryStructure.h
 //! @brief     High Order Geometry_structure
 //! @author    Li Ming, Gong Xiaoquan, Zhang Jian, Wan yunbo, Xu gang.
-
-/*----------------------------------------------*\
-     This is High-Order Unstructure Solvers platform for DG and DG/FV using C++
-     The HOGeometryStructure.h is used to declare Volum_element, Face_element, point_element
-\*----------------------------------------------*/
-//! HOGeometryStructure.h
 
 #pragma once
 

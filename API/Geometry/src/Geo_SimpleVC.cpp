@@ -143,7 +143,7 @@ void GlobalVolumeCondition::ParseVCFromFile(fstream &file)
             globalVCList->push_back(volumeCondition);
         }
 
-        delete []value;
+        delete[] value;    value = nullptr;
     }
 }
 

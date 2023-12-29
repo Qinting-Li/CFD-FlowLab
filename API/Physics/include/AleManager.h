@@ -1,3 +1,18 @@
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
+//          P   P  H   H  E      NN   N  G      L      E       I          +
+//          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
+//          P      H   H  E      N  N N  G   G  L      E       I          +
+//          P      H   H  EEEEE  N    N  GGGGG  LLLLL  EEEEE  III         +
+//------------------------------------------------------------------------+
+//          Platform for Hybrid Engineering Simulation of Flows           +
+//          China Aerodynamics Research and Development Center            +
+//                     (C) Copyright, Since 2010                          +
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! @file      AleManager.h
+//! @brief     Explain this file briefly.
+//! @author    He Kun.
+
 #pragma once
 #include "Precision.h"
 #include "Force.h"
@@ -53,7 +68,7 @@ public:
     void ComputeGridFaceVelocity();
 };
 
-//整体上的调用
+//! The global call of Ale.
 void CreateAleManager();
 void FreeAleManager();
 void SolveSingleInnerIterationStepForAleSolvers();
@@ -63,25 +78,27 @@ AleManager * GetAleManager();
 
 void BackupAllZonesOldGrid();
 
-//ALE备份文件
+//! The backup file of Ale.
 bool IsReadAleFile();
 void SetIsReadAleFile(bool isReadAleFileIn);
 fstream & GetCurrentAleFile();
 
-int      GetIntegerParameterFromDataBase(int bodyIndex, const string& parameterName);
-int      GetIntegerParameterFromDataBaseIfExist(int bodyIndex, const string& parameterName, int defaultValve);
-RDouble  GetRDoubleParameterFromDataBase(int bodyIndex, const string& parameterName);
-string   GetStringParameterFromDataBase(int bodyIndex, const string& parameterName);
+int GetIntegerParameterFromDataBase(int bodyIndex, const string& parameterName);
+int GetIntegerParameterFromDataBaseIfExist(int bodyIndex, const string& parameterName, int defaultValve);
 
-RDouble  GetRDoubleParameterFromDataBaseIfExist(int bodyIndex, const string &parameterName, RDouble defaultValue);
+RDouble GetRDoubleParameterFromDataBase(int bodyIndex, const string& parameterName);
 
-int*     GetIntegerArrayFromDataBase(const string& nameOfIntegerArray, int numberOfElements);
-void     GetRDoubleVectorFromDataBase(vector< RDouble >& parameter, int bodyIndex, const string& parameterName, int numberOfElements);
+string GetStringParameterFromDataBase(int bodyIndex, const string& parameterName);
 
-RDouble   GetAleTimeStep();
+RDouble GetRDoubleParameterFromDataBaseIfExist(int bodyIndex, const string &parameterName, RDouble defaultValue);
 
-bool     IsImplicitAleMethod();
-bool     IsExplicitAleMethod();
+int * GetIntegerArrayFromDataBase(const string& nameOfIntegerArray, int numberOfElements);
+void GetRDoubleVectorFromDataBase(vector< RDouble >& parameter, int bodyIndex, const string& parameterName, int numberOfElements);
+
+RDouble GetAleTimeStep();
+
+bool IsImplicitAleMethod();
+bool IsExplicitAleMethod();
 
 void DeAllocateOversetStorage();
 

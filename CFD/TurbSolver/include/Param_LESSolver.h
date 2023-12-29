@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      Param_LESSolver.h
 //! @brief     Record paramters of LESSolver.
-//! @author    zipzhang.
+//! @author    Zhang Zipei.
 #pragma once
 #include "LIB_Macro.h"
 #include "Param_CFDSolver.h"

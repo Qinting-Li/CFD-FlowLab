@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      Geo_Element.h
 //! @brief     Explain this file briefly.
-//! @author    
+//! @author    xxx
 
 #pragma once
 #include "Math_BasisFunction.h"

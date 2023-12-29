@@ -116,6 +116,9 @@ private:
     //! so, each cell belongs to a coarse cell on the coarse level.
     int *cell2coarsegridcell;
 
+    //! for multizone rotating reference frame.
+    RDouble *PeriodicRotationAngle;
+
     //! There are two cells for each cell face.\n
     //! fc2cL: the order of the right cell on the neighbor cell list.
     //! fc2cR: the order of the left  cell on the neighbor cell list.

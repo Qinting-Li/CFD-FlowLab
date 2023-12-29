@@ -44,9 +44,9 @@ void MXDQ_STD(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble area
     lmd2 = half * (lmd2 + ipnrad);
     lmd3 = half * (lmd3 + ipnrad);
 
-    //!This term is actually equal to 0.0 
+    //! This term is actually equal to 0.0 
     x1 = (lmd1 + lmd1 - lmd2 - lmd3) / (c2 + c2);
-    //!This term is actually equal to 0.5
+    //! This term is actually equal to 0.5
     x2 = (lmd2 - lmd3) / (cm + cm);
 
     RDouble dc, dh, c2dc;
@@ -59,9 +59,9 @@ void MXDQ_STD(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble area
     RDouble hm;
     gas->ComputeTotalEnthalpyAndDH(prim, gama, dq, hm, dh);
 
-    //!This term is actually equal to (0.5 * dc)
+    //! This term is actually equal to (0.5 * dc)
     RDouble dhx1_dcx2 =  dh   * x1 + dc * x2;
-    //!This term is actually equal to (0.5 * dh)
+    //! This term is actually equal to (0.5 * dh)
     RDouble c2dcx1_dhx2 = c2dc * x1 + dh * x2;
 
     //! The following expressions can be referred to formula (A.6) in appendix A of the PHengLEI Theory manual.
@@ -294,7 +294,7 @@ void ConservativePreconMatrixVariables(RDouble *field, RDouble *preconMatrix, RD
         field[m] = field_tmp[m];
     }
 
-    delete []field_tmp;
+    delete [] field_tmp;    field_tmp = nullptr;
 }
 
 
@@ -640,13 +640,13 @@ void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble *preconM
     //! Normal velocity and Eigenvalues.
     vn = nxs * um + nys * vm + nzs * wm - vgn;
     v2 = um * um + vm * vm + wm * wm;
-    c2  = gama * pm / rm;
+    c2 = gama * pm / rm;
 
     RDouble vnew,cnew,eig;
 
-    vnew  = half * timeCoeff * vn * (1.0 + preconCoeff);
-    cnew  = half * timeCoeff * sqrt(((1.0 - preconCoeff) * vn) * ((1.0 - preconCoeff) * vn) + 4.0 * preconCoeff * c2);
-    eig   = (ABS(vnew) +  cnew );
+    vnew = half * timeCoeff * vn * (1.0 + preconCoeff);
+    cnew = half * timeCoeff * sqrt(((1.0 - preconCoeff) * vn) * ((1.0 - preconCoeff) * vn) + 4.0 * preconCoeff * c2);
+    eig  = (ABS(vnew) +  cnew );
 
     //! Need to find out the fluxes on level n.
     df[IR ] = - (Qtmp[IR] * vn);
@@ -681,7 +681,7 @@ void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble *preconM
     rm = ABS(rm);
     pm = ABS(pm);
 
-    vn  = nxs * um + nys * vm + nzs * wm - vgn;
+    vn = nxs * um + nys * vm + nzs * wm - vgn;
 
     //! Now the flux difference due to dq.
     df[IR ] += (Qtmp[IR] * vn);
@@ -711,6 +711,6 @@ void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble *preconM
         df[m] *= half * ns;
     }
 
-    delete []Qtmp;
+    delete[] Qtmp;    Qtmp = nullptr;
 }
 }

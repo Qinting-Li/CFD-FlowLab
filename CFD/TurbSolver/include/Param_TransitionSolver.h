@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      Param_TransitionSolver.h
 //! @brief     Record paramters of TransitionSolver.
-//! @author    
+//! @author    He Kun.
 
 #pragma once
 #include "Param_CFDSolver.h"

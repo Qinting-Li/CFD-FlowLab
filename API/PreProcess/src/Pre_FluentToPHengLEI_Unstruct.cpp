@@ -160,12 +160,50 @@ void Pre_FluentToPHengLEI_Unstruct::AnalysisFluentKeyWord(GridFormat_Fluent *flu
         if (zone_id == 0)
         {
             fluent_factory->SetNTotalNode(last_index - first_index + 1);
+
+            int nTotalNode = last_index - first_index + 1;
+            RDouble *x = new RDouble[nTotalNode];
+            RDouble *y = new RDouble[nTotalNode];
+            RDouble *z = new RDouble[nTotalNode];
+
+            RawGrid *rawgrid = fluent_factory->GetRawGrid();
+            rawgrid->SetNTotalNode(nTotalNode);
+            rawgrid->SetX(x);
+            rawgrid->SetY(y);
+            rawgrid->SetZ(z);
         }
         else
         {
+            int nodeType, nodeDimension;
+            line = FindNextWord(line, word, separator);
+            from_string< int >(nodeType, word, std::hex);
+
+            line = FindNextWord(line, word, separator);
+            from_string< int >(nodeDimension, word, std::hex);
+
             RawGrid *rawgrid = fluent_factory->GetRawGrid();
             ReadFluentNodes(rawgrid, first_index, last_index, fluent_factory->GetDimension(), file);
         }
+    }
+    else if (section_ID == FLUENT_SPACE::FLUENT_EDGES)
+    {
+        line = FindNextWord(line, word, separator);
+        from_string< int >(zone_id, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(first_index, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(last_index, word, std::hex);
+
+        if (zone_id != 0)
+        {
+            line = FindNextWord(line, word, separator);
+            from_string< int >(type, word, std::hex);
+
+            ReadFluentEdge(first_index, last_index, file);
+        }
+
     }
     else if (section_ID == FLUENT_SPACE::FLUENT_CELLS)
     {
@@ -190,7 +228,7 @@ void Pre_FluentToPHengLEI_Unstruct::AnalysisFluentKeyWord(GridFormat_Fluent *flu
             line = FindNextWord(line, word, separator);
             from_string< int >(element_type, word, std::hex);
 
-            if (!element_type)
+            if (element_type == FLUENT_SPACE::ELEMENTTYPE_MIXED)
             {
                 ReadFluentCell(first_index, last_index, file);
             }
@@ -221,6 +259,24 @@ void Pre_FluentToPHengLEI_Unstruct::AnalysisFluentKeyWord(GridFormat_Fluent *flu
 
             ReadFluentFace(fluent_factory, zone_id, first_index, last_index, bc_type, face_type, file);
         }
+    }
+    else if (section_ID == FLUENT_SPACE::FLUENT_PERIODICFACES)
+    {
+        int periodicFaceZone, shadowFaceZone;
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(first_index, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(last_index, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(periodicFaceZone, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(shadowFaceZone, word, std::hex);
+
+        ReadFluentPeriodicface(first_index, last_index, file);
     }
     else if (section_ID == FLUENT_SPACE::FLUENT_C45)
     {
@@ -262,19 +318,63 @@ void Pre_FluentToPHengLEI_Unstruct::AnalysisFluentKeyWord(GridFormat_Fluent *flu
 
         fluent_factory->SetBoundaryName(zone_id, selfDefineBCName);
     }
+    else if (section_ID == FLUENT_SPACE::FLUENT_CELLTREE)
+    {
+        line = FindNextWord(line, word, separator);
+        from_string< int >(first_index, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(last_index, word, std::hex);
+
+        int parentZoneId, childZoneId;
+        line = FindNextWord(line, word, separator);
+        from_string< int >(parentZoneId, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(childZoneId, word, std::hex);
+
+        ReadFluentCellTree(first_index, last_index, file);
+    }
+    else if (section_ID == FLUENT_SPACE::FLUENT_FACETREE)
+    {
+        line = FindNextWord(line, word, separator);
+        from_string< int >(first_index, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(last_index, word, std::hex);
+
+        int parentZoneId, childZoneId;
+        line = FindNextWord(line, word, separator);
+        from_string< int >(parentZoneId, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(childZoneId, word, std::hex);
+
+        ReadFluentFaceTree(first_index, last_index, file);
+    }
+    else
+    {
+        int frontBracket = count(line.begin(), line.end(), '(') + 1;
+        int closedBracket = count(line.begin(), line.end(), ')');
+        frontBracket = frontBracket - closedBracket;
+
+        while (frontBracket)
+        {
+            getline(file, line);
+
+            int frontBracket1  = count(line.begin(), line.end(), '(');
+            int closedBracket1 = count(line.begin(), line.end(), ')');
+
+            frontBracket = frontBracket + frontBracket1 - closedBracket1;
+        }
+    }
 }
 
 void Pre_FluentToPHengLEI_Unstruct::ReadFluentNodes(RawGrid *rawgrid, int first_index, int last_index, int dimension, fstream &file)
 {
-    int nTotalNode = last_index - first_index + 1;
-    RDouble *x = new RDouble[nTotalNode];
-    RDouble *y = new RDouble[nTotalNode];
-    RDouble *z = new RDouble[nTotalNode];
-
-    rawgrid->SetNTotalNode(nTotalNode);
-    rawgrid->SetX(x);
-    rawgrid->SetY(y);
-    rawgrid->SetZ(z);
+    RDouble *x = rawgrid->GetX();
+    RDouble *y = rawgrid->GetY();
+    RDouble *z = rawgrid->GetZ();
 
     string line, word;
     string separator = " \r\n()";
@@ -346,7 +446,7 @@ void Pre_FluentToPHengLEI_Unstruct::ReadFluentFace(GridFormat_Fluent *fluent_fac
 
     int number, nodeid, le ,re;
 
-    if (face_type == 0)
+    if (face_type == FLUENT_SPACE::FACETYPE_MIXED || face_type == FLUENT_SPACE::FACETYPE_POLYGONAL)
     {
         int i = first_index;
         do
@@ -418,16 +518,106 @@ void Pre_FluentToPHengLEI_Unstruct::ReadFluentFace(GridFormat_Fluent *fluent_fac
     //delete face_patch;
 }
 
+void Pre_FluentToPHengLEI_Unstruct::ReadFluentEdge(int first_index, int last_index, fstream &file)
+{
+    string line, word;
+    string separator = " \r\n()";
+
+    int node1, node2;
+    int i = first_index;
+    do
+    {
+        getline(file, line);
+        line = FindNextWord(line, word, separator);
+        if (word == "") continue;
+
+        from_string< int >(node1, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(node2, word, std::hex);
+
+        ++ i;
+    } while (i <= last_index);
+}
+
+void Pre_FluentToPHengLEI_Unstruct::ReadFluentPeriodicface(int first_index, int last_index, fstream &file)
+{
+    string line, word;
+    string separator = " \r\n()";
+
+    int periodicFaceIndex, shadowFaceIndex;
+    int i = first_index;
+    do
+    {
+        getline(file, line);
+        line = FindNextWord(line, word, separator);
+        if (word == "") continue;
+
+        from_string< int >(periodicFaceIndex, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(shadowFaceIndex, word, std::hex);
+
+        ++ i;
+    }while (i <= last_index);
+}
+
+void Pre_FluentToPHengLEI_Unstruct::ReadFluentCellTree(int first_index, int last_index, fstream &file)
+{
+    string line, word;
+    string separator = " \r\n()";
+
+    int numberOfKids, kidIndex;
+    int i = first_index;
+    do
+    {
+        getline(file, line);
+        line = FindNextWord(line, word, separator);
+        if (word == "") continue;
+
+        from_string< int >(numberOfKids, word, std::hex);
+
+        for (int iKid = 0; iKid < numberOfKids; ++ iKid)
+        {
+            line = FindNextWord(line, word, separator);
+            from_string< int >(kidIndex, word, std::hex);
+        }
+
+        ++ i;
+    }while (i <= last_index);
+}
+
+void Pre_FluentToPHengLEI_Unstruct::ReadFluentFaceTree(int first_index, int last_index, fstream &file)
+{
+    string line, word;
+    string separator = " \r\n()";
+
+    int numberOfKids, kidIndex;
+    int i = first_index;
+    do
+    {
+        getline(file, line);
+        line = FindNextWord(line, word, separator);
+        if (word == "") continue;
+
+        from_string< int >(numberOfKids, word, std::hex);
+
+        for (int iKid = 0; iKid < numberOfKids; ++ iKid)
+        {
+            line = FindNextWord(line, word, separator);
+            from_string< int >(kidIndex, word, std::hex);
+        }
+
+        ++ i;
+    }while (i <= last_index);
+}
+
 void Pre_FluentToPHengLEI_Unstruct::ReadFluentCell(int first_index, int last_index, fstream &file)
 {
-
     string line, word;
     string separator = " \r\n()";
 
     int type;
-
-    int num2 = 0;
-    int num6 = 0;
 
     int i = first_index;
     do
@@ -441,14 +631,10 @@ void Pre_FluentToPHengLEI_Unstruct::ReadFluentCell(int first_index, int last_ind
             from_string< int >(type, word, std::hex);
             line = FindNextWord(line, word, separator);
 
-            if (type == 2) num2++;
-            if (type == 6) num6++;
-
             ++ i;
             if (word == "") break;
         } while (true);
     } while (i <= last_index);
-
 }
 
 GridFormat_Fluent::GridFormat_Fluent()

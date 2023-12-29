@@ -62,6 +62,16 @@ const int GRID_REPAIR         = 5;
 const int GRID_MIRROR         = 6;
 const int GRID_STRTOUNS       = 7;
 
+//! Type of  rotating reference frame.
+const int STATIONARY_FRAME    = 0;
+const int TRANSLATIONAL_FRAME   = 1;
+const int ROTATIONAL_FRAME      = 2;
+
+//! periodicType
+const int NO_PERIODICITY = 0;
+const int TRANSLATIONAL_PERIODICITY = 1;
+const int ROTATIONAL_PERIODICITY = 2;
+
 const RDouble half            = 0.5;
 const RDouble third           = 1.0 / 3.0;
 const RDouble two3rd          = 2.0 / 3.0;
@@ -133,8 +143,8 @@ const int ISCHEME_AUSMPW         = 11;
 const int ISCHEME_Rotate         = 12;
 const int ISCHEME_ROE_MODIFIED   = 13;
 const int ISCHEME_AUSMPW_PLUS    = 14;
-const int ISCHEME_GMRES_ROE      = 15; // GMRES modified Roe scheme for assembling Jacobian matrix using FD
-const int ISCHEME_GMRES_Steger   = 16; // GMRES modified Steger scheme  GMRES3D
+const int ISCHEME_GMRES_ROE      = 15;    //! GMRES modified Roe scheme for assembling Jacobian matrix using FD
+const int ISCHEME_GMRES_Steger   = 16;    //! GMRES modified Steger scheme  GMRES3D
 
 const int FIRST_ORDER            = 1;
 const int SECOND_ORDER           = 2;

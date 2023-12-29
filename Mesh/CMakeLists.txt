@@ -144,6 +144,7 @@ ${OVERSET_H_PATH}/Mesh_Refine.h
 ${OVERSET_H_PATH}/Mesh_Refine_Struct.h
 ${OVERSET_H_PATH}/Mesh_Refine_Unstruct.h
 ${OVERSET_H_PATH}/Mesh_RefineController.h
+${OVERSET_H_PATH}/Mesh_ConstructInterfaceLink.h
 )
 source_group(include FILES ${OVERSET_H_LIST}) 
 include_directories(${OVERSET_H_PATH})
@@ -166,6 +167,7 @@ ${OVERSET_CPP_PATH}/Mesh_Refine.cpp
 ${OVERSET_CPP_PATH}/Mesh_Refine_Struct.cpp
 ${OVERSET_CPP_PATH}/Mesh_Refine_Unstruct.cpp
 ${OVERSET_CPP_PATH}/Mesh_RefineController.cpp
+${OVERSET_CPP_PATH}/Mesh_ConstructInterfaceLink.cpp
 )
 source_group(src FILES ${OVERSET_CPP_LIST}) 
 include_directories(${OVERSET_CPP_PATH})

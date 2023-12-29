@@ -304,19 +304,19 @@ void Pre_UnstructGridPartition::CreatePartition()
     else
     {
         part = CreatePartitionParallel(gridSource, maxProcessor, vtxdist);
+    }
 
-        // The following section is used in parallel partition.
-        // This pointers are used in communication.
-        int nBoundFace = gridSource->GetNBoundFace();
-        interfaceIndexInBC_send    = new int[nBoundFace];
-        interfaceIndexInBC_recv    = new int[nBoundFace];
-        partIndexInNewPartion_recv = new int[nBoundFace];
-        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
-        {
-            interfaceIndexInBC_send[iFace]    = -1;
-            interfaceIndexInBC_recv[iFace]    = -1;
-            partIndexInNewPartion_recv[iFace] = -1;
-        }
+    // The following section is used in parallel partition.
+    // This pointers are used in communication.
+    int nBoundFace = gridSource->GetNBoundFace();
+    interfaceIndexInBC_send    = new int[nBoundFace];
+    interfaceIndexInBC_recv    = new int[nBoundFace];
+    partIndexInNewPartion_recv = new int[nBoundFace];
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        interfaceIndexInBC_send[iFace]    = -1;
+        interfaceIndexInBC_recv[iFace]    = -1;
+        partIndexInNewPartion_recv[iFace] = -1;
     }
 
     SetProcessorList();
@@ -1100,13 +1100,403 @@ void Pre_UnstructGridPartition::BuildInterfaceLink(Grid **grids, int maxProcesso
     {
         for (int iProc = 0; iProc < maxProcessor; ++ iProc)
         {
+            //! To build interface link for periodic boundary.
+            SetPeriodInfo(grids, iProc);
             ReconInterfaces(grids, iProc);
         }
+        ResetFace2Face(grids);
     }
     else
     {
         ConstructGlobalInterfaceLink(grids, maxProcessor);
     }
+}
+
+void Pre_UnstructGridPartition::SetPeriodInfo(Grid **grids, int iZone)
+{
+    UnstructGrid *gridpart = UnstructGridCast(grids[iZone]);
+
+    UnstructBCSet *unstructBCSet = gridSource->GetUnstructBCSet();
+    InterfaceInfo *GlobalInterfaceInfo = gridSource->GetInterfaceInfo();
+
+    int *GlobalinterFace2BoundaryFace = GlobalInterfaceInfo->GetInterFace2BoundaryFace();
+    int *GlobalinterFace2ZoneID       = GlobalInterfaceInfo->GetInterFace2ZoneID();
+    int *bcRegionIDofBCFace           = unstructBCSet->GetBCFaceInfo();
+    int *rightCellOfFace              = gridSource->GetRightCellOfFace();
+    int nBoundFace                    = gridSource->GetNBoundFace();
+
+    RDouble *xfc = gridSource->GetFaceCenterX();
+    RDouble *yfc = gridSource->GetFaceCenterY();
+    RDouble *zfc = gridSource->GetFaceCenterZ();
+
+    RDouble *localxfc = gridpart->GetFaceCenterX();
+    RDouble *localyfc = gridpart->GetFaceCenterY();
+    RDouble *localzfc = gridpart->GetFaceCenterZ();
+
+    int *node_number_of_each_face = gridSource->GetNodeNumberOfEachFace();
+    int *face2node = gridSource->GetFace2Node();
+
+    UnstructBCSet *partBCSet = gridpart->GetUnstructBCSet();
+    int i_nBFace = gridpart->GetNBoundFace();
+
+    InterfaceInfo *interfaceInfo = gridpart->GetInterfaceInfo();
+    int i_nIFace = interfaceInfo->GetNIFace();
+    int *interFace2ZoneID = interfaceInfo->GetInterFace2ZoneID();
+    int *interFace2CellID = interfaceInfo->GetInterFace2CellID();
+    int *interFace2InterFaceID = interfaceInfo->GetInterFace2InterFaceID();
+    int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
+    int *interFaceDirection = interfaceInfo->GetInterFaceDirection();
+
+    bool *isNeighborInterfaceFound = interfaceInfo->GetIsNeighborInterfaceFound();
+
+    int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
+    RDouble translationLength[3] = { 0.0 };
+    GlobalDataBase::GetData("translationLength", &translationLength, PHDOUBLE, 3);
+    double rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
+    rotationAngle = rotationAngle * PI / 180.0;
+
+    int npartBound = gridpart->GetNBoundFace();
+    int nIFace = interfaceInfo->GetNIFace();
+    int nphysi = npartBound - nIFace;
+
+    int count = 0;
+    int Globalpos = 0;
+    int maxlist = 0;
+
+    //! The size of ii_local here is equal to periodic faces in current zone.
+    int ii_local = 0;
+
+    //! Find periodic boundary information in source grid.
+    for (int iBFace = 0; iBFace < nBoundFace; iBFace++)
+    {
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iBFace]);
+        string bcName = bcRegion->GetBCName();
+        int bcType = bcRegion->GetBCType();
+
+        if (bcName != "Periodic_up" && bcName != "Periodic_down")
+        {
+            Globalpos += node_number_of_each_face[iBFace];
+            continue;
+        }
+
+        maxlist = MAX(maxlist, node_number_of_each_face[iBFace]);
+        vector<int> index(maxlist), pindex(maxlist);
+
+        RDouble *xlist = new RDouble[maxlist];
+        RDouble *ylist = new RDouble[maxlist];
+        RDouble *zlist = new RDouble[maxlist];
+
+        RDouble *Globalxlist = new RDouble[maxlist];
+        RDouble *Globalylist = new RDouble[maxlist];
+        RDouble *Globalzlist = new RDouble[maxlist];
+
+        RDouble *Globalx = gridSource->GetX();
+        RDouble *Globaly = gridSource->GetY();
+        RDouble *Globalz = gridSource->GetZ();
+
+        for (int m = 0; m < node_number_of_each_face[iBFace]; ++m)
+        {
+            //! get node index.
+            index[m] = face2node[Globalpos + m];
+        }
+        Globalpos += node_number_of_each_face[iBFace];
+
+        int nlist = node_number_of_each_face[iBFace];
+        pindex.resize(nlist);
+
+        GetFaceCoorList(index, nlist, xlist, ylist, zlist, Globalx, Globaly, Globalz);
+
+        //! Correct coordinates to match target coordinate.
+        if (periodicType == TRANSLATIONAL_PERIODICITY)
+        {
+            if (bcRegion->GetBCName() == "Periodic_up")
+            {
+                for (int m = 0; m < node_number_of_each_face[iBFace]; ++m)
+                {
+                    Globalxlist[m] = xlist[m] + translationLength[0];
+                    Globalylist[m] = ylist[m] + translationLength[1];
+                    Globalzlist[m] = zlist[m] + translationLength[2];
+                }
+            }
+            else
+            {
+                for (int m = 0; m < node_number_of_each_face[iBFace]; ++m)
+                {
+                    Globalxlist[m] = xlist[m] - translationLength[0];
+                    Globalylist[m] = ylist[m] - translationLength[1];
+                    Globalzlist[m] = zlist[m] - translationLength[2];
+                }
+            }
+        }
+        else if (periodicType == ROTATIONAL_PERIODICITY)
+        {
+            if (bcRegion->GetBCName() == "Periodic_down")
+            {
+                for (int m = 0; m < node_number_of_each_face[iBFace]; ++m)
+                {
+                    RDouble rotPoint[3] = { 0.0, 0.0, 0.0 };
+                    rotPoint[0] = xlist[m];
+                    rotPoint[1] = ylist[m] * cos(2.0 * PI - rotationAngle) - zlist[m] * sin(2.0 * PI - rotationAngle);
+                    rotPoint[2] = ylist[m] * sin(2.0 * PI - rotationAngle) + zlist[m] * cos(2.0 * PI - rotationAngle);
+                    Globalxlist[m] = rotPoint[0];
+                    Globalylist[m] = rotPoint[1];
+                    Globalzlist[m] = rotPoint[2];
+                }
+            }
+            if (bcRegion->GetBCName() == "Periodic_up")
+            {
+                for (int m = 0; m < node_number_of_each_face[iBFace]; ++m)
+                {
+                    RDouble rotPoint[3] = { 0.0, 0.0, 0.0 };
+                    rotPoint[0] = xlist[m];
+                    rotPoint[1] = ylist[m] * cos(rotationAngle) - zlist[m] * sin(rotationAngle);
+                    rotPoint[2] = ylist[m] * sin(rotationAngle) + zlist[m] * cos(rotationAngle);
+                    Globalxlist[m] = rotPoint[0];
+                    Globalylist[m] = rotPoint[1];
+                    Globalzlist[m] = rotPoint[2];
+                }
+            }
+        }
+
+        if (IsInterface(bcType))
+        {
+            if (bcRegion->GetBCName() == "Periodic_up" || bcRegion->GetBCName() == "Periodic_down")
+            {
+                int localIndex = -1;
+                //! Find local face index for iBFace.
+                MatchPeriodicFace(grids, iZone, iBFace, xlist, ylist, zlist, localIndex);
+
+                //! Build periodic boundary link for faces that locate in part grid.
+
+                if (localIndex < i_nBFace && localIndex > -1)
+                {
+                    int Targetzone;
+                    int TargetFace = -1;
+
+                    for (Targetzone = 0; Targetzone < maxProcessor; Targetzone++)
+                    {
+                        //! Use corrected coordinate to find target face index.
+                        MatchPeriodicFace(grids, Targetzone, iBFace, Globalxlist, Globalylist, Globalzlist, TargetFace);
+
+                        //! If find target face index in target zone, stop.
+                        if (TargetFace >= 0)
+                        {
+                            //! Due to the periodic boundary, left cell of TargetFace take the place of right cell of iBFace. 
+                            UnstructGrid *Targetgrid = UnstructGridCast(grids[Targetzone]);
+                            int *left_cell_of_face = Targetgrid->GetLeftCellOfFace();
+                            int *right_cell_of_face = gridpart->GetRightCellOfFace();
+
+                            int Targetcell = left_cell_of_face[TargetFace];
+
+                            //! Manually set neighbors for periodic boundary.
+                            interFaceDirection[ii_local] = 1;
+                            interFace2ZoneID[ii_local] = static_cast<int>(Targetzone);
+                            interFace2CellID[ii_local] = cell_mark[Targetcell];
+                            interFace2InterFaceID[ii_local] = TargetFace;
+                            interFace2BoundaryFace[ii_local] = localIndex;
+
+                            isNeighborInterfaceFound[ii_local] = true;
+                            ii_local++;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+//! Find FaceIndex in Targetzone.
+//! iBFace: global face index.
+//! xlist, ylist, zlist: node cooridinate of the face.
+//! FaceIndex: local face index.
+void Pre_UnstructGridPartition::MatchPeriodicFace(Grid **grids, int Targetzone, int iBFace, RDouble *xlist, RDouble *ylist, RDouble *zlist, int &FaceIndex)
+{
+    UnstructGrid *Targetgrid = UnstructGridCast(grids[Targetzone]);
+    UnstructBCSet *TargetBCSet = Targetgrid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = TargetBCSet->GetBCFaceInfo();
+    int nBoundFace = Targetgrid->GetNBoundFace();
+    int *face2node = Targetgrid->GetFace2Node();
+    int *node_number_of_each_face = gridSource->GetNodeNumberOfEachFace();
+
+    int nodepos = 0;
+    int count = 0;
+
+    for (int iFace = 0; iFace < nBoundFace; iFace++)
+    {
+        UnstructBC *TargetbcRegion = TargetBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        string TargetbcName = TargetbcRegion->GetBCName();
+        int bcType = TargetbcRegion->GetBCType();
+        int *Target_node_number_of_each_face = Targetgrid->GetNodeNumberOfEachFace();
+
+        if (!IsInterface(bcType))
+        {
+            nodepos += Target_node_number_of_each_face[iFace];
+            continue;
+        }
+
+        if (TargetbcName != "Periodic_up" && TargetbcName != "Periodic_down" )
+        {
+            nodepos += Target_node_number_of_each_face[iFace];
+            continue;
+        }
+
+        int Target_maxlist = 0;
+
+        Target_maxlist = MAX(Target_maxlist, Target_node_number_of_each_face[iFace]);
+        vector<int> Target_index(Target_maxlist), Target_pindex(Target_maxlist);
+
+        RDouble *Targetxlist = new RDouble[Target_maxlist];
+        RDouble *Targetylist = new RDouble[Target_maxlist];
+        RDouble *Targetzlist = new RDouble[Target_maxlist];
+
+        RDouble *Targetx = Targetgrid->GetX();
+        RDouble *Targety = Targetgrid->GetY();
+        RDouble *Targetz = Targetgrid->GetZ();
+
+        for (int m = 0; m < Target_node_number_of_each_face[iFace]; ++m)
+        {
+            //! get node index
+            Target_index[m] = face2node[nodepos + m];
+        }
+        nodepos += Target_node_number_of_each_face[iFace];
+
+        int Target_nlist = Target_node_number_of_each_face[iFace];
+        Target_pindex.resize(Target_nlist);
+
+        GetFaceCoorList(Target_index, Target_nlist, Targetxlist, Targetylist, Targetzlist, Targetx, Targety, Targetz);
+        //! every node coordinate of iBFace should equal to iFace.
+        for (int m = 0; m < node_number_of_each_face[iBFace]; ++m)
+        {
+            for (int n = 0; n < Target_node_number_of_each_face[iFace]; ++n)
+            {
+                RDouble errx, erry, errz;
+
+                //! now tolerance is set to 1e-6.
+                errx = xlist[m] - Targetxlist[n];
+                erry = ylist[m] - Targetylist[n];
+                errz = zlist[m] - Targetzlist[n];
+
+                errx = sqrt(errx * errx);
+                erry = sqrt(erry * erry);
+                errz = sqrt(errz * errz);
+
+                if (errx<1e-6 && erry<1e-6 && errz<1e-6)
+                {
+                    count++;
+                    break;
+                }
+            }
+
+            if (m == node_number_of_each_face[iBFace] - 1)
+            {
+                if (count == node_number_of_each_face[iBFace])
+                {
+                    FaceIndex = iFace;
+                }
+                //! Initial count after finishing search for one face. 
+                count = 0;
+            }
+        }
+    }
+}
+
+//! interFace2interface data: turn faceindex into facecount.
+void Pre_UnstructGridPartition::ResetFace2Face(Grid **grids)
+{
+    int maxFace = 0;
+    for (int Zone = 0; Zone < maxProcessor; Zone++)
+    {
+        UnstructGrid *iGrid = UnstructGridCast(grids[Zone]);
+        InterfaceInfo *iinterfaceInfo = iGrid->GetInterfaceInfo();
+        int inIFace = iinterfaceInfo->GetNIFace();
+
+        if (maxFace < inIFace)
+        {
+            maxFace = inIFace;
+        }
+    }
+
+    //! Define two-dimensional array to store "interFace2InterFaceID[ii_local]".
+    int **Face2Face = new int * [maxProcessor];
+    for (int iProcessor = 0; iProcessor < maxProcessor; iProcessor++)
+    {
+        Face2Face[iProcessor] = new int[maxFace];
+    }
+
+    for (int ZoneNumber = 0; ZoneNumber < maxProcessor; ZoneNumber++)
+    {
+        UnstructGrid *Grid_ori = UnstructGridCast(grids[ZoneNumber]);
+        UnstructBCSet *BCSet_ori = Grid_ori->GetUnstructBCSet();
+        int *bcRegionIDofBCFace_ori = BCSet_ori->GetBCFaceInfo();
+
+        InterfaceInfo *interfaceInfo_ori = Grid_ori->GetInterfaceInfo();
+        int nIFace_ori = interfaceInfo_ori->GetNIFace();
+        int * Face2NeighborZone_ori = interfaceInfo_ori->GetInterFace2ZoneID();
+        int * Face2NeighborFace_ori = interfaceInfo_ori->GetInterFace2InterFaceID();
+        int * Face2BoundaryFace_ori = interfaceInfo_ori->GetInterFace2BoundaryFace();
+
+        for (int FaceNumber = 0; FaceNumber < nIFace_ori; FaceNumber++)
+        {
+            int iBoundaryFace = Face2BoundaryFace_ori[FaceNumber];
+            int iNeighborFace = Face2NeighborFace_ori[FaceNumber];
+            int NeighborZone = Face2NeighborZone_ori[FaceNumber];
+
+            UnstructBC *bcRegion_ori = BCSet_ori->GetBCRegion(bcRegionIDofBCFace_ori[iBoundaryFace]);
+            string bcName_ori = bcRegion_ori->GetBCName();
+
+            if (bcName_ori == "Periodic_up" || bcName_ori == "Periodic_down")
+            {
+                UnstructGrid *Grid_target = UnstructGridCast(grids[NeighborZone]);
+                InterfaceInfo *interfaceInfo_target = Grid_target->GetInterfaceInfo();
+
+                int nIFace_target = interfaceInfo_target->GetNIFace();
+                int *Face2BoundaryFace_target = interfaceInfo_target->GetInterFace2BoundaryFace();
+
+                //! Store interface2interface data in Face2Face for periodic face.
+                for (int iTargetFace = 0; iTargetFace < nIFace_target; iTargetFace++)
+                {
+                    if (Face2BoundaryFace_target[iTargetFace] == iNeighborFace)
+                    {
+                        Face2Face[ZoneNumber][FaceNumber] = iTargetFace;
+                    }
+                }
+            }
+        }
+    }
+
+    //! Store interface2interface data in interfaceInfo for periodic face.
+    for (int ZoneNumber = 0; ZoneNumber < maxProcessor; ZoneNumber++)
+    {
+        UnstructGrid *i_Grid = UnstructGridCast(grids[ZoneNumber]);
+        InterfaceInfo *i_interfaceInfo = i_Grid->GetInterfaceInfo();
+
+        UnstructBCSet *i_BCSet = i_Grid->GetUnstructBCSet();
+        int *i_bcRegionIDofBCFace = i_BCSet->GetBCFaceInfo();
+
+        int i_nIFace = i_interfaceInfo->GetNIFace();
+        int *i_interFace2InterFaceID = i_interfaceInfo->GetInterFace2InterFaceID();
+        int *i_Face2BoundaryFace = i_interfaceInfo->GetInterFace2BoundaryFace();
+
+        for (int FaceNumber = 0; FaceNumber < i_nIFace; FaceNumber++)
+        {
+            int iBoundaryFace = i_Face2BoundaryFace[FaceNumber];
+            UnstructBC *i_bcRegion = i_BCSet->GetBCRegion(i_bcRegionIDofBCFace[iBoundaryFace]);
+            string i_bcName = i_bcRegion->GetBCName();
+
+            if (i_bcName == "Periodic_up" || i_bcName == "Periodic_down")
+            {
+                i_interFace2InterFaceID[FaceNumber] = Face2Face[ZoneNumber][FaceNumber];
+            }
+        }
+    }
+
+    //! DeAllocate.
+    for (int iProcessor = 0; iProcessor < maxProcessor; iProcessor++)
+    {
+        delete []Face2Face[iProcessor];
+    }
+    delete []Face2Face;
 }
 
 //! For each interface in the current zone,\n
@@ -1314,7 +1704,7 @@ void Pre_UnstructGridPartition::SetFace2CellAndBC(int iZone, UnstructGrid *gridp
     gridpart->CreateUnstructBCSet(nBCRegionUnstruct);
 
     UnstructBCSet *unstructBCSet = gridpart->GetUnstructBCSet();
-    int* bcRegionIDofBCFace = new int[nBoundFace];
+    int *bcRegionIDofBCFace = new int[nBoundFace];
     set<string>::iterator iter;
 
     int count = 0;
@@ -1604,8 +1994,6 @@ void Pre_UnstructGridPartition::SetInterfaceInfoPartForParallelPartition(int iZo
             }
         }
     }
-
-    //WriteLogFile(" nIFace in Interior = ", count);
 }
 
 void Pre_UnstructGridPartition::ComputeNodeMark(UnstructGrid *gridpart)

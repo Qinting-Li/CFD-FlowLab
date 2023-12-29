@@ -410,11 +410,13 @@ ElementType UnstructGrid::CellFaceVertex(int  icel,
     int **face2node            = this->GetFace2NodeArray();
     int  *faceNumberOfEachCell = this->GetFaceNumberOfEachCell();
     int **cell2face            = this->GetCell2Face();
+    int *leftCellOfFace        = this->GetLeftCellOfFace();
 
     int n_edges = 0;
     int n_trias = 0;
     int n_quads = 0;
     int nface   = faceNumberOfEachCell[icel];
+
     for (int iface = 0; iface < nface; ++iface)
     {
         int face_id = cell2face[icel][iface];
@@ -423,8 +425,25 @@ ElementType UnstructGrid::CellFaceVertex(int  icel,
         {
             if (cell_vtx_edge)
             {
-                for (int vtx = 0; vtx < nvertex; vtx++)
-                    cell_vtx_edge[n_edges * 2 + vtx] = face2node[face_id][vtx];
+                int leftindex = leftCellOfFace[face_id];
+                if (leftindex == icel)
+                {
+                    int nodeCount = 0;
+                    for (int vtx = 0; vtx < nvertex; vtx ++)
+                    {
+                        cell_vtx_edge[n_edges * 2 + nodeCount] = face2node[face_id][vtx];
+                        nodeCount ++;
+                    }
+                }
+                else
+                {
+                    int nodeCount = 0;
+                    for (int vtx = nvertex - 1; vtx >= 0; vtx --)
+                    {
+                        cell_vtx_edge[n_edges * 2 + nodeCount] = face2node[face_id][vtx];
+                        nodeCount ++;
+                    }
+                }
             }
             n_edges += 1;
         }
@@ -749,8 +768,8 @@ int UnstructGrid::nodal_from_face_tria(const int *cell_vtx_edge, int *cell_vtx_t
     int direction;
     int vtx_num, vtx_num_1, vtx_num_2;
 
-    cell_vtx_tria[0] = cell_vtx_edge[1];
-    cell_vtx_tria[1] = cell_vtx_edge[0];
+    cell_vtx_tria[0] = cell_vtx_edge[0];
+    cell_vtx_tria[1] = cell_vtx_edge[1];
 
     vtx_num_1 = cell_vtx_tria[0];
     vtx_num_2 = cell_vtx_tria[1];
@@ -1036,21 +1055,21 @@ LIB_EXPORT vector<int> * UnstructGrid::GetCell2Cell()
     return cellTopology->GetCell2Cell();
 }
 #ifdef USE_GMRESSOLVER
-// GMRESVis
+//! GMRESVis
 LIB_EXPORT vector<int> * UnstructGrid::GMRESGetNeighborCells()
 {
     if (!cellTopology) return NULL;
     return cellTopology->GMRESGetNeighborCells();
 }
 
-// GMRESVis
+//! GMRESVis
 LIB_EXPORT vector<int> * UnstructGrid::GMRESGetNeighborFaces()
 {
     if (!cellTopology) return NULL;
     return cellTopology->GMRESGetNeighborFaces();
 }
 
-// GMRESVis
+//! GMRESVis
 LIB_EXPORT vector<int> * UnstructGrid::GMRESGetNeighborLR()
 {
     if (!cellTopology) return NULL;
@@ -1069,29 +1088,34 @@ void UnstructGrid::ComputeCell2Cell()
     vector<int> * cell2cell = new vector<int>[ nTotalCell ];
     int le,re;
 
-    // If boundary is an INTERFACE, need to count ghost cell
+    //! If boundary is an INTERFACE, need to count ghost cell
     UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
     int nBCRegion = unstructBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
-        int bcType = bcRegion->GetBCType();
-        if (IsInterface(bcType))
+        int taskType = GetTaskCode();
+
+        if (taskType != PARTITION_GRID)
         {
-            vector<int>* faceIndex = bcRegion->GetFaceIndex();
-            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+            int bcType = bcRegion->GetBCType();
+            if (IsInterface(bcType))
             {
-                // iFace is the face number in the set of faceIndex.
-                int iFace = *iter;
-                le      = leftCellOfFace[ iFace ];
-                re      = iFace + nTotalCell;
-                cell2cell[le].push_back(re);
+                vector<int>* faceIndex = bcRegion->GetFaceIndex();
+                for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+                {
+                    //! iFace is the face number in the set of faceIndex.
+                    int iFace = *iter;
+                    le      = leftCellOfFace[ iFace ];
+                    re      = iFace + nTotalCell;
+                    cell2cell[le].push_back(re);
+                }
             }
         }
     }
 
-    // Interior faces
+    //! Interior faces
     for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
         le = leftCellOfFace [iFace];
@@ -1105,7 +1129,7 @@ void UnstructGrid::ComputeCell2Cell()
 }
 
 #ifdef USE_GMRESSOLVER
-// GMRESVis
+//! GMRESVis
 void UnstructGrid::ComputeNeighborinfo()
 {
 
@@ -1113,21 +1137,21 @@ void UnstructGrid::ComputeNeighborinfo()
     int nBoundFace = this->GetNBoundFace();
     int nTotal     = nTotalCell + nBoundFace;
     int nTotalFace = this->GetNTotalFace();
-    int * leftCellOfFace = this->GetLeftCellOfFace();
-    int * rightCellOfFace = this->GetRightCellOfFace();
+    int *leftCellOfFace = this->GetLeftCellOfFace();
+    int *rightCellOfFace = this->GetRightCellOfFace();
 
     vector<int> * neighborCells     = new vector<int>[ nTotal ];
     vector<int> * neighborFaces     = new vector<int>[ nTotal ];
     vector<int> * neighborLR        = new vector<int>[ nTotal ];
 
-    // GMRES2ndCorrection
+    //! GMRES2ndCorrection
     vector<int> BCLeftCells;
     vector<int> BCRightCells;
     vector<int> BCFaces;
 
     int le,re;
 
-    // Boundary faces
+    //! Boundary faces
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         le      = leftCellOfFace[ iFace ];
@@ -1140,14 +1164,14 @@ void UnstructGrid::ComputeNeighborinfo()
         neighborFaces[re].push_back(iFace);
         neighborLR[re].push_back(-1);
 
-        // GMRES2ndCorrection
+        //! GMRES2ndCorrection
         BCLeftCells.push_back(le);
         BCRightCells.push_back(re);
         BCFaces.push_back(iFace);
 
     }
 
-    // Interior faces
+    //! Interior faces
     for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
         le = leftCellOfFace [iFace];
@@ -1167,7 +1191,7 @@ void UnstructGrid::ComputeNeighborinfo()
     cellTopology->GMRESSetNeighborFaces(neighborFaces);
     cellTopology->GMRESSetNeighborLR(neighborLR);
 
-    // GMRES2ndCorrection
+    //! GMRES2ndCorrection
     this->SetBCLeftCells(BCLeftCells);
     this->SetBCRightCells(BCRightCells);
     this->SetBCFaces(BCFaces);
@@ -1195,14 +1219,14 @@ LIB_EXPORT int ** UnstructGrid::GetCell2Face()
 
 void UnstructGrid::ComputeCell2Face()
 {
-    int ** cell2face = cellTopology->GetCell2Face();
+    int **cell2face = cellTopology->GetCell2Face();
     
     int nTotalCell = this->GetNTotalCell();
     int nBoundFace = this->GetNBoundFace();
     int nTotalFace = this->GetNTotalFace();
 
-    int * leftCellOfFace  = this->GetLeftCellOfFace();
-    int * rightCellOfFace = this->GetRightCellOfFace();
+    int *leftCellOfFace  = this->GetLeftCellOfFace();
+    int *rightCellOfFace = this->GetRightCellOfFace();
 
     vector<int> *vcell2face = new vector<int> [ nTotalCell ];
     int le,re;
@@ -1220,7 +1244,7 @@ void UnstructGrid::ComputeCell2Face()
         vcell2face[re].push_back(iFace);
     }
 
-    int * face_number_of_each_cell = new int [nTotalCell];
+    int *face_number_of_each_cell = new int [nTotalCell];
 
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
@@ -2081,10 +2105,10 @@ void UnstructGrid::ComputeCell2CellConnectivity()
 
 LIB_EXPORT RDouble UnstructGrid::SkewnessSummary(ActionKey *actkey)
 {
-    int     angleC[18];
+    int angleC[18];
     RDouble dotp1,x1,y1,z1,dis1,dotp2,x2,y2,z2,dis2,angle;
     RDouble minAng = straightAngle;
-    RDouble maxAng  = 0.0;
+    RDouble maxAng = 0.0;
     RDouble area_scale = TINY;
     RDouble criticalAngle = 89.9;
 
@@ -2094,20 +2118,20 @@ LIB_EXPORT RDouble UnstructGrid::SkewnessSummary(ActionKey *actkey)
     {
         angleC[i] = 0;
     }
-    int     *leftCellOfFace  = this->GetLeftCellOfFace();
-    int     *rightCellOfFace = this->GetRightCellOfFace();
-    RDouble *xcc  = this->GetCellCenterX();
-    RDouble *ycc  = this->GetCellCenterY();
-    RDouble *zcc  = this->GetCellCenterZ();
+    int *leftCellOfFace  = this->GetLeftCellOfFace();
+    int *rightCellOfFace = this->GetRightCellOfFace();
+    RDouble *xcc = this->GetCellCenterX();
+    RDouble *ycc = this->GetCellCenterY();
+    RDouble *zcc = this->GetCellCenterZ();
 
-    RDouble *xfc  = this->GetFaceCenterX();
-    RDouble *yfc  = this->GetFaceCenterY();
-    RDouble *zfc  = this->GetFaceCenterZ();
+    RDouble *xfc = this->GetFaceCenterX();
+    RDouble *yfc = this->GetFaceCenterY();
+    RDouble *zfc = this->GetFaceCenterZ();
 
-    RDouble *nxs  = this->GetFaceNormalX();
-    RDouble *nys  = this->GetFaceNormalY();
-    RDouble *nzs  = this->GetFaceNormalZ();
-    RDouble *ns   = this->GetFaceArea();
+    RDouble *nxs = this->GetFaceNormalX();
+    RDouble *nys = this->GetFaceNormalY();
+    RDouble *nzs = this->GetFaceNormalZ();
+    RDouble *ns  = this->GetFaceArea();
 
     int nTotalFace = this->GetNTotalFace();
     int nBoundFace = this->GetNBoundFace();
@@ -2311,7 +2335,7 @@ void UnstructGrid::FaceWeight(RDouble *deltL, RDouble *deltR, int localStart, in
         RDouble dyR = yfc[iFace] - ycc[re];
         RDouble dzR = zfc[iFace] - zcc[re];
 
-        // Left
+        //! Left
         RDouble delta1 = DISTANCE(dxL, dyL, dzL);
         RDouble delta2 = DISTANCE(dxR, dyR, dzR);
         RDouble delta = one / (delta1 + delta2 + SMALL);
@@ -3590,9 +3614,9 @@ void UnstructGrid::ComputeWeight()
     int nBoundFace = this->GetNBoundFace();
     int nTotalFace = this->GetNTotalFace();
 
-    RDouble * xcc = this->GetCellCenterX();
-    RDouble * ycc = this->GetCellCenterY();
-    RDouble * zcc = this->GetCellCenterZ();
+    RDouble *xcc = this->GetCellCenterX();
+    RDouble *ycc = this->GetCellCenterY();
+    RDouble *zcc = this->GetCellCenterZ();
 
     if (!this->GetLeastSquareIWT()) this->SetLeastSquareIWT(new RDouble [ nTotalFace ]);
     if (!this->GetLeastSquareIXX()) this->SetLeastSquareIXX(new RDouble [ nTotalCell ]);
@@ -3603,17 +3627,17 @@ void UnstructGrid::ComputeWeight()
     if (!this->GetLeastSquareIYZ()) this->SetLeastSquareIYZ(new RDouble [ nTotalCell ]);
     if (!this->GetFaceMark()) this->SetFaceMark(new char [ nTotalFace ]);
 
-    RDouble * iwt   = this->GetLeastSquareIWT();
-    RDouble * ixx   = this->GetLeastSquareIXX();
-    RDouble * iyy   = this->GetLeastSquareIYY();
-    RDouble * izz   = this->GetLeastSquareIZZ();
-    RDouble * ixy   = this->GetLeastSquareIXY();
-    RDouble * ixz   = this->GetLeastSquareIXZ();
-    RDouble * iyz   = this->GetLeastSquareIYZ();
-    char    * fMark = this->GetFaceMark();
+    RDouble *iwt   = this->GetLeastSquareIWT();
+    RDouble *ixx   = this->GetLeastSquareIXX();
+    RDouble *iyy   = this->GetLeastSquareIYY();
+    RDouble *izz   = this->GetLeastSquareIZZ();
+    RDouble *ixy   = this->GetLeastSquareIXY();
+    RDouble *ixz   = this->GetLeastSquareIXZ();
+    RDouble *iyz   = this->GetLeastSquareIYZ();
+    char    *fMark = this->GetFaceMark();
 
-    int     * leftCellOfFace   = this->GetLeftCellOfFace();
-    int     * rightCellOfFace  = this->GetRightCellOfFace();
+    int *leftCellOfFace   = this->GetLeftCellOfFace();
+    int *rightCellOfFace  = this->GetRightCellOfFace();
     
     for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
@@ -3637,21 +3661,21 @@ void UnstructGrid::ComputeWeight()
   
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        le       = leftCellOfFace[ iFace ];
-        re       = iFace + nTotalCell;
+        le = leftCellOfFace[ iFace ];
+        re = iFace + nTotalCell;
 
-        dx       = (xcc[re] - xcc[le]) * fMark[iFace];
-        dy       = (ycc[re] - ycc[le]) * fMark[iFace];
-        dz       = (zcc[re] - zcc[le]) * fMark[iFace];
+        dx = (xcc[re] - xcc[le]) * fMark[iFace];
+        dy = (ycc[re] - ycc[le]) * fMark[iFace];
+        dz = (zcc[re] - zcc[le]) * fMark[iFace];
 
         ods = one / (dx * dx + dy * dy + dz * dz + SMALL);
 
-        txx      = ods * dx * dx;
-        tyy      = ods * dy * dy;
-        tzz      = ods * dz * dz;
-        txy      = ods * dx * dy;
-        txz      = ods * dx * dz;
-        tyz      = ods * dy * dz;
+        txx = ods * dx * dx;
+        tyy = ods * dy * dy;
+        tzz = ods * dz * dz;
+        txy = ods * dx * dy;
+        txz = ods * dx * dz;
+        tyz = ods * dy * dz;
 
         iwt[iFace]  = ods;
         ixx[le] += txx;
@@ -3813,7 +3837,7 @@ LIB_EXPORT void UnstructGrid::ComputeNodeBCType()
         }
     }
 
-    delete [] nodeBCTypeIndex;
+    delete[] nodeBCTypeIndex;    nodeBCTypeIndex = nullptr;
 }
 
 void UnstructGrid::CompGradientLSQ(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz)
@@ -4326,6 +4350,21 @@ void UnstructGrid::TranslateCellCenter(ActionKey *actkey)
     DataContainer *cdata = actkey->GetData();
     cdata->moveto_begin();
 
+    int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
+    RDouble translationLength[3] = { 0.0 };
+    GlobalDataBase::GetData("translationLength", &translationLength, PHDOUBLE, 3);
+    RDouble rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
+    rotationAngle = rotationAngle * PI / 180.0;
+    int referenceFrame = PHSPACE::GlobalDataBase::GetIntParaFromDB("referenceFrame");
+
+    int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+    int *leftCellofFace = this->GetLeftCellOfFace();
+    int *rightCellofFace = this->GetRightCellOfFace();
+    int count = 0;
+
+
     for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
         iFace = faceIndexForRecv[iLocalFace];
@@ -4335,6 +4374,89 @@ void UnstructGrid::TranslateCellCenter(ActionKey *actkey)
         cdata->read(&ycc[t1], sizeof(RDouble));
         cdata->read(&zcc[t1], sizeof(RDouble));
         cdata->read(&vol[t1], sizeof(RDouble));
+
+        int iBFace = interFace2BoundaryFace[iFace];
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iBFace]);
+        int bcType = bcRegion->GetBCType();
+        string bcName = bcRegion->GetBCName();
+
+        if (referenceFrame == ROTATIONAL_FRAME)
+        {
+            //! nTurboZone
+            int nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+            //! PeriodicRotationAngle
+            RDouble PeriodicRotationAngle[100];
+            GlobalDataBase::GetData("PeriodicRotationAngle", &PeriodicRotationAngle, PHDOUBLE, nTurboZone);
+
+            //! Periodic_Name
+            string Periodic_Name[100];
+            GlobalDataBase::GetData("Periodic_Name", &Periodic_Name, PHSTRING, 2 * nTurboZone);
+
+            for (int iTurboZone = 0; iTurboZone < nTurboZone; iTurboZone++)
+            {
+                PeriodicRotationAngle[iTurboZone] = PeriodicRotationAngle[iTurboZone] * PI / 180.0;
+                rotationAngle = PeriodicRotationAngle[iTurboZone];
+
+                RDouble rotcell[3] = { 0.0, 0.0, 0.0 };
+                if (bcName == Periodic_Name[2 * iTurboZone])
+                {
+                    rotcell[1] = ycc[t1] * cos(2.0 * PI - rotationAngle) - zcc[t1] * sin(2.0 * PI - rotationAngle);
+                    rotcell[2] = ycc[t1] * sin(2.0 * PI - rotationAngle) + zcc[t1] * cos(2.0 * PI - rotationAngle);
+
+                    ycc[t1] = rotcell[1];
+                    zcc[t1] = rotcell[2];
+                }
+                else if (bcName == Periodic_Name[2 * iTurboZone + 1])
+                {
+                    rotcell[1] = ycc[t1] * cos(rotationAngle) - zcc[t1] * sin(rotationAngle);
+                    rotcell[2] = ycc[t1] * sin(rotationAngle) + zcc[t1] * cos(rotationAngle);
+
+                    ycc[t1] = rotcell[1];
+                    zcc[t1] = rotcell[2];
+                }
+            }
+        }
+        else
+        {
+            if (periodicType == TRANSLATIONAL_PERIODICITY)
+            {
+                if (bcName == "Periodic_up")
+                {
+                    xcc[t1] = xcc[t1] - translationLength[0];
+                    ycc[t1] = ycc[t1] - translationLength[1];
+                    zcc[t1] = zcc[t1] - translationLength[2];
+                }
+                else if (bcName == "Periodic_down")
+                {
+                    xcc[t1] = xcc[t1] + translationLength[0];
+                    ycc[t1] = ycc[t1] + translationLength[1];
+                    zcc[t1] = zcc[t1] + translationLength[2];
+                }
+            }
+            else if (periodicType == ROTATIONAL_PERIODICITY)
+            {
+                RDouble rotcell[3] = { 0.0, 0.0, 0.0 };
+
+                if (bcName == "Periodic_up")
+                {   //! cell center coordinate
+                    rotcell[1] = ycc[t1] * cos(2.0 * PI - rotationAngle) - zcc[t1] * sin(2.0 * PI - rotationAngle);
+                    rotcell[2] = ycc[t1] * sin(2.0 * PI - rotationAngle) + zcc[t1] * cos(2.0 * PI - rotationAngle);
+
+                    //! coordinate matching
+                    ycc[t1] = rotcell[1];
+                    zcc[t1] = rotcell[2];
+                }
+                else if (bcName == "Periodic_down")
+                {
+                    rotcell[1] = ycc[t1] * cos(rotationAngle) - zcc[t1] * sin(rotationAngle);
+                    rotcell[2] = ycc[t1] * sin(rotationAngle) + zcc[t1] * cos(rotationAngle);
+
+                    //! coordinate matching
+                    ycc[t1] = rotcell[1];
+                    zcc[t1] = rotcell[2];
+                }
+            }
+        }
     }
 }
 
@@ -4703,7 +4825,7 @@ void UnstructGrid::DumpWalldist(ActionKey *actkey)
 {
     int nTotalCell = this->GetNTotalCell();
 
-    DataContainer * cdata = actkey->GetData();
+    DataContainer *cdata = actkey->GetData();
     cdata->moveto_begin();
 
     cdata->write(&nTotalCell, sizeof(int));
@@ -5104,12 +5226,12 @@ LIB_EXPORT void UnstructGrid::AllocateOversetGrid()
 {
     int nTotalCell = this->GetNTotalCell();
     int nBoundFace = this->GetNBoundFace();
-    int nTotal = nTotalCell + nBoundFace;     //! interior cells + ghost cells.
+    int nTotal = nTotalCell + nBoundFace;    //! interior cells + ghost cells.
 
     if ((this->iBlank))
     {
         delete iBlank;
-        iBlank = NULL;
+        iBlank = nullptr;
     }
     this->iBlank = new int[nTotal];
 
@@ -5579,6 +5701,12 @@ void UnstructGrid::ComputeFaceCenterAreaNormal3DNew2(ActionKey *actkey)
     RDouble *zfc  = this->GetFaceCenterZ();
     RDouble *area = this->GetFaceArea();
 
+    //! Compute rotating velocity.
+    RDouble *vgn = this->GetFaceNormalVelocity();
+    RDouble *vgx = this->GetFaceVelocityX();
+    RDouble *vgy = this->GetFaceVelocityY();
+    RDouble *vgz = this->GetFaceVelocityZ();
+
     int iFace, j, p1, p2, index1, index2, nodepos;
     RDouble coef, x00, y00, z00, dx1, dy1, dz1, dx2, dy2, dz2, anx, any, anz, areaTemp, oareaTemp;
 
@@ -5726,6 +5854,75 @@ void UnstructGrid::ComputeFaceCenterAreaNormal3DNew2(ActionKey *actkey)
         zfn[iFace] *= oareaTemp;
         
         nodepos += node_number_of_each_face[iFace];
+    }
+
+    int referenceFrame = PHSPACE::GlobalDataBase::GetIntParaFromDB("referenceFrame");
+
+    if (referenceFrame == ROTATIONAL_FRAME)
+    {
+        int nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+
+        //! angular velocity
+        RDouble Omega[100];
+        GlobalDataBase::GetData("Omega", &Omega, PHDOUBLE, nTurboZone);
+
+        string shroud[100];
+        GlobalDataBase::GetData("shroud", &shroud, PHSTRING, nTurboZone);
+
+        RDouble refMach = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
+        RDouble refTemp = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
+
+        RDouble refGama = 1.4;
+        RDouble refGasConstant = 287.15;
+        RDouble refVel = refMach * sqrt(refGama * refGasConstant * refTemp);
+
+        //! Parallel
+        int iTurboZone = this->GetOrdinaryGridIndex();
+        //! Serial
+        if (iTurboZone == -1)
+        {
+            iTurboZone = this->GetZoneID();
+        }
+
+        Omega[iTurboZone] /= refVel;
+
+        for (iFace = 0; iFace < nTotalFace; ++iFace)
+        {
+            vgx[iFace] = 0.0;
+            vgy[iFace] = 0.0;
+            vgz[iFace] = 0.0;
+
+            //! Compute velocity of each face.
+            vgy[iFace] = - Omega[iTurboZone] * zfc[iFace];
+            vgz[iFace] =   Omega[iTurboZone] * yfc[iFace];
+
+            //! Set velocity of each face.
+            vgn[iFace] = vgx[iFace] * xfn[iFace] + vgy[iFace] * yfn[iFace] + vgz[iFace] * zfn[iFace];
+        }
+
+        //! rotating speed of shroud is 0.
+        for (iFace = 0; iFace < nBoundFace; iFace++)
+        {
+            UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+            int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
+            UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+            string bcName = bcRegion->GetBCName();
+            int bcType = bcRegion->GetBCType();
+
+            for (int iTurboZone = 0; iTurboZone < nTurboZone; iTurboZone++)
+            {
+                if (bcName == shroud[iTurboZone])
+                {
+                    vgx[iFace] = 0;
+                    vgy[iFace] = 0;
+                    vgz[iFace] = 0;
+
+                    //! Set velocity of each face.
+                    vgn[iFace] = 0;
+                }
+            }
+        }
     }
 
     delete []xfct;
@@ -6700,8 +6897,6 @@ void UnstructGrid::ComputeCellCenterVol2D(ActionKey *actkey)
         vol[re] -= dot;
     }
 
-    std::ostringstream oss;
-
     //! Don't forget the coefficients.
     negativecell = 0;
     RDouble minvol = LARGE, maxvol = 0.0;
@@ -6730,6 +6925,7 @@ void UnstructGrid::ComputeCellCenterVol2D(ActionKey *actkey)
         {
             vol[iCell] = - vol[iCell];
             ++ negativecell;
+            std::ostringstream oss;
             oss << "  Warning: negative volume cell index " << iCell << ", (x, y) " << xcc[iCell] << " " << ycc[iCell] << " !\n";
             if (PHMPI::GetCurrentProcessorID() == PHMPI::GetServerProcessorID())
             {
@@ -6737,6 +6933,7 @@ void UnstructGrid::ComputeCellCenterVol2D(ActionKey *actkey)
             }
         }
     }
+
     //if (cell) oss << cell << " cells have negative vols \n";
     if (negativecell == nTotalCell)
     {
@@ -8887,22 +9084,28 @@ void UnstructGrid::ChangeBCType(int from_bctype, int to_bctype)
     UnstructBCSet **bcr = this->GetBCRecord();
     UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
     int nBCRegion = unstructBCSet->GetnBCRegion();
-
+    int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
         int bcType = bcRegion->GetBCType();
         if (bcType == from_bctype)
         {
             bcRegion->SetBCType(to_bctype);
-            bcRegion->SetBCName("INTERFACE");
+            if (periodicType == NO_PERIODICITY)
+            {
+               bcRegion->SetBCName("INTERFACE");
+            }
 
             vector<int> *faceIndex = bcRegion->GetFaceIndex();
             for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter ++)
             {
                 int faceIndexTmp = *iter;
                 bcr[faceIndexTmp]->SetKey(to_bctype);
-                bcr[faceIndexTmp]->SetBCName("INTERFACE");
+                if (periodicType == NO_PERIODICITY)
+                {
+                   bcr[faceIndexTmp]->SetBCName("INTERFACE");
+                }
             }
         }
     }
@@ -8991,6 +9194,14 @@ void UnstructGrid::BuildGridLink(LinkStruct * link)
     int pcount = coor_tree.GetNodeNum();
     int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
 
+    int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
+    RDouble translationLength[3] = { 0.0 };
+    GlobalDataBase::GetData("translationLength", &translationLength, PHDOUBLE, 3);
+    RDouble rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
+    rotationAngle = rotationAngle * PI / 180.0;
+
+    int referenceFrame = PHSPACE::GlobalDataBase::GetIntParaFromDB("referenceFrame");
+
     int nodepos = 0;
     for (int iBFace = 0; iBFace < nBoundFace; ++ iBFace)
     {
@@ -9012,6 +9223,64 @@ void UnstructGrid::BuildGridLink(LinkStruct * link)
         pindex.resize(nlist);
 
         GetFaceCoorList(index, nlist, xlist, ylist, zlist, x, y, z);
+        string bcName = bcRegion->GetBCName();
+
+        if (referenceFrame == ROTATIONAL_FRAME)
+        {
+            int nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+            RDouble PeriodicRotationAngle[100];
+            GlobalDataBase::GetData("PeriodicRotationAngle", &PeriodicRotationAngle, PHDOUBLE, nTurboZone);
+            string Periodic_Name[100];
+            GlobalDataBase::GetData("Periodic_Name", &Periodic_Name, PHSTRING, 2 * nTurboZone);
+
+            for (int iTurboZone = 0; iTurboZone < nTurboZone; iTurboZone++)
+            {
+                if (bcName == Periodic_Name[2 * iTurboZone])
+                {
+                    PeriodicRotationAngle[iTurboZone] = PeriodicRotationAngle[iTurboZone] * PI / 180;
+                    rotationAngle = PeriodicRotationAngle[iTurboZone];
+
+                    for (int m = 0; m < node_number_of_each_face[iBFace]; ++m)
+                    {
+                        RDouble rotPoint[3] = { 0.0, 0.0, 0.0 };
+                        rotPoint[0] = xlist[m];
+                        rotPoint[1] = ylist[m] * cos(rotationAngle) - zlist[m] * sin(rotationAngle);
+                        rotPoint[2] = ylist[m] * sin(rotationAngle) + zlist[m] * cos(rotationAngle);
+                        xlist[m] = rotPoint[0];
+                        ylist[m] = rotPoint[1];
+                        zlist[m] = rotPoint[2];
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (bcName == "Periodic_up")
+            {
+                if (periodicType == TRANSLATIONAL_PERIODICITY)
+                {
+                    for (int m = 0; m < node_number_of_each_face[iBFace]; ++m)
+                    {
+                        xlist[m] += translationLength[0];
+                        ylist[m] += translationLength[1];
+                        zlist[m] += translationLength[2];
+                    }
+                }
+                else if (periodicType == ROTATIONAL_PERIODICITY)
+                {
+                    for (int m = 0; m < node_number_of_each_face[iBFace]; ++m)
+                    {
+                        RDouble rotPoint[3] = { 0.0, 0.0, 0.0 };
+                        rotPoint[0] = xlist[m];
+                        rotPoint[1] = ylist[m] * cos(rotationAngle) - zlist[m] * sin(rotationAngle);
+                        rotPoint[2] = ylist[m] * sin(rotationAngle) + zlist[m] * cos(rotationAngle);
+                        xlist[m] = rotPoint[0];
+                        ylist[m] = rotPoint[1];
+                        zlist[m] = rotPoint[2];
+                    }
+                }
+            }
+        }
         GetCoorIndexList(&coor_tree, tol, pcount, xlist, ylist, zlist, nlist, pindex);
         Create_Link_Info(pindex, zoneIndex, iFace, fcount, facelist, zoneid, faceid, link);
 
@@ -9558,6 +9827,43 @@ void DownloadInterfaceValue(UnstructGrid *grid, RDouble **f, const string &name,
 
     int nIFace = interfaceInfo->GetNIFace();
 
+    int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
+
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
+    double rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
+    rotationAngle = rotationAngle / 180.0 * PI;
+    int nBoundFace = grid->GetNBoundFace();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
+    RDouble *xfc = grid->GetFaceCenterX();
+    RDouble *yfc = grid->GetFaceCenterY();
+    RDouble *zfc = grid->GetFaceCenterZ();
+
+    RDouble *xcc = grid->GetCellCenterX();
+    RDouble *ycc = grid->GetCellCenterY();
+    RDouble *zcc = grid->GetCellCenterZ();
+
+    int referenceFrame = PHSPACE::GlobalDataBase::GetIntParaFromDB("referenceFrame");
+
+    if (referenceFrame == ROTATIONAL_FRAME)
+    {
+        int nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+        RDouble PeriodicRotationAngle[100];
+        GlobalDataBase::GetData("PeriodicRotationAngle", &PeriodicRotationAngle, PHDOUBLE, nTurboZone);
+
+        //! Parallel
+        int iTurboZone = grid->GetOrdinaryGridIndex();
+        //! Serial
+        if (iTurboZone == -1)
+        {
+            iTurboZone = grid->GetZoneID();
+        }
+
+        PeriodicRotationAngle[iTurboZone] = PeriodicRotationAngle[iTurboZone] * PI / 180;
+        rotationAngle = PeriodicRotationAngle[iTurboZone];
+    }
+
     for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
         Data_ParamFieldSuite *recieveData = interfaceInfo->GetRecvDataStorage(iGhost);
@@ -9568,6 +9874,73 @@ void DownloadInterfaceValue(UnstructGrid *grid, RDouble **f, const string &name,
         {
             int targetCell;
             grid->GetTargetIndex(iFace, iGhost + 1, targetCell);
+
+            int iBFace = interFace2BoundaryFace[iFace];
+            UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iBFace]);
+            string bcName = bcRegion->GetBCName();
+
+            if (neqn >= 4 && periodicType == ROTATIONAL_PERIODICITY)
+            {
+                RDouble rotfg[3] = { 0.0, 0.0, 0.0 };
+
+                if (referenceFrame == ROTATIONAL_FRAME)
+                {
+                    int nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+                    string Periodic_Name[100];
+                    GlobalDataBase::GetData("Periodic_Name", &Periodic_Name, PHSTRING, 2 * nTurboZone);
+
+                    //! Parallel
+                    int iTurboZone = grid->GetOrdinaryGridIndex();
+                    //! Serial
+                    if (iTurboZone == -1)
+                    {
+                        iTurboZone = grid->GetZoneID();
+                    }
+
+                    if (bcName == Periodic_Name[2 * iTurboZone])
+                    {
+                        rotfg[0] = fg[1][iFace];
+                        rotfg[1] = fg[2][iFace] * cos(2.0 * PI - rotationAngle) - fg[3][iFace] * sin(2.0 * PI - rotationAngle);
+                        rotfg[2] = fg[2][iFace] * sin(2.0 * PI - rotationAngle) + fg[3][iFace] * cos(2.0 * PI - rotationAngle);
+
+                        fg[1][iFace] = rotfg[0];
+                        fg[2][iFace] = rotfg[1];
+                        fg[3][iFace] = rotfg[2];
+                    }
+                    if (bcName == Periodic_Name[2 * iTurboZone + 1])
+                    {
+                        rotfg[0] = fg[1][iFace];
+                        rotfg[1] = fg[2][iFace] * cos(rotationAngle) - fg[3][iFace] * sin(rotationAngle);
+                        rotfg[2] = fg[2][iFace] * sin(rotationAngle) + fg[3][iFace] * cos(rotationAngle);
+
+                        fg[1][iFace] = rotfg[0];
+                        fg[2][iFace] = rotfg[1];
+                        fg[3][iFace] = rotfg[2];
+                    }
+                }
+                else
+                {
+                    if (bcName == "Periodic_up" || bcName == "Periodic_down")
+                    {
+                        if (bcName == "Periodic_up")
+                        {
+                            rotfg[0] = fg[1][iFace];
+                            rotfg[1] = fg[2][iFace] * cos(2.0 * PI - rotationAngle) - fg[3][iFace] * sin(2.0 * PI - rotationAngle);
+                            rotfg[2] = fg[2][iFace] * sin(2.0 * PI - rotationAngle) + fg[3][iFace] * cos(2.0 * PI - rotationAngle);
+                        }
+                        if (bcName == "Periodic_down")
+                        {
+                            rotfg[0] = fg[1][iFace];
+                            rotfg[1] = fg[2][iFace] * cos(rotationAngle) - fg[3][iFace] * sin(rotationAngle);
+                            rotfg[2] = fg[2][iFace] * sin(rotationAngle) + fg[3][iFace] * cos(rotationAngle);
+                        }
+                        fg[1][iFace] = rotfg[0];
+                        fg[2][iFace] = rotfg[1];
+                        fg[3][iFace] = rotfg[2];
+                    }
+                }
+            }
+
             for (int m = 0; m < neqn; ++ m)
             {
                 f[m][targetCell] = fg[m][iFace];

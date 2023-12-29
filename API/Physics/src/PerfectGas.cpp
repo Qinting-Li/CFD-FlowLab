@@ -286,7 +286,7 @@ void PerfectGas::Primitive2Conservative(RDouble *prim, RDouble gama, RDouble Tv,
     using namespace IDX;
     RDouble em;
 
-    //!obtain the total internal energy Em.
+    //! obtain the total internal energy Em.
     ComputeInternalEnergy(prim, gama, Tv, Te, em);
 
     q[IR ] = prim[IR];
@@ -321,11 +321,11 @@ void PerfectGas::Conservative2Primitive(RDouble *q, RDouble gama, RDouble *prim,
         return;
     }
 
-    oDensity  = 1.0 / density;
-    um   = q[IRU] * oDensity;
-    vm   = q[IRV] * oDensity;
-    wm   = q[IRW] * oDensity;
-    internalEnergy  = q[IRE] - half * density * (um * um + vm * vm + wm * wm);
+    oDensity = 1.0 / density;
+    um = q[IRU] * oDensity;
+    vm = q[IRV] * oDensity;
+    wm = q[IRW] * oDensity;
+    internalEnergy = q[IRE] - half * density * (um * um + vm * vm + wm * wm);
 
     prim[IR] = density;
     prim[IU] = um;
@@ -500,16 +500,16 @@ void PerfectGas::InitCommonParameter()
     RDouble prt = GlobalDataBase::GetDoubleParaFromDB("prt");
     RDouble gamma = GlobalDataBase::GetDoubleParaFromDB("refGama");
 
-    if (this->nGasModel == 2) //The Argon gas.
+    if (this->nGasModel == 2)    //! The Argon gas.
     {
-        //Referred to the "2008-Lofthouse-Nonequilibrium Hypersonic Aerothermodynamics Using the Direct Simulation Monte Carlo And Navier-Stokes Models".
+        //! Referred to the "2008-Lofthouse-Nonequilibrium Hypersonic Aerothermodynamics Using the Direct Simulation Monte Carlo And Navier-Stokes Models".
         gamma = 5.0 / 3.0;
         GlobalDataBase::UpdateData("refGama", &gamma, PHDOUBLE, 1);
         prl = 4.0 * gamma / (9.0 * gamma - 5.0);
         GlobalDataBase::UpdateData("prl", &prl, PHDOUBLE, 1);
         GlobalDataBase::UpdateData("refGama", &gamma, PHDOUBLE, 1);
     }
-    else if (this->nGasModel == 3) //The Nitrogen gas.
+    else if (this->nGasModel == 3)    //! The Nitrogen gas.
     {
         gamma = 1.4;
         prl = 4.0 * gamma / (9.0 * gamma - 5.0);
@@ -584,7 +584,7 @@ void PerfectGas::InitReferenceParameter()
 
         SetAirInformationByExpData();
     }
-    else if (inflowParaType == TEMPERATURE_DENSITY) //where temperature and density are fixed.
+    else if (inflowParaType == TEMPERATURE_DENSITY)    //! where temperature and density are fixed.
     {
         RDouble refDimensionalVelocity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalVelocity");
         RDouble refDimensionalTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
@@ -594,7 +594,7 @@ void PerfectGas::InitReferenceParameter()
         referenceParameterDimensional.SetTemperature(refDimensionalTemperature);
         referenceParameterDimensional.SetDensity(refDimensionalDensity);
     }
-    else if (inflowParaType == TEMPERATURE_PRESSURE) //where temperature and pressure are fixed.
+    else if (inflowParaType == TEMPERATURE_PRESSURE)    //! where temperature and pressure are fixed.
     {
         RDouble refDimensionalVelocity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalVelocity");
         RDouble refDimensionalTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
@@ -604,7 +604,7 @@ void PerfectGas::InitReferenceParameter()
         referenceParameterDimensional.SetTemperature(refDimensionalTemperature);
         referenceParameterDimensional.SetPressure(refDimensionalPressure);
     }
-    else if (inflowParaType == MACH_TEMP_PRE) //where temperature and pressure are fixed.
+    else if (inflowParaType == MACH_TEMP_PRE)    //! where temperature and pressure are fixed.
     {
         RDouble refMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
         RDouble refDimensionalTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
@@ -1225,14 +1225,14 @@ RDouble PerfectGas::ComputeVariablesAverage(vector< RDouble > & variable)
 
 void PerfectGas::ComputeReferenceParameter()
 {
-    //!The first two variables is temperature independent, 
-    //!depend on molecular weight and mass fraction of species if chemical reactions exist.
+    //! The first two variables is temperature independent, 
+    //! depend on molecular weight and mass fraction of species if chemical reactions exist.
     ComputeReferenceMolecularInformation();
 
     ComputeReferenceGeneralGasConstant();
 
-    //!The following five variables depend on temperature, 
-    //!and mass fraction of species if chemical reactions exist.
+    //! The following five variables depend on temperature, 
+    //! and mass fraction of species if chemical reactions exist.
     ComputeReferenceViscosityDimensional();
 
     ComputeReferenceSpecificHeatRatio();
@@ -1242,10 +1242,10 @@ void PerfectGas::ComputeReferenceParameter()
     ComputeReferenceVelocity();
 
     ComputeCoefficientOfStateEquation();
-    //!The above seven variables should be computed firstly.
+    //! The above seven variables should be computed firstly.
 
-    //!The variables in this function are computed by different methods according to "inflowParaType", 
-    //!including density, pressure or reynolds.
+    //! The variables in this function are computed by different methods according to "inflowParaType", 
+    //! including density, pressure or reynolds.
     ComputeReferenceGasInformation();
 
     ComputeReferencePrimitive();
@@ -1262,7 +1262,7 @@ void PerfectGas::ComputeReferencePrimitive()
     RDouble reference_temperature = 1.0;
 
     reference_sound_velocity = 1.0 / refMachNumber;
-    
+
     reference_pressure = coefficientOfStateEquation * 
     reference_density * reference_temperature / massoo_ref;
 
@@ -1288,7 +1288,7 @@ void PerfectGas::ComputeReferenceGasInformation()
         ComputeDensityWithReynoldsNumber();
         ComputePressureInGasStateEquation();
     }
-    else if (inflowParaType == FLIGHTCONDITION || inflowParaType == EXPERIMENTCONDITION)  //obtain the referce density for nondimension, and the Re.
+    else if (inflowParaType == FLIGHTCONDITION || inflowParaType == EXPERIMENTCONDITION)    //! obtain the referce density for nondimension, and the Re.
     {
         NormalizeAirInformation();
         ComputeReferenceReynoldsNumber();
@@ -1373,7 +1373,7 @@ void PerfectGas::ComputeCoefficientOfStateEquation()
     RDouble refMachNumber = referenceParameterDimensional.GetMachNumber();
 
     //! The variable is the non-dimensional value of 8.314/M��M denotes the non-dimensioanl molecular weight of the mixture gas.
-    coefficientOfStateEquation = 1.0 / (gama0 * refMachNumber * refMachNumber); //! universal gas constant.
+    coefficientOfStateEquation = 1.0 / (gama0 * refMachNumber * refMachNumber);    //! universal gas constant.
     GlobalDataBase::UpdateData("coefficientOfStateEquation", &coefficientOfStateEquation, PHDOUBLE, 1);
 }
 
@@ -1429,13 +1429,13 @@ void PerfectGas::ComputeReferenceSpecificHeatRatio()
 
 void PerfectGas::ComputeReferenceViscosityDimensional()
 {
-    if (this->nGasModel > 1) //The one molecule of the gas.
+    if (this->nGasModel > 1)    //! The one molecule of the gas.
     {
-        //Referred to the "2008-Lofthouse-Nonequilibrium Hypersonic Aerothermodynamics Using the Direct Simulation Monte Carlo And Navier-Stokes Models".
+        //! Referred to the "2008-Lofthouse-Nonequilibrium Hypersonic Aerothermodynamics Using the Direct Simulation Monte Carlo And Navier-Stokes Models".
         RDouble T = referenceParameterDimensional.GetTemperature();
-        //The default is the Argon.
+        //! The default is the Argon.
         RDouble Omega = 0.734, Tref = 1000.0, Dref = 3.595e-10;
-        if (this->nGasModel == 3) //The pure gas of Nitrogen.
+        if (this->nGasModel == 3)    //! The pure gas of Nitrogen.
         {
             Omega = 0.70;
             Tref = 290.0;
@@ -1469,28 +1469,27 @@ void PerfectGas::ComputeReferenceViscosityDimensional()
 
 void PerfectGas::ComputeReferenceMolecularInformation()
 {
-    //!unit: kg/mol.
+    //! unit: kg/mol.
     RDouble refMolecularWeight = 28.9644;
 
     molecularDiameter = 3.6e-10;
 
-    if (nGasModel == 1) //The Carbon dioxide.
+    if (nGasModel == 1)    //! The Carbon dioxide.
     {
         refMolecularWeight = 44.01;
-        molecularDiameter = 3.370e-10; //!unit: m
+        molecularDiameter = 3.370e-10;    //! unit: m
     }
-    else if (nGasModel == 2) //The Argon.
+    else if (nGasModel == 2)    //! The Argon.
     {
         refMolecularWeight = 40.0;
-        molecularDiameter = 3.595e-10; //!unit: m
+        molecularDiameter = 3.595e-10;    //! unit: m
     }
-    else if (nGasModel == 3) //The Nitrogen.
+    else if (nGasModel == 3)    //! The Nitrogen.
     {
         refMolecularWeight = 28.01293;
-        molecularDiameter = 4.110e-10; //!unit: m
+        molecularDiameter = 4.110e-10;    //! unit: m
     }
 
-    
     GlobalDataBase::UpdateData("refMolecularWeight", &refMolecularWeight, PHDOUBLE, 1);
     RDouble reference_average_molecular_weight_dimensional = refMolecularWeight * 1.0e-3;
     referenceParameterDimensional.SetAverageMolecularWeight(reference_average_molecular_weight_dimensional);

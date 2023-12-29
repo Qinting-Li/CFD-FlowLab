@@ -92,7 +92,7 @@ void ResidualGlobal::InitResidual()
     int nLocalZones = GetNumberofLocalZones();
 
     residualOnEachZone = new Residual *[nLocalZones];
-    residualNormal = NULL;
+    residualNormal = nullptr;
 }
 
 void ResidualGlobal::CollectResidual(ActionKey *actkey)
@@ -120,10 +120,10 @@ void ResidualGlobal::CollectResidual(ActionKey *actkey)
             averageResidual[m] = zoneNorm[m];
         }
 
-        delete []zoneNorm;
+        delete [] zoneNorm;    zoneNorm = nullptr;
     }
 
-    // Residual summary of this processor.
+    //! Residual summary of this processor.
     numberOfResidualVariables = residualOnEachZone[0]->GetNvar();
     RDouble *localNorm = new RDouble[numberOfResidualVariables];
 
@@ -150,7 +150,7 @@ void ResidualGlobal::CollectResidual(ActionKey *actkey)
             residualNormal[iVar] = localNorm[iVar];
         }
     }
-    delete []localNorm;
+    delete [] localNorm;    localNorm = nullptr;
 
     if(myid != server)
     {
@@ -246,7 +246,7 @@ void ResidualGlobal::PrintResidualtoWindow(int outnstep, string &formatRes)
         return;
     }
 
-    bool dumpTitle = true;// Print the NS-equations residual to window only.
+    bool dumpTitle = true;    //! Print the NS-equations residual to window only.
     if (isUnsteady)
     {
         int innerStep = GlobalDataBase::GetIntParaFromDB("innstep");
@@ -325,15 +325,15 @@ void ResidualGlobal::FreeMemory()
 
     for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        delete residualOnEachZone[iZone];
+        delete residualOnEachZone[iZone];    residualOnEachZone[iZone] = nullptr;
     }
-    delete [] residualOnEachZone;
+    delete [] residualOnEachZone;    residualOnEachZone = nullptr;
 
-    if (residualNormal != NULL)
+    if (residualNormal != nullptr)
     {
-        delete [] residualNormal;
+        delete [] residualNormal;    residualNormal = nullptr;
     }
-    residualNormal = NULL;
+    residualNormal = nullptr;
 }
 
 void ResidualGlobal::DumpResidual(ActionKey *actkey, int outnstep)
@@ -535,7 +535,7 @@ void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **dq, 
 
     vector <RDouble> residualNormal(nEquation);
 
-    // Initialization.
+    //! Initialization.
     for (int m = 0; m < nEquation; ++ m)
     {
         residualNormal[m] = 0.0;

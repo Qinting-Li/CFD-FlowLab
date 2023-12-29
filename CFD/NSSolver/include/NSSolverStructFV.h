@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      NSSolverStructFV.h
 //! @brief     NS solver for struct grid with finite volume method.
-//! @author    
+//! @author    xxx
 
 #pragma once
 #include "NSSolverStruct.h"

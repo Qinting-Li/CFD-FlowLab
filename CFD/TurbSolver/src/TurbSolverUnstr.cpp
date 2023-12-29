@@ -64,6 +64,13 @@ void TurbSolverUnstr::AllocateGlobalVar(Grid *gridIn)
     grid->UpdateDataPtr("res_turb" , residualTurbulence);    //! Residual or right-hand side.
     grid->UpdateDataPtr("spec_turb", spectrumTurbulence);    //! Spectral radius of turbulent model.
 
+    int referenceFrame = PHSPACE::GlobalDataBase::GetIntParaFromDB("referenceFrame");
+    int nTurboZone = 0;
+    if(referenceFrame)
+    {
+        nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+    }
+
 #ifdef USE_GMRESSOLVER
     //! GMRESturb
     int originaltscheme = GlobalDataBase::GetIntParaFromDB("OriginalTscheme");
@@ -108,6 +115,44 @@ void TurbSolverUnstr::AllocateGlobalVar(Grid *gridIn)
     grid->UpdateDataPtr("gradTurbulenceX", gradientTurbulenceX);
     grid->UpdateDataPtr("gradTurbulenceY", gradientTurbulenceY);
     grid->UpdateDataPtr("gradTurbulenceZ", gradientTurbulenceZ);
+
+    //! Temporary variable for periodic boundary condition.
+    RDouble **rotNSgradValueX = NewPointer2<RDouble>(nTurbulenceEquation, numberOfTotal);
+    RDouble **rotNSgradValueY = NewPointer2<RDouble>(nTurbulenceEquation, numberOfTotal);
+    RDouble **rotNSgradValueZ = NewPointer2<RDouble>(nTurbulenceEquation, numberOfTotal);
+    grid->UpdateDataPtr("rotTurbgradValueX", rotNSgradValueX);
+    grid->UpdateDataPtr("rotTurbgradValueY", rotNSgradValueY);
+    grid->UpdateDataPtr("rotTurbgradValueZ", rotNSgradValueZ);
+
+    //! allocate mixing plane variables.
+    //! for multi-row turbomachinery.
+    if (nTurboZone > 0)
+    {
+        int nSpanSection = PHSPACE::GlobalDataBase::GetIntParaFromDB("nSpanSection");
+        int nType = 2;
+
+        //! zone with MixingIn and MixingOut.
+        int nFlag = 10 * nTurboZone + 2;
+
+        RDouble ***SpanTurbFlux      = NewPointer3<RDouble>(nFlag, nTurbulenceEquation, nSpanSection);
+        RDouble ***qTurb_Span        = NewPointer3<RDouble>(nFlag, nTurbulenceEquation, nSpanSection);
+        RDouble ***qTurbSpanNeighbor = NewPointer3<RDouble>(nFlag, nTurbulenceEquation, nSpanSection);
+        RDouble ***dqTurbSpanIn      = NewPointer3<RDouble>(nFlag, nTurbulenceEquation, nSpanSection);
+        RDouble ***dqTurbSpanEx      = NewPointer3<RDouble>(nFlag, nTurbulenceEquation, nSpanSection);
+        RDouble ***dcTurbSpan        = NewPointer3<RDouble>(nFlag, nTurbulenceEquation, nSpanSection);
+        InitMixingPlane(SpanTurbFlux, nFlag, nTurbulenceEquation, nSpanSection, zero);
+        InitMixingPlane(qTurb_Span, nFlag, nTurbulenceEquation, nSpanSection, zero);
+        InitMixingPlane(qTurbSpanNeighbor, nFlag, nTurbulenceEquation, nSpanSection, zero);
+        InitMixingPlane(dqTurbSpanIn, nFlag, nTurbulenceEquation, nSpanSection, zero);
+        InitMixingPlane(dqTurbSpanEx, nFlag, nTurbulenceEquation, nSpanSection, zero);
+        InitMixingPlane(dcTurbSpan, nFlag, nTurbulenceEquation, nSpanSection, zero);
+        grid->UpdateDataPtr("SpanTurbFlux", SpanTurbFlux);
+        grid->UpdateDataPtr("qTurb_Span", qTurb_Span);
+        grid->UpdateDataPtr("qTurbSpanNeighbor", qTurbSpanNeighbor);
+        grid->UpdateDataPtr("dqTurbSpanIn", dqTurbSpanIn);
+        grid->UpdateDataPtr("dqTurbSpanEx", dqTurbSpanEx);
+        grid->UpdateDataPtr("dcTurbSpan", dcTurbSpan);
+    }
 
     int numberOfTotalNode = grid->GetNTotalNode();
     RDouble **qTurbulenceNode = NewPointer2<RDouble>(nTurbulenceEquation, numberOfTotalNode);
@@ -213,6 +258,13 @@ void TurbSolverUnstr::DeAllocateGlobalVar(Grid *gridIn)
     DelPointer2(residualTurbulence);
     DelPointer2(spectrumTurbulence);
 
+    int referenceFrame = PHSPACE::GlobalDataBase::GetIntParaFromDB("referenceFrame");
+    int nTurboZone = 0;
+    if (referenceFrame)
+    {
+        nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+    }
+
 #ifdef USE_GMRESSOLVER
     // GMRESCoupled1st
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
@@ -276,6 +328,27 @@ void TurbSolverUnstr::DeAllocateGlobalVar(Grid *gridIn)
             RDouble **qAverageTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("qAverageTurb"));
             DelPointer2(qAverageTurbulence);
         }
+    }
+
+    //! deallocate mixing plane array.
+    if (nTurboZone > 0)
+    {
+        int nType = 2;
+        int nSpanSection = PHSPACE::GlobalDataBase::GetIntParaFromDB("nSpanSection");
+
+        RDouble ***SpanTurbFlux      = reinterpret_cast <RDouble ***> (grid->GetDataPtr("SpanTurbFlux"));
+        RDouble ***qTurb_Span        = reinterpret_cast <RDouble ***> (grid->GetDataPtr("qTurb_Span"));
+        RDouble ***qTurbSpanNeighbor = reinterpret_cast <RDouble ***> (grid->GetDataPtr("qTurbSpanNeighbor"));
+        RDouble ***dqTurbSpanIn      = reinterpret_cast <RDouble ***> (grid->GetDataPtr("dqTurbSpanIn"));
+        RDouble ***dqTurbSpanEx      = reinterpret_cast <RDouble ***> (grid->GetDataPtr("dqTurbSpanEx"));
+        RDouble ***dcTurbSpan        = reinterpret_cast <RDouble ***> (grid->GetDataPtr("dcTurbSpan"));
+
+        DelPointer3(SpanTurbFlux);
+        DelPointer3(qTurb_Span);
+        DelPointer3(qTurbSpanNeighbor);
+        DelPointer3(dqTurbSpanIn);
+        DelPointer3(dqTurbSpanEx);
+        DelPointer3(dcTurbSpan);
     }
 
     if (viscoueType == 4)
@@ -5833,11 +5906,50 @@ void TurbSolverUnstr::Boundary(Grid *gridIn)
     using namespace PHENGLEI;
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int nBCRegion = unstructBCSet->GetnBCRegion();
+    int referenceFrame = PHSPACE::GlobalDataBase::GetIntParaFromDB("referenceFrame");
+
+    //! Parallel
+    int currentZone = grid->GetOrdinaryGridIndex();
+
+    //! Serial
+    if (currentZone == -1)
+    {
+        currentZone = grid->GetZoneID();
+    }
+    int MixingPlaneNumber = 0;
+
+    string MixingIn, MixingOut;
+    if (referenceFrame == ROTATIONAL_FRAME)
+    {
+        int nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+        string MixingPlane[100];
+        GlobalDataBase::GetData("MixingPlane", &MixingPlane, PHSTRING, 2 * nTurboZone - 2);
+
+        if (currentZone == 0)
+        {
+            MixingOut = MixingPlane[2 * currentZone];
+        }
+        else if (currentZone == nTurboZone)
+        {
+            MixingIn = MixingPlane[2 * currentZone - 1];
+        }
+        else
+        {
+            MixingIn = MixingPlane[2 * currentZone - 1];
+            MixingOut = MixingPlane[2 * currentZone];
+        }
+    }
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
         UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
         int bcType = bcRegion->GetBCType();
+        string bcName = bcRegion->GetBCName();
+
+        if (bcName == MixingIn || bcName == MixingOut)
+        {
+            continue;
+        }
 
         if (IsInterface(bcType))
         {
@@ -7310,11 +7422,6 @@ void ComputeLowReynoldsNumberCorrection(Grid *gridIn, RDouble *lowReynoldsNumber
         RDouble xsi3 = POWER3(xsi);
 
         RDouble turbulentFt2 = 0.0; 
-        //int codeOfFt2 = 0; //PHSPACE::GetCodeOfFt2();
-        //if (codeOfFt2)
-        //{
-        //    turbulentFt2 = ct3 * exp(- ct4 * xsi2);
-        //}
 
         RDouble turbulentFv1 = xsi3 / (xsi3 + cv13);
         RDouble turbulentFv2 = one - xsi / (one + xsi * turbulentFv1);
@@ -7333,6 +7440,846 @@ void TurbSolverUnstr::ComputeGradient(Grid *gridIn)
     if(grid->IsFinestGrid())
     {
         GetGradientField(gridIn);
+    }
+}
+
+void TurbSolverUnstr::InitMixingPlane(RDouble ***MixingPlaneVar, int Dim1, int Dim2, int Dim3, RDouble Value)
+{
+    for (int iDim1 = 0; iDim1 < Dim1; iDim1++)
+    {
+        for (int iDim2 = 0; iDim2 < Dim2; iDim2++)
+        {
+            for (int iDim3 = 0; iDim3 < Dim3; iDim3++)
+            {
+                MixingPlaneVar[iDim1][iDim2][iDim3] = Value;
+            }
+        }
+    }
+}
+
+//! need to input q_average, which means flux averaged primitive variable of mixing plane.
+//! this function should be called in boundary condition part.
+void TurbSolverUnstr::AverageMixingPlane(Grid *grid)
+{
+    UnstructGrid *gridUnstruct   = UnstructGridCast(grid);
+    UnstructBCSet *unstructBCSet = gridUnstruct->GetUnstructBCSet();
+
+    Param_TurbSolverUnstruct *parameters = GetControlParameters();
+    RDouble refGama = parameters->GetRefGama();
+    RDouble gama1   = refGama - 1;
+
+    RDouble refDensity  = parameters->GetRefDimensionalDensity();
+    RDouble refPressure = parameters->GetRefDimensionalPressure();
+
+    RDouble **q           = reinterpret_cast< RDouble ** > (gridUnstruct->GetDataPtr("q"));
+    RDouble **qTurbulence = reinterpret_cast< RDouble ** > (gridUnstruct->GetDataPtr("q_turb"));
+
+    RDouble **r_ori    = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("Radius_Face"));
+    RDouble **r_target = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("Radius_Span"));
+
+    RDouble **SpanArea = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("SpanArea"));
+
+    //! nSpan is the number of spanwise point to do data average
+    //! also interpolate data on these points.
+    int nSpanSection = PHSPACE::GlobalDataBase::GetIntParaFromDB("nSpanSection");
+    RDouble nSpan = (RDouble)(nSpanSection);
+
+    RDouble Area;
+
+    RDouble *nxs, *nys, *nzs, *ns;
+
+    nxs = gridUnstruct->GetFaceNormalX();
+    nys = gridUnstruct->GetFaceNormalY();
+    nzs = gridUnstruct->GetFaceNormalZ();
+    ns  = gridUnstruct->GetFaceArea();
+
+    int nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+    string MixingPlane[100];
+    GlobalDataBase::GetData("MixingPlane", &MixingPlane, PHSTRING, 2 * nTurboZone - 2);
+
+    //! r_ori should be an array that contains coordinate of each node.
+    //! the range of this array is equal to the face number of this boundary.
+    RDouble r_min, r_max;
+
+    r_min = 1e6;
+    r_max = 0;
+
+    RDouble *xfc = gridUnstruct->GetFaceCenterX();
+    RDouble *yfc = gridUnstruct->GetFaceCenterY();
+    RDouble *zfc = gridUnstruct->GetFaceCenterZ();
+
+    RDouble *gama = reinterpret_cast< RDouble * > (grid->GetDataPtr("gama"));
+
+    int **face2nodeArray = gridUnstruct->GetFace2NodeArray();
+    int * node_number_of_each_face = gridUnstruct->GetNodeNumberOfEachFace();
+
+    int *leftCellofFace  = gridUnstruct->GetLeftCellOfFace();
+    int *rightCellofFace = gridUnstruct->GetRightCellOfFace();
+    int nTotalCell       = gridUnstruct->GetNTotalCell();
+
+    int nBCRegion = unstructBCSet->GetnBCRegion();
+
+    RDouble PeriodicRotationAngle[100];
+    GlobalDataBase::GetData("PeriodicRotationAngle", &PeriodicRotationAngle, PHDOUBLE, nTurboZone);
+
+    using namespace IDX;
+
+    RDouble ***SpanFlux     = reinterpret_cast< RDouble *** > (gridUnstruct->GetDataPtr("SpanFlux"));
+    RDouble ***SpanTurbFlux = reinterpret_cast< RDouble *** > (gridUnstruct->GetDataPtr("SpanTurbFlux"));
+    int FlowDirection = -1;
+
+    int nEquation = GetNumberOfEquations();
+
+    RDouble *vgn = gridUnstruct->GetFaceNormalVelocity();
+
+    RDouble *primi = new RDouble[nEquation]();
+    RDouble *primo = new RDouble[nEquation]();
+
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion++)
+    {
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+
+        int bcType = bcRegion->GetBCType();
+        string bcName = bcRegion->GetBCName();
+
+        //! find mixing plane and average data.
+        //! Parallel
+        int iTurboZone = gridUnstruct->GetOrdinaryGridIndex();
+
+        //! Serial
+        if (iTurboZone == -1)
+        {
+            iTurboZone = gridUnstruct->GetZoneID();
+        }
+
+        RDouble rotationAngle = PeriodicRotationAngle[iTurboZone] / 180.0 * PI;
+
+        string MixingPlaneIn, MixingPlaneOut;
+        int SourceFlag;
+
+        if (iTurboZone == 0)
+        {
+            MixingPlaneOut = MixingPlane[0];
+        }
+        else if (iTurboZone == nTurboZone)
+        {
+            MixingPlaneIn = MixingPlane[2 * iTurboZone - 1];
+        }
+        else
+        {
+            MixingPlaneIn = MixingPlane[2 * iTurboZone - 1];
+            MixingPlaneOut = MixingPlane[2 * iTurboZone];
+        }
+
+        if (bcName == MixingPlaneIn || bcName == MixingPlaneOut)
+        {
+            if (bcName == MixingPlaneIn)
+            {
+                FlowDirection = 0;
+                SourceFlag = 1 + (iTurboZone - 1) * 10;
+            }
+            if (bcName == MixingPlaneOut)
+            {
+                FlowDirection = 1;
+                SourceFlag = 0 + (iTurboZone + 1) * 10;
+            }
+            int MixingFlag = FlowDirection + iTurboZone * 10;
+
+            //! preprocess of mixing plane.
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                //! iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+
+                int le = leftCellofFace[iFace];
+                int re = rightCellofFace[iFace];
+
+                //! need to compute total area, total flux of this bc region.
+                //! also need to compute flux of each spanwise.
+                //! spanwise can be defined based on mesh or manually.
+                r_ori[MixingFlag][iFace] = sqrt(yfc[iFace] * yfc[iFace] + zfc[iFace] * zfc[iFace]);
+
+                r_min = MIN(r_ori[MixingFlag][iFace], r_min);
+                r_max = MAX(r_ori[MixingFlag][iFace], r_max);
+            }
+
+            //! get target radius.
+            for (int iSpan = 0; iSpan <= nSpanSection; iSpan++)
+            {
+                r_target[MixingFlag][iSpan] = r_min + iSpan * (r_max - r_min) / nSpan;
+            }
+
+            //! compute average flux.
+            for (int iSpan = 0; iSpan < nSpanSection; iSpan++)
+            {
+                RDouble Flux[5]     = { 0.0, 0.0, 0.0, 0.0, 0.0 };
+                RDouble TurbFlux[5] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
+                RDouble TotalArea = 0.0;
+
+                for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+                {
+                    //! iFace is the face number in the set of faceIndex.
+                    int iFace = *iter;
+
+                    int le = leftCellofFace[iFace];
+                    int re = rightCellofFace[iFace];
+
+                    Area = ns[iFace];
+
+                    RDouble r_Face = sqrt(yfc[iFace] * yfc[iFace] + zfc[iFace] * zfc[iFace]);
+
+                    RDouble Velocity_ti = (q[IV][le] * zfc[iFace] - q[IW][le] * yfc[iFace]) / r_Face;
+                    RDouble Velocity_ri = (q[IV][le] * yfc[iFace] + q[IW][le] * zfc[iFace]) / r_Face;
+
+                    RDouble Velocity_to = (q[IV][re] * zfc[iFace] - q[IW][re] * yfc[iFace]) / r_Face;
+                    RDouble Velocity_ro = (q[IV][re] * yfc[iFace] + q[IW][re] * zfc[iFace]) / r_Face;
+
+                    RDouble nrs = (nys[iFace] * yfc[iFace] + nzs[iFace] * zfc[iFace]) / r_Face;
+
+                    RDouble vni = q[IU][le] * nxs[iFace] + Velocity_ri * nrs - vgn[iFace];
+                    RDouble vno = q[IU][re] * nxs[iFace] + Velocity_ro * nrs - vgn[iFace];
+                    //! find face center that locate in target span.
+                    //! compute flux at each span.
+                    if (r_Face > r_target[MixingFlag][iSpan] && r_Face <= r_target[MixingFlag][iSpan + 1])
+                    {
+                        TotalArea += Area;
+
+                        for (int m = 0; m < nEquation; m++)
+                        {
+                            TurbFlux[m] += q[IR][le] * vni * qTurbulence[m][le] * ns[iFace];
+                        }
+                    }
+                }
+
+                SpanArea[MixingFlag][iSpan] = TotalArea;
+
+                for (int m = 0; m < nEquation; m++)
+                {
+                    SpanTurbFlux[MixingFlag][m][iSpan] = TurbFlux[m] / SpanArea[MixingFlag][iSpan];
+                }
+            }
+        }
+    }
+}
+
+//! SpanFlux from AverageMixingPlane should be input data.
+//! Here we will obtain averaged primitive variable of each span from SpanFlux.
+//! The averaged primitive variable will be treated as outlet data of upstream and inlet data of downsteam.
+void TurbSolverUnstr::MixingPlaneDataTransfer(Grid *grid, Grid *NeighborGrid)
+{
+    UnstructGrid *gridUnstruct   = UnstructGridCast(grid);
+    UnstructGrid *gridSource     = UnstructGridCast(NeighborGrid);
+    UnstructBCSet *unstructBCSet = gridUnstruct->GetUnstructBCSet();
+
+    Param_TurbSolverUnstruct *parameters = GetControlParameters();
+    RDouble refGama = parameters->GetRefGama();
+    RDouble gama1   = refGama - 1;
+
+    RDouble refDensity  = parameters->GetRefDimensionalDensity();
+    RDouble refPressure = parameters->GetRefDimensionalPressure();
+
+    RDouble **q           = reinterpret_cast< RDouble ** > (gridUnstruct->GetDataPtr("q"));
+    RDouble **qTurbulence = reinterpret_cast< RDouble **> (gridUnstruct->GetDataPtr("q_turb"));
+
+    RDouble **r_target = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("Radius_Span"));
+
+    RDouble **SpanArea = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("SpanArea"));
+    //! nSpan is the number of spanwise point to do data average
+    //! also interpolate data on these points.
+    int nSpanSection = PHSPACE::GlobalDataBase::GetIntParaFromDB("nSpanSection");
+
+    int nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+    string MixingPlane[100];
+    GlobalDataBase::GetData("MixingPlane", &MixingPlane, PHSTRING, 2 * nTurboZone - 2);
+
+    RDouble *xfc = gridUnstruct->GetFaceCenterX();
+    RDouble *yfc = gridUnstruct->GetFaceCenterY();
+    RDouble *zfc = gridUnstruct->GetFaceCenterZ();
+
+    int nBCRegion = unstructBCSet->GetnBCRegion();
+
+    //! qSpanNeighbor: record flow variable in neighbor zone at each span.
+    RDouble ***qTurb_Span    = reinterpret_cast< RDouble *** > (gridUnstruct->GetDataPtr("qTurb_Span"));
+    RDouble ***SourceFlux    = reinterpret_cast< RDouble *** > (gridUnstruct->GetDataPtr("SpanFlux"));
+    RDouble ***SpanTurbFlux  = reinterpret_cast< RDouble *** > (gridUnstruct->GetDataPtr("SpanTurbFlux"));
+
+    RDouble ***qTurbSpanNeighbor = reinterpret_cast< RDouble *** > (gridSource->GetDataPtr("qTurbSpanNeighbor"));
+
+    using namespace IDX;
+
+    int FlowDirection = -1;
+
+    int nEquation = GetNumberOfEquations();
+
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion++)
+    {
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+
+        int bcType = bcRegion->GetBCType();
+        string bcName = bcRegion->GetBCName();
+
+        //! Parallel
+        int iTurboZone = gridUnstruct->GetOrdinaryGridIndex();
+        int SourceZone = gridSource->GetOrdinaryGridIndex();
+        //! Serial
+        if (iTurboZone == -1)
+        {
+            iTurboZone = gridUnstruct->GetZoneID();
+            SourceZone = gridSource->GetZoneID();
+        }
+
+        string MixingPlaneIn, MixingPlaneOut;
+
+        if (iTurboZone == 0)
+        {
+            MixingPlaneOut = MixingPlane[0];
+        }
+        else if (iTurboZone == nTurboZone)
+        {
+            MixingPlaneIn = MixingPlane[2 * iTurboZone - 1];
+        }
+        else
+        {
+            MixingPlaneIn = MixingPlane[2 * iTurboZone - 1];
+            MixingPlaneOut = MixingPlane[2 * iTurboZone];
+        }
+
+        //! TargetMixingFlag is Mixingplane in current zone, which need neighbor zone data.
+        //! SourceMixingFlag is Mixingplane in neighbor zone, which provide the data. 
+        int MixingFlag, TargetFlag;
+        if (bcName == MixingPlaneIn || bcName == MixingPlaneOut)
+        {
+            //! downstream to upstream: transfer data from MixingIn to MixingOut.
+            if (SourceZone == iTurboZone + 1)
+            {
+                if (bcName == MixingPlaneIn) continue;
+                //! upstream MixingIn.
+                TargetFlag = 0 + SourceZone * 10;
+                //! current MixingOut.
+                MixingFlag = 1 + iTurboZone * 10;
+            }
+            //! upstream to downstream: transfer data from MixingOut to MixingIn.
+            else if (SourceZone == iTurboZone - 1)
+            {
+                if (bcName == MixingPlaneOut) continue;
+                TargetFlag = 1 + SourceZone * 10;
+                MixingFlag = 0 + iTurboZone * 10;
+            }
+
+            //! compute flow variables.
+            for (int iSpan = 0; iSpan < nSpanSection; iSpan++)
+            {
+                for (int m = 0; m < nEquation; m++)
+                {
+                    qTurb_Span[MixingFlag][m][iSpan] = SpanTurbFlux[MixingFlag][m][iSpan] / SourceFlux[MixingFlag][IR][iSpan];
+                }
+
+                for (int m = 0; m < nEquation; m++)
+                {
+                    qTurbSpanNeighbor[TargetFlag][m][iSpan] = qTurb_Span[MixingFlag][m][iSpan];
+                }
+            }
+        }
+    }
+}
+
+void TurbSolverUnstr::NonReflective(Grid *grid, Grid *NeighborGrid)
+{
+    UnstructGrid *gridUnstruct   = UnstructGridCast(grid);
+    UnstructGrid *gridTarget     = UnstructGridCast(NeighborGrid);
+    UnstructBCSet *unstructBCSet = gridUnstruct->GetUnstructBCSet();
+
+    Param_TurbSolverUnstruct *parameters = GetControlParameters();
+    RDouble refGama = parameters->GetRefGama();
+    RDouble gama1   = refGama - 1;
+
+    RDouble refDensity  = parameters->GetRefDimensionalDensity();
+    RDouble refPressure = parameters->GetRefDimensionalPressure();
+
+    RDouble **q           = reinterpret_cast< RDouble ** > (gridUnstruct->GetDataPtr("q"));
+    RDouble **qTurbulence = reinterpret_cast< RDouble **> (gridUnstruct->GetDataPtr("q_turb"));
+
+    RDouble **r_ori    = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("Radius_Face"));
+    RDouble **r_target = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("Radius_Span"));
+
+    RDouble ***qTurb_Span = reinterpret_cast< RDouble *** > (gridUnstruct->GetDataPtr("qTurb_Span"));
+
+    RDouble **SpanArea = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("SpanArea"));
+    //! nSpan is the number of spanwise point to do data average
+    //! also interpolate data on these points.
+    int nSpanSection = PHSPACE::GlobalDataBase::GetIntParaFromDB("nSpanSection");
+
+    int nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+    string MixingPlane[100];
+    GlobalDataBase::GetData("MixingPlane", &MixingPlane, PHSTRING, 2 * nTurboZone - 2);
+
+    RDouble *xcc = gridUnstruct->GetCellCenterX();
+    RDouble *ycc = gridUnstruct->GetCellCenterY();
+    RDouble *zcc = gridUnstruct->GetCellCenterZ();
+
+    RDouble *xfc = gridUnstruct->GetFaceCenterX();
+    RDouble *yfc = gridUnstruct->GetFaceCenterY();
+    RDouble *zfc = gridUnstruct->GetFaceCenterZ();
+
+    RDouble *ns = gridUnstruct->GetFaceArea();
+
+    int *leftCellofFace  = gridUnstruct->GetLeftCellOfFace();
+    int *rightCellofFace = gridUnstruct->GetRightCellOfFace();
+
+    int nBCRegion = unstructBCSet->GetnBCRegion();
+
+    RDouble **nxsSpan = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("nxsSpan"));
+    RDouble **ntsSpan = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("ntsSpan"));
+    RDouble **nrsSpan = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("nrsSpan"));
+
+    //! qSpanNeighbor: record flow variable in neighbor zone at each span.
+    RDouble ***q_SpanCurrent     = reinterpret_cast< RDouble *** > (gridUnstruct->GetDataPtr("q_Span"));
+    RDouble ***q_SpanTarget      = reinterpret_cast< RDouble *** > (gridTarget->GetDataPtr("q_Span"));
+
+    RDouble ***qTurb_SpanCurrent = reinterpret_cast< RDouble *** > (gridUnstruct->GetDataPtr("qTurb_Span"));
+    RDouble ***qTurbSpanNeighbor = reinterpret_cast< RDouble *** > (gridUnstruct->GetDataPtr("qTurbSpanNeighbor"));
+    RDouble ***SpanTurbFlux      = reinterpret_cast< RDouble *** > (gridUnstruct->GetDataPtr("SpanTurbFlux"));
+
+    RDouble ***qTurb_SpanTarget = reinterpret_cast< RDouble *** > (gridTarget->GetDataPtr("qTurb_Span"));
+
+    RDouble ***dqTurbSpanIn = reinterpret_cast <RDouble ***> (gridUnstruct->GetDataPtr("dqTurbSpanIn"));
+    RDouble ***dqTurbSpanEx = reinterpret_cast <RDouble ***> (gridUnstruct->GetDataPtr("dqTurbSpanEx"));
+    RDouble ***dcTurbSpan   = reinterpret_cast <RDouble ***> (gridUnstruct->GetDataPtr("dcTurbSpan"));
+
+    using namespace IDX;
+
+    int FlowDirection = -1;
+
+    int nEquation = GetNumberOfEquations();
+
+    RDouble *ExtraDqTurb = new RDouble[nEquation];
+    RDouble *deltaQTurb  = new RDouble[nEquation];
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion++)
+    {
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+
+        int bcType = bcRegion->GetBCType();
+        string bcName = bcRegion->GetBCName();
+
+        //! Parallel
+        int iTurboZone = gridUnstruct->GetOrdinaryGridIndex();
+        int TargetZone = gridTarget->GetOrdinaryGridIndex();
+        //! Serial
+        if (iTurboZone == -1)
+        {
+            iTurboZone = gridUnstruct->GetZoneID();
+            TargetZone = gridTarget->GetZoneID();
+        }
+
+        string MixingPlaneIn, MixingPlaneOut;
+
+        if (iTurboZone == 0)
+        {
+            MixingPlaneOut = MixingPlane[0];
+        }
+        else if (iTurboZone == nTurboZone)
+        {
+            MixingPlaneIn = MixingPlane[2 * iTurboZone - 1];
+        }
+        else
+        {
+            MixingPlaneIn = MixingPlane[2 * iTurboZone - 1];
+            MixingPlaneOut = MixingPlane[2 * iTurboZone];
+        }
+
+        //! TargetMixingFlag is Mixingplane in current zone, which need neighbor zone data.
+        //! SourceMixingFlag is Mixingplane in neighbor zone, which provide the data. 
+        int MixingFlag, TargetFlag;
+        if (bcName == MixingPlaneIn || bcName == MixingPlaneOut)
+        {
+            //! downstream to upstream: transfer data from MixingIn to MixingOut.
+            if (TargetZone == iTurboZone + 1)
+            {
+                if (bcName == MixingPlaneIn) continue;
+                //! upstream MixingIn.
+                TargetFlag = 0 + TargetZone * 10;
+                //! current MixingOut.
+                MixingFlag = 1 + iTurboZone * 10;
+            }
+            //! upstream to downstream: transfer data from MixingOut to MixingIn.
+            else if (TargetZone == iTurboZone - 1)
+            {
+                if (bcName == MixingPlaneOut) continue;
+                TargetFlag = 1 + TargetZone * 10;
+                MixingFlag = 0 + iTurboZone * 10;
+            }
+            if (bcName == MixingPlaneIn || bcName == MixingPlaneOut)
+            {
+                //! compute variable perturbation
+                for (int iSpan = 0; iSpan < nSpanSection; iSpan++)
+                {
+                    for (int m = 0; m < nEquation; m++)
+                    {
+                        ExtraDqTurb[m] = 0.0;
+                    }
+
+                    for (int m = 0; m < nEquation; m++)
+                    {
+                        dqTurbSpanIn[MixingFlag][m][iSpan] = qTurb_SpanTarget[TargetFlag][m][iSpan] - qTurb_SpanCurrent[MixingFlag][m][iSpan];
+                    }
+
+                    //! extrapolation
+                    vector<int> *faceIndex = bcRegion->GetFaceIndex();
+                    for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+                    {
+                        int iFace = *iter;
+
+                        int re = rightCellofFace[iFace];
+                        int le = leftCellofFace[iFace];
+
+                        RDouble r_Face = sqrt(yfc[iFace] * yfc[iFace] + zfc[iFace] * zfc[iFace]);
+
+                        if (r_Face > r_target[MixingFlag][iSpan] && r_Face <= r_target[MixingFlag][iSpan + 1])
+                        {
+                            for (int m = 0; m < nEquation; m++)
+                            {
+                                ExtraDqTurb[m] = (qTurb_Span[MixingFlag][m][iSpan] - qTurbulence[m][le]) * ns[iFace];
+                            }
+                        }
+                    }
+
+                    for (int m = 0; m < nEquation; m++)
+                    {
+                        dqTurbSpanEx[MixingFlag][m][iSpan] = ExtraDqTurb[m] / SpanArea[MixingFlag][iSpan];
+                    }
+                }
+                for (int iSpan = 0; iSpan < nSpanSection; iSpan++)
+                {
+                    //! after data transfer in NSSlover, IU, IV, IW refers to vx, vtheta, vr.
+                    RDouble vn = nxsSpan[MixingFlag][iSpan] * q_SpanCurrent[MixingFlag][IU][iSpan]
+                        + nrsSpan[MixingFlag][iSpan] * q_SpanCurrent[MixingFlag][IW][iSpan];
+
+                    RDouble avgRho = half * (q_SpanCurrent[MixingFlag][IR][iSpan] + q_SpanTarget[TargetFlag][IR][iSpan]);
+                    RDouble avgP   = half * (q_SpanCurrent[MixingFlag][IP][iSpan] + q_SpanTarget[TargetFlag][IP][iSpan]);
+
+                    RDouble c = sqrt(refGama * (avgP / avgRho));
+
+                    RDouble rhoc = half * (q_SpanCurrent[MixingFlag][IR][iSpan] + q_SpanTarget[TargetFlag][IR][iSpan]) * c;
+
+                    if (vn > 0)
+                    {
+                        for (int m = 0; m < nEquation; m++)
+                        {
+                            dcTurbSpan[MixingFlag][m][iSpan] = rhoc * dqTurbSpanEx[MixingFlag][m][iSpan];
+                        }
+                    }
+                    else
+                    {
+                        for (int m = 0; m < nEquation; m++)
+                        {
+                            dcTurbSpan[MixingFlag][m][iSpan] = rhoc * dqTurbSpanIn[MixingFlag][m][iSpan];
+                        }
+                    }
+
+                    for (int m = 0; m < nEquation; m++)
+                    {
+                        deltaQTurb[m] = dcTurbSpan[MixingFlag][m][iSpan] / rhoc;
+                    }
+
+                    for (int m = 0; m < nEquation; m++)
+                    {
+                        qTurbSpanNeighbor[MixingFlag][m][iSpan] += deltaQTurb[m];
+                    }
+                }
+            }
+        }
+    }
+    delete[]ExtraDqTurb;
+    delete[]deltaQTurb;
+}
+
+//! function to set radial profile of mixingin and mixingout.
+//! treat mixingin as a kind of inlet and treat mixing as a kind of outlet.
+void TurbSolverUnstr::SetMixingPlaneData(Grid *grid)
+{
+    UnstructGrid *gridUnstruct   = UnstructGridCast(grid);
+    UnstructBCSet *unstructBCSet = gridUnstruct->GetUnstructBCSet();
+
+    Param_TurbSolverUnstruct *parameters = GetControlParameters();
+    RDouble refPressure = parameters->GetRefDimensionalPressure();
+    RDouble refGama     = parameters->GetRefGama();
+    RDouble gama1       = refGama - 1.0;
+
+    RDouble **q           = reinterpret_cast< RDouble ** > (gridUnstruct->GetDataPtr("q"));
+    RDouble **qTurbulence = reinterpret_cast<RDouble **> (gridUnstruct->GetDataPtr("q_turb"));
+
+    RDouble **r_ori    = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("Radius_Face"));
+    RDouble **r_target = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("Radius_Span"));
+
+    //! nSpan is the number of spanwise point to do data average
+    //! also interpolate data on these points.
+    //! nSpan is set to 50 temporary.
+    int nSpanSection = PHSPACE::GlobalDataBase::GetIntParaFromDB("nSpanSection");
+    RDouble nSpan = (RDouble)(nSpanSection);
+
+    RDouble *nxs, *nys, *nzs, *ns;
+
+    nxs = gridUnstruct->GetFaceNormalX();
+    nys = gridUnstruct->GetFaceNormalY();
+    nzs = gridUnstruct->GetFaceNormalZ();
+    ns = gridUnstruct->GetFaceArea();
+
+    int nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+    string MixingPlane[100];
+    GlobalDataBase::GetData("MixingPlane", &MixingPlane, PHSTRING, 2 * nTurboZone - 2);
+
+    RDouble *xfc = gridUnstruct->GetFaceCenterX();
+    RDouble *yfc = gridUnstruct->GetFaceCenterY();
+    RDouble *zfc = gridUnstruct->GetFaceCenterZ();
+
+    RDouble *xcc = gridUnstruct->GetCellCenterX();
+    RDouble *ycc = gridUnstruct->GetCellCenterY();
+    RDouble *zcc = gridUnstruct->GetCellCenterZ();
+
+    int **face2nodeArray = gridUnstruct->GetFace2NodeArray();
+    int * node_number_of_each_face = gridUnstruct->GetNodeNumberOfEachFace();
+
+    int *leftCellofFace  = gridUnstruct->GetLeftCellOfFace();
+    int *rightCellofFace = gridUnstruct->GetRightCellOfFace();
+    int nTotalCell = gridUnstruct->GetNTotalCell();
+
+    int nBCRegion = unstructBCSet->GetnBCRegion();
+
+    int nEquation = GetNumberOfEquations();
+
+    using namespace IDX;
+
+    RDouble ***qTurb_Span    = reinterpret_cast< RDouble *** > (gridUnstruct->GetDataPtr("qTurb_Span"));
+    RDouble ***qSpanNeighbor = reinterpret_cast< RDouble *** > (gridUnstruct->GetDataPtr("qTurbSpanNeighbor"));
+
+    int FlowDirection = -1;
+
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion++)
+    {
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+
+        int bcType = bcRegion->GetBCType();
+        string bcName = bcRegion->GetBCName();
+
+        //! Parallel
+        int iTurboZone = gridUnstruct->GetOrdinaryGridIndex();
+        //! Serial
+        if (iTurboZone == -1)
+        {
+            iTurboZone = gridUnstruct->GetZoneID();
+        }
+
+        //! use new bcType to define mixing plane.
+        //! if (bcType == -1)
+        string MixingPlaneIn = "";
+        string MixingPlaneOut = "";
+
+        if (iTurboZone == 0)
+        {
+            MixingPlaneOut = MixingPlane[0];
+        }
+        else if (iTurboZone == nTurboZone)
+        {
+            MixingPlaneIn = MixingPlane[2 * iTurboZone - 1];
+        }
+        else
+        {
+            MixingPlaneIn = MixingPlane[2 * iTurboZone - 1];
+            MixingPlaneOut = MixingPlane[2 * iTurboZone];
+        }
+
+        if (bcName == MixingPlaneIn || bcName == MixingPlaneOut)
+        {
+            if (bcName == MixingPlaneIn)
+            {
+                FlowDirection = 0;
+            }
+            if (bcName == MixingPlaneOut)
+            {
+                FlowDirection = 1;
+            }
+            int MixingFlag = FlowDirection + iTurboZone * 10;
+
+            for (int iSpan = 0; iSpan < nSpanSection; iSpan++)
+            {
+                for (int m = 0; m < nEquation; m++)
+                {
+                    qTurb_Span[MixingFlag][m][iSpan] = qSpanNeighbor[MixingFlag][m][iSpan];
+                }
+            }
+
+            for (int iSpan = 0; iSpan < nSpanSection; iSpan++)
+            {
+                for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+                {
+                    //! iFace is the face number in the set of faceIndex.
+                    int iFace = *iter;
+
+                    int le = leftCellofFace[iFace];
+                    int re = rightCellofFace[iFace];
+
+                    //! find face center that locate in target span.
+                    //! compute variable at each span.
+                    if (r_ori[MixingFlag][iFace] > r_target[MixingFlag][iSpan] && r_ori[MixingFlag][iFace] <= r_target[MixingFlag][iSpan + 1])
+                    {
+                        for (int m = 0; m < nEquation; m++)
+                        {
+                            qTurbulence[m][re] = qTurb_Span[MixingFlag][m][iSpan];
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void TurbSolverUnstr::RotateVectorFromInterface(Grid *gridIn, const int &neighborZoneIndex, const int &nEquation)
+{
+    UnstructGrid *grid = UnstructGridCast(gridIn);
+    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
+    if (!interfaceInformation)
+    {
+        return;
+    }
+
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    RDouble **rotTurbgradValueX = reinterpret_cast <RDouble **> (grid->GetDataPtr("rotTurbgradValueX"));
+    RDouble **rotTurbgradValueY = reinterpret_cast <RDouble **> (grid->GetDataPtr("rotTurbgradValueY"));
+    RDouble **rotTurbgradValueZ = reinterpret_cast <RDouble **> (grid->GetDataPtr("rotTurbgradValueZ"));
+
+    int iNeighborZone = interfaceInformation->FindIthNeighbor(neighborZoneIndex);
+
+    if (iNeighborZone = -1)
+    {
+        return;
+    }
+
+    int interfaceNumberBetweenTwoNeighboringZone = interfaceInformation->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForReceive = interfaceInformation->GetFaceIndexForRecv(iNeighborZone);
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+    int* interFace2BoundaryFace = interfaceInformation->GetInterFace2BoundaryFace();
+
+    RDouble rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
+    rotationAngle = rotationAngle * PI / 180.0;
+
+    int referenceFrame = PHSPACE::GlobalDataBase::GetIntParaFromDB("referenceFrame");
+
+    if (referenceFrame == ROTATIONAL_FRAME)
+    {
+        int nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+        RDouble PeriodicRotationAngle[100];
+        GlobalDataBase::GetData("PeriodicRotationAngle", &PeriodicRotationAngle, PHDOUBLE, nTurboZone);
+
+        //! Parallel
+        int iTurboZone = grid->GetOrdinaryGridIndex();
+        //! Serial
+        if (iTurboZone == -1)
+        {
+            iTurboZone = grid->GetZoneID();
+        }
+        PeriodicRotationAngle[iTurboZone] = PeriodicRotationAngle[iTurboZone] * PI / 180.0;
+        rotationAngle = PeriodicRotationAngle[iTurboZone];
+    }
+
+    if (nEquation > 0)
+    {
+        RDouble **fieldRecvTurbY = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradTurbulenceY"));
+        RDouble **fieldRecvTurbZ = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradTurbulenceZ"));
+
+        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; --iGhostLayer)
+        {
+            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++iLocalFace)
+            {
+                int iFace = interfaceIndexContainerForReceive[iLocalFace];
+                int t1;
+                grid->GetTargetIndex(iFace, 1, t1);
+
+                int iBFace = interFace2BoundaryFace[iFace];
+                UnstructBC *bcregion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iBFace]);
+                string bcName = bcregion->GetBCName();
+
+                if (referenceFrame == ROTATIONAL_FRAME)
+                {
+                    int nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+                    string Periodic_Name[100];
+                    GlobalDataBase::GetData("Periodic_Name", &Periodic_Name, PHSTRING, 2 * nTurboZone);
+
+                    //! Parallel
+                    int iTurboZone = grid->GetOrdinaryGridIndex();
+                    //! Serial
+                    if (iTurboZone == -1)
+                    {
+                        iTurboZone = grid->GetZoneID();
+                    }
+
+                    //! need loop over bcregions
+                    if (bcName == Periodic_Name[2 * iTurboZone])
+                    {
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            rotTurbgradValueY[m][t1] = fieldRecvTurbY[m][t1] * cos(2 * PI - rotationAngle) - fieldRecvTurbZ[m][t1] * sin(2 * PI - rotationAngle);
+                            rotTurbgradValueZ[m][t1] = fieldRecvTurbY[m][t1] * sin(2 * PI - rotationAngle) + fieldRecvTurbZ[m][t1] * cos(2 * PI - rotationAngle);
+                        }
+
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            fieldRecvTurbY[m][t1] = rotTurbgradValueY[m][t1];
+                            fieldRecvTurbZ[m][t1] = rotTurbgradValueZ[m][t1];
+                        }
+                    }
+                    else if (bcName == Periodic_Name[2 * iTurboZone + 1])
+                    {
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            rotTurbgradValueY[m][t1] = fieldRecvTurbY[m][t1] * cos(rotationAngle) - fieldRecvTurbZ[m][t1] * sin(rotationAngle);
+                            rotTurbgradValueZ[m][t1] = fieldRecvTurbY[m][t1] * sin(rotationAngle) + fieldRecvTurbZ[m][t1] * cos(rotationAngle);
+                        }
+
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            fieldRecvTurbY[m][t1] = rotTurbgradValueY[m][t1];
+                            fieldRecvTurbZ[m][t1] = rotTurbgradValueZ[m][t1];
+                        }
+                    }
+                }
+                else
+                {
+                    //! need loop over bcregions
+                    if (bcName == "Periodic_up")
+                    {
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            rotTurbgradValueY[m][t1] = fieldRecvTurbY[m][t1] * cos(2 * PI - rotationAngle) - fieldRecvTurbZ[m][t1] * sin(2 * PI - rotationAngle);
+                            rotTurbgradValueZ[m][t1] = fieldRecvTurbY[m][t1] * sin(2 * PI - rotationAngle) + fieldRecvTurbZ[m][t1] * cos(2 * PI - rotationAngle);
+                        }
+
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            fieldRecvTurbY[m][t1] = rotTurbgradValueY[m][t1];
+                            fieldRecvTurbZ[m][t1] = rotTurbgradValueZ[m][t1];
+                        }
+                    }
+                    else if (bcName == "Periodic_down")
+                    {
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            rotTurbgradValueY[m][t1] = fieldRecvTurbY[m][t1] * cos(rotationAngle) - fieldRecvTurbZ[m][t1] * sin(rotationAngle);
+                            rotTurbgradValueZ[m][t1] = fieldRecvTurbY[m][t1] * sin(rotationAngle) + fieldRecvTurbZ[m][t1] * cos(rotationAngle);
+                        }
+
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            fieldRecvTurbY[m][t1] = rotTurbgradValueY[m][t1];
+                            fieldRecvTurbZ[m][t1] = rotTurbgradValueZ[m][t1];
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

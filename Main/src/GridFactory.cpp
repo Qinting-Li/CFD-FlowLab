@@ -317,8 +317,15 @@ void CGNS2UnstructGrid()
     //! Construct block connection and dump out to file.
     ConstructGlobalInterfaceLink(grids, numberOfBlocks);
 
+    int referenceFrame = PHSPACE::GlobalDataBase::GetIntParaFromDB("referenceFrame");
+    int nTurboZone = 1;
+    if (referenceFrame == ROTATIONAL_FRAME)
+    {
+        nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+    }
+
     int hasVolumeCondition = GlobalDataBase::GetIntParaFromDB("hasVolumeCondition");
-    if ((numberOfBlocks > 1) && (!hasVolumeCondition))
+    if ((numberOfBlocks > 1) && (!hasVolumeCondition) && nTurboZone<=1)
     {
         cout << "\n";
         cout << "Blocks > 1, Start to Combine Grids" << endl;

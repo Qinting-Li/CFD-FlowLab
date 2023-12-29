@@ -297,6 +297,11 @@ public:
     //! Rotate gradient vector for periodic boundary in both NSSolver and TurbSolver.
     virtual void RotateVectorFromInterface(Grid *grid, const int &neighborZoneIndex, const int &neqn) {};
 
+    virtual void AverageMixingPlane(Grid *grid) {};
+    virtual void MixingPlaneDataTransfer(Grid *grid, Grid *NeighborGrid1) {};
+    virtual void NonReflective(Grid *grid, Grid *NeighborGrid1) {};
+    virtual void SetMixingPlaneData(Grid *grid) {};
+
     virtual void CompressGradientandLimitToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex){};
     virtual void DecompressGradientandLimitToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex){};
 

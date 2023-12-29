@@ -86,7 +86,7 @@ double knudsenLength = 1.0;		              // unit of meter.
 #########################################################################
 // viscousType: Viscous model.
 //           0 -- Euler.
-//           1 -- Lamilar.
+//           1 -- Laminar.
 //           3 -- 1eq turbulent.
 //           4 -- 2eq turbulent.
 // viscousName: Laminar or tubulent model.

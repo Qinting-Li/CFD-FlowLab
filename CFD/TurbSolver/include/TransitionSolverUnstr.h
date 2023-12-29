@@ -78,6 +78,15 @@ public:
     //! Compute the residual of turbulent equation.
     void GetResidual(ActionKey *actkey);
 
+    void RotateVectorFromInterface(Grid *gridIn, const int &neighborZoneIndex, const int &nEquation);
+
+    void InitMixingPlane(RDouble ***MixingPlaneVar, int Dim1, int Dim2, int Dim3, RDouble Value);
+
+    void AverageMixingPlane(Grid *grid);
+    void MixingPlaneDataTransfer(Grid *grid, Grid *NeighborGrid);
+    void NonReflective(Grid *grid, Grid *NeighborGrid);
+    void SetMixingPlaneData(Grid *grid);
+
     //! Restrict defect from fine to coarse grid.
     void RestrictDefect(Grid *fineGridIn, Grid *coarseGridIn);
 

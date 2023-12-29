@@ -120,7 +120,7 @@ inline void Grid::SetInterfaceInfo(InterfaceInfo *interfaceInfo)
     delete this->interfaceInfo;
     this->interfaceInfo = interfaceInfo;
 
-    if (interfaceFields) delete interfaceFields;    
+    if (interfaceFields) delete interfaceFields;
     interfaceFields = new InterfaceFields(interfaceInfo);
 }
 

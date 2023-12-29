@@ -123,7 +123,7 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
         if (GlobalDataBase::GetIntParaFromDB("isSolveSpecies"))
         {
             int nSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
-            string* speciesNameIncom = new string[nSpecies];
+            string *speciesNameIncom = new string[nSpecies];
             GlobalDataBase::GetData("speciesNameIncom", speciesNameIncom, PHSTRING, 1);
 
             for (int iSpecie = 0; iSpecie < nSpecies; ++iSpecie)
@@ -184,7 +184,7 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
         varIter ++;
     }
     GlobalDataBase::UpdateData("visualVariables", visualVariablesData, PHINT, nVisualVariables);
-    delete [] visualVariablesData;
+    delete[] visualVariablesData;    visualVariablesData = nullptr;
 }
 
 LIB_EXPORT Post_Visual::~Post_Visual()

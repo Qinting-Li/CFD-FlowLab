@@ -1135,10 +1135,16 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
     else
     {
         int nBoundFace = grid_in->GetNBoundFace();
+        int nTotalNode = grid_in->GetNTotalNode();
 
-        RDouble *x = grid_in->GetX();
-        RDouble *y = grid_in->GetY();
-        RDouble *z = grid_in->GetZ();
+        grid->ComputeMetrics(NULL);
+
+        RDouble *x   = grid_in->GetX();
+        RDouble *y   = grid_in->GetY();
+        RDouble *z   = grid_in->GetZ();
+        RDouble *xfc = grid->GetFaceCenterX();
+        RDouble *yfc = grid->GetFaceCenterY();
+        RDouble *zfc = grid->GetFaceCenterZ();
 
         using namespace PHENGLEI;
         vector < vector < int > > face2nodelist(nBoundFace);
@@ -1188,11 +1194,20 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
 
             for (int iNode = 0; iNode < NumPts; ++ iNode)
             {
-                int it = linkmap[iNode];
-
-                xBoundary[iNode] = x[it];
-                yBoundary[iNode] = y[it];
-                zBoundary[iNode] = z[it];
+                int nodeIndex = linkmap[iNode];
+                if (nodeIndex < nTotalNode)
+                {
+                    xBoundary[iNode] = x[nodeIndex];
+                    yBoundary[iNode] = y[nodeIndex];
+                    zBoundary[iNode] = z[nodeIndex];
+                }
+                else
+                {
+                    int faceIndex = nodeIndex - nTotalNode;
+                    xBoundary[iNode] = xfc[faceIndex];
+                    yBoundary[iNode] = yfc[faceIndex];
+                    zBoundary[iNode] = zfc[faceIndex];
+                }
             }
 
             PHWrite(data, xBoundary, NumPts);

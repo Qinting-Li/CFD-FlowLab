@@ -124,6 +124,11 @@ public:
 
     void RotateVectorFromInterface(Grid *gridIn, const int &neighborZoneIndex, const int &nEquation);//zhangyong
 
+    void AverageMixingPlane(Grid *grid) {};
+    void MixingPlaneDataTransfer(Grid *grid, Grid *NeighborGrid) {};
+    void NonReflective(Grid *grid, Grid *NeighborGrid) {};
+    void SetMixingPlaneData(Grid *grid) {};
+
     //! Interface: to put the boundary data to DataContainer for parallel communication.
     //! @param[in ]: actkey contains the control information for parallel communication.
     void UploadInterfaceData(ActionKey *actkey);

@@ -56,7 +56,7 @@ LIB_EXPORT void Data_Param::GetData(const string &name, void *data, int type, in
     if (iter != dataSet->end())
     {
         CopyDataValue(data, iter->GetData(), iter->GetType(), iter->GetSize());
-        
+
         //bcNameSet.insert(name);
         //count ++;
     }
@@ -65,7 +65,7 @@ LIB_EXPORT void Data_Param::GetData(const string &name, void *data, int type, in
         cout << "This data does not exist: " << name.c_str() << endl;
         exit(0);    //! It is temporary!!!
     }
-    
+
     /*int iCount = static_cast<int>(bcNameSet.size()) + 10000;
     if (iCount < count)
     {

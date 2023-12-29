@@ -80,6 +80,7 @@ public:
     void LoadResiduals(Grid *gridIn, FieldProxy *rhsProxy);   
 
     void Boundary(Grid *gridIn);
+    void CornerPoint(Grid *gridIn);
     void CalculateBoundaryData();
     void ComputeMassFlow(Grid *gridIn);
     void ComputeMassInFlow(Grid *gridIn, UnstructBC *bcRegionUnstruct);
@@ -178,6 +179,7 @@ public:
     void ViscousFlux   (Grid *gridIn);
     void ChemicalSource(Grid *gridIn);
     void gravitySource(Grid *gridIn);
+    void RotatingSource(Grid *gridIn);
     void DualTimeSource(Grid *gridIn);
     void StoreHistoricalResidual(Grid *gridIn);
     void UpdateUnsteadyFlow(Grid *gridIn);
@@ -404,23 +406,38 @@ public:
     //! @param[in] bcRegionUnstruct    an object of some BCRegionUnstruct class, contain the information of this BC.
     void PressureInletBCRiemannRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct); 
     
-    //calculate the total area of all BC regions with the same BC name.
+    //! calculate the total area of all BC regions with the same BC name.
     void calculateBCArea(Grid *gridIn, UnstructBC *bcRegionUnstruct); 
 
-    //calculate the mass flux ratio of all mass outlet BC regions with the same BC name.
+    //! calculate the mass flux ratio of all mass outlet BC regions with the same BC name.
     void CalculateMassFluxRatio();
 
-    // mass flow in boundary condition.
+    //! mass flow in boundary condition.
     void MassFlowInletBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct); 
     
-    // mass flow out boundary condition.
+    //! mass flow out boundary condition.
     void MassFlowOutletBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct);
+
+    //! mixing plane for multi row turbomachinery.
+    void MixingPlaneInterface(Grid *gridIn);
+
 private:
     void InviscidFluxWrap(Grid *gridIn, FaceProxy *faceProxy, INVScheme inv_scheme, int localStart, int localEnd);
     void RegisterCFDSolverInterfaceField();
     //! Register the interpoint field in the NS unstructured solver.
     void RegisterCFDSolverInterpointField();
     void RegisterOversetField();
+
+    void RotateVelocity(Grid *grid, RDouble **q);
+    void RotateVectorFromInterface(Grid *grid, const int &neighborZoneIndex, const int &neqn);
+
+    void InitMixingPlane(RDouble ***MixingPlaneVar,int Dim1,int Dim2, int Dim3,RDouble Value);
+
+    void AverageMixingPlane(Grid *grid);
+    void MixingPlaneDataTransfer(Grid *grid, Grid *NeighborGrid);
+    void NonReflective(Grid *grid, Grid *NeighborGrid);
+    void SetMixingPlaneData(Grid *grid);
+
     RDouble P0Wall(RDouble p1, RDouble gama, RDouble mach);
     RDouble R0Wall(RDouble r1, RDouble gama, RDouble mach);
     Limiter * CreateLimiter(Grid *gridIn);

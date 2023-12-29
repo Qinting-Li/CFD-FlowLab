@@ -1,3 +1,18 @@
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
+//          P   P  H   H  E      NN   N  G      L      E       I          +
+//          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
+//          P      H   H  E      N  N N  G   G  L      E       I          +
+//          P      H   H  EEEEE  N    N  GGGGG  LLLLL  EEEEE  III         +
+//------------------------------------------------------------------------+
+//          Platform for Hybrid Engineering Simulation of Flows           +
+//          China Aerodynamics Research and Development Center            +
+//                     (C) Copyright, Since 2010                          +
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! @file      MovingMesh.h
+//! @brief     Explain this file briefly.
+//! @author    He Kun.
+
 #pragma once
 
 namespace PHSPACE
@@ -49,7 +64,7 @@ class SixDofParameter;
 class DeformingParameter;
 class Grid;
 
-// the father class of the moving mesh. the features includes the deforming and rigid motion.
+//! the father class of the moving mesh. the features includes the deforming and rigid motion.
 class SimpleMovingMesh
 {
 public:
@@ -63,12 +78,12 @@ public:
     Grid *grid;
 
     int numberOfNodes;
-    // the init coordinate of the body axis.
+    //! the init coordinate of the body axis.
     vector< RDouble > xInit;
     vector< RDouble > yInit;
     vector< RDouble > zInit;
 
-    // the current coordinate of the body axis.
+    //! the current coordinate of the body axis.
     vector< RDouble > xPresent;
     vector< RDouble > yPresent;
     vector< RDouble > zPresent;
@@ -86,9 +101,9 @@ public:
 //! several common complex motion meshes.
 //! transform to the calculating axis system from the body axis by the six DOF information.
 //! for the rudder surface control.
-//1 - first rotate in the body axis system.(rudder deviation)
-//2 - implement the coordinate transform by the assembly information of the projectile.
-//3 - transform to the calculating axis system by the six DOF information of the projectile.
+//! 1 - first rotate in the body axis system.(rudder deviation)
+//! 2 - implement the coordinate transform by the assembly information of the projectile.
+//! 3 - transform to the calculating axis system by the six DOF information of the projectile.
 
 class OriginalMovingMesh
 {

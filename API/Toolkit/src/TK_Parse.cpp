@@ -11,7 +11,7 @@ namespace PHSPACE
 LIB_EXPORT void TK_Parse::ReadBasicData(fstream &file, Data_Param *database)
 {
     string line, keyword, name, word;
-    //string * value;
+    //string *value;
     vector <string> values;
     //string separator  = " =\t\r\n#$,;\"";
     //! \t is the tab key.
@@ -53,7 +53,7 @@ LIB_EXPORT void TK_Parse::ReadBasicData(fstream &file, Data_Param *database)
         {
             //! Array mode.
             string line1 = name;
-            //string sep  = " =\t\r\n#$,;\"[]";
+            //string sep = " =\t\r\n#$,;\"[]";
             string sep = " =\r\n\t#$,;\"[]";
             line1 = FindNextWord(line1, name, sep);
 

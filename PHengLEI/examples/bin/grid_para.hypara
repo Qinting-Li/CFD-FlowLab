@@ -20,21 +20,18 @@
 //             6 -- Ustar, mgrid.in.
 //             7 -- Hybrid, include both of unstructured and structured grid, *.fts.
 //             8 -- GMSH, *.msh.
-//             9 -- Gridgen type of structured grid, *.dat/*.grd.
+//             9 -- Gridgen type of structured grid, *.dat/*.grd. 
 
 int gridtype   = 0;
 int nAxisRotateTimes      = 0;
 int axisRotateOrder[]     = [1, 2, 3];
 double axisRotateAngles[] = [0.0, 0.0, 0.0]; 
 int from_gtype = 2;
-int nAxisRotateTimes      = 0;
-int axisRotateOrder[]     = [1, 2, 3];
-double axisRotateAngles[] = [0.0, 0.0, 0.0];
 
 #########################################################################
 #                           File path                                   #
 #########################################################################
 // from_gfile: path of original data file for unstructure grid convert from.
 // out_gfile:  path of target file for grid convert to, *.fts type of file usually.
-string from_gfile = "./grid/2D_cylinder_hybrid6.cgns";
-string out_gfile  = "./grid/2D_cylinder_hybrid6.fts";
+string from_gfile = "./grid/rae2822_hybrid2d.cas";
+string out_gfile  = "./grid/rae2822_hybrid2d.fts";

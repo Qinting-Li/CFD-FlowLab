@@ -3,6 +3,5 @@
 /CFD/bin/
 /Mesh/bin/
 /PHengLEI/build/
-/PHengLEI/3rdparty/libvs12/win-x64/mgrid-debug.lib
-/PHengLEI/3rdparty/mgrid.zip
-/PHengLEI/3rdparty/eigen
+/PHengLEI/3rdparty/
+

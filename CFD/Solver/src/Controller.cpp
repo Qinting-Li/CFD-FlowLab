@@ -328,7 +328,7 @@ void Controller::CommunicationNodeBCType()
                 }
             }
 
-            delete cdata;
+            delete cdata;    cdata = nullptr;
         }
     }
 }
@@ -821,6 +821,137 @@ void Controller::ZeroResiduals(int iSolver, int level)
     }
 }
 
+void Controller::MixingPlaneBoundary(int iSolver,int level)
+{
+    using namespace PHMPI;
+
+    int nSolver = GlobalDataBase::GetIntParaFromDB("maxNumOfSolver");
+
+    int referenceFrame = PHSPACE::GlobalDataBase::GetIntParaFromDB("referenceFrame");
+
+    //! MixingPlane Boundary.
+    if (referenceFrame == ROTATIONAL_FRAME)
+    {
+        int nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+
+        if (nTurboZone > 1)
+        {
+            //! first compute flux of all MixingPlane.
+            for (int iZone = 0; iZone < nTurboZone; ++iZone)
+            {
+                int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+                bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+                if (!ifCalTheZone)
+                {
+                    continue;
+                }
+
+                Grid *grid = GetGrid(zoneID, level);
+                CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+                solver->AverageMixingPlane(grid);
+            }
+
+            //! second communicate data.
+            for (int iZone = 0; iZone < nTurboZone; ++iZone)
+            {
+                int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+                bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+                if (!ifCalTheZone)
+                {
+                    continue;
+                }
+
+                Grid *grid = GetGrid(zoneID, level);
+                CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+                int upStreamZone, downStreamZone;
+
+                if (zoneID == 0)
+                {
+                    downStreamZone = zoneID + 1;
+                    Grid *NeighborGrid = GetGrid(downStreamZone, level);
+                    solver->MixingPlaneDataTransfer(grid, NeighborGrid);
+                }
+                else if (zoneID == nTurboZone - 1)
+                {
+                    upStreamZone = zoneID - 1;
+                    Grid *NeighborGrid = GetGrid(upStreamZone, level);
+                    solver->MixingPlaneDataTransfer(grid, NeighborGrid);
+                }
+                else
+                {
+                    upStreamZone = zoneID - 1;
+                    downStreamZone = zoneID + 1;
+                    Grid *NeighborGrid1 = GetGrid(upStreamZone, level);
+                    Grid *NeighborGrid2 = GetGrid(downStreamZone, level);
+                    solver->MixingPlaneDataTransfer(grid, NeighborGrid1);
+                    solver->MixingPlaneDataTransfer(grid, NeighborGrid2);
+                }
+            }
+
+            //! third NonReflective
+            for (int iZone = 0; iZone < nTurboZone; ++iZone)
+            {
+                int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+                bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+                if (!ifCalTheZone)
+                {
+                    continue;
+                }
+
+                Grid *grid = GetGrid(zoneID, level);
+                CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+                int upStreamZone, downStreamZone;
+
+                if (zoneID == 0)
+                {
+                    downStreamZone = zoneID + 1;
+                    Grid *NeighborGrid = GetGrid(downStreamZone, level);
+                    solver->NonReflective(grid, NeighborGrid);
+                }
+                else if (zoneID == nTurboZone - 1)
+                {
+                    upStreamZone = zoneID - 1;
+                    Grid *NeighborGrid = GetGrid(upStreamZone, level);
+                    solver->NonReflective(grid, NeighborGrid);
+                }
+                else
+                {
+                    upStreamZone = zoneID - 1;
+                    downStreamZone = zoneID + 1;
+                    Grid *NeighborGrid1 = GetGrid(upStreamZone, level);
+                    Grid *NeighborGrid2 = GetGrid(downStreamZone, level);
+                    solver->NonReflective(grid, NeighborGrid1);
+                    solver->NonReflective(grid, NeighborGrid2);
+                }
+            }
+
+            //! Fourth SetMixingPlaneData
+            for (int iZone = 0; iZone < nTurboZone; ++iZone)
+            {
+                int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+                bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+                if (!ifCalTheZone)
+                {
+                    continue;
+                }
+
+                Grid *grid = GetGrid(zoneID, level);
+                CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+                solver->SetMixingPlaneData(grid);
+            }
+        }
+    } 
+}
+
+
 void Controller::UpdateResiduals(int iSolver, int level)
 {
     int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
@@ -1242,6 +1373,7 @@ void Controller::SetBoundaryValueOfField(int iSolver, int level)
 
         solver->Boundary(grid);
     }
+    MixingPlaneBoundary(iSolver, level);
 }
 
 void Controller::PreSolveforStructHighOrder(int iSolver, int level)
@@ -1705,11 +1837,11 @@ void Controller::LUSGS(int iSolver, int level)
 
     for (int iLocalZone = 0; iLocalZone < nLocalZones; ++ iLocalZone)
     {
-        delete dqProxy[iLocalZone];
-        delete LUplusDQ[iLocalZone];
+        delete dqProxy[iLocalZone];    dqProxy[iLocalZone] = nullptr;
+        delete LUplusDQ[iLocalZone];    LUplusDQ[iLocalZone] = nullptr;
     }
-    delete []dqProxy;
-    delete []LUplusDQ;
+    delete [] dqProxy;    dqProxy = nullptr;
+    delete [] LUplusDQ;    LUplusDQ = nullptr;
 }
 
 void Controller::DualTimeStepsLUSGS(int iSolver, int level)
@@ -1891,7 +2023,7 @@ void Controller::ForwardSweep(int iSolver, int level, FieldProxy **dqProxy, Fiel
     {
         sweepNormal += zoneNormal[iZone];
     }
-    delete []zoneNormal;    zoneNormal = NULL;
+    delete [] zoneNormal;    zoneNormal = nullptr;
 }
 
 void Controller::BackwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
@@ -1925,7 +2057,7 @@ void Controller::BackwardSweep(int iSolver, int level, FieldProxy **dqProxy, Fie
     {
         sweepNormal += zoneNormal[iZone];
     }
-    delete []zoneNormal;    zoneNormal = NULL;
+    delete [] zoneNormal;    zoneNormal = nullptr;
 }
 
 void Controller::UpdateFlowField(int iSolver, int level, FieldProxy **dqProxy)
@@ -2730,7 +2862,7 @@ void Controller::CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy)
                 {
                     streamsize nlen = sendBuffer->size();
 
-                    // Send the data to neighbors.
+                    //! Send the data to neighbors.
                     send(sendBuffer, receiveProcessor, nlen, requestContainer, tag);
                 }
             }
@@ -2890,7 +3022,7 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
                 CommunicateSpecificArray(level, "dcdy", nSpeciesNumber);
                 CommunicateSpecificArray(level, "dcdz", nSpeciesNumber);
             }
-            if(periodicType == 2)
+            if(periodicType == ROTATIONAL_PERIODICITY)
             {
                 for (int iZone = 0; iZone < nZones; ++ iZone)
                 {
@@ -2921,7 +3053,7 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             CommunicateSpecificArray(level, "gradTurbulenceCellCenterX", nEquation);
             CommunicateSpecificArray(level, "gradTurbulenceCellCenterY", nEquation);
             CommunicateSpecificArray(level, "gradTurbulenceCellCenterZ", nEquation);
-            if(periodicType == 2)
+            if(periodicType == ROTATIONAL_PERIODICITY)
             {
                 for (int iZone = 0; iZone < nZones; ++ iZone)
                 {
@@ -2952,7 +3084,7 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             CommunicateSpecificArray(level, "gradTransitionCellCenterX", nEquation);
             CommunicateSpecificArray(level, "gradTransitionCellCenterY", nEquation);
             CommunicateSpecificArray(level, "gradTransitionCellCenterZ", nEquation);
-            if(periodicType == 2)
+            if(periodicType == ROTATIONAL_PERIODICITY)
             {
                 for (int iZone = 0; iZone < nZones; ++ iZone)
                 {
@@ -2987,7 +3119,7 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             CommunicateSpecificArray(level, "gradUVWTCellCenterY", nTotalVariable);
             CommunicateSpecificArray(level, "gradUVWTCellCenterZ", nTotalVariable);
 
-            if(periodicType == 2)
+            if(periodicType == ROTATIONAL_PERIODICITY)
             {
                 for (int iZone = 0; iZone < nZones; ++ iZone)
                 {
@@ -3025,6 +3157,9 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
     }
     if (systemGridType == UNSTRUCTGRID)
     {
+        int nZones = PHMPI::GetNumberofGlobalZones();
+        int currentProcessor = PHMPI::GetCurrentProcessorID();
+
         if (iSolver == NS_SOLVER)
         {
             //! NSSolver, GradientCommunication for struct high order has been done at another place, with another function.
@@ -3037,6 +3172,36 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             CommunicateSpecificArray(level, "gradTemperatureX", nTemperatureModel);
             CommunicateSpecificArray(level, "gradTemperatureY", nTemperatureModel);
             CommunicateSpecificArray(level, "gradTemperatureZ", nTemperatureModel);
+
+            if (periodicType == ROTATIONAL_PERIODICITY)
+            {
+                for (int iZone = 0; iZone < nZones; ++iZone)
+                {
+                    int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
+                    ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
+                    int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
+
+                    for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++iNeighbor)
+                    {
+                        int neighborZone = globalNeighborZones->GetZoneIndexOfNeighbor(iNeighbor);
+                        int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
+
+                        if (currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
+                        {
+                            continue;
+                        }
+
+                        if (currentProcessor == sendProcessor)
+                        {
+                            CFDSolver *solver1 = GetCFDSolver(iZone, iSolver);
+                            Grid *grid = PHSPACE::GetGrid(iZone, level);
+                            solver1->RotateVectorFromInterface(grid, iZone, nNSEquation);
+                            solver1->RotateVectorFromInterface(grid, iZone, nTemperatureModel);
+                        }
+                    }
+                }
+            }
+
         }
         else if (iSolver == TURB_SOLVER && iLES == NOLES_SOLVER)
         {
@@ -3044,6 +3209,31 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             CommunicateSpecificArray(level, "gradTurbulenceX", nEquation);
             CommunicateSpecificArray(level, "gradTurbulenceY", nEquation);
             CommunicateSpecificArray(level, "gradTurbulenceZ", nEquation);
+
+            if (periodicType == ROTATIONAL_PERIODICITY)
+            {
+                for (int iZone = 0; iZone < nZones; ++iZone)
+                {
+                    int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
+                    ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
+                    int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
+                    for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++iNeighbor)
+                    {
+                        int neighborZone = globalNeighborZones->GetZoneIndexOfNeighbor(iNeighbor);
+                        int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
+                        if (currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
+                        {
+                            continue;
+                        }
+                        if (currentProcessor == sendProcessor)
+                        {
+                            CFDSolver *solver1 = GetCFDSolver(iZone, iSolver);
+                            Grid *grid = PHSPACE::GetGrid(iZone, level);
+                            solver1->RotateVectorFromInterface(grid, iZone, nEquation);
+                        }
+                    }
+                }
+            }
         }
         else if (iSolver == TRANSITION_SOLVER)
         {
@@ -3051,6 +3241,32 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             CommunicateSpecificArray(level, "gradTransitionX", nEquation);
             CommunicateSpecificArray(level, "gradTransitionY", nEquation);
             CommunicateSpecificArray(level, "gradTransitionZ", nEquation);
+
+            if (periodicType == ROTATIONAL_PERIODICITY)
+            {
+                for (int iZone = 0; iZone < nZones; ++iZone)
+                {
+                    int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
+                    ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
+                    int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
+                    for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++iNeighbor)
+                    {
+                        int neighborZone = globalNeighborZones->GetZoneIndexOfNeighbor(iNeighbor);
+                        int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
+                        if (currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
+                        {
+                            continue;
+                        }
+                        if (currentProcessor == sendProcessor)
+                        {
+                            CFDSolver *solver1 = GetCFDSolver(iZone, iSolver);
+                            Grid *grid = PHSPACE::GetGrid(iZone, level);
+                            solver1->RotateVectorFromInterface(grid, iZone, nEquation);
+                        }
+                    }
+                }
+            }
+
         }
     }
 }
@@ -5023,7 +5239,7 @@ void Controller::DestroyRHSProxy(int level)
         }
 
         delete rightHandSideProxy[zoneID];
-        rightHandSideProxy[zoneID] = NULL;
+        rightHandSideProxy[zoneID] = nullptr;
     }
 }
 
@@ -5083,8 +5299,8 @@ void Controller::RecoverResidual(int iSolver, int level)
 bool Controller::JudgeIfCalTheZoneForDensityBasedMethod(int zoneID, int iSolver)
 {
     using namespace PHMPI;
-    Zone* zone = GetZone(zoneID);
-    bool  IfCalTheZone = true;
+    Zone *zone = GetZone(zoneID);
+    bool IfCalTheZone = true;
     if (!zone)
     {
         IfCalTheZone = false;

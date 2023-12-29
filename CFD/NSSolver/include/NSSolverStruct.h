@@ -114,7 +114,14 @@ private:
     void ChemicalSource(Grid *gridIn);  //! Source.
     
     void gravitySource(Grid* gridIn) {};  //! Source.
-                                        
+
+    void RotatingSource(Grid* gridIn) {};  //! Source.
+
+    void AverageMixingPlane(Grid *grid) {};
+    void MixingPlaneDataTransfer(Grid *grid, Grid *Neighborgrid) {};
+    void NonReflective(Grid *grid, Grid *NeighborGrid) {};
+    void SetMixingPlaneData(Grid *grid) {};
+
     //! Compute the distance between the center of the grid cell on the first layer and the center of the surface cell.
     void ComputeFirstLayerGridHeight(Grid *gridIn);
     void UpdateUnsteadyFlow(Grid *gridIn);

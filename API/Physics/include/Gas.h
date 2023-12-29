@@ -28,7 +28,7 @@ namespace PHSPACE
 namespace GAS_SPACE
 {
 //! General gas constant,the unit is J/(Mol*K).
-//const RDouble rjmk = 8.31434;
+//! const RDouble rjmk = 8.31434;
 const RDouble rjmk = GeneralGasConstant;
 
 class FluidParameter
@@ -576,25 +576,25 @@ public:
     virtual void Primitive2ConservativeR2(RDouble *prim, RDouble Ttr, RDouble Tv, RDouble Te, RDouble *q){};
 
 #ifdef USE_GMRESSOLVER
-    // GMRESPV 
-    // the derivative of primitive variables w.r.t conservative variables
+    //! GMRESPV 
+    //! the derivative of primitive variables w.r.t conservative variables
     virtual void dPrimitive2dConservative(RDouble *prim, RDouble gama, RDouble** dqdcv){};
 
-    // GMRESVis
-    // the derivative of primitive variables w.r.t conservative variables
+    //! GMRESVis
+    //! the derivative of primitive variables w.r.t conservative variables
     virtual void dGradient2dPrimitive(RDouble *prim, int sign, RDouble** dgraddq, char direction, RDouble nxs, RDouble nys, RDouble nzs, RDouble ns, RDouble vol,int nPara = 6){};
     
-    // GMRESnolim
+    //! GMRESnolim
     virtual void dGradient2dPrimitive4limiter(int sign, RDouble** dgraddq, char direction, RDouble nxs, RDouble nys, RDouble nzs, RDouble ns, RDouble vol){};
 #endif
 
-    //The conservative variables are transfered to the primitive variables.
+    //! The conservative variables are transfered to the primitive variables.
     //! @param[in ]: q indicates the conservative variables.
     //! @param[in ]: gama denotes the specific heat ratio, which is valid in the perfect gas.
     //! @param[out]: prim indicates the primitive variables.
     //! @param[in/out]: temperature denotes the array of temperatures in the current time-advancing step and next time-advancing step.
-    //As input parameter, temperature indicates the temperature of the current time-advancing step. Meanwhile,
-    //it denotes the temperature of the next time-advancing step as output parameter.
+    //! As input parameter, temperature indicates the temperature of the current time-advancing step. Meanwhile,
+    //! it denotes the temperature of the next time-advancing step as output parameter.
     virtual void Conservative2Primitive(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature){};
     virtual void Conservative2PrimitiveR(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature){};
     virtual void LimitTemperature(RDouble &Temperature, RDouble Delta, RDouble Minimum){};
@@ -1138,7 +1138,7 @@ public:
     //! @param[out]: speciesBeta indicates the partial derivatives of pressure vs. species density(dp/d(rho * ci)).
     virtual void ComputePressureDerivatives(RDouble *primitiveVars, RDouble *temperatures, RDouble &alpha, RDouble &beta, RDouble &eta, RDouble *speciesBeta) {};
 
-    //=======codes for test ================
+    //! =======codes for test ================
     virtual void  ComputeMixturegasThermalParameter(RDouble *massF, RDouble trTemperature, RDouble vTemperature, RDouble eTemperature, int Dimensional = 0){};
 
     virtual void  ComputeMixtureCvAndEnergy(RDouble *massF, RDouble trTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy){};

@@ -203,6 +203,9 @@ void CombinGrid::MergeInterface2All()
     face2Interface = new int [nTotalFace];
     PHSPACE::SetField(face2Interface, -1, nTotalFace);
 
+    int referenceFrame = PHSPACE::GlobalDataBase::GetIntParaFromDB("referenceFrame");
+    int nMixingPlaneInterfaces = 0;
+
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         UnstructGrid *gridLocal = UnstructGridCast(grid_in[iZone]);
@@ -217,11 +220,12 @@ void CombinGrid::MergeInterface2All()
         {
             UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
             int bcType = bcRegion->GetBCType();
+            string bcName = bcRegion->GetBCName();
 
             vector<int> *faceIndex = bcRegion->GetFaceIndex();
             for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
-                // iFace is the face number in the set of faceIndex.
+                //! iFace is the face number in the set of faceIndex.
                 int iFace = *iter;
                 int globalFaceID = face2all[iFace];
 
@@ -235,10 +239,47 @@ void CombinGrid::MergeInterface2All()
                         ++ nMergedInterfaces;
                     }
                 }
+
+                if (referenceFrame == ROTATIONAL_FRAME)
+                {
+                    int nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
+
+                    string MixingPlane[100];
+                    GlobalDataBase::GetData("MixingPlane", &MixingPlane, PHSTRING, 2 * nTurboZone - 2);
+
+                    string MixingInName, MixingOutName;
+                    if (iZone == 0)
+                    {
+                        MixingOutName = MixingPlane[iZone];
+                    }
+                    else if (iZone == nTurboZone - 1)
+                    {
+                        MixingInName = MixingPlane[2 * iZone - 1];
+                    }
+                    else
+                    {
+                        MixingInName  = MixingPlane[2 * iZone - 1];
+                        MixingOutName = MixingPlane[2 * iZone];
+                    }
+                   
+                    if (bcName == MixingInName || bcName == MixingOutName)
+                    {
+                        ++nMergedInterfaces;
+                        ++nMixingPlaneInterfaces;
+                    }
+                }
             }
         }
 
-        WriteLogFile("number of merged interfaces: ", nMergedInterfaces);
+        //! this means rotating frame with mixing plane.
+        if (referenceFrame == ROTATIONAL_FRAME && nMixingPlaneInterfaces > 0)
+        {
+            WriteLogFile("number of Mixing Plane: ", nMixingPlaneInterfaces);
+        }
+        else
+        {
+            WriteLogFile("number of Merged Interfaces: ", nMergedInterfaces);
+        }
         if (numberOfZones > 1 && nMergedInterfaces == 0)
         {
             TK_Exit::ExceptionExit("The sub-zone is independent of other zones, consider more!");

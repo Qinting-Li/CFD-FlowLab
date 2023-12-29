@@ -8,7 +8,7 @@
 //          Platform for Hybrid Engineering Simulation of Flows           +
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
-//                         PHengLEI 2306                                  +
+//                         PHengLEI 2312                                  +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ###########################################################################
 #                       Default parameters for Grid conversion            #
@@ -51,7 +51,7 @@ int gridReorder         = 0;
 int faceReorderMethod   = 0;
 
 // nAxisRotateTimes: number of axis rotating times, zero (default) meaning without rotating.
-// axisRotateOrder : axis rotating order.
+// axisRotateOrder : axis rotating order. The size of array "axisRotateOrder" is equal to nAxisRotateTimes.
 //             1 -- X-axis.
 //             2 -- Y-axis.
 //             3 -- Z-axis.
@@ -399,7 +399,7 @@ string str_limiter_name = "vanalbada";
 #************************************************************************
 // viscousType: Viscous model.
 //              0 -- Euler.
-//              1 -- Lamilar.
+//              1 -- Laminar.
 //              2 -- Algebraic.
 //              3 -- 1eq turbulent.
 //              4 -- 2eq turbulent.
@@ -1417,6 +1417,41 @@ int morphing_0 = 0;
 
 // post indentify.
 int integralOrder = 4;
+
+#************************************************************************
+#                         TurboMachinery Parameter                      *
+#************************************************************************
+// ----------------- Rotating Frame --------------------------------
+// referenceFrame: whether rotating reference frame used.
+//               0 -- Stationary Frame.
+//               1 -- Translational Frame.
+//               2 -- Rotational Frame.
+int referenceFrame = 0;
+
+// nTurboZone: number of rows of TurboMachinery.
+int nTurboZone = 0;
+
+// Periodic_Name: a list of periodic boundary name, the  number of name equals to 2*nZone
+//                "Periodic_up, Periodic_down" means a pair of name of one zone
+string Periodic_Name[] = "Periodic_up, Periodic_down";
+
+// PeriodicRotationAngle means rotating angle for each zone.
+// PeriodicRotationAngle[] = [theta1, theta2...]
+//                theta1, theta2 means rotating angle for zone1,zone2.
+double PeriodicRotationAngle[] = [16.363636363636];
+
+// MixingPlane: a list of mixing plane name, the  number of name equals to 2*nZone-2
+//                "MixOut, MixIn" the first is upstream zone outlet, the second is downstream zone inlet.
+string MixingPlane[] = "";
+
+// Omega: angular velocity(rad/s) of each zone.
+double Omega[] = [-1680.0];
+
+// shroud: define turbomachinery shroud of each zone, because shroud do not rotate.
+string shroud[] = "shroud";
+
+// nSpanSection: number of spanwise section used for mixing plane.
+int nSpanSection = 0;
 
 // ---------------- ATP read --------------------------------------------
 //@int    inflowParaType = 0;

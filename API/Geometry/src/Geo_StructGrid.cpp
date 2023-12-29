@@ -4090,7 +4090,7 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
         int ibcregion = ibcregions[iFace];
         StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
         string bcName = bcregion->GetBCName();
-        if (periodicType == 2)
+        if (periodicType == ROTATIONAL_PERIODICITY)
         {
             RDouble rotcell[3] = {0.0, 0.0, 0.0};
             if (bcName == "Periodic_up")
@@ -4136,7 +4136,7 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
             cdata->read(&Data_2nd_Layer[nodeID][0], sizeof(RDouble));
             cdata->read(&Data_2nd_Layer[nodeID][1], sizeof(RDouble));
             cdata->read(&Data_2nd_Layer[nodeID][2], sizeof(RDouble));
-            if (periodicType == 2)
+            if (periodicType == ROTATIONAL_PERIODICITY)
             {
                 RDouble rotData_1st[3] = {0.0};
                 RDouble rotData_2nd[3] = {0.0};
@@ -6033,7 +6033,7 @@ LIB_EXPORT void StructGrid::BuildGridLink(LinkStruct *link)
     int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
     RDouble translationLength[3] = {0.0};
     GlobalDataBase::GetData("translationLength", &translationLength, PHDOUBLE, 3);
-    double rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
+    RDouble rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
     rotationAngle = rotationAngle * PI / 180;
 
     StructBCSet *structBCSet = this->GetStructBCSet();
@@ -6068,7 +6068,7 @@ LIB_EXPORT void StructGrid::BuildGridLink(LinkStruct *link)
                     
                     if (bcregion->GetBCName() == "Periodic_up")
                     {
-                        if (periodicType == 1)
+                        if (periodicType == TRANSLATIONAL_PERIODICITY)
                         {
                             for (int m = 0; m < nlist; ++ m)
                             {
@@ -6077,7 +6077,7 @@ LIB_EXPORT void StructGrid::BuildGridLink(LinkStruct *link)
                                 zlist[m] += translationLength[2];
                             }
                         }
-                        else if (periodicType == 2)
+                        else if (periodicType == ROTATIONAL_PERIODICITY)
                         {
                             RDouble rotPoint[3]={0.0, 0.0, 0.0};
                             for (int m = 0; m < nlist; ++ m)
@@ -6865,7 +6865,7 @@ void DownloadInterfaceValue(StructGrid *grid, RDouble4D *f, const string &name, 
             StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
             string bcName = bcregion->GetBCName();
             //! Rotate process only for vector in rotational periodicity.
-            if (neqn >= 4 && periodicType == 2)
+            if (neqn >= 4 && periodicType == ROTATIONAL_PERIODICITY)
             {
                 if (bcName == "Periodic_up" || bcName == "Periodic_down")
                 {

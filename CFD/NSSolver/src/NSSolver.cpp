@@ -188,7 +188,7 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
             ActionKey *actkeyDumpRestartData = new ActionKey();
             FillActionKey(actkeyDumpRestartData, DUMP_RESTART, level);
             DumpRestartData(actkeyDumpRestartData);
-            delete actkeyDumpRestartData;
+            delete actkeyDumpRestartData;    actkeyDumpRestartData = nullptr;
         }
 
         else
@@ -197,7 +197,7 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
             ActionKey *actkeyDumpRestartData = new ActionKey();
             FillActionKey(actkeyDumpRestartData, DUMP_RESTART, level);
             DumpProtectData(actkeyDumpRestartData, RestartFile);
-            delete actkeyDumpRestartData;
+            delete actkeyDumpRestartData;    actkeyDumpRestartData = nullptr;
 
             if(outnstep > 1)
             {
@@ -236,7 +236,7 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
             ActionKey *actkeyTecOutAverageFlow = new ActionKey();
             FillActionKey(actkeyTecOutAverageFlow, VISUALIZATION_AVERAGE_FLOW, level);
             TecOutAverageFlow(actkeyTecOutAverageFlow);
-            delete actkeyTecOutAverageFlow;
+            delete actkeyTecOutAverageFlow;    actkeyTecOutAverageFlow = nullptr;
         }
 
         if (IsNeedReynoldsStressStatistics())
@@ -245,7 +245,7 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
             ActionKey *actkeyTecOutAverageReynoldsStress = new ActionKey();
             FillActionKey(actkeyTecOutAverageReynoldsStress, VISUALIZATION_AVERAGE_ReynoldsStress, level);
             TecOutAverageReynoldsStress(actkeyTecOutAverageReynoldsStress);
-            delete actkeyTecOutAverageReynoldsStress;
+            delete actkeyTecOutAverageReynoldsStress;    actkeyTecOutAverageReynoldsStress = nullptr;
         }
     }
 
@@ -256,7 +256,7 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
         ActionKey *actkeyDumpResidual = new ActionKey();
         FillActionKey(actkeyDumpResidual, DUMP_RESIDUAL, level);
         DumpResidual(actkeyDumpResidual);
-        delete actkeyDumpResidual;
+        delete actkeyDumpResidual;    actkeyDumpResidual = nullptr;
     }
 
     int intervalStepForce = parameters->GetIntervalStepForce();
@@ -270,19 +270,19 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
                 ActionKey *actkeyDumpAirForceCoef = new ActionKey();
                 FillActionKey(actkeyDumpAirForceCoef, DUMP_AIR_FORCE_COEF, level);
                 DumpAirForceCoef(actkeyDumpAirForceCoef);
-                delete actkeyDumpAirForceCoef;
+                delete actkeyDumpAirForceCoef;    actkeyDumpAirForceCoef = nullptr;
 
                 //! To dump wall airforce coefficient data.
                 ActionKey *actkeyDumpWallAircoef = new ActionKey();
                 FillActionKey(actkeyDumpWallAircoef, DUMP_CP_DISTRI, 0);
                 DumpCpDistri(actkeyDumpWallAircoef);
-                delete actkeyDumpWallAircoef;
+                delete actkeyDumpWallAircoef;    actkeyDumpWallAircoef = nullptr;
 
                 //! To dump surface information data.
                 ActionKey *actkeyDumpSurfaceInfo = new ActionKey();
                 FillActionKey(actkeyDumpSurfaceInfo, DUMP_SURFACE_INFO, 0);
                 DumpSurfaceInfo(actkeyDumpSurfaceInfo);
-                delete actkeyDumpSurfaceInfo;
+                delete actkeyDumpSurfaceInfo;    actkeyDumpSurfaceInfo = nullptr;
 
                 if (sys_gridtype == STRUCTGRID)
                 {
@@ -290,7 +290,7 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
                     ActionKey *actkeyDumpHeatFlux = new ActionKey();
                     FillActionKey(actkeyDumpHeatFlux, DUMP_HEATFLUX, 0);
                     DumpHeatFlux(actkeyDumpHeatFlux);
-                    delete actkeyDumpHeatFlux;
+                    delete actkeyDumpHeatFlux;    actkeyDumpHeatFlux = nullptr;
                 }
             }
         }
@@ -302,13 +302,13 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
                 ActionKey *actkeyDumpWallAircoef = new ActionKey();
                 FillActionKey(actkeyDumpWallAircoef, DUMP_CP_DISTRI, 0);
                 DumpCpDistri(actkeyDumpWallAircoef);
-                delete actkeyDumpWallAircoef;
+                delete actkeyDumpWallAircoef;    actkeyDumpWallAircoef = nullptr;
 
                 //! To dump surface information data.
                 ActionKey *actkeyDumpSurfaceInfo = new ActionKey();
                 FillActionKey(actkeyDumpSurfaceInfo, DUMP_SURFACE_INFO, 0);
                 DumpSurfaceInfo(actkeyDumpSurfaceInfo);
-                delete actkeyDumpSurfaceInfo;
+                delete actkeyDumpSurfaceInfo;    actkeyDumpSurfaceInfo = nullptr;
             }
         }
     }
@@ -594,11 +594,11 @@ void NSSolver::CheckSurfaceHeatingChange(Grid *grid, int level)
 
 void NSSolver::FillActionKey(ActionKey *actkey, int action, int level)
 {
-    actkey->action     = action;
-    actkey->solver     = NS_EQUATION;
-    actkey->solverID   = this->GetIndex();
-    actkey->kind       = SOLVER_BASED;
-    actkey->level      = level;
+    actkey->action   = action;
+    actkey->solver   = NS_EQUATION;
+    actkey->solverID = this->GetIndex();
+    actkey->kind     = SOLVER_BASED;
+    actkey->level    = level;
 }
 
 RDouble NSSolver::ComputeCFL(RDouble partialCFL)
@@ -630,7 +630,7 @@ RDouble NSSolver::ComputeCFL(RDouble partialCFL)
 
    int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
     RDouble cfl;
-    // GMRES1st2nd
+    //! GMRES1st2nd
     if(tscheme != GMRES)
     {
         cfl = cflStart + (cflEnd - cflStart) * MIN (iterationStep, cflNstep) / cflNstep;
@@ -639,7 +639,7 @@ RDouble NSSolver::ComputeCFL(RDouble partialCFL)
     {
         int newIterStep = GlobalDataBase::GetIntParaFromDB("newnstep");
         RDouble GMRESCFLScale = GlobalDataBase::GetDoubleParaFromDB("GMRESCFLScale");
-        cfl = cflStart*pow(GMRESCFLScale,newIterStep);
+        cfl = cflStart * pow(GMRESCFLScale,newIterStep);
     }
 
     return cfl;
@@ -650,10 +650,16 @@ void NSSolver::SourceFlux(Grid *grid)
     Param_NSSolver *parameters = GetControlParameters();
     int nChemical = parameters->GetChemicalFlag();
     int nChemicalSource = parameters->GetNChemicalSource();
+    int referenceFrame = PHSPACE::GlobalDataBase::GetIntParaFromDB("referenceFrame");
 
     if (nChemical == 1 && nChemicalSource == 1)
     {
         ChemicalSource(grid);
+    }
+
+    if (referenceFrame == ROTATIONAL_FRAME)
+    {
+        RotatingSource(grid);
     }
 
     //! It is null for Structure grid calculation.
@@ -763,7 +769,7 @@ void NSSolver::RegisterCFDSolverInterfaceField()
 
     int nTemperatureModel = parameters->GetTemperatureModel();
     CFDSolver::RegisterInterfaceField("t", PHDOUBLE, nTemperatureModel);
-    
+
     int numberOfSpecies = parameters->GetNumberOfSpecies();
     int *visualVariablesType = postVisualWall->GetVisualVariablesType();
     int nWallVariables = postVisualWall->GetVisualVariablesNumber();
@@ -781,7 +787,7 @@ void NSSolver::RegisterCFDSolverInterfaceField()
     int nVisualVariables_in = GlobalDataBase::GetIntParaFromDB("nVisualVariables");
     int visualVariables[100];
     GlobalDataBase::GetData("visualVariables", visualVariables, PHINT, nVisualVariables_in);
-    Post_Visual* postVisualization = new Post_Visual(nVisualVariables_in, visualVariables);
+    Post_Visual *postVisualization = new Post_Visual(nVisualVariables_in, visualVariables);
     set<int>::iterator varIter;
     set<int> visualVariablesID = postVisualization->GetVisualVariables();
     for (varIter = visualVariablesID.begin(); varIter != visualVariablesID.end(); ++ varIter)

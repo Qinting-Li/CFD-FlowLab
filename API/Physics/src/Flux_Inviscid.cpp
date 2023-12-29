@@ -111,11 +111,11 @@ INVScheme GetINVScheme(int scheme_id)
         inv_scheme = Hlle_Scheme;
         break;
     #ifdef USE_GMRESSOLVER
-    case ISCHEME_GMRES_ROE:    // GMRES
-        inv_scheme = GMRES_INVScheme;  //GMRES3D
+    case ISCHEME_GMRES_ROE:    //! GMRES
+        inv_scheme = GMRES_INVScheme;    //! GMRES3D
         break;
-    case ISCHEME_GMRES_Steger:    // GMRES3D
-        inv_scheme = GMRES_INVScheme;  
+    case ISCHEME_GMRES_Steger:    //! GMRES3D
+        inv_scheme = GMRES_INVScheme;
         break;
     #endif
     default:
@@ -428,7 +428,7 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
     delete []dq;    dq = NULL;
 }
 #ifdef USE_GMRESSOLVER
-// GMRESCSR
+//! GMRESCSR
 inline int GetIndexOfBlockJacobianMatrix(vector<int> &AI, vector<int> &AJ, int nEquation, int rCell, int qCell)
 {
     int index;
@@ -448,7 +448,7 @@ inline int GetIndexOfBlockJacobianMatrix(vector<int> &AI, vector<int> &AJ, int n
     index *= nEquation;
     return index;
 }
-// GMRES
+//! GMRES
 void GMRES_Roe_Scheme_ConservativeForm_test(FaceProxy* face_proxy, InviscidSchemeParameter* invSchemePara)
 {
     const RDouble LITTLE = 1.0E-10;
@@ -465,31 +465,31 @@ void GMRES_Roe_Scheme_ConservativeForm_test(FaceProxy* face_proxy, InviscidSchem
     RDouble refMachNumber = invSchemePara->GetMachNumber();
     RDouble entrFixCoefLeft = invSchemePara->GetLeftEntropyFixCoefficient();
     RDouble entrFixCoefRight = invSchemePara->GetRightEntropyFixCoefficient();
-    RDouble** qL = invSchemePara->GetLeftQ();
-    RDouble** qR = invSchemePara->GetRightQ();
-    RDouble* gamaL = invSchemePara->GetLeftGama();
-    RDouble* gamaR = invSchemePara->GetRightGama();
-    RDouble* pressureCoeffL = face_proxy->GetPressureCoefficientL();
-    RDouble* pressureCoeffR = face_proxy->GetPressureCoefficientR();
-    RDouble* xfn = invSchemePara->GetFaceNormalX();
-    RDouble* yfn = invSchemePara->GetFaceNormalY();
-    RDouble* zfn = invSchemePara->GetFaceNormalZ();
-    RDouble* vgn = invSchemePara->GetFaceVelocity();
-    RDouble** flux = invSchemePara->GetFlux();
-    RDouble** tl = invSchemePara->GetLeftTemperature();
-    RDouble** tr = invSchemePara->GetRightTemperature();
+    RDouble **qL = invSchemePara->GetLeftQ();
+    RDouble **qR = invSchemePara->GetRightQ();
+    RDouble *gamaL = invSchemePara->GetLeftGama();
+    RDouble *gamaR = invSchemePara->GetRightGama();
+    RDouble *pressureCoeffL = face_proxy->GetPressureCoefficientL();
+    RDouble *pressureCoeffR = face_proxy->GetPressureCoefficientR();
+    RDouble *xfn = invSchemePara->GetFaceNormalX();
+    RDouble *yfn = invSchemePara->GetFaceNormalY();
+    RDouble *zfn = invSchemePara->GetFaceNormalZ();
+    RDouble *vgn = invSchemePara->GetFaceVelocity();
+    RDouble **flux = invSchemePara->GetFlux();
+    RDouble **tl = invSchemePara->GetLeftTemperature();
+    RDouble **tr = invSchemePara->GetRightTemperature();
     RDouble mach2 = refMachNumber * refMachNumber;
 
     using namespace IDX;
     using namespace GAS_SPACE;
 
-    RDouble* prim = new RDouble[nEquation]();
-    RDouble* qConserveL = new RDouble[nEquation]();
-    RDouble* qConserveR = new RDouble[nEquation]();
-    RDouble* dq = new RDouble[nEquation]();
+    RDouble *prim = new RDouble[nEquation]();
+    RDouble *qConserveL = new RDouble[nEquation]();
+    RDouble *qConserveR = new RDouble[nEquation]();
+    RDouble *dq = new RDouble[nEquation]();
 
-    RDouble* primL = new RDouble[nEquation]();
-    RDouble* primR = new RDouble[nEquation]();
+    RDouble *primL = new RDouble[nEquation]();
+    RDouble *primR = new RDouble[nEquation]();
     RDouble temperaturesL[3] = { 0 }, temperaturesR[3] = { 0 };
 
     for (int iFace = 0; iFace < nLength; ++iFace)
@@ -500,17 +500,17 @@ void GMRES_Roe_Scheme_ConservativeForm_test(FaceProxy* face_proxy, InviscidSchem
             primR[iEqn] = qR[iEqn][iFace];
         }
 
-        RDouble& rL = primL[IR];
-        RDouble& uL = primL[IU];
-        RDouble& vL = primL[IV];
-        RDouble& wL = primL[IW];
-        RDouble& pL = primL[IP];
+        RDouble &rL = primL[IR];
+        RDouble &uL = primL[IU];
+        RDouble &vL = primL[IV];
+        RDouble &wL = primL[IW];
+        RDouble &pL = primL[IP];
 
-        RDouble& rR = primR[IR];
-        RDouble& uR = primR[IU];
-        RDouble& vR = primR[IV];
-        RDouble& wR = primR[IW];
-        RDouble& pR = primR[IP];
+        RDouble &rR = primR[IR];
+        RDouble &uR = primR[IU];
+        RDouble &vR = primR[IV];
+        RDouble &wR = primR[IW];
+        RDouble &pR = primR[IP];
 
         RDouble xsn = xfn[iFace];
         RDouble ysn = yfn[iFace];
@@ -732,7 +732,7 @@ void GMRES_Roe_Scheme_ConservativeForm_test(FaceProxy* face_proxy, InviscidSchem
 }
 
 
-// GMRES 
+//! GMRES 
 void GMRES_Roe_Scheme_ConservativeForm_wholeJacobian(FaceProxy* face_proxy, InviscidSchemeParameter* invSchemePara)
 {
     const RDouble LITTLE    = 1.0E-10;
@@ -749,42 +749,42 @@ void GMRES_Roe_Scheme_ConservativeForm_wholeJacobian(FaceProxy* face_proxy, Invi
     RDouble refMachNumber       = invSchemePara->GetMachNumber();
     RDouble entrFixCoefLeft     = invSchemePara->GetLeftEntropyFixCoefficient();
     RDouble entrFixCoefRight    = invSchemePara->GetRightEntropyFixCoefficient();
-    RDouble** qL                = invSchemePara->GetLeftQ();
-    RDouble** qR                = invSchemePara->GetRightQ();
-    RDouble* gamaL              = invSchemePara->GetLeftGama();
-    RDouble* gamaR              = invSchemePara->GetRightGama();
-    RDouble* pressureCoeffL     = face_proxy->GetPressureCoefficientL();
-    RDouble* pressureCoeffR     = face_proxy->GetPressureCoefficientR();
-    RDouble* xfn                = invSchemePara->GetFaceNormalX();
-    RDouble* yfn                = invSchemePara->GetFaceNormalY();
-    RDouble* zfn                = invSchemePara->GetFaceNormalZ();
-    RDouble* vgn                = invSchemePara->GetFaceVelocity();
-    RDouble** flux              = invSchemePara->GetFlux();
-    RDouble** tl                = invSchemePara->GetLeftTemperature();
-    RDouble** tr                = invSchemePara->GetRightTemperature();
-    int* leftcellindexofFace    = face_proxy->GetLeftCellIndexOfFace();
-    int* rightcellindexofFace   = face_proxy->GetRightCellIndexOfFace();
-    GeomProxy* geomProxy        = face_proxy->GetGeomProxy();
-    RDouble* areas              = geomProxy->GetFaceArea();
-    RDouble** dRdq             = face_proxy->GetJacobianMatrix();
+    RDouble **qL                = invSchemePara->GetLeftQ();
+    RDouble **qR                = invSchemePara->GetRightQ();
+    RDouble *gamaL              = invSchemePara->GetLeftGama();
+    RDouble *gamaR              = invSchemePara->GetRightGama();
+    RDouble *pressureCoeffL     = face_proxy->GetPressureCoefficientL();
+    RDouble *pressureCoeffR     = face_proxy->GetPressureCoefficientR();
+    RDouble *xfn                = invSchemePara->GetFaceNormalX();
+    RDouble *yfn                = invSchemePara->GetFaceNormalY();
+    RDouble *zfn                = invSchemePara->GetFaceNormalZ();
+    RDouble *vgn                = invSchemePara->GetFaceVelocity();
+    RDouble **flux              = invSchemePara->GetFlux();
+    RDouble **tl                = invSchemePara->GetLeftTemperature();
+    RDouble **tr                = invSchemePara->GetRightTemperature();
+    int *leftcellindexofFace    = face_proxy->GetLeftCellIndexOfFace();
+    int *rightcellindexofFace   = face_proxy->GetRightCellIndexOfFace();
+    GeomProxy *geomProxy        = face_proxy->GetGeomProxy();
+    RDouble *areas              = geomProxy->GetFaceArea();
+    RDouble **dRdq             = face_proxy->GetJacobianMatrix();
     RDouble mach2               = refMachNumber * refMachNumber;
 
     using namespace IDX;
     using namespace GAS_SPACE;
 
-    RDouble* prim       = new RDouble[nEquation]();
-    RDouble* qConserveL = new RDouble[nEquation]();
-    RDouble* qConserveR = new RDouble[nEquation]();
-    RDouble* qCvL       = new RDouble[nEquation]();
-    RDouble* qCvR       = new RDouble[nEquation]();
-    RDouble* qCvLpert   = new RDouble[nEquation]();
-    RDouble* qCvRpert   = new RDouble[nEquation]();
-    RDouble* dFluxdCv   = new RDouble[nEquation]();
-    RDouble  dCvpert;
+    RDouble *prim       = new RDouble[nEquation]();
+    RDouble *qConserveL = new RDouble[nEquation]();
+    RDouble *qConserveR = new RDouble[nEquation]();
+    RDouble *qCvL       = new RDouble[nEquation]();
+    RDouble *qCvR       = new RDouble[nEquation]();
+    RDouble *qCvLpert   = new RDouble[nEquation]();
+    RDouble *qCvRpert   = new RDouble[nEquation]();
+    RDouble *dFluxdCv   = new RDouble[nEquation]();
+    RDouble dCvpert;
 
-    RDouble* primL = new RDouble[nEquation]();
-    RDouble* primR = new RDouble[nEquation]();
-    RDouble* fluxp = new RDouble[nEquation](); // flux proxy
+    RDouble *primL = new RDouble[nEquation]();
+    RDouble *primR = new RDouble[nEquation]();
+    RDouble *fluxp = new RDouble[nEquation](); // flux proxy
     RDouble temperaturesL[3] = { 0 }, temperaturesR[3] = { 0 };
     RDouble perturbScale = 0.001;
 
@@ -831,8 +831,8 @@ void GMRES_Roe_Scheme_ConservativeForm_wholeJacobian(FaceProxy* face_proxy, Invi
     delete[]qCvR;           qCvR = NULL;
     delete[]fluxp;          fluxp = NULL;
 }
-// GMRESAD CSR format  GMRESCSR
-// GMRES for finite difference considering nBoundFace using primitive variables with auto difference
+//! GMRESAD CSR format  GMRESCSR
+//! GMRES for finite difference considering nBoundFace using primitive variables with auto difference
 void GMRES_Roe_Scheme_ConservativeForm(FaceProxy* face_proxy, InviscidSchemeParameter* invSchemePara)
 {
     const RDouble LITTLE    = 1.0E-10;
@@ -846,41 +846,41 @@ void GMRES_Roe_Scheme_ConservativeForm(FaceProxy* face_proxy, InviscidSchemePara
     int nPrecondition       = invSchemePara->GetIfPrecondition();
     int nIdealState         = invSchemePara->GetIfIdealState();
 
-    // GMRESBoundary
+    //! GMRESBoundary
     int localStart  = face_proxy->GetlocalStart();
     int localEnd    = face_proxy->GetlocalEnd();
     int nBoundFace  = face_proxy->GetnBoundFace();
     int nTotalCell  = face_proxy->GetnTotalCell();
     int nMid;
-    // GMRESBCorrection
+    //! GMRESBCorrection
     vector<int>* wallFaceIndex = face_proxy->GetWallFaceIndex();
 
     RDouble refMachNumber       = invSchemePara->GetMachNumber();
     RDouble entrFixCoefLeft     = invSchemePara->GetLeftEntropyFixCoefficient();
     RDouble entrFixCoefRight    = invSchemePara->GetRightEntropyFixCoefficient();
-    RDouble** qL                = invSchemePara->GetLeftQ();
-    RDouble** qR                = invSchemePara->GetRightQ();
-    RDouble** qLC               = invSchemePara->GetLeftQC();  // GMRESPassQC
-    RDouble** qRC               = invSchemePara->GetRightQC(); // GMRESPassQC
-    RDouble* gamaL              = invSchemePara->GetLeftGama();
-    RDouble* gamaR              = invSchemePara->GetRightGama();
-    RDouble* pressureCoeffL     = face_proxy->GetPressureCoefficientL();
-    RDouble* pressureCoeffR     = face_proxy->GetPressureCoefficientR();
-    RDouble* xfn                = invSchemePara->GetFaceNormalX();
-    RDouble* yfn                = invSchemePara->GetFaceNormalY();
-    RDouble* zfn                = invSchemePara->GetFaceNormalZ();
-    RDouble* vgn                = invSchemePara->GetFaceVelocity();
-    RDouble** flux              = invSchemePara->GetFlux();
-    RDouble** tl                = invSchemePara->GetLeftTemperature();
-    RDouble** tr                = invSchemePara->GetRightTemperature();
-    int* leftcellindexofFace    = face_proxy->GetLeftCellIndexOfFace();
-    int* rightcellindexofFace   = face_proxy->GetRightCellIndexOfFace();
-    GeomProxy* geomProxy        = face_proxy->GetGeomProxy();
-    RDouble* areas              = geomProxy->GetFaceArea();
-    RDouble** dRdq             = face_proxy->GetJacobianMatrix();
-    // GMRESBoundary    
-    RDouble** dDdP              = face_proxy->GetdDdPMatrix();
-    // GMRES CSR
+    RDouble **qL                = invSchemePara->GetLeftQ();
+    RDouble **qR                = invSchemePara->GetRightQ();
+    RDouble **qLC               = invSchemePara->GetLeftQC();  // GMRESPassQC
+    RDouble **qRC               = invSchemePara->GetRightQC(); // GMRESPassQC
+    RDouble *gamaL              = invSchemePara->GetLeftGama();
+    RDouble *gamaR              = invSchemePara->GetRightGama();
+    RDouble *pressureCoeffL     = face_proxy->GetPressureCoefficientL();
+    RDouble *pressureCoeffR     = face_proxy->GetPressureCoefficientR();
+    RDouble *xfn                = invSchemePara->GetFaceNormalX();
+    RDouble *yfn                = invSchemePara->GetFaceNormalY();
+    RDouble *zfn                = invSchemePara->GetFaceNormalZ();
+    RDouble *vgn                = invSchemePara->GetFaceVelocity();
+    RDouble **flux              = invSchemePara->GetFlux();
+    RDouble **tl                = invSchemePara->GetLeftTemperature();
+    RDouble **tr                = invSchemePara->GetRightTemperature();
+    int *leftcellindexofFace    = face_proxy->GetLeftCellIndexOfFace();
+    int *rightcellindexofFace   = face_proxy->GetRightCellIndexOfFace();
+    GeomProxy *geomProxy        = face_proxy->GetGeomProxy();
+    RDouble *areas              = geomProxy->GetFaceArea();
+    RDouble **dRdq             = face_proxy->GetJacobianMatrix();
+    //! GMRESBoundary    
+    RDouble **dDdP              = face_proxy->GetdDdPMatrix();
+    //! GMRES CSR
     vector<int> AI = face_proxy->GetJacobianAI4GMRES();
     vector<int> AJ = face_proxy->GetJacobianAJ4GMRES();
 
@@ -897,19 +897,19 @@ void GMRES_Roe_Scheme_ConservativeForm(FaceProxy* face_proxy, InviscidSchemePara
     RDouble  dFluxdpR[nEquation][nEquation];
     RDouble  dFluxdpwall[nEquation][nEquation];
 
-    // auto difference allocation
-    ADReal* primL  = new ADReal[nEquation]();
-    ADReal* primR  = new ADReal[nEquation]();
-    ADReal* fluxp  = new ADReal[nEquation](); // flux proxy
+    //! auto difference allocation
+    ADReal *primL  = new ADReal[nEquation]();
+    ADReal *primR  = new ADReal[nEquation]();
+    ADReal *fluxp  = new ADReal[nEquation](); //! flux proxy
 
-    RDouble* primLC = new RDouble[nEquation](); // GMRESPassQC
-    RDouble* primRC = new RDouble[nEquation](); // GMRESPassQC
-    
+    RDouble *primLC = new RDouble[nEquation](); //! GMRESPassQC
+    RDouble *primRC = new RDouble[nEquation](); //! GMRESPassQC
+
     RDouble temperaturesL[3] = { 0 }, temperaturesR[3] = { 0 };
     RDouble perturbScale = 0.001;
     
-    RDouble** dqdcvL= new RDouble*[nEquation];
-    RDouble** dqdcvR= new RDouble*[nEquation];
+    RDouble **dqdcvL= new RDouble*[nEquation];
+    RDouble **dqdcvR= new RDouble*[nEquation];
     for(int indexI=0; indexI < nEquation; indexI++)
     {
         dqdcvL[indexI] = new RDouble[nEquation];

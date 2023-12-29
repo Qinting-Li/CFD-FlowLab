@@ -6859,7 +6859,7 @@ void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDou
 {
     using namespace IDX;
     using namespace GAS_SPACE;
-    // The number of species.
+    //! The number of species.
     int nSpecies = nLaminar - nNSEquation + 1;
     RDouble alpha = 0.0, beta = 0.0, gama = 0.0, *speciesBeta;
     speciesBeta = new RDouble[nSpecies];
@@ -6869,14 +6869,14 @@ void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDou
     RDouble wVelocity = primitiveVars[IW];
     RDouble squareVelocity, absoluteVelocity, relativeVelocity;
 
-    // The absolute velocity.
+    //! The absolute velocity.
     absoluteVelocity = nx * uVelocity + ny * vVelocity + nz * wVelocity;
-    // The relative velocity.
+    //! The relative velocity.
     relativeVelocity = absoluteVelocity - moveVelocity;
-    // Compute squared velocity.
+    //! Compute squared velocity.
     squareVelocity = uVelocity * uVelocity + vVelocity * vVelocity + wVelocity * wVelocity;
 
-    // Obtain the temperatures.
+    //! Obtain the temperatures.
     RDouble transRotationTemperature = temperature[ITT];
     RDouble vibrationTemperature = transRotationTemperature;
     RDouble electronTemperature = transRotationTemperature;
@@ -6890,18 +6890,18 @@ void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDou
         }
     }
 
-    // Compute the total enthalpy.
+    //! Compute the total enthalpy.
     RDouble totalEnthalpy = gas->GetMixedGasEnthalpy(primitiveVars, transRotationTemperature, vibrationTemperature, electronTemperature);
     totalEnthalpy += 0.5 * squareVelocity;
 
-    // Compute the coefficient b1 and b2 (see formula A.5 in PHengLEI Theory manual).
+    //! Compute the coefficient b1 and b2 (see formula A.5 in PHengLEI Theory manual).
     RDouble b1 = nx * deltaQ[IRU] + ny * deltaQ[IRV] + nz * deltaQ[IRW] - absoluteVelocity * deltaQ[IR];
     RDouble dh = uVelocity * deltaQ[IRU] + vVelocity * deltaQ[IRV] + wVelocity * deltaQ[IRW] - deltaQ[IRE];
     RDouble b2 = 0.0, b3 = 0.0, electronPressure = 0.0;
 
     if (nTemperatureModel == 1)
     {
-        // Compute the coefficients in the chemical reaction.
+        //! Compute the coefficients in the chemical reaction.
         gas->ComputeCoefficientInMXDQ(primitiveVars, alpha, beta, speciesBeta);
 
         b2 = beta * deltaQ[IR] - alpha * dh;
@@ -6910,13 +6910,13 @@ void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDou
             b2 += speciesBeta[s] * deltaQ[nNSEquation + s];
         }
     }
-    else // Multi-temperature model.
+    else //! Multi-temperature model.
     {
-        // Compute the pressure of electron.
+        //! Compute the pressure of electron.
         electronPressure = gas->GetElectronPressure(primitiveVars, electronTemperature);
         RDouble *speciesGama = new RDouble[nSpecies];
 
-        // Compute partial derivatives of pressure and electron pressure to conservative variables.
+        //! Compute partial derivatives of pressure and electron pressure to conservative variables.
         gas->GetMultiTemperatureModelPartialDerivatives(primitiveVars, transRotationTemperature, electronTemperature,
             alpha, beta, gama, speciesBeta, speciesGama);
 
@@ -6940,10 +6940,10 @@ void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDou
             b3 += speciesGama[iSpices] * deltaQ[nNSEquation + iSpices];
         }
 
-        delete []speciesGama;
+        delete[] speciesGama;    speciesGama = nullptr;
     }
 
-    // Comoute the fluxes called M*dQ.
+    //! Comoute the fluxes called M*dQ.
     flux[IR ] = relativeVelocity * deltaQ[IR ] + b1;
     flux[IRU] = relativeVelocity * deltaQ[IRU] + b1 * uVelocity     + b2 * nx;
     flux[IRV] = relativeVelocity * deltaQ[IRV] + b1 * vVelocity     + b2 * ny;
@@ -6954,7 +6954,7 @@ void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDou
         flux[m] = relativeVelocity * deltaQ[m] + b1 * primitiveVars[m];
     }
 
-    // Modify the fluxes of multi-temperature model.
+    //! Modify the fluxes of multi-temperature model.
     if (nTemperatureModel == 2) 
     {
         flux[nLaminar + 1] = relativeVelocity * deltaQ[nLaminar + 1] + b1 * (primitiveVars[nLaminar + 1] + electronPressure / primitiveVars[IR]) + b3 * absoluteVelocity;
@@ -6965,7 +6965,7 @@ void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDou
         flux[nLaminar + 2] = relativeVelocity * deltaQ[nLaminar + 2] + b1 * (primitiveVars[nLaminar + 2] + electronPressure / primitiveVars[IR]) + b3 * absoluteVelocity;
     }
 
-    // To add rM * dQ that is the product of the invscid spectrum radius rM and increment dQ.
+    //! To add rM * dQ that is the product of the invscid spectrum radius rM and increment dQ.
     RDouble spectrumRadiusTerm = iSign * radius / faceArea;
     for (int m = 0; m < nLaminar; ++ m)
     {
@@ -6979,13 +6979,13 @@ void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDou
         flux[nLaminar - 1] = 0.0;
     }
 
-    // Modify the fluxes of vibration and electron energy terms.
+    //! Modify the fluxes of vibration and electron energy terms.
     for (int m = 0; m < nTemperatureModel - 1; ++ m)
     {
         flux[nLaminar + 1 + m] += spectrumRadiusTerm * deltaQ[nLaminar + 1 + m];
         flux[nLaminar + 1 + m] *= 0.5 * faceArea;
     }
-    delete []speciesBeta;
+    delete[] speciesBeta;    speciesBeta = nullptr;
 }
 
 void ChemicalMXDQR(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDouble ny, RDouble nz, RDouble faceArea, RDouble moveVelocity,

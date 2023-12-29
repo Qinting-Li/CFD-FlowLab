@@ -1397,9 +1397,9 @@ void IO_HDF5Read::ReadInterfaceInfo(hid_t loc_id, Grid *gridIn)
             interFace2BoundaryFace[iFace] = interFace2BoundaryFaceTemp[iFace];
         }
 
-        delete [] interFace2ZoneIDTemp;
-        delete [] interFace2InterFaceIDTemp;
-        delete [] interFace2BoundaryFaceTemp;
+        delete [] interFace2ZoneIDTemp;    interFace2ZoneIDTemp = nullptr;
+        delete [] interFace2InterFaceIDTemp;    interFace2InterFaceIDTemp = nullptr;
+        delete [] interFace2BoundaryFaceTemp;    interFace2BoundaryFaceTemp = nullptr;
     }
 
     H5Gclose(grpData);

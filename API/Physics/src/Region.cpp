@@ -1021,7 +1021,7 @@ LIB_EXPORT void Region::DataMonitor()
     {
         return;
     }
-    
+
     int ifSetDataMonitor = 0;
     GlobalDataBase::GetData("ifSetDataMonitor", &ifSetDataMonitor, PHINT, 1);
     if (!ifSetDataMonitor) return;
@@ -1621,7 +1621,7 @@ void Region::SwapZoneConnectivityBetweenNeighborZones()
     {
         //! "This" refers to zoneIndex, "current" refers to information on current processor.
         ZoneNeighbor *zoneNeighborOfThisZone = zoneConnectivity->GetZoneNeighbor(zoneIndex);
-            
+
         //! The proc id of this zone.
         int send_proc = GetZoneProcessorID(zoneIndex);
 
@@ -1768,16 +1768,16 @@ void Region::SwapZoneConnectivityForPointBetweenNeighborZones()
 void Region::SwapZoneNeighborsInformation()
 {
     WriteLogFile("Start Swapping Zone Neighbors Information!");
-   
+
     TimeSpan timeSpan;
     BroadcastZoneNeighborInformation();
     timeSpan.ShowTimeSpanToLogFile("Neighbor zone information BCast "); 
-   
+
     timeSpan.ResetTime();
     SwapNeighborsSendContent();
     //SwapNeighborsSendContentNonblocking();
     timeSpan.ShowTimeSpanToLogFile("Swap Neighbor Send Content ");
-    
+
     WriteLogFile("End Swapping Zone Neighbors Information!");
 }
 
@@ -2035,9 +2035,9 @@ void Region::SwapNeighborsSendContent()
                 InterfaceInfo *tiinfo = GetInterfaceInfo(zoneIndexOfNeighbor, level);
                 tiinfo->FillFaceIndexForSend(iZone, faceIndexForSend);
             }
-            if (faceIndexForSend != NULL)
+            if (faceIndexForSend != nullptr)
             {
-                delete [] faceIndexForSend;    faceIndexForSend = NULL;
+                delete [] faceIndexForSend;    faceIndexForSend = nullptr;
             }
         }
     }
@@ -2139,7 +2139,7 @@ void Region::DumpWallFaceCenter()
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         DataContainer *cdata = actkeyDumpFaceCenter->GetData();
-        delete cdata;
+        delete cdata;    cdata = nullptr;
 
         DataContainer *cdataNew = new DataContainer();
         actkeyDumpFaceCenter->SetData(cdataNew);
@@ -2171,7 +2171,7 @@ void Region::DumpWallFaceCenter()
         ParallelCloseFile(actkeyDumpFaceCenter);
     }
 
-    delete actkeyDumpFaceCenter;    actkeyDumpFaceCenter = NULL;
+    delete actkeyDumpFaceCenter;    actkeyDumpFaceCenter = nullptr;
 }
 
 void Region::SetNGrids()
@@ -2242,7 +2242,7 @@ void Region::CheckMeshMultigridByFTS()
             }
         }
     }
-    
+
     PH_CompareMaxMin(km_grid, 2);
 
     int nMGLevel = GlobalDataBase::GetIntParaFromDB("nMGLevel");
@@ -2252,7 +2252,7 @@ void Region::CheckMeshMultigridByFTS()
         GlobalDataBase::UpdateData("nMGLevel", &km_grid, PHINT, 1);
         this->nGrids = km_grid;
     }
-    
+
     if (myid == server && km_grid < 1024)
     {
         PrintToWindow("\nThe most valid multi-grid level is: ", km_grid, "\n\n");
@@ -2304,7 +2304,7 @@ void Region::InitCellBoundaryType(int level)
         int myid = PHMPI::GetCurrentProcessorID();
         if (myid == send_proc)
         {
-            Grid* grid = GetGrid(iZone);
+            Grid *grid = GetGrid(iZone);
             grid->ComputeCellBoundaryType();
         }
     }
@@ -2343,7 +2343,7 @@ void Region::ComputeMetrics(int level)
             WriteScreen(actkey);
         }
     }
-    delete actkey;    actkey = NULL;
+    delete actkey;    actkey = nullptr;
 }
 
 void Region::GlobalGridStatic(int level)
@@ -3079,7 +3079,7 @@ void Region::CommunicateCellCenterData()
         }
 
         //delete task;
-        delete actkey;
+        delete actkey;    actkey = nullptr;
     }
 }
 
@@ -3532,7 +3532,7 @@ void Region::TestReconstruction()
             grid->SkewnessSummary(actkey);
         }
     }
-    delete actkey;
+    delete actkey;    actkey = nullptr;
 }
 
 void Region::ComputeWeight()
@@ -3631,8 +3631,8 @@ LIB_EXPORT void Region::ChangeBoundaryCondition()
             int nBCRegion = unstructBCSet->GetnBCRegion();
             for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
             {
-                UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
-             
+                UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+
                 int originalBC = bcRegion->GetBCType();
                 int newBC = bcMap.TranslateBC(originalBC);
                 if (newBC != originalBC)

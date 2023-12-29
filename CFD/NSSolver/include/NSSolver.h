@@ -123,6 +123,9 @@ protected:
     //! @param[in]: gridIn denotes the current computational regions of the grids.
     virtual void ChemicalSource(Grid *grid) = 0;
 
+    //! Source flux: compute the rotating source term.
+    virtual void RotatingSource(Grid *grid) = 0;
+
     //! Source flux: Compute the gravity source terms.
     //! @param[in]: gridIn denotes the current computational regions of the grids.
     virtual void gravitySource(Grid *grid) = 0;

@@ -79,6 +79,15 @@ public:
     //! Residuals are set to zero
     void ZeroResiduals(Grid *gridIn);
 
+    void RotateVectorFromInterface(Grid *gridIn, const int &neighborZoneIndex, const int &nEquation);
+
+    void InitMixingPlane(RDouble ***MixingPlaneVar, int Dim1, int Dim2, int Dim3, RDouble Value);
+
+    void AverageMixingPlane(Grid *grid);
+    void MixingPlaneDataTransfer(Grid *grid, Grid *NeighborGrid);
+    void NonReflective(Grid *grid, Grid *NeighborGrid);
+    void SetMixingPlaneData(Grid *grid);
+
     //! Judge if the flow field variables file already exists in Turb solver.
     bool JudgeIfRestart();
     bool JudgeIfReadAverage();

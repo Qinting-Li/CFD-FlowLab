@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      Param_LESSolverUnstruct.h
 //! @brief     Record paramters of LESSolverUnstruct.
-//! @author    zipzhang.
+//! @author    Zhang Zipei.
 #pragma once
 #include "Param_LESSolver.h"
 

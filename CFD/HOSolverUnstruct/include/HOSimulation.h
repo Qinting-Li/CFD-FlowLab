@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      HOSimulation.h
 //! @brief     High Order Solver Simulation.
-//! @author    
+//! @author    xxx
 
 #pragma once
 #include "Region.h"

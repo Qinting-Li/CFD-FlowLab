@@ -69,9 +69,9 @@ LIB_EXPORT Pre_WalldistCompute::~Pre_WalldistCompute()
 LIB_EXPORT void Pre_WalldistCompute::Run()
 {
     WriteLogFile("  Start Wall Distance Computing ...");
-    
+
     FillWallStructureNew();
-    
+
     InitWallDistance();
 
     int systemGridType = GlobalDataBase::GetIntParaFromDB("sys_gridtype");
@@ -112,13 +112,12 @@ LIB_EXPORT void Pre_WalldistCompute::Run()
         if (walldistComputeMethod != FAST_METHOD) break;
 
         ++ this->rotateAxis;
-        delete wallFaceTree;
-        wallFaceTree = 0;
+        delete wallFaceTree;    wallFaceTree = nullptr;
+
         if (walldistComputeMethod == KDTREE_METHOD && systemGridType == STRUCTGRID)
         {
-            delete wallFaceKDTree;
-            wallFaceKDTree = 0;
-       }
+            delete wallFaceKDTree;    wallFaceKDTree = nullptr;
+        }
 
         if (this->rotateAxis == 4)
         {
@@ -137,7 +136,7 @@ LIB_EXPORT void Pre_WalldistCompute::Run()
 
     timeSpan->ShowTimeSpanToLogFile("Wall distance computing");
     WriteLogFile("  End Wall Distance Computing ...");
-    delete timeSpan;
+    delete timeSpan;    timeSpan = nullptr;
 }
 
 LIB_EXPORT void Pre_WalldistCompute::ComputeNodeDistance()
@@ -172,7 +171,7 @@ void Pre_WalldistCompute::FillWallStructureNew()
 
     PrintToWindow("Barrier for wall structure filling ...\n");
     PrintToWindow("End for wall structure filling ...\n");
-    delete timeSpan;
+    delete timeSpan;    timeSpan = nullptr;
 }
 
 void Pre_WalldistCompute::FillWallStructure()
@@ -467,7 +466,7 @@ void Pre_WalldistCompute::ComputeWallDist2DByBinarySearching(UnstructGrid *grid)
                     {
                         walldist[iCell] = wdst;
                         markFace = static_cast<int>(iFace);
-                    } 
+                    }
                 }
             }
 
@@ -1928,7 +1927,7 @@ void Pre_WalldistCompute::ServerCollection()
     {
         int tag = myid;
         send(cdata, serverTmp, tag);
-        delete cdata;
+        delete cdata;    cdata = nullptr;
     }
     else
     {
@@ -1947,7 +1946,7 @@ void Pre_WalldistCompute::ServerCollection()
 
             if (myid != iProc)
             {
-                delete cdata;
+                delete cdata;    cdata = nullptr;
                 cdata = new DataContainer();
                 receive(cdata, iProc, tag);
             }
@@ -1960,8 +1959,7 @@ void Pre_WalldistCompute::ServerCollection()
                 DeCompressWallStructure(cdata, false);
             }
 
-            delete cdata;
-            cdata = 0;
+            delete cdata;    cdata = nullptr;
         }
     }
 }
@@ -2435,8 +2433,8 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
 
     if (!nSolidFace)
     {
-        // If there are not solid cell, do nothing and return.
-        delete [] isWallFace;    isWallFace = NULL;
+        //! If there are not solid cell, do nothing and return.
+        delete [] isWallFace;    isWallFace = nullptr;
         return;
     }
 
@@ -2570,15 +2568,15 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
         cdata->write(&zfn0, sizeof(RDouble));
     }
 
-    delete [] isWallPoint;    isWallPoint = NULL;
-    delete [] globalPoint2Wall;    globalPoint2Wall = NULL;
-    delete [] xWall;    xWall = NULL;
-    delete [] yWall;    yWall = NULL;
-    delete [] zWall;    zWall = NULL;
-    delete [] nPointsPerWallFace;    nPointsPerWallFace = NULL;
-    delete [] isWallFace;    isWallFace = NULL;
-    delete [] localWallFace2Global;    localWallFace2Global = NULL;
-    delete [] wallface2node;    wallface2node = NULL;
+    delete [] isWallPoint;    isWallPoint = nullptr;
+    delete [] globalPoint2Wall;    globalPoint2Wall = nullptr;
+    delete [] xWall;    xWall = nullptr;
+    delete [] yWall;    yWall = nullptr;
+    delete [] zWall;    zWall = nullptr;
+    delete [] nPointsPerWallFace;    nPointsPerWallFace = nullptr;
+    delete [] isWallFace;    isWallFace = nullptr;
+    delete [] localWallFace2Global;    localWallFace2Global = nullptr;
+    delete [] wallface2node;    wallface2node = nullptr;
 }
 
 void Pre_WalldistCompute::FilterWallStructureList()
@@ -3846,7 +3844,7 @@ void Pre_WalldistCompute::PostWallDistanceByNodeMethod(UnstructGrid *grid)
         }
     }
 
-    delete [] nodeOnWall;
+    delete[] nodeOnWall;    nodeOnWall = nullptr;
 }
 
 void Pre_WalldistCompute::PostWallDistance(UnstructGrid *grid)
@@ -5239,10 +5237,10 @@ void GenerateWalldist()
     int viscousType = 0;
     GlobalDataBase::GetData("viscousType", &viscousType, PHINT, 1);
     int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
-    int nIsComputeWallDist = GlobalDataBase::GetIntParaFromDB("nIsComputeWallDist");   //  just for laminar or Euler flow.  by dms
+    int nIsComputeWallDist = GlobalDataBase::GetIntParaFromDB("nIsComputeWallDist");    //! just for laminar or Euler flow.  by dms
 
     int sysGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    if(viscousType > 1 || sysGridType != STRUCTGRID)   //turbulence flow  or not STRUCTGRID
+    if(viscousType > 1 || sysGridType != STRUCTGRID)    //! turbulence flow  or not STRUCTGRID
     {
         nIsComputeWallDist = 0;
     }
@@ -5443,7 +5441,7 @@ void AllocateWalldist()
             grid->AllocateWalldist();
         }
     }
-    delete actkey;
+    delete actkey;    actkey = nullptr;
 }
 
 #ifdef USE_TecplotLib
@@ -5650,7 +5648,7 @@ void WriteWalldist()
     }
 
     ParallelCloseHDF5File(actkey);
-    delete actkey;
+    delete actkey;    actkey = nullptr;
 }
 
 void DumpWalldistToFile(ActionKey *actkey, int iZone)
@@ -5706,14 +5704,14 @@ void DumpWalldistToFile(ActionKey *actkey, int iZone)
     WriteLogFile(oss2);
     //*/
 
-    delete [] walldist;
-    delete [] wdt;
-    delete [] nearestwallfacenormalx;
-    delete [] nearestwallfacenormaly;
-    delete [] nearestwallfacenormalz;
-    delete [] nwfnx;
-    delete [] nwfny;
-    delete [] nwfnz;
+    delete [] walldist;    walldist = nullptr;
+    delete [] wdt;    wdt = nullptr;
+    delete [] nearestwallfacenormalx;    nearestwallfacenormalx = nullptr;
+    delete [] nearestwallfacenormaly;    nearestwallfacenormaly = nullptr;
+    delete [] nearestwallfacenormalz;    nearestwallfacenormalz = nullptr;
+    delete [] nwfnx;    nwfnx = nullptr;
+    delete [] nwfny;    nwfny = nullptr;
+    delete [] nwfnz;    nwfnz = nullptr;
 }
 
 void WalldistStatics()

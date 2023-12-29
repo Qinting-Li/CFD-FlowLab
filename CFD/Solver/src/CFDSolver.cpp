@@ -191,7 +191,7 @@ void CFDSolver::FreeControlParameters()
     if (controlParameters)
     {
         delete controlParameters;
-        controlParameters = NULL;
+        controlParameters = nullptr;
     }
 }
 
@@ -2871,6 +2871,9 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
         {
             if (TecioMission == 0) break;
 
+            string bcName;
+            cdata->read_string(bcName);
+
             PHRead(cdata, &IMxOrNumPts, 1);
             PHRead(cdata, &JMxOrNumElements, 1);
             PHRead(cdata, &KMxOrNumFaces, 1);
@@ -2909,11 +2912,11 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
             if (oriGridIndex >= 0)
             {
                 ossZoneTitle << "\"oriZone_"<< oriGridIndex << " ";
-                ossZoneTitle << "Zone_"<< GridID << "\"";
+                ossZoneTitle << "Zone_"<< GridID << "_" << bcName << "\"";
             }
             else
             {
-                ossZoneTitle << "\"Zone_"<< GridID << "\"";
+                ossZoneTitle << "\"Zone_"<< GridID << "_" << bcName << "\"";
             }
 
             wallAircoefFile << "zone T = " << ossZoneTitle.str() << "\n";
@@ -3239,6 +3242,9 @@ void CFDSolver::WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> dat
         {
             if (TecioMission == 0) break;
 
+            string bcName;
+            cdata->read_string(bcName);
+
             PHRead(cdata, &IMxOrNumPts, 1);
             PHRead(cdata, &JMxOrNumElements, 1);
             PHRead(cdata, &KMxOrNumFaces, 1);
@@ -3305,7 +3311,7 @@ void CFDSolver::WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> dat
             {
                 oss1 << "oriZone_"<< oriGridIndex<<" ";
             }
-            oss1 << "Zone_"<< GridID;
+            oss1 << "Zone_"<< GridID << "_" << bcName;
             string Zonetitle = oss1.str();
             const char * ZoneTitle = Zonetitle.c_str();
 
@@ -3408,7 +3414,7 @@ void CFDSolver::UploadInterfaceData()
                 solver->UploadInterfaceData(actkey);
             }
         }
-        delete actkey;
+        delete actkey;    actkey = nullptr;
     }
 }
 
@@ -3439,7 +3445,7 @@ void CFDSolver::UpdateInterfaceData()
             MainTaskBlocking(actkey);
         }
         //delete task;
-        delete actkey;
+        delete actkey;    actkey = nullptr;
     }
 }
 
@@ -3473,7 +3479,7 @@ void CFDSolver::DownloadInterfaceData()
             }
         }
 
-        delete actkey;
+        delete actkey;    actkey = nullptr;
     }
 }
 
@@ -3593,7 +3599,7 @@ void CFDSolver::UploadInterpointData()
                 solver->UploadInterpointData(actkey);
             }
         }
-        delete actkey;
+        delete actkey;    actkey = nullptr;
     }
 }
 
@@ -3623,8 +3629,8 @@ void CFDSolver::UpdateInterpointData()
         {
             task->MainTaskBlocking(actkey);
         }
-        delete task;
-        delete actkey;
+        delete task;    task = nullptr;
+        delete actkey;    actkey = nullptr;
     }
 }
 
@@ -3658,7 +3664,7 @@ void CFDSolver::DownloadInterpointData()
             }
         }
 
-        delete actkey;
+        delete actkey;    actkey = nullptr;
     }
 }
 
@@ -3682,7 +3688,7 @@ void CFDSolver::CommunicationInterpointWeight()
         CommunicationInterpointWeight(actkey);
         DownloadInterpointWeight(actkey);
 
-        delete actkey;
+        delete actkey;    actkey = nullptr;
     }
 }
 
