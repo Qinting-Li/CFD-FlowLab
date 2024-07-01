@@ -41,7 +41,7 @@ void StructGrid::AllocateMetricsStructHighOrder(ActionKey *actkey)
 void StructGrid::ComputeMetricsStructHighOrder2D(ActionKey *actkey)
 {
     string highordersolvername = GlobalDataBase::GetStrParaFromDB("str_highorder_solver");
-    if(highordersolvername.substr(0, 4) == "HDCS")
+    if (highordersolvername.substr(0, 4) == "HDCS")
     {
         ComputeMetricsStructHighOrder2D_HDCS();
         return;
@@ -375,7 +375,7 @@ void StructGrid::ComputeMetricsStructHighOrder2D(ActionKey *actkey)
 void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
 {
     string highordersolvername = GlobalDataBase::GetStrParaFromDB("str_highorder_solver");
-    if(highordersolvername.substr(0, 4) == "HDCS")
+    if (highordersolvername.substr(0, 4) == "HDCS")
     {
         ComputeMetricsStructHighOrder3D_HDCS();
         return;
@@ -1214,7 +1214,7 @@ void StructGrid::ComputeMetricsStructHighOrder2D_HDCS()
             //!{
             //!    vol_FD = vol_FV;
             //!}
-            if(vol_FD < SMALL)
+            if (vol_FD < SMALL)
             {
                 oss << " vol < 0 " << " ZoneID = " << ZoneID << " i = " << i << " j = " << j << " vol = " << vol_FD << "\n";
             }
@@ -1956,7 +1956,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS()
                 
                 RDouble vol_FD = (vol_kxi + vol_eta + vol_cta) / 3.0;
 
-                if(vol_FD < SMALL)
+                if (vol_FD < SMALL)
                 {
                     oss << " vol < 0 " << " ZoneID = " << ZoneID << " i = " << i << " j = " << j << " vol = " << vol_FD << "\n";
                 }
@@ -1999,9 +1999,9 @@ void StructGrid::GhostMetricsStructHighOrder2D()
 
     const int k = 1;
 
-    for(int layer = 1; layer <= 4; ++layer)
+    for (int layer = 1; layer <= 4; ++layer)
     {
-        for(int j = 1; j <= nj - 1; ++j)
+        for (int j = 1; j <= nj - 1; ++j)
         {
             vol(    1 - layer, j, k) = vol(    layer, j, k);
             vol(ni - 1 + layer, j, k) = vol(ni - layer, j, k);
@@ -2021,7 +2021,7 @@ void StructGrid::GhostMetricsStructHighOrder2D()
             zcc(ni-1+layer,j,k) = two * zfc - zcc(ni-layer,j,k);
         }
 
-        for(int i = 1; i <= ni - 1; ++i)
+        for (int i = 1; i <= ni - 1; ++i)
         {
             vol(i,      1 - layer, k) = vol(i,      layer, k);
             vol(i, nj - 1 + layer, k) = vol(i, nj - layer, k);
@@ -2054,11 +2054,11 @@ void StructGrid::GhostMetricsStructHighOrder3D()
     RDouble3D &ycc = *(this->GetCellCenterY());
     RDouble3D &zcc = *(this->GetCellCenterZ());
     
-    for(int layer = 1; layer <= 4; ++layer)
+    for (int layer = 1; layer <= 4; ++layer)
     {
-        for(int k = 1; k <= nk - 1; ++k)
+        for (int k = 1; k <= nk - 1; ++k)
         {
-            for(int j = 1; j <= nj - 1; ++j)
+            for (int j = 1; j <= nj - 1; ++j)
             {
                 vol(    1 - layer, j, k) = vol(    layer, j, k);
                 vol(ni - 1 + layer, j, k) = vol(ni - layer, j, k);
@@ -2078,9 +2078,9 @@ void StructGrid::GhostMetricsStructHighOrder3D()
             }
         }
         
-        for(int k = 1; k <= nk - 1; ++k)
+        for (int k = 1; k <= nk - 1; ++k)
         {
-            for(int i = 1; i <= ni - 1; ++i)
+            for (int i = 1; i <= ni - 1; ++i)
             {
                 vol(i,      1 - layer, k) = vol(i,      layer, k);
                 vol(i, nj - 1 + layer, k) = vol(i, nj - layer, k);
@@ -2100,9 +2100,9 @@ void StructGrid::GhostMetricsStructHighOrder3D()
             }
         }
 
-        for(int j = 1; j <= nj - 1; ++j)
+        for (int j = 1; j <= nj - 1; ++j)
         {
-            for(int i = 1; i <= ni - 1; ++i)
+            for (int i = 1; i <= ni - 1; ++i)
             {
                 vol(i, j,      1 - layer) = vol(i, j,      layer);
                 vol(i, j, nk - 1 + layer) = vol(i, j, nk - layer);
@@ -2135,17 +2135,17 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
     DiscretePrecisionETA = new Int1D(Range(-1, nj + 1), fortranArray);
     DiscretePrecisionCTA = new Int1D(Range(-1, nk + 1), fortranArray);
     
-    for(int i = -1; i <= ni + 1; ++ i)
+    for (int i = -1; i <= ni + 1; ++ i)
     {
         (*DiscretePrecisionKXI)(i) = 4;
     }
 
-    for(int j = -1; j <= nj + 1; ++ j)
+    for (int j = -1; j <= nj + 1; ++ j)
     {
         (*DiscretePrecisionETA)(j) = 4;
     }
 
-    for(int k = -1; k <= nk + 1; ++ k)
+    for (int k = -1; k <= nk + 1; ++ k)
     {
         (*DiscretePrecisionCTA)(k) = 4;
     }
@@ -2173,7 +2173,7 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
         int *s_lr3d = bcregion->GetFaceDirectionIndex();  
         int id, jd, kd;
         GetBCFaceIDX(s_lr3d, id, jd, kd);
-        if(nsurf_bc == 1)
+        if (nsurf_bc == 1)
         {
             if (id + jd + kd == 0)
             {
@@ -2188,7 +2188,7 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
                 (*DiscretePrecisionKXI)(ni + 1) = 2;
             } 
         }
-        else if(nsurf_bc == 2)
+        else if (nsurf_bc == 2)
         {
             if (id + jd + kd == 0)
             {
@@ -2231,7 +2231,7 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
     {
         for (int j = jst; j <= jed; ++ j)
         {
-            for(int i = ist; i <= ied; ++ i)
+            for (int i = ist; i <= ied; ++ i)
             {
                 RDouble ax = - xx(i - 1, j, k) + xx(i    , j, k);
                 RDouble ay = - yy(i - 1, j, k) + yy(i    , j, k);
@@ -2257,7 +2257,7 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
     {
         for (int j = jst; j <= jed; ++ j)
         {
-            for(int i = ist; i <= ied; ++ i)
+            for (int i = ist; i <= ied; ++ i)
             {
                 RDouble ax = - xx(i, j - 1, k) + xx(i, j    , k);
                 RDouble ay = - yy(i, j - 1, k) + yy(i, j    , k);
@@ -2288,7 +2288,7 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
     {
         for (int j = jst; j <= jed; ++ j)
         {
-            for(int i = ist; i <= ied; ++ i)
+            for (int i = ist; i <= ied; ++ i)
             {
                 RDouble ax = - xx(i, j, k - 1) + xx(i, j, k   );
                 RDouble ay = - yy(i, j, k - 1) + yy(i, j, k   );
@@ -3737,47 +3737,47 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder(DataContainer *&dataContai
     //int mission_Comm(vist, gradqturb, blending               ) = 10;
     //int mission_Comm(vist                                    ) = 11 (for LES);
     
-    if(mission == 1)
+    if (mission == 1)
     {
         UploadGridInfoOnlyforStructHighOrder_mission1(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 2)
+    else if (mission == 2)
     {
         UploadGridInfoOnlyforStructHighOrder_mission2(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 3)
+    else if (mission == 3)
     {
         UploadGridInfoOnlyforStructHighOrder_mission3(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 4)
+    else if (mission == 4)
     {
         UploadGridInfoOnlyforStructHighOrder_mission4(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 5)
+    else if (mission == 5)
     {
         UploadGridInfoOnlyforStructHighOrder_mission5(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 6)
+    else if (mission == 6)
     {
         UploadGridInfoOnlyforStructHighOrder_mission6(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 7)
+    else if (mission == 7)
     {
         UploadGridInfoOnlyforStructHighOrder_mission7(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 8)
+    else if (mission == 8)
     {
         UploadGridInfoOnlyforStructHighOrder_mission8(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 9)
+    else if (mission == 9)
     {
         UploadGridInfoOnlyforStructHighOrder_mission9(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 10)
+    else if (mission == 10)
     {
         UploadGridInfoOnlyforStructHighOrder_mission10(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 11)
+    else if (mission == 11)
     {
         UploadGridInfoOnlyforStructHighOrder_mission11(dataContainer, neighborZoneIndex);
     }
@@ -3797,47 +3797,47 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder(DataContainer *&dataCont
     //int mission_Comm(vist, gradqturb, blending               ) = 10;
     //int mission_Comm(vist                                    ) = 11 (for LES);
     
-    if(mission == 1)
+    if (mission == 1)
     {
         DownloadGridInfoOnlyforStructHighOrder_mission1(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 2)
+    else if (mission == 2)
     {
         DownloadGridInfoOnlyforStructHighOrder_mission2(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 3)
+    else if (mission == 3)
     {
         DownloadGridInfoOnlyforStructHighOrder_mission3(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 4)
+    else if (mission == 4)
     {
         DownloadGridInfoOnlyforStructHighOrder_mission4(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 5)
+    else if (mission == 5)
     {
         DownloadGridInfoOnlyforStructHighOrder_mission5(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 6)
+    else if (mission == 6)
     {
         DownloadGridInfoOnlyforStructHighOrder_mission6(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 7)
+    else if (mission == 7)
     {
         DownloadGridInfoOnlyforStructHighOrder_mission7(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 8)
+    else if (mission == 8)
     {
         DownloadGridInfoOnlyforStructHighOrder_mission8(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 9)
+    else if (mission == 9)
     {
         DownloadGridInfoOnlyforStructHighOrder_mission9(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 10)
+    else if (mission == 10)
     {
         DownloadGridInfoOnlyforStructHighOrder_mission10(dataContainer, neighborZoneIndex);
     }
-    else if(mission == 11)
+    else if (mission == 11)
     {
         DownloadGridInfoOnlyforStructHighOrder_mission11(dataContainer, neighborZoneIndex);
     }
@@ -3853,7 +3853,7 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission1(DataContainer *&d
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble3D &vol = *this->GetCellVolume();
     RDouble3D &xcc = *this->GetCellCenterX();
@@ -3909,7 +3909,7 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission2(DataContainer *&d
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble3D &xx = * this->GetStructX();
     RDouble3D &yy = * this->GetStructY();
@@ -3951,7 +3951,7 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission3(DataContainer *&d
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
     
     RDouble4D &xfv  = *(this->GetFaceVectorX());
     RDouble4D &yfv  = *(this->GetFaceVectorY());
@@ -4044,7 +4044,7 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission4(DataContainer *&d
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
     
     RDouble3D &vol = *this->GetCellVolume();
     
@@ -4073,7 +4073,7 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission5(DataContainer *&d
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble4D &q_FD = *reinterpret_cast <RDouble4D *> (this->GetDataPtr("q_FD"));
 
@@ -4105,7 +4105,7 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission6(DataContainer *&d
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (this->GetDataPtr("rtem"));
 
@@ -4132,7 +4132,7 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission7(DataContainer *&d
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (this->GetDataPtr("rtem"));
 
@@ -4265,7 +4265,7 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission8(DataContainer *&d
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (this->GetDataPtr("rtem"));
     RDouble4D &gradUVWTCellCenterX = *reinterpret_cast <RDouble4D *> (this->GetDataPtr("gradUVWTCellCenterX"));
@@ -4350,7 +4350,7 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission9(DataContainer *&d
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble3D &vist = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("vist"));
     RDouble4D &gradTurbulenceCellCenterX = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulenceCellCenterX"));
@@ -4387,7 +4387,7 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission10(DataContainer *&
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble3D &blend = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("blend"));
     RDouble3D &vist  = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("vist"));
@@ -4432,7 +4432,7 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission11(DataContainer *&
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble3D &vist  = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("vist"));
     RDouble3D &subgridScaleEnergy  = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("subgridScaleEnergy"));
@@ -4466,7 +4466,7 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission1(DataContainer *
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
     
     RDouble3D &vol = *this->GetCellVolume();
     RDouble3D &xcc = *this->GetCellCenterX();
@@ -4542,7 +4542,7 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission2(DataContainer *
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
     
     RDouble3D &xx = * this->GetStructX();
     RDouble3D &yy = * this->GetStructY();
@@ -4901,7 +4901,7 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission3(DataContainer *
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
     
     RDouble4D &xfn  = *(this->GetFaceNormalX());
     RDouble4D &yfn  = *(this->GetFaceNormalY());
@@ -5058,7 +5058,7 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission4(DataContainer *
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
     
     RDouble3D &vol = *this->GetCellVolume();
     
@@ -5087,7 +5087,7 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission5(DataContainer *
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble4D &q_FD = *reinterpret_cast <RDouble4D *> (this->GetDataPtr("q_FD"));
 
@@ -5119,7 +5119,7 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission6(DataContainer *
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (this->GetDataPtr("rtem"));
 
@@ -5146,7 +5146,7 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission7(DataContainer *
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (this->GetDataPtr("rtem"));
     RDouble4D &dqdxnokxi = *reinterpret_cast <RDouble4D *> (this->GetDataPtr("dqdxnokxi"));
@@ -5277,7 +5277,7 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission8(DataContainer *
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (this->GetDataPtr("rtem"));
     RDouble4D &gradUVWTCellCenterX = *reinterpret_cast <RDouble4D *> (this->GetDataPtr("gradUVWTCellCenterX"));
@@ -5362,7 +5362,7 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission9(DataContainer *
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble3D &vist = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("vist"));
     RDouble4D &gradTurbulenceCellCenterX = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulenceCellCenterX"));
@@ -5399,7 +5399,7 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission10(DataContainer 
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble3D &blend = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("blend"));
     RDouble3D &vist = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("vist"));
@@ -5444,7 +5444,7 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission11(DataContainer 
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble3D &vist = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("vist"));
 

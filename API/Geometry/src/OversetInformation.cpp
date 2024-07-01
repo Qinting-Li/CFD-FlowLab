@@ -551,9 +551,9 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
 
     if (currentProcessor == serverProcessor)
     {
-        dataContainerLocal->moveto_begin();
+        dataContainerLocal->MoveToBegin();
 
-        dataContainerGlobal->write(dataContainerLocal);
+        dataContainerGlobal->Write(dataContainerLocal);
 
         for (int iProc = 0; iProc < numberOfprocessors; ++ iProc)
         {
@@ -566,9 +566,9 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
 
             receive(dataContainerRevc, iProc, iProc);
 
-            dataContainerRevc->moveto_begin();
+            dataContainerRevc->MoveToBegin();
 
-            dataContainerGlobal->write(dataContainerRevc);
+            dataContainerGlobal->Write(dataContainerRevc);
 
             delete dataContainerRevc;
         }
@@ -577,7 +577,7 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
     delete dataContainerLocal;
 
     PHMPI::PH_BcastByServerSepMode(dataContainerGlobal);
-    dataContainerGlobal->moveto_begin();
+    dataContainerGlobal->MoveToBegin();
 
     for (int iProc = 0; iProc < numberOfprocessors; ++ iProc)
     {

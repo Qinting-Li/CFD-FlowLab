@@ -18,17 +18,17 @@ IncomKETurbEpsilonEqCalculator::~IncomKETurbEpsilonEqCalculator()
 
 }
 
-void IncomKETurbEpsilonEqCalculator::SetDiffusionCoeff(Grid* gridIn)
+void IncomKETurbEpsilonEqCalculator::SetDiffusionCoeff(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nTotalFace = grid->GetNTotalFace();
     int nBoundFace = grid->GetNBoundFace();
-    int* leftCellOfFace = grid->GetLeftCellOfFace();
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
     int *rightCellOfFace = grid->GetRightCellOfFace();
 
-    RDouble* visl = reinterpret_cast<RDouble*>(grid->GetDataPtr("visl"));
-    RDouble* vist = reinterpret_cast<RDouble*>(grid->GetDataPtr("vist"));
+    RDouble *visl = reinterpret_cast<RDouble *>(grid->GetDataPtr("visl"));
+    RDouble *vist = reinterpret_cast<RDouble *>(grid->GetDataPtr("vist"));
     RDouble prandtl = 1.3;
     RDouble **DiffusionCoeff = reinterpret_cast <RDouble **> (GlobalDataBase::GetDataPtr("DiffusionCoeff"));
     int solverIndex = GetSolverIndex();
@@ -48,7 +48,7 @@ void IncomKETurbEpsilonEqCalculator::SetDiffusionCoeff(Grid* gridIn)
     CommunicateAnInterfaceVar(DiffusionCoeff[solverIndex]);
 }
 
-void IncomKETurbEpsilonEqCalculator::InitFlowAsRestart(Grid* gridIn)
+void IncomKETurbEpsilonEqCalculator::InitFlowAsRestart(Grid *gridIn)
 {
     IncomScalarEqCalculator::InitFlowAsRestart(gridIn);
     UnstructGrid *grid = UnstructGridCast(gridIn); 
@@ -59,7 +59,7 @@ void IncomKETurbEpsilonEqCalculator::InitFlowAsRestart(Grid* gridIn)
     string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
     int solverIndex = GetSolverIndex();
     RDouble initPhi = GlobalDataBase::GetDoubleParaFromDB("init" + varNameIncom[solverIndex]);
-    RDouble* phi = reinterpret_cast<RDouble*>(grid->GetDataPtr(varNameIncom[solverIndex]));
+    RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(varNameIncom[solverIndex]));
     PHSPACE::SetField(phi, initPhi, nTotal);
 }
 
@@ -75,14 +75,14 @@ void IncomKETurbEpsilonEqCalculator::solveScalarEquation(Grid *gridIn, int iEqua
 
     WallModification(grid);
 
-    RDouble* diagMatrixCoeff = reinterpret_cast<RDouble*>(grid->GetDataPtr("diagMatrixCoeff"));
-    RDouble* upperMatrixCoeff  = reinterpret_cast<RDouble*>(grid->GetDataPtr("upperMatrixCoeff"));
-    RDouble* lowerMatrixCoeff = reinterpret_cast<RDouble*>(grid->GetDataPtr("lowerMatrixCoeff"));
-    RDouble* bCoeff = reinterpret_cast<RDouble*>(grid->GetDataPtr("bCoeff"));
+    RDouble *diagMatrixCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("diagMatrixCoeff"));
+    RDouble *upperMatrixCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("upperMatrixCoeff"));
+    RDouble *lowerMatrixCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("lowerMatrixCoeff"));
+    RDouble *bCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("bCoeff"));
 
-    string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
+    string *varNameIncom = reinterpret_cast <string *>(GlobalDataBase::GetDataPtr("varNameIncom"));
     string varName = varNameIncom[solverIndex];
-    RDouble* q = reinterpret_cast<RDouble*>(grid->GetDataPtr(varName));
+    RDouble *q = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName));
     calculateLinearEquation(grid, solverIndex, q, diagMatrixCoeff, bCoeff, upperMatrixCoeff , lowerMatrixCoeff);
 
     UpdateBCValue(grid);
@@ -90,14 +90,13 @@ void IncomKETurbEpsilonEqCalculator::solveScalarEquation(Grid *gridIn, int iEqua
     UpdateProperties(grid);
 }
 
-void IncomKETurbEpsilonEqCalculator::calWallBC(Grid*  gridIn, vector<int>* faceIndex, Data_Param* bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff,  RDouble *q,
+void IncomKETurbEpsilonEqCalculator::calWallBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
     RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
 {
     
 }
 
-
-void IncomKETurbEpsilonEqCalculator::WallModification(Grid*  gridIn)
+void IncomKETurbEpsilonEqCalculator::WallModification(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
@@ -108,7 +107,7 @@ void IncomKETurbEpsilonEqCalculator::WallModification(Grid*  gridIn)
     int *faceNumberOfEachCell = grid->GetFaceNumberOfEachCell();
     int **cell2face  = grid->GetCell2Face();
 
-    RDouble* Epsilon = reinterpret_cast<RDouble*>(grid->GetDataPtr("Epsilon"));
+    RDouble *Epsilon = reinterpret_cast<RDouble *>(grid->GetDataPtr("Epsilon"));
     RDouble *upperMatrixCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("upperMatrixCoeff"));
     RDouble *lowerMatrixCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("lowerMatrixCoeff"));
     RDouble *diagMatrixCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("diagMatrixCoeff"));
@@ -118,9 +117,9 @@ void IncomKETurbEpsilonEqCalculator::WallModification(Grid*  gridIn)
     int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
-        vector<int>* faceIndex = bcRegion->GetFaceIndex();
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
 
         if (bcType == PHENGLEI::SOLID_SURFACE)
         {
@@ -160,7 +159,7 @@ void IncomKETurbEpsilonEqCalculator::WallModification(Grid*  gridIn)
 
 void IncomKETurbEpsilonEqCalculator::CalcOtherMatrixACoeff(Grid * gridIn)
 {
-    UnstructGrid* grid = UnstructGridCast(gridIn);
+    UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     RDouble *k = reinterpret_cast<RDouble *>(grid->GetDataPtr("Kinetic"));
     RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
@@ -175,7 +174,7 @@ void IncomKETurbEpsilonEqCalculator::CalcOtherMatrixACoeff(Grid * gridIn)
     }
 }
 
-void IncomKETurbEpsilonEqCalculator::CalcOtherbCoeff(Grid* gridIn, int iEquation)
+void IncomKETurbEpsilonEqCalculator::CalcOtherbCoeff(Grid *gridIn, int iEquation)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
@@ -284,7 +283,7 @@ void IncomKETurbEpsilonEqCalculator::UpdateUnsteadyVariable(Grid *grid)
 
 }
 
-void IncomKETurbEpsilonEqCalculator::UpdateBCValue(Grid*  gridIn)
+void IncomKETurbEpsilonEqCalculator::UpdateBCValue(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn); 
     int nTotalCell = grid->GetNTotalCell();
@@ -301,12 +300,12 @@ void IncomKETurbEpsilonEqCalculator::UpdateBCValue(Grid*  gridIn)
     RDouble *k = reinterpret_cast<RDouble *>(grid->GetDataPtr("Kinetic"));
     RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
     RDouble *visl = reinterpret_cast<RDouble *>(grid->GetDataPtr("visl"));
-    RDouble *yplus = reinterpret_cast<RDouble*>(grid->GetDataPtr("yplus")) + nTotalCell;
-    RDouble* FaceFlux = reinterpret_cast<RDouble*>(grid->GetDataPtr("FaceFlux"));
+    RDouble *yplus = reinterpret_cast<RDouble *>(grid->GetDataPtr("yplus")) + nTotalCell;
+    RDouble *FaceFlux = reinterpret_cast<RDouble *>(grid->GetDataPtr("FaceFlux"));
 
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
-    int* rightCellOfFace = grid->GetRightCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
         UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
@@ -356,7 +355,7 @@ void IncomKETurbEpsilonEqCalculator::UpdateBCValue(Grid*  gridIn)
                 int iFacelocal = (*faceIndex)[iFace];
                 int le = leftCellOfFace[iFacelocal];
                 int re = rightCellOfFace[iFacelocal];
-                RDouble* FaceFlux = reinterpret_cast<RDouble*>(grid->GetDataPtr("FaceFlux"));
+                RDouble *FaceFlux = reinterpret_cast<RDouble *>(grid->GetDataPtr("FaceFlux"));
                 if (FaceFlux[iFacelocal] < 0)
                 {
 
@@ -373,7 +372,7 @@ void IncomKETurbEpsilonEqCalculator::UpdateBCValue(Grid*  gridIn)
         {
             RDouble epsilonb = 0.0;
 
-            RDouble* FaceFlux = reinterpret_cast<RDouble*>(grid->GetDataPtr("FaceFlux"));
+            RDouble *FaceFlux = reinterpret_cast<RDouble *>(grid->GetDataPtr("FaceFlux"));
             for (std::size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
             {
                 const int iFacelocal = (*faceIndex)[iFace];
@@ -404,8 +403,8 @@ void IncomKETurbEpsilonEqCalculator::UpdateBCValue(Grid*  gridIn)
             RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr("Epsilon"));
             string varName = "Epsilon";
             RDouble *dphidx = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dx"));
-            RDouble* dphidy = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dy"));
-            RDouble* dphidz = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dz"));
+            RDouble *dphidy = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dy"));
+            RDouble *dphidz = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dz"));
             
             for (std::size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
             {
@@ -498,11 +497,11 @@ void IncomKETurbEpsilonEqCalculator::UpdateBCValue(Grid*  gridIn)
     CommunicateAnInterfaceVar(phi);
 }
 
-void IncomKETurbEpsilonEqCalculator::UpdateProperties(Grid* gridIn)
+void IncomKETurbEpsilonEqCalculator::UpdateProperties(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
-    RDouble* Epsilon = reinterpret_cast<RDouble*>(grid->GetDataPtr("Epsilon"));
+    RDouble *Epsilon = reinterpret_cast<RDouble *>(grid->GetDataPtr("Epsilon"));
 
     for (int iCell = 0; iCell < nTotalCell; ++iCell)
     {
@@ -517,29 +516,29 @@ void IncomKETurbEpsilonEqCalculator::UpdateProperties(Grid* gridIn)
     }
 }
 
-void IncomKETurbEpsilonEqCalculator::CalcGenTerm(Grid*  gridIn)
+void IncomKETurbEpsilonEqCalculator::CalcGenTerm(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
 
-    RDouble* u = reinterpret_cast<RDouble*>(grid->GetDataPtr("U"));
-    RDouble* v = reinterpret_cast<RDouble*>(grid->GetDataPtr("V"));
-    RDouble* w = reinterpret_cast<RDouble*>(grid->GetDataPtr("W"));
-    RDouble* dudx = reinterpret_cast<RDouble*>(grid->GetDataPtr("dUdx"));
-    RDouble* dudy = reinterpret_cast<RDouble*>(grid->GetDataPtr("dUdy"));
-    RDouble* dudz = reinterpret_cast<RDouble*>(grid->GetDataPtr("dUdz"));
-    RDouble* dvdx = reinterpret_cast<RDouble*>(grid->GetDataPtr("dVdx"));
-    RDouble* dvdy = reinterpret_cast<RDouble*>(grid->GetDataPtr("dVdy"));
-    RDouble* dvdz = reinterpret_cast<RDouble*>(grid->GetDataPtr("dVdz"));
-    RDouble* dwdx = reinterpret_cast<RDouble*>(grid->GetDataPtr("dWdx"));
-    RDouble* dwdy = reinterpret_cast<RDouble*>(grid->GetDataPtr("dWdy"));
-    RDouble* dwdz = reinterpret_cast<RDouble*>(grid->GetDataPtr("dWdz"));
-    RDouble* vist = reinterpret_cast<RDouble*>(grid->GetDataPtr("vist"));
-    RDouble* visl = reinterpret_cast<RDouble*>(grid->GetDataPtr("visl"));
-    RDouble* gen = reinterpret_cast<RDouble*>(grid->GetDataPtr("gen"));
-    RDouble* yplus = reinterpret_cast<RDouble*>(grid->GetDataPtr("yplus"));
-    RDouble* Epsilon = reinterpret_cast<RDouble*>(grid->GetDataPtr("Epsilon"));
-    RDouble* rho = reinterpret_cast<RDouble*>(grid->GetDataPtr("rho"));
+    RDouble *u = reinterpret_cast<RDouble *>(grid->GetDataPtr("U"));
+    RDouble *v = reinterpret_cast<RDouble *>(grid->GetDataPtr("V"));
+    RDouble *w = reinterpret_cast<RDouble *>(grid->GetDataPtr("W"));
+    RDouble *dudx = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdx"));
+    RDouble *dudy = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdy"));
+    RDouble *dudz = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdz"));
+    RDouble *dvdx = reinterpret_cast<RDouble *>(grid->GetDataPtr("dVdx"));
+    RDouble *dvdy = reinterpret_cast<RDouble *>(grid->GetDataPtr("dVdy"));
+    RDouble *dvdz = reinterpret_cast<RDouble *>(grid->GetDataPtr("dVdz"));
+    RDouble *dwdx = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdx"));
+    RDouble *dwdy = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdy"));
+    RDouble *dwdz = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdz"));
+    RDouble *vist = reinterpret_cast<RDouble *>(grid->GetDataPtr("vist"));
+    RDouble *visl = reinterpret_cast<RDouble *>(grid->GetDataPtr("visl"));
+    RDouble *gen = reinterpret_cast<RDouble *>(grid->GetDataPtr("gen"));
+    RDouble *yplus = reinterpret_cast<RDouble *>(grid->GetDataPtr("yplus"));
+    RDouble *Epsilon = reinterpret_cast<RDouble *>(grid->GetDataPtr("Epsilon"));
+    RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
     
     GradientCalculation(grid, "U", "dUdx", "dUdy", "dUdz");
     GradientCalculation(grid, "V", "dVdx", "dVdy", "dVdz");
@@ -565,7 +564,7 @@ void IncomKETurbEpsilonEqCalculator::CalcGenTerm(Grid*  gridIn)
 
 }
 
-void IncomKETurbEpsilonEqCalculator::UpdateWallGen(Grid*  gridIn)
+void IncomKETurbEpsilonEqCalculator::UpdateWallGen(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     UnstructBCSet* unstructBCSet = grid->GetUnstructBCSet();
@@ -582,27 +581,27 @@ void IncomKETurbEpsilonEqCalculator::UpdateWallGen(Grid*  gridIn)
 
         {
             int nTotalCell = grid->GetNTotalCell();
-            int* leftCellOfFace = grid->GetLeftCellOfFace();
-            int* rightCellOfFace = grid->GetRightCellOfFace();
+            int *leftCellOfFace = grid->GetLeftCellOfFace();
+            int *rightCellOfFace = grid->GetRightCellOfFace();
             int nBoundFace = grid->GetNBoundFace();
-            RDouble* xfn = grid->GetFaceNormalX();
-            RDouble* yfn = grid->GetFaceNormalY();
-            RDouble* zfn = grid->GetFaceNormalZ();
-            RDouble* WD = reinterpret_cast<RDouble*>(grid->GetDataPtr("wd"));
-            RDouble* gen = reinterpret_cast<RDouble*>(grid->GetDataPtr("gen"));
-            RDouble* k = reinterpret_cast<RDouble*>(grid->GetDataPtr("Kinetic"));
-            RDouble* rho = reinterpret_cast<RDouble*>(grid->GetDataPtr("rho"));
-            RDouble* visl = reinterpret_cast<RDouble*>(grid->GetDataPtr("visl"));
-            RDouble* vist = reinterpret_cast<RDouble*>(grid->GetDataPtr("vist"));
-            RDouble* vistb = vist + nTotalCell;
-            RDouble* u = reinterpret_cast<RDouble*>(grid->GetDataPtr("U"));
-            RDouble* v = reinterpret_cast<RDouble*>(grid->GetDataPtr("V"));
-            RDouble* w = reinterpret_cast<RDouble*>(grid->GetDataPtr("W"));
-            RDouble* mu = reinterpret_cast<RDouble*>(grid->GetDataPtr("mu"));
-            RDouble* yplus = reinterpret_cast<RDouble*>(grid->GetDataPtr("yplus")) + nTotalCell;
-            RDouble* Epsilon = reinterpret_cast<RDouble*>(grid->GetDataPtr("Epsilon"));
-            RDouble* nu_eff_w = reinterpret_cast<RDouble*>(grid->GetDataPtr("nu_eff")) + nTotalCell;
-            RDouble* wallFlag = reinterpret_cast<RDouble*>(grid->GetDataPtr("wallFlag"));
+            RDouble *xfn = grid->GetFaceNormalX();
+            RDouble *yfn = grid->GetFaceNormalY();
+            RDouble *zfn = grid->GetFaceNormalZ();
+            RDouble *WD = reinterpret_cast<RDouble *>(grid->GetDataPtr("wd"));
+            RDouble *gen = reinterpret_cast<RDouble *>(grid->GetDataPtr("gen"));
+            RDouble *k = reinterpret_cast<RDouble *>(grid->GetDataPtr("Kinetic"));
+            RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
+            RDouble *visl = reinterpret_cast<RDouble *>(grid->GetDataPtr("visl"));
+            RDouble *vist = reinterpret_cast<RDouble *>(grid->GetDataPtr("vist"));
+            RDouble *vistb = vist + nTotalCell;
+            RDouble *u = reinterpret_cast<RDouble *>(grid->GetDataPtr("U"));
+            RDouble *v = reinterpret_cast<RDouble *>(grid->GetDataPtr("V"));
+            RDouble *w = reinterpret_cast<RDouble *>(grid->GetDataPtr("W"));
+            RDouble *mu = reinterpret_cast<RDouble *>(grid->GetDataPtr("mu"));
+            RDouble *yplus = reinterpret_cast<RDouble *>(grid->GetDataPtr("yplus")) + nTotalCell;
+            RDouble *Epsilon = reinterpret_cast<RDouble *>(grid->GetDataPtr("Epsilon"));
+            RDouble *nu_eff_w = reinterpret_cast<RDouble *>(grid->GetDataPtr("nu_eff")) + nTotalCell;
+            RDouble *wallFlag = reinterpret_cast<RDouble *>(grid->GetDataPtr("wallFlag"));
 
             RDouble cmu75_ = 0.1643;
             RDouble cappa_ = 0.4187;
@@ -635,14 +634,12 @@ void IncomKETurbEpsilonEqCalculator::UpdateWallGen(Grid*  gridIn)
                 RDouble Uz = dw - dun * az;
                 RDouble Uwall = std::sqrt(Ux * Ux + Uy * Uy + Uz * Uz);//壁面切向速度
 
-
                 yplus[iFacelocal] = max(yplus[iFacelocal], yptr_);
                 double tau_w = Uwall * cmute * rho[le] / (std::log(elog_ * yplus[iFacelocal]) / cappa_);
                 double d = yplus[iFacelocal] * visl[le] / (rho[le] * cmute);
                 nu_eff_w[iFacelocal] = tau_w * wd / Uwall;
                 gen[le] += (tau_w * tau_w / (cappa_ * rho[le] * cmute * d)) / wallFlag[le];
                 Epsilon[le] += (cmu75_ * std::pow(k[le], 1.5) / (cappa_ * d)) / wallFlag[le];
-
             }
         }
     }

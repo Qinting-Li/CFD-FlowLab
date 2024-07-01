@@ -37,6 +37,10 @@ void InitializeOversetGridConfig();
 
 void ReConfigUnstructOversetGrid();
 
+void ExplicitHoleCut();
+
+void ImplicitHoleCut();
+
 void OutUnstructOversetGridConfig();
 
 void FreeUnstructOversetGridConfig();
@@ -56,7 +60,8 @@ private:
     int geometricDimension;
 private:
     ZoneSearchNodes **zonesSearchNodes;     //! Set of all calculate points.
-    InterCells **zonesInterpolateCells;    //! Set of all interpolation cells.
+    InterCells **zonesInterpolateCells;     //! Set of all interpolation cells.
+    InterCells **zonesDefectCells;          //! Set of all defect cells whose donorCell is invalid.
     TimeSpan *testTime;
 
 private:
@@ -98,7 +103,9 @@ public:
     ZoneSearchNodes **GetZonesSearchNodes() {
         return this->zonesSearchNodes;
     }
-
+    OversetConfig **GetOversetConfig() {
+        return this->oversetConfigMultiZone;
+    }
     int **GetKeyOfInterfaceNodesInBlocks() {
         return this->keyOfInterfaceNodesInBlocks;
     }
@@ -112,7 +119,7 @@ private:    //! Initialize.
     void SetNodesMinDistanceInOtherBlocks();
 
     bool ReadInInnerGridH5(const string &fileName, UnstructGrid *gridIn);
-    void BuildLocalToGlobalInterfaceNodesMap(int iBlockIn, int* numberOfNodesInBlocksIn);
+    void BuildLocalToGlobalInterfaceNodesMap(int iBlockIn, int *numberOfNodesInBlocksIn);
 
     void GetGlobalInterfaceNodes();
     void GetGlobalInterfaceNodes(int iBlock);
@@ -133,6 +140,9 @@ private:    //! Core process: points.
     void BuildKDTreeByMinMaxBoxOfZones();
     void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTrees(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
 
+    void BuildKDTreeByActiveCells();
+    void BuildDefectCellRelationships();
+
     void BuildMinMaxBoxOfBlocks();
 
     void BuildZonesSearchNodes();
@@ -149,14 +159,18 @@ private:    //! Core process: points.
     void InterFaceBoundaryOptimize();
     void SetNegativeForInnerNodes();
     void SetNegativeForInnerAndInitialInterNodes();
+
 private:    //! Core process: cells.
     void FindActiveCells();
     void FindInterCells();
     void CreatGlobalInterCells();
     void AllReduceZonesInterpolateCells();
+    void AllReduceZonesDefectCells();
+
 private:    //! Core process: cells.
     void BuildInterpolateRelationships();
     void FindInterpolateRelationships();
+    void FindDefectRelationships();
 
 private:    //! Check.
     void CheckInterpolateRelationships();
@@ -264,6 +278,7 @@ private:
 
     int *donorZoneIndex;
     int *donorCellIndex;
+    int *isDefectCell;
 
     int *donorLevel;
     RDouble *cellMinDistance;
@@ -286,8 +301,13 @@ public:
     int *GetDonorZoneIndex() {
         return donorZoneIndex;
     }
+
     int *GetDonorCellIndex() {
         return donorCellIndex;
+    }
+
+    int *IsDefectCell() {
+        return isDefectCell;
     }
 
     RDouble *GetX() {
@@ -299,6 +319,7 @@ public:
     RDouble *GetZ() {
         return z;
     }
+
     RDouble *GetMinDist() {
         return cellMinDistance;
     }
@@ -339,7 +360,7 @@ public:    //! Improve efficiency of query.
     GridKDTree *gridKDTree;
     RDouble *minBoxOfZone;
     RDouble *maxBoxOfZone;
-
+    DataStruct_KDTree *cellKDTree;
 public:
     int numberOfInterCells;
 
@@ -347,6 +368,7 @@ public:
     int *keyActiveOfNodes;
 
     vector< int > interpolateCellList;
+    vector< int > defectCellList;
 
     int *keyBufferOfNodes;
 
@@ -394,6 +416,7 @@ public:    //! Initialize.
     void SetInitialValue();
     void FreeKeyBasicActiveNode();
     void FreeKeyInBlockNodes();
+    void FreeKDTree();
     void SetInitialValueForBufferRigion();
     void SetKeyBufferByKeyActive();
 
@@ -401,6 +424,7 @@ public:    //! Core operations: points.
     void ComputeNodeAndCellTopology();
     void CopyMinDist(RDouble *nodesMinDistanceInOtherBlockIn);
     void BuildKDTreeByMinMaxBoxOfZone();
+    void BuildKDTreeByActiveCell();
     void SearchZonesSearchNodesInKDTree();
 
     RDouble ComputeDistanceInDonorZone(RDouble *nodeCoordinateIn, int donorCell);
@@ -425,6 +449,7 @@ public:    //! Core operations: cells.
     void FindInterCells();
     int  FindDonorCell(RDouble *nodeCoordinateIn);
     void FindInterpolateRelationship();
+    void FindDefectRelationship();
     void CheckInterpolateRelationship(int iBlockIn,
         InterCells *zoneInterpolateCellsIn,
         int &numberOfInterpolateCellsInThisBlockIn,
@@ -532,6 +557,11 @@ public:
         return this->interpolateCellList;
     }
 
+    vector< int > &GetDefectCellList()
+    {
+        return this->defectCellList;
+    }
+
     OversetInformationProxy *GetOversetInformationProxy()
     {
         return oversetInformationProxy;
@@ -581,7 +611,7 @@ private:
         if (iPrint % numberOfWordsInEachLine != 0) file << endl;
         file << endl;
 
-        delete[] valueFull;
+        delete [] valueFull;
     }
 
     template < typename T >

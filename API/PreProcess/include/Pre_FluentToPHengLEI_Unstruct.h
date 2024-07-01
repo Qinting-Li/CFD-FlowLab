@@ -44,6 +44,9 @@ private:
     void ReadFluentNodes(RawGrid *rawgrid, int first_index, int last_index, int dimension, fstream &file);
     void ReadFluentFace(GridFormat_Fluent *fluent_factory, int zone_id, int first_index, int last_index, int bc_type, int face_type, fstream &file);
     void ReadFluentCell(int first_index, int last_index, fstream &file);
+    void ReadFluentNodesBinary(RawGrid *rawgrid, int first_index, int last_index, int dimension, fstream &file);
+    void ReadFluentFaceBinary(GridFormat_Fluent *fluent_factory, int zone_id, int first_index, int last_index, int bc_type, int face_type, fstream &file);
+    void ReadFluentCellBinary(int first_index, int last_index, fstream &file);
     void ReadFluentEdge(int first_index, int last_index, fstream &file);
     void ReadFluentPeriodicface(int first_index, int last_index, fstream &file);
     void ReadFluentCellTree(int first_index, int last_index, fstream &file);

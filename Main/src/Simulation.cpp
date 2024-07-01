@@ -207,7 +207,7 @@ void Simulation::RunCFD()
 
     InitGeometry();
 
-    SwapGeommetry();
+    SwapGeometry();
 
     InitOversetGrid();
 
@@ -847,7 +847,7 @@ void Simulation::RunGridCheckSolver()
 
             file << "nodeNumberOfEachCell :" << endl;
             file << "cellNumber nodeNumber " << endl;
-            for (int iCell =0; iCell < nTotalCell; iCell ++)
+            for (int iCell =0; iCell < 50; iCell ++)
             {
                 file << iCell << setw(8) << nodeNumberOfEachCell[iCell] << endl;
                 nodeCount += nodeNumberOfEachCell[iCell];
@@ -855,7 +855,7 @@ void Simulation::RunGridCheckSolver()
 
             file << "cell2Node :" << endl;
             file << "nodeCountNumber nodeNumber " << endl;
-            for (int iCount =0; iCount < nodeCount; iCount ++)
+            for (int iCount =0; iCount < 50; iCount ++)
             {
                 file << iCount << setw(8) << cell2Node[iCount] << endl;
             }
@@ -871,7 +871,7 @@ void Simulation::RunGridCheckSolver()
 
             file << "faceNumber  BcType  BCName" << endl;
             
-            for (int iFace = 0; iFace < nBoundFace; ++iFace)
+            for (int iFace = 0; iFace < 50; ++iFace)
             {
                 UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
                 int bcType = bcRegion->GetBCType();
@@ -886,7 +886,7 @@ void Simulation::RunGridCheckSolver()
 
             file << "nodeNumberOfEachFace :" << endl;
             file << "faceNumber nodeNumber " << endl;
-            for (int iFace = 0; iFace < nTotalFace; iFace ++)
+            for (int iFace = 0; iFace < 50; iFace ++)
             {
                 file << iFace << setw(8) << nodeNumberOfEachFace[iFace] << endl;
                 faceCount += nodeNumberOfEachFace[iFace];
@@ -894,7 +894,7 @@ void Simulation::RunGridCheckSolver()
 
             file << "face2Node :" << endl;
             file << "faceCountNumber nodeNumber " << endl;
-            for (int iCount =0; iCount < faceCount; iCount ++)
+            for (int iCount =0; iCount < 50; iCount ++)
             {
                 file << iCount << setw(8) << face2Node[iCount] << endl;
             }
@@ -904,14 +904,14 @@ void Simulation::RunGridCheckSolver()
             
             file << "leftCellOfFace :" << endl;
             file << "faceNumber leftCellNumber " << endl;
-            for (int iFace = 0; iFace < nTotalFace; iFace ++)
+            for (int iFace = 0; iFace < 50; iFace ++)
             {
                 file << iFace << setw(8) << leftCellOfFace[iFace] << endl;
             }
 
             file << "rightCellOfFace :" << endl;
             file << "faceNumber rightCellNumber " << endl;
-            for (int iFace = 0; iFace < nTotalFace; iFace ++)
+            for (int iFace = 0; iFace < 50; iFace ++)
             {
                 file << iFace << setw(8) << rightCellOfFace[iFace] << endl;
             }
@@ -928,21 +928,21 @@ void Simulation::RunGridCheckSolver()
 
                 file << "interFace2ZoneID" << endl;
                 file << "interFaceNumber  ZoneID" << endl;
-                for (int iFace = 0; iFace < nIFace; iFace ++)
+                for (int iFace = 0; iFace < 50; iFace ++)
                 {
                     file << iFace << setw(8) << interFace2ZoneID[iFace] << endl;
                 }
 
                 file << "interFace2InterFaceID" << endl;
                 file << "interFaceNumber  InterFaceID" << endl;
-                for (int iFace = 0; iFace < nIFace; iFace ++)
+                for (int iFace = 0; iFace < 50; iFace ++)
                 {
                     file << iFace << setw(8) << interFace2InterFaceID[iFace] << endl;
                 }
 
                 file << "interFace2BoundaryFace" << endl;
                 file << "interFaceNumber  BoundaryFaceID" << endl;
-                for (int iFace = 0; iFace < nIFace; iFace ++)
+                for (int iFace = 0; iFace < 50; iFace ++)
                 {
                     file << iFace << setw(8) << interFace2BoundaryFace[iFace] << endl;
                 }
@@ -967,42 +967,42 @@ void Simulation::RunGridCheckSolver()
 
                 file << "cellNumberOfInterPoint" << endl;
                 file << "interPointNumber  totalCellNumbers" << endl;
-                for (int iPoint = 0; iPoint < nIPoint; iPoint ++)
+                for (int iPoint = 0; iPoint < 50; iPoint ++)
                 {
                     file << iPoint << setw(8) << cellNumberOfInterPoint[iPoint] << endl;
                 }
 
                 file << "interPoint2GlobalPoint" << endl;
                 file << "interPointNumber  gobalPointNumber" << endl;
-                for (int iPoint = 0; iPoint < nIPoint; iPoint ++)
+                for (int iPoint = 0; iPoint < 50; iPoint ++)
                 {
                     file << iPoint << setw(8) << interPoint2GlobalPoint[iPoint] << endl;
                 }
 
                 file << "interPoint2InterPointID" << endl;
                 file << "interPointNumber  interPointID" << endl;
-                for (int iPoint = 0; iPoint < nIPoint; iPoint ++)
+                for (int iPoint = 0; iPoint < 50; iPoint ++)
                 {
                     file << iPoint << setw(8) << interPoint2InterPointID[iPoint] << endl;
                 }
 
                 file << "interPoint2ZoneID" << endl;
                 file << "interPointNumber  ZoneID" << endl;
-                for (int iPoint = 0; iPoint < nIPoint; iPoint ++)
+                for (int iPoint = 0; iPoint < 50; iPoint ++)
                 {
                     file << iPoint << setw(8) << interPoint2ZoneID[iPoint] << endl;
                 }
 
                 file << "labelOfInterPoint" << endl;
                 file << "interPointNumber  label" << endl;
-                for (int iPoint = 0; iPoint < nIPoint; iPoint ++)
+                for (int iPoint = 0; iPoint < 50; iPoint ++)
                 {
                     file << iPoint << setw(8) << labelOfInterPoint[iPoint] << endl;
                 }
 
                 file << "totalZonesOfInterPoint" << endl;
                 file << "interPointNumber  totalZones" << endl;
-                for (int iPoint = 0; iPoint < nIPoint; iPoint ++)
+                for (int iPoint = 0; iPoint < 50; iPoint ++)
                 {
                     file << iPoint << setw(8) << totalZonesOfInterPoint[iPoint] << endl;
                 }  
@@ -1117,21 +1117,21 @@ void Simulation::RunGridCheckSolver()
 
                 file << "interFace2ZoneID" << endl;
                 file << "interFaceNumber  ZoneID" << endl;
-                for (int iFace = 0; iFace < nIFace; iFace ++)
+                for (int iFace = 0; iFace < 50; iFace ++)
                 {
                     file << iFace << setw(8) << interFace2ZoneID[iFace] << endl;
                 }
 
                 file << "interFace2InterFaceID" << endl;
                 file << "interFaceNumber  InterFaceID" << endl;
-                for (int iFace = 0; iFace < nIFace; iFace ++)
+                for (int iFace = 0; iFace < 50; iFace ++)
                 {
                     file << iFace << setw(8) << interFace2InterFaceID[iFace] << endl;
                 }
 
                 file << "interFace2BoundaryFace" << endl;
                 file << "interFaceNumber  BoundaryFaceID" << endl;
-                for (int iFace = 0; iFace < nIFace; iFace ++)
+                for (int iFace = 0; iFace < 50; iFace ++)
                 {
                     file << iFace << setw(8) << interFace2BoundaryFace[iFace] << endl;
                 }
@@ -1222,7 +1222,6 @@ void Simulation::InitOversetGrid()
     //! Read overset information files or config.
 
     int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
-    //int isAle = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
     if (!isOverset)
     {
@@ -1260,11 +1259,8 @@ void Simulation::InitOversetGrid()
             delete timeSpan;
         }
 
-        //int isAle = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
-        //if (!isAle)
-        //{
         InitializeOversetInterfaceTopology();
-        //}
+
         WriteLogFile("Initialize oversetInterface topology \n");
     }
 }
@@ -1288,9 +1284,9 @@ void Simulation::InitGeometry()
     this->region->InitGeometry();
 }
 
-void Simulation::SwapGeommetry()
+void Simulation::SwapGeometry()
 {
-    this->region->SwapGeommetry();
+    this->region->SwapGeometry();
 }
 
 void Simulation::InitializeSolvers()
@@ -1538,7 +1534,7 @@ void Simulation::DefineAndCreateSolvers()
         {
             maxNumOfSolver = solverList.size();
         }
-    }    //! iZone
+    }   //! iZone
     GlobalDataBase::UpdateData("maxNumOfSolver", &maxNumOfSolver, PHINT, 1);
 }
 
@@ -1589,7 +1585,6 @@ void Simulation::PreSolve()
             }
         }
     }
-
 }
 
 void Simulation::PostSolve()
@@ -1784,7 +1779,7 @@ void Simulation::UpdateOuterIterationStep(int &outIterStep)
         if ( newIterStep == 1 )
         {
             GlobalDataBase::UpdateData("OriginalTscheme", &tscheme, PHINT, 1);
-}
+        }
     }
 #endif
 }
@@ -1886,13 +1881,13 @@ void Simulation::SolveSteady()
     {
         for (int iSolver = 0; iSolver < nSolver; ++iSolver)
         {
-            //! iSolver = 1 or 2, is supposed as turbulence computing.
+    //! iSolver = 1 or 2, is supposed as turbulence computing.
             if ((iSolver != NS_SOLVER) && (outerIterStep % turbInterval != 0))
             {
                 return;
             }
 
-            Controller* controller = new Controller(iSolver, this->region);
+            Controller *controller = new Controller(iSolver, this->region);
 
             controller->SolveSteadyField();
 
@@ -1965,67 +1960,71 @@ void Simulation::SolveSteadyByGMRES()
 }
 void Simulation::SolveUnsteady()
 {
-        int minSubItertation = GlobalDataBase::GetIntParaFromDB("min_sub_iter");
-        int maxSubItertation = GlobalDataBase::GetIntParaFromDB("max_sub_iter");
-        RDouble toltalSubItertation = GlobalDataBase::GetDoubleParaFromDB("tol_sub_iter");
+    int subTotalIterStep = GlobalDataBase::GetIntParaFromDB("subTotalIterStep");
+    int minSubItertation = GlobalDataBase::GetIntParaFromDB("min_sub_iter");
+    int maxSubItertation = GlobalDataBase::GetIntParaFromDB("max_sub_iter");
+    RDouble toltalSubItertation = GlobalDataBase::GetDoubleParaFromDB("tol_sub_iter");
 
-        int innerIterStep = 0;
-        int nSolver = GlobalDataBase::GetIntParaFromDB("maxNumOfSolver");
+    int innerIterStep = 0;
+    int nSolver = GlobalDataBase::GetIntParaFromDB("maxNumOfSolver");
 
-        bool isSubIterationDump = false;
-        GlobalDataBase::UpdateData("isSubIterationDump", &isSubIterationDump, PHBOOL, 1);
+    bool isSubIterationDump = false;
+    GlobalDataBase::UpdateData("isSubIterationDump", &isSubIterationDump, PHBOOL, 1);
 
-        bool isSubIterationConvergence = false;
-        while (!isSubIterationConvergence)
-        {
-            innerIterStep += 1;
-            GlobalDataBase::UpdateData("innstep", &innerIterStep, PHINT, 1);
+    bool isSubIterationConvergence = false;
+    while (!isSubIterationConvergence)
+    {
+        innerIterStep += 1;
+        GlobalDataBase::UpdateData("innstep", &innerIterStep, PHINT, 1);
 
-            SolveSingleInnerIterationStepForAleSolvers();
+        SolveSingleInnerIterationStepForAleSolvers();
 
-            RDouble subIterationNormOneSolver = zero;
-            RDouble maxSubIterationNormAllSolvers = -LARGE;
+        RDouble subIterationNormOneSolver = zero;
+        RDouble maxSubIterationNormAllSolvers = -LARGE;
 
-            for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
-            {
-                Controller *controller = new Controller(iSolver, this->region);
-
-                controller->SolveSteadyField();
-
-                //! Here is in the sub-iteration, PostSolve is only for the CommunicationInterfaceData and dumps the "res.dat", which contains index of the sub-iteration residual.
-                controller->PostSolve();
-
-                subIterationNormOneSolver = controller->ComputeSubIterationNorm(iSolver, 0);
-                maxSubIterationNormAllSolvers = MAX(maxSubIterationNormAllSolvers, subIterationNormOneSolver);
-
-                delete controller;
-            }
-
-            PH_CompareMaxMin(maxSubIterationNormAllSolvers, 1);
-
-            //! Sub-iteration continue or not judgement.
-            isSubIterationConvergence = IsSubIterationConvergence(innerIterStep, minSubItertation, maxSubItertation, toltalSubItertation, maxSubIterationNormAllSolvers);
-        }
-
-        PostprocessAfterInnerIterationStepForAleSolvers();
-
-        //! Here is already (innstep == max_sub_iter || isSubIterationConvergence).
-        isSubIterationDump = true;
-        GlobalDataBase::UpdateData("isSubIterationDump", &isSubIterationDump, PHBOOL, 1);
-
-        //! Update physical time step flow field after sub-iteration convergence.
         for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
         {
             Controller *controller = new Controller(iSolver, this->region);
 
-            controller->UpdateUnsteadyFlow(iSolver, 0);
+            controller->SolveSteadyField();
 
-            //! Here is out of the sub-iteration, PostSolve is to dump various files according to the parameters in the "cfd_para.hypara", such as intervalStepFlow, intervalStepPlot, intervalStepForce, intervalStepRes, et al.
+            //! Here is in the sub-iteration, PostSolve is only for the CommunicationInterfaceData and dumps the "res.dat", which contains index of the sub-iteration residual.
             controller->PostSolve();
+
+            subIterationNormOneSolver = controller->ComputeSubIterationNorm(iSolver, 0);
+            maxSubIterationNormAllSolvers = MAX(maxSubIterationNormAllSolvers, subIterationNormOneSolver);
 
             delete controller;
         }
+
+        PH_CompareMaxMin(maxSubIterationNormAllSolvers, 1);
+
+        //! Sub-iteration continue or not judgement.
+        isSubIterationConvergence = IsSubIterationConvergence(innerIterStep, minSubItertation, maxSubItertation, toltalSubItertation, maxSubIterationNormAllSolvers);
     }
+
+    //! Here is already (innstep == max_sub_iter || isSubIterationConvergence).
+    isSubIterationDump = true;
+    GlobalDataBase::UpdateData("isSubIterationDump", &isSubIterationDump, PHBOOL, 1);
+
+    subTotalIterStep += innerIterStep;
+    GlobalDataBase::UpdateData("subTotalIterStep", &subTotalIterStep, PHINT, 1);
+
+    //! Update physical time step flow field after sub-iteration convergence.
+    for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+    {
+        Controller *controller = new Controller(iSolver, this->region);
+
+        controller->UpdateUnsteadyFlow(iSolver, 0);
+
+        //! Here is out of the sub-iteration, PostSolve is to dump various files according to the parameters in the "cfd_para.hypara", such as intervalStepFlow, intervalStepPlot, intervalStepForce, intervalStepRes, et al.
+        controller->PostSolve();
+
+        delete controller;
+    }
+
+    PostprocessAfterInnerIterationStepForAleSolvers();
+}
 
 bool Simulation::IsSubIterationConvergence(const int &innerIterStep, const int &minSubIteration, const int &maxSubIteration, const RDouble &tolalSubIteration, const RDouble &averageQuotientMaxInSolvers)
 {

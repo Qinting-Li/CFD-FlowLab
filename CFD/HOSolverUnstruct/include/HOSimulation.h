@@ -47,7 +47,7 @@ public:
 private:
     void InitGeometry();
     void ReadGeometry();
-    void SwapGeommetry();
+    void SwapGeometry();
     void InitOversetGrid() {}
     void OversetGridConfig();
     void ReadGrid();

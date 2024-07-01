@@ -15,7 +15,7 @@ IncomSpeciesEqCalculator::~IncomSpeciesEqCalculator()
 
 }
 
-void IncomSpeciesEqCalculator::InitFlowAsRestart(Grid* gridIn)
+void IncomSpeciesEqCalculator::InitFlowAsRestart(Grid *gridIn)
 {
     IncomScalarEqCalculator::InitFlowAsRestart(gridIn);
     UnstructGrid *grid = UnstructGridCast(gridIn); 
@@ -29,15 +29,15 @@ void IncomSpeciesEqCalculator::InitFlowAsRestart(Grid* gridIn)
     int localIndex = localSolverIndex[solverIndex];
 
     int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
-    RDouble* initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
+    RDouble *initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
     GlobalDataBase::GetData("initMassFractionIncom", initMassFractionIncom, PHDOUBLE, numberOfSpeciesIncom);
     RDouble initPhi = initMassFractionIncom[localIndex];
-    RDouble* phi = reinterpret_cast<RDouble*>(grid->GetDataPtr(varNameIncom[solverIndex]));
+    RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(varNameIncom[solverIndex]));
     PHSPACE::SetField(phi, initPhi, nTotal);
 
     GAS_SPACE::gas->InitParameterForMassdiff();
 
-    delete[] initMassFractionIncom;
+    delete [] initMassFractionIncom;
 }
 
 void IncomSpeciesEqCalculator::IncompressibleInitial(Grid * gridIn)
@@ -123,17 +123,17 @@ void IncomSpeciesEqCalculator::UpdateUnsteadyVariable(Grid *grid)
 
 }
 
-void IncomSpeciesEqCalculator::UpdateBCValue(Grid*  gridIn)
+void IncomSpeciesEqCalculator::UpdateBCValue(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn); 
     string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
     int solverIndex = GetSolverIndex();
     string varName = varNameIncom[solverIndex];
     int nTotalCell = grid->GetNTotalCell();
-    int* leftCellOfFace = grid->GetLeftCellOfFace();
-    int* rightCellOfFace = grid->GetRightCellOfFace();
-    RDouble* FaceFlux = reinterpret_cast<RDouble*>(grid->GetDataPtr("FaceFlux"));
-    RDouble* phi = reinterpret_cast<RDouble*>(grid->GetDataPtr(varName));
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
+    RDouble *FaceFlux = reinterpret_cast<RDouble *>(grid->GetDataPtr("FaceFlux"));
+    RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName));
 
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
@@ -157,14 +157,14 @@ void IncomSpeciesEqCalculator::UpdateBCValue(Grid*  gridIn)
                 int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
                 if (bcData->IsExist("initMassFractionIncom", PHDOUBLE, numberOfSpeciesIncom))
                 {
-                    RDouble* initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
+                    RDouble *initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
                     bcData->GetData("initMassFractionIncom", initMassFractionIncom, PHDOUBLE, numberOfSpeciesIncom);
 
                     int *localSolverIndex = reinterpret_cast <int *> (GlobalDataBase::GetDataPtr("localSolverIndex"));
                     int localIndex = localSolverIndex[solverIndex];
                     spBound = initMassFractionIncom[localIndex];
 
-                    delete[] initMassFractionIncom;
+                    delete [] initMassFractionIncom;
                 }
                 phi[re] = RDouble(spBound);
             }
@@ -180,14 +180,14 @@ void IncomSpeciesEqCalculator::UpdateBCValue(Grid*  gridIn)
                 int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
                 if (bcData->IsExist("initMassFractionIncom", PHDOUBLE, numberOfSpeciesIncom))
                 {
-                    RDouble* initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
+                    RDouble *initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
                     bcData->GetData("initMassFractionIncom", initMassFractionIncom, PHDOUBLE, numberOfSpeciesIncom);
 
                     int *localSolverIndex = reinterpret_cast <int *> (GlobalDataBase::GetDataPtr("localSolverIndex"));
                     int localIndex = localSolverIndex[solverIndex];
                     spBound = initMassFractionIncom[localIndex];
 
-                    delete[] initMassFractionIncom;
+                    delete [] initMassFractionIncom;
                 }
                 else
                 {
@@ -215,14 +215,14 @@ void IncomSpeciesEqCalculator::UpdateBCValue(Grid*  gridIn)
                     int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
                     if (bcData->IsExist("initMassFractionIncom", PHDOUBLE, numberOfSpeciesIncom))
                     {
-                        RDouble* initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
+                        RDouble *initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
                         bcData->GetData("initMassFractionIncom", initMassFractionIncom, PHDOUBLE, numberOfSpeciesIncom);
 
                         int *localSolverIndex = reinterpret_cast <int *> (GlobalDataBase::GetDataPtr("localSolverIndex"));
                         int localIndex = localSolverIndex[solverIndex];
                         spBound = initMassFractionIncom[localIndex];
 
-                        delete[] initMassFractionIncom;
+                        delete [] initMassFractionIncom;
                     }
                 }
 
@@ -240,14 +240,14 @@ void IncomSpeciesEqCalculator::UpdateBCValue(Grid*  gridIn)
                 int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
                 if (bcData->IsExist("initMassFractionIncom", PHDOUBLE, numberOfSpeciesIncom))
                 {
-                    RDouble* initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
+                    RDouble *initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
                     bcData->GetData("initMassFractionIncom", initMassFractionIncom, PHDOUBLE, numberOfSpeciesIncom);
 
                     int *localSolverIndex = reinterpret_cast <int *> (GlobalDataBase::GetDataPtr("localSolverIndex"));
                     int localIndex = localSolverIndex[solverIndex];
                     spBound = initMassFractionIncom[localIndex];
 
-                    delete[] initMassFractionIncom;
+                    delete [] initMassFractionIncom;
                 }
                 else
                 {
@@ -273,14 +273,14 @@ void IncomSpeciesEqCalculator::UpdateBCValue(Grid*  gridIn)
                     int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
                     if (bcData->IsExist("initMassFractionIncom", PHDOUBLE, numberOfSpeciesIncom))
                     {
-                        RDouble* initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
+                        RDouble *initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
                         bcData->GetData("initMassFractionIncom", initMassFractionIncom, PHDOUBLE, numberOfSpeciesIncom);
 
                         int *localSolverIndex = reinterpret_cast <int *> (GlobalDataBase::GetDataPtr("localSolverIndex"));
                         int localIndex = localSolverIndex[solverIndex];
                         spBound = initMassFractionIncom[localIndex];
 
-                        delete[] initMassFractionIncom;
+                        delete [] initMassFractionIncom;
                     }
                 }
                 phi[re] = spBound;
@@ -301,7 +301,7 @@ void IncomSpeciesEqCalculator::UpdateBCValue(Grid*  gridIn)
     CommunicateAnInterfaceVar(phi);
 }
 
-void IncomSpeciesEqCalculator::UpdateAfterIterloop(Grid*  gridIn)
+void IncomSpeciesEqCalculator::UpdateAfterIterloop(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn); 
     int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
@@ -317,17 +317,17 @@ void IncomSpeciesEqCalculator::UpdateAfterIterloop(Grid*  gridIn)
     int nTotalFace = grid->GetNTotalFace();
     int nTotal = nTotalCell + nBoundFace;
 
-    int* leftCellOfFace = grid->GetLeftCellOfFace();
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
 
-    RDouble* u = reinterpret_cast<RDouble*>(grid->GetDataPtr("U"));
-    RDouble* v = reinterpret_cast<RDouble*>(grid->GetDataPtr("V"));
-    RDouble* w = reinterpret_cast<RDouble*>(grid->GetDataPtr("W"));
-    RDouble* T = reinterpret_cast<RDouble*>(grid->GetDataPtr("T"));
-    RDouble* p = reinterpret_cast<RDouble*>(grid->GetDataPtr("P"));
+    RDouble *u = reinterpret_cast<RDouble *>(grid->GetDataPtr("U"));
+    RDouble *v = reinterpret_cast<RDouble *>(grid->GetDataPtr("V"));
+    RDouble *w = reinterpret_cast<RDouble *>(grid->GetDataPtr("W"));
+    RDouble *T = reinterpret_cast<RDouble *>(grid->GetDataPtr("T"));
+    RDouble *p = reinterpret_cast<RDouble *>(grid->GetDataPtr("P"));
 
-    RDouble* Rg = reinterpret_cast<RDouble*>(grid->GetDataPtr("Rg"));
-    RDouble* cp = reinterpret_cast<RDouble*>(grid->GetDataPtr("cp"));
-    RDouble* cRho = reinterpret_cast<RDouble*>(grid->GetDataPtr("cRho"));
+    RDouble *Rg = reinterpret_cast<RDouble *>(grid->GetDataPtr("Rg"));
+    RDouble *cp = reinterpret_cast<RDouble *>(grid->GetDataPtr("cp"));
+    RDouble *cRho = reinterpret_cast<RDouble *>(grid->GetDataPtr("cRho"));
 
     RDouble *spSum = new RDouble[nTotalCell];
     string *scalarNameList = GAS_SPACE::gas->GetGasName();
@@ -338,7 +338,7 @@ void IncomSpeciesEqCalculator::UpdateAfterIterloop(Grid*  gridIn)
     int numOfSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
     for (int iSp = 0; iSp < numOfSpecies; ++iSp)
     {
-        sp = (RDouble*)grid->GetDataPtr(scalarNameList[iSp]);
+        sp = (RDouble *)grid->GetDataPtr(scalarNameList[iSp]);
         for (int iCell = 0; iCell < nTotalCell; iCell++)
         {
             if (sp[iCell] < 0.0)
@@ -352,7 +352,7 @@ void IncomSpeciesEqCalculator::UpdateAfterIterloop(Grid*  gridIn)
     
     for (int iSp = 0; iSp < numOfSpecies; iSp++)
     {
-        sp = (RDouble*)grid->GetDataPtr(scalarNameList[iSp]);
+        sp = (RDouble *)grid->GetDataPtr(scalarNameList[iSp]);
         for (int iCell = 0; iCell < nTotalCell; iCell++)
         {
             sp[iCell] /= spSum[iCell];
@@ -361,36 +361,36 @@ void IncomSpeciesEqCalculator::UpdateAfterIterloop(Grid*  gridIn)
 
     UpdateSpBoundary(grid);
 
-    delete[] spSum;
+    delete [] spSum;
 
     for (int iSp = 0; iSp < numOfSpecies; iSp++)
     {
-        sp = (RDouble*)grid->GetDataPtr(scalarNameList[iSp]);
+        sp = (RDouble *)grid->GetDataPtr(scalarNameList[iSp]);
         CommunicateAnInterfaceVar(sp);
     }
 }
 
-void IncomSpeciesEqCalculator::UpdateSpBoundary(Grid* gridIn)
+void IncomSpeciesEqCalculator::UpdateSpBoundary(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
-    int* rightCellOfFace = grid->GetRightCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
     int nTotalCell = grid->GetNTotalCell();
-    int* leftCellOfFace = grid->GetLeftCellOfFace();
-    RDouble* FaceFlux = reinterpret_cast<RDouble*>(grid->GetDataPtr("FaceFlux"));
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
+    RDouble *FaceFlux = reinterpret_cast<RDouble *>(grid->GetDataPtr("FaceFlux"));
 
-    UnstructBCSet* unstructBCSet = grid->GetUnstructBCSet();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
     string *scalarNameList = GAS_SPACE::gas->GetGasName();
     int numOfSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
     for (int iSp = 0; iSp < numOfSpecies; ++iSp)
     {
-        RDouble* phi = reinterpret_cast<RDouble*>(grid->GetDataPtr(scalarNameList[iSp]));
+        RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(scalarNameList[iSp]));
         for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
         {
-            UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+            UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
             int bcType = bcRegion->GetBCType();
-            vector<int>* faceIndex = bcRegion->GetFaceIndex();
-            Data_Param* bcData = bcRegion->GetBCParamDataBase();
+            vector<int> *faceIndex = bcRegion->GetFaceIndex();
+            Data_Param *bcData = bcRegion->GetBCParamDataBase();
 
             if (bcType == PHENGLEI::SOLID_SURFACE)
             {
@@ -404,10 +404,10 @@ void IncomSpeciesEqCalculator::UpdateSpBoundary(Grid* gridIn)
                     int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
                     if (bcData->IsExist("initMassFractionIncom", PHDOUBLE, numberOfSpeciesIncom))
                     {
-                        RDouble* initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
+                        RDouble *initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
                         bcData->GetData("initMassFractionIncom", initMassFractionIncom, PHDOUBLE, numberOfSpeciesIncom);
                         spBound = initMassFractionIncom[iSp];
-                        delete[] initMassFractionIncom;
+                        delete [] initMassFractionIncom;
                     }
 
                     phi[re] = spBound;
@@ -424,10 +424,10 @@ void IncomSpeciesEqCalculator::UpdateSpBoundary(Grid* gridIn)
                     int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
                     if (bcData->IsExist("initMassFractionIncom", PHDOUBLE, numberOfSpeciesIncom))
                     {
-                        RDouble* initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
+                        RDouble *initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
                         bcData->GetData("initMassFractionIncom", initMassFractionIncom, PHDOUBLE, numberOfSpeciesIncom);
                         spBound = initMassFractionIncom[iSp];
-                        delete[] initMassFractionIncom;
+                        delete [] initMassFractionIncom;
                     }
                     else
                     {
@@ -452,10 +452,10 @@ void IncomSpeciesEqCalculator::UpdateSpBoundary(Grid* gridIn)
                         int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
                         if (bcData->IsExist("initMassFractionIncom", PHDOUBLE, numberOfSpeciesIncom))
                         {
-                            RDouble* initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
+                            RDouble *initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
                             bcData->GetData("initMassFractionIncom", initMassFractionIncom, PHDOUBLE, numberOfSpeciesIncom);
                             spBound = initMassFractionIncom[iSp];
-                            delete[] initMassFractionIncom;
+                            delete [] initMassFractionIncom;
                         }
                     }
                     phi[re] = spBound;
@@ -473,19 +473,17 @@ void IncomSpeciesEqCalculator::UpdateSpBoundary(Grid* gridIn)
                     int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
                     if (bcData->IsExist("initMassFractionIncom", PHDOUBLE, numberOfSpeciesIncom))
                     {
-                        RDouble* initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
+                        RDouble *initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
                         bcData->GetData("initMassFractionIncom", initMassFractionIncom, PHDOUBLE, numberOfSpeciesIncom);
                         spBound = initMassFractionIncom[iSp];
-                        delete[] initMassFractionIncom;
+                        delete [] initMassFractionIncom;
                     }
                     else
                     {
                         std::cout << " No initial value has assigned to the boundary " << std::endl;
                     }
-
                     phi[re] = spBound;
                 }
-
             }
             else if (bcType == PHENGLEI::PRESSURE_OUTLET)
             {
@@ -501,10 +499,10 @@ void IncomSpeciesEqCalculator::UpdateSpBoundary(Grid* gridIn)
                         int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
                         if (bcData->IsExist("initMassFractionIncom", PHDOUBLE, numberOfSpeciesIncom))
                         {
-                            RDouble* initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
+                            RDouble *initMassFractionIncom = new RDouble[numberOfSpeciesIncom];
                             bcData->GetData("initMassFractionIncom", initMassFractionIncom, PHDOUBLE, numberOfSpeciesIncom);
                             spBound = initMassFractionIncom[iSp];
-                            delete[] initMassFractionIncom;
+                            delete [] initMassFractionIncom;
                         }
                     }
                     phi[re] = spBound;
@@ -524,7 +522,7 @@ void IncomSpeciesEqCalculator::UpdateSpBoundary(Grid* gridIn)
     }
 }
 
-void IncomSpeciesEqCalculator::UpdateProperties(Grid* gridIn)
+void IncomSpeciesEqCalculator::UpdateProperties(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
@@ -541,31 +539,28 @@ void IncomSpeciesEqCalculator::UpdateProperties(Grid* gridIn)
         return;
     }
 
-    RDouble* Rg = reinterpret_cast<RDouble*>(grid->GetDataPtr("Rg"));
-    RDouble* rho = reinterpret_cast<RDouble*>(grid->GetDataPtr("rho"));
+    RDouble *Rg = reinterpret_cast<RDouble *>(grid->GetDataPtr("Rg"));
+    RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
     GAS_SPACE::gas->UpdateRg(grid, Rg);
     GAS_SPACE::gas->UpdateRho(grid, rho);
 
     CommunicateAnInterfaceVar(Rg);
     CommunicateAnInterfaceVar(rho);
-
 }
 
-void IncomSpeciesEqCalculator::SetDiffusionCoeff(Grid* gridIn)
+void IncomSpeciesEqCalculator::SetDiffusionCoeff(Grid *gridIn)
 {
-    UnstructGrid* grid = UnstructGridCast(gridIn);
+    UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nTotalFace = grid->GetNTotalFace();
     int nBoundFace = grid->GetNBoundFace();
-    int* leftCellOfFace = grid->GetLeftCellOfFace();
-    int* rightCellOfFace = grid->GetRightCellOfFace();
-    int *localSolverIndex = reinterpret_cast <int *> (GlobalDataBase::GetDataPtr("localSolverIndex"));
-    RDouble **DiffusionCoeff = reinterpret_cast <RDouble **> (GlobalDataBase::GetDataPtr("DiffusionCoeff"));
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
+    int *localSolverIndex = reinterpret_cast<int *>(GlobalDataBase::GetDataPtr("localSolverIndex"));
+    RDouble **DiffusionCoeff = reinterpret_cast<RDouble **>(GlobalDataBase::GetDataPtr("DiffusionCoeff"));
     int solverIndex = GetSolverIndex();
     GAS_SPACE::gas->UpdateMassDiff(grid, localSolverIndex[solverIndex], DiffusionCoeff[solverIndex]);
     CommunicateAnInterfaceVar(DiffusionCoeff[solverIndex]);
-
 }
-
 
 }

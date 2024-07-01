@@ -69,10 +69,10 @@ void Task_WriteBinaryTecplot::ServerWrite(ActionKey *actkey)
     for (int iZone =  0; iZone < nZones; ++ iZone)
     {
         DataContainer *cdata = actkey->GetData();
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
         
         DataContainer *tecdata = actkey->GetTecData();
-        tecdata->moveto_begin();
+        tecdata->MoveToBegin();
 
         int send_proc = GetZoneProcessorID(iZone);
         recv_proc = GetZoneFileID(iZone);
@@ -87,7 +87,7 @@ void Task_WriteBinaryTecplot::ServerWrite(ActionKey *actkey)
         
         PH_Trade(actkey, send_proc, recv_proc, tag);
 
-        if(myid == recv_proc)
+        if (myid == recv_proc)
         {
             if (actkey->VTKvisual == true)
             {

@@ -207,7 +207,7 @@ T GetAngleOfTwoVector(T* x, T* y, int n)
     {
         return 0;
     }
-    else if(cosnum < -1.0)
+    else if (cosnum < -1.0)
     {
         return PI;
     }

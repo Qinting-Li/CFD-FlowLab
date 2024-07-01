@@ -140,7 +140,7 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
                         }
                     }
 
-                    delete []desc;
+                    delete [] desc;
                 }
             }
         }

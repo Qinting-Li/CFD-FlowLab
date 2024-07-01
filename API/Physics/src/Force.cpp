@@ -100,47 +100,47 @@ Force::Force()
 
 Force::~Force()
 {
-    delete[] partBCID;    partBCID = NULL;
+    delete [] partBCID;    partBCID = NULL;
 
-    delete[] cpx;    cpx = NULL;
-    delete[] cpy;    cpy = NULL;
-    delete[] cpz;    cpz = NULL;
+    delete [] cpx;    cpx = NULL;
+    delete [] cpy;    cpy = NULL;
+    delete [] cpz;    cpz = NULL;
 
-    delete[] cl_tot;    cl_tot = NULL;
-    delete[] cd_tot;    cd_tot = NULL;
-    delete[] cd_pr;    cd_pr = NULL;
-    delete[] cd_sf;    cd_sf = NULL;
-    delete[] cd_cl2pa;    cd_cl2pa = NULL;
-    delete[] xcp;    xcp = NULL;
-    delete[] ycp;    ycp = NULL;
-    delete[] zcp;    zcp = NULL;
-    delete[] side;    side = NULL;
+    delete [] cl_tot;    cl_tot = NULL;
+    delete [] cd_tot;    cd_tot = NULL;
+    delete [] cd_pr;    cd_pr = NULL;
+    delete [] cd_sf;    cd_sf = NULL;
+    delete [] cd_cl2pa;    cd_cl2pa = NULL;
+    delete [] xcp;    xcp = NULL;
+    delete [] ycp;    ycp = NULL;
+    delete [] zcp;    zcp = NULL;
+    delete [] side;    side = NULL;
 
-    delete[] CA_f;    CA_f = NULL;
-    delete[] CA_p;    CA_p = NULL;
-    delete[] CN_f;    CN_f = NULL;
-    delete[] CN_p;    CN_p = NULL;
-    delete[] CZ_f;    CZ_f = NULL;
-    delete[] CZ_p;    CZ_p = NULL;
-    delete[] Cl_f;    Cl_f = NULL;
-    delete[] Cl_p;    Cl_p = NULL;
-    delete[] Cn_f;    Cn_f = NULL;
-    delete[] Cn_p;    Cn_p = NULL;
-    delete[] Cm_f;    Cm_f = NULL;
-    delete[] Cm_p;    Cm_p = NULL;
+    delete [] CA_f;    CA_f = NULL;
+    delete [] CA_p;    CA_p = NULL;
+    delete [] CN_f;    CN_f = NULL;
+    delete [] CN_p;    CN_p = NULL;
+    delete [] CZ_f;    CZ_f = NULL;
+    delete [] CZ_p;    CZ_p = NULL;
+    delete [] Cl_f;    Cl_f = NULL;
+    delete [] Cl_p;    Cl_p = NULL;
+    delete [] Cn_f;    Cn_f = NULL;
+    delete [] Cn_p;    Cn_p = NULL;
+    delete [] Cm_f;    Cm_f = NULL;
+    delete [] Cm_p;    Cm_p = NULL;
 
-    delete[] CA_f_body;    CA_f_body = NULL;
-    delete[] CN_f_body;    CN_f_body = NULL;
-    delete[] CZ_f_body;    CZ_f_body = NULL;
-    delete[] Cl_f_body;    Cl_f_body = NULL;
-    delete[] Cn_f_body;    Cn_f_body = NULL;
-    delete[] Cm_f_body;    Cm_f_body = NULL;
-    delete[] CA_p_body;    CA_p_body = NULL;
-    delete[] CN_p_body;    CN_p_body = NULL;
-    delete[] CZ_p_body;    CZ_p_body = NULL;
-    delete[] Cl_p_body;    Cl_p_body = NULL;
-    delete[] Cn_p_body;    Cn_p_body = NULL;
-    delete[] Cm_p_body;    Cm_p_body = NULL;
+    delete [] CA_f_body;    CA_f_body = NULL;
+    delete [] CN_f_body;    CN_f_body = NULL;
+    delete [] CZ_f_body;    CZ_f_body = NULL;
+    delete [] Cl_f_body;    Cl_f_body = NULL;
+    delete [] Cn_f_body;    Cn_f_body = NULL;
+    delete [] Cm_f_body;    Cm_f_body = NULL;
+    delete [] CA_p_body;    CA_p_body = NULL;
+    delete [] CN_p_body;    CN_p_body = NULL;
+    delete [] CZ_p_body;    CZ_p_body = NULL;
+    delete [] Cl_p_body;    Cl_p_body = NULL;
+    delete [] Cn_p_body;    Cn_p_body = NULL;
+    delete [] Cm_p_body;    Cm_p_body = NULL;
 }
 
 void Force::Init(RDouble attack, RDouble sideslip, RDouble forceReferenceArea, RDouble forceReferenceLength, RDouble forceReferenceLengthSpanWise)
@@ -275,7 +275,7 @@ void Force::Init(RDouble attack, RDouble sideslip, RDouble forceReferenceArea, R
 
 void Force::CollectionForce(DataContainer *data_in)
 {
-    data_in->moveto_begin();
+    data_in->MoveToBegin();
     int nLocalZones = PHMPI::GetNumberofLocalZones();
 
     int nTotalVarDim = nForceVar * numberofTotalPart;
@@ -300,25 +300,25 @@ void Force::CollectionForce(DataContainer *data_in)
 
             RDouble dCA_f, dCA_p, dCN_f, dCN_p, dCZ_f, dCZ_p, dcpx, dcpy, dcpz, dCl_f, dCl_p, dCn_f, dCn_p, dCm_f, dCm_p, hingeMoment;
 
-            data_in->read(&dCA_f, sizeof(RDouble));
-            data_in->read(&dCA_p, sizeof(RDouble));
-            data_in->read(&dCN_f, sizeof(RDouble));
-            data_in->read(&dCN_p, sizeof(RDouble));
-            data_in->read(&dCZ_f, sizeof(RDouble));
-            data_in->read(&dCZ_p, sizeof(RDouble));
+            data_in->Read(&dCA_f, sizeof(RDouble));
+            data_in->Read(&dCA_p, sizeof(RDouble));
+            data_in->Read(&dCN_f, sizeof(RDouble));
+            data_in->Read(&dCN_p, sizeof(RDouble));
+            data_in->Read(&dCZ_f, sizeof(RDouble));
+            data_in->Read(&dCZ_p, sizeof(RDouble));
 
-            data_in->read(&dcpx, sizeof(RDouble));
-            data_in->read(&dcpy, sizeof(RDouble));
-            data_in->read(&dcpz, sizeof(RDouble));
+            data_in->Read(&dcpx, sizeof(RDouble));
+            data_in->Read(&dcpy, sizeof(RDouble));
+            data_in->Read(&dcpz, sizeof(RDouble));
 
-            data_in->read(&dCl_f, sizeof(RDouble));
-            data_in->read(&dCl_p, sizeof(RDouble));
-            data_in->read(&dCn_f, sizeof(RDouble));
-            data_in->read(&dCn_p, sizeof(RDouble));
-            data_in->read(&dCm_f, sizeof(RDouble));
-            data_in->read(&dCm_p, sizeof(RDouble));
+            data_in->Read(&dCl_f, sizeof(RDouble));
+            data_in->Read(&dCl_p, sizeof(RDouble));
+            data_in->Read(&dCn_f, sizeof(RDouble));
+            data_in->Read(&dCn_p, sizeof(RDouble));
+            data_in->Read(&dCm_f, sizeof(RDouble));
+            data_in->Read(&dCm_p, sizeof(RDouble));
 
-            data_in->read(&hingeMoment, sizeof(RDouble));
+            data_in->Read(&hingeMoment, sizeof(RDouble));
 
             localForceVar[varCount ++] += static_cast<double>(dCA_f);
             localForceVar[varCount ++] += static_cast<double>(dCA_p);
@@ -343,25 +343,25 @@ void Force::CollectionForce(DataContainer *data_in)
             //! Because of global and local part force, when (iPart > ALL_SOLID_WALL), read second.
             if (iPart > ALL_SOLID_WALL)
             {
-                data_in->read(&dCA_f, sizeof(RDouble));
-                data_in->read(&dCA_p, sizeof(RDouble));
-                data_in->read(&dCN_f, sizeof(RDouble));
-                data_in->read(&dCN_p, sizeof(RDouble));
-                data_in->read(&dCZ_f, sizeof(RDouble));
-                data_in->read(&dCZ_p, sizeof(RDouble));
+                data_in->Read(&dCA_f, sizeof(RDouble));
+                data_in->Read(&dCA_p, sizeof(RDouble));
+                data_in->Read(&dCN_f, sizeof(RDouble));
+                data_in->Read(&dCN_p, sizeof(RDouble));
+                data_in->Read(&dCZ_f, sizeof(RDouble));
+                data_in->Read(&dCZ_p, sizeof(RDouble));
 
-                data_in->read(&dcpx, sizeof(RDouble));
-                data_in->read(&dcpy, sizeof(RDouble));
-                data_in->read(&dcpz, sizeof(RDouble));
+                data_in->Read(&dcpx, sizeof(RDouble));
+                data_in->Read(&dcpy, sizeof(RDouble));
+                data_in->Read(&dcpz, sizeof(RDouble));
 
-                data_in->read(&dCl_f, sizeof(RDouble));
-                data_in->read(&dCl_p, sizeof(RDouble));
-                data_in->read(&dCn_f, sizeof(RDouble));
-                data_in->read(&dCn_p, sizeof(RDouble));
-                data_in->read(&dCm_f, sizeof(RDouble));
-                data_in->read(&dCm_p, sizeof(RDouble));
+                data_in->Read(&dCl_f, sizeof(RDouble));
+                data_in->Read(&dCl_p, sizeof(RDouble));
+                data_in->Read(&dCn_f, sizeof(RDouble));
+                data_in->Read(&dCn_p, sizeof(RDouble));
+                data_in->Read(&dCm_f, sizeof(RDouble));
+                data_in->Read(&dCm_p, sizeof(RDouble));
 
-                data_in->read(&hingeMoment, sizeof(RDouble));
+                data_in->Read(&hingeMoment, sizeof(RDouble));
 
                 localForceVar[varCount ++] += static_cast<double>(dCA_f);
                 localForceVar[varCount ++] += static_cast<double>(dCA_p);
@@ -430,8 +430,8 @@ void Force::CollectionForce(DataContainer *data_in)
         }
     }
 
-    delete[]localForceVar;
-    delete[]globalForceVar;
+    delete [] localForceVar;
+    delete [] globalForceVar;
 }
 
 void Force::CompForce()
@@ -497,7 +497,7 @@ void Force::CompForce()
     //* CD_TOT    (F10.5) Total Drag Coefficient.
     //* CD_PR     (F10.5) Surface-Pressure Integrated Drag Coefficient.
     //* CD_SF     (F10.5) Skin-Friction Integrated Drag Coefficient.
-    //* CD-CL2/PA (F10.5) CD_TOT - (CL_TOT*CL_TOT)/(PI*AR)£¬Note: AR=9.5
+    //* CD-CL2/PA (F10.5) CD_TOT - (CL_TOT*CL_TOT)/(PI*AR), Note: AR=9.5
     //* CM_TOT    (F10.4) Total Moment Coefficient.
 
     if (!cl_tot || !cd_tot || !cd_pr || !cd_sf || !cd_cl2pa || !xcp || !side)
@@ -761,7 +761,6 @@ void Force::DumpAllForceData(ActionKey *actkey, int outnstep)
         height = GlobalDataBase::GetDoubleParaFromDB("height");
     }
 
-
     //! Write global force data file title
     ossGlobalData << "#     MeshFile                     :       " << gridFile << endl;
     if (inflowParaType == 1)
@@ -808,7 +807,6 @@ void Force::DumpAllForceData(ActionKey *actkey, int outnstep)
     ossGlobalData << "#        CA_p           CN_p          CZ1_p         Cml_p           Cmn_p          Cm_p" << endl;
     ossGlobalData << "#        CA_f           CN_f          CZ1_f         Cml_f           Cmn_f          Cm_f" << endl;
 
-
     //! Write local force data file title
     ossLocalData << "#     MeshFile             :       " << gridFile << endl;
     if (inflowParaType == 1)
@@ -841,7 +839,6 @@ void Force::DumpAllForceData(ActionKey *actkey, int outnstep)
     ossLocalData << "#        CA_p           CN_p          CZ1_p         Cml_p           Cmn_p          Cm_p" << endl;
     ossLocalData << "#        CA_f           CN_f          CZ1_f         Cml_f           Cmn_f          Cm_f" << endl;
     ossLocalData << "#        CMh" << endl;
-
 
     bool isGlobalData = true;
     //! Write force data file
@@ -992,6 +989,10 @@ void Force::DumpBodyForceData(int bodyID, std::ostringstream &oss)
     oss << setprecision(10);
 
     oss << endl;
+    if (wallNameOfEachBody[bodyID].size() == 1)
+    {
+        return;
+    }
     oss << "*" << wallNameOfEachBody[bodyID][0] << "(";
     oss << wallNameOfEachBody[bodyID][1];
 
@@ -1025,7 +1026,7 @@ void Force::DumpBodyForceData(int bodyID, std::ostringstream &oss)
 
 void Force::DumpData(DataContainer *data)
 {
-    data->moveto_begin();
+    data->MoveToBegin();
 
     PHWrite(data, numberofSolidWallPart);
     PHWrite(data, numberofTotalPart);

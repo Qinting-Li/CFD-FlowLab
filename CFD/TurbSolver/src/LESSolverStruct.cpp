@@ -296,7 +296,7 @@ void LESSolverStruct::DumpRestartH5(ActionKey *actkey)
     string grpName;
 
     ostringstream oss;
-    oss<<"Group"<<gridID;
+    oss << "Group" << gridID;
     grpName = oss.str();
 
     grploc = OpenGroup(actkey->filepos, grpName);
@@ -328,14 +328,14 @@ void LESSolverStruct::ReadRestartH5(ActionKey *actkey)
     string grpName;
 
     ostringstream oss;
-    oss<<"Group"<<gridID;
+    oss << "Group" << gridID;
     grpName = oss.str();
 
     grploc = OpenGroup(actkey->filepos, grpName);
 
     int nTotalCellRestart = 0;
     ReadData(grploc, &nTotalCellRestart, "nTotalCell");
-    if(nTotalCellRestart != nTotalCell)
+    if (nTotalCellRestart != nTotalCell)
     {
         ostringstream erroeInfo;
         erroeInfo << " Error: the cell number in turb.dat is not equal to the cell number in grid file !" << endl;
@@ -461,9 +461,9 @@ void LESSolverStruct::RotateVectorFromInterface(Grid *gridIn, const int &neighbo
     int iNeighborZone                            = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
-    double rotationAngle        = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
+    RDouble rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
     rotationAngle = rotationAngle*PI/180;
-    if(nEquation > 0)
+    if (nEquation > 0)
     {
         RDouble4D &fieldRecvNSY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
         RDouble4D &fieldRecvNSZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
@@ -489,7 +489,7 @@ void LESSolverStruct::RotateVectorFromInterface(Grid *gridIn, const int &neighbo
                         rotNSgradValueZ(it, jt, kt, m) = fieldRecvNSY(it, jt, kt, m) * sin(2*PI-rotationAngle) + fieldRecvNSZ(it, jt, kt, m) * cos(2*PI-rotationAngle);
                     }
                 }
-                else if(bcName == "Periodic_down")
+                else if (bcName == "Periodic_down")
                 {
                     for (int m = 0; m < nEquation; ++ m)
                     {
@@ -855,8 +855,8 @@ void LESSolverStruct::ComputeWallFunction(Grid *gridIn)
         GlobalDataBase::GetData("newnstep", &iterationStep, PHINT, 1);
     }
 
-    int cflNstep    = parameters->GetCFLVaryStep();
-    if(iterationStep < cflNstep)
+    int cflNstep = parameters->GetCFLVaryStep();
+    if (iterationStep < cflNstep)
     {
         WallFunctionofVanDriest(grid);
 
@@ -1187,7 +1187,7 @@ void LESSolverStruct::ObtainGradientCellCenterHighOrder(Grid *gridIn)
     GetUVWTproxy(strgrid);
 
     int nDim = GetDim();
-    for(int nsurf = 1; nsurf <= nDim; ++nsurf)
+    for (int nsurf = 1; nsurf <= nDim; ++nsurf)
     {
         GetUVWTfaceproxy(strgrid, nsurf);
         GetdqdkxietactaCellCenter(strgrid, nsurf);
@@ -1330,7 +1330,7 @@ void LESSolverStruct::GetUVWTproxy(Grid *gridIn)
 void LESSolverStruct::GetUVWTfaceproxy(Grid *gridIn, int nsurf)
 {
     string highordersolvername = GlobalDataBase::GetStrParaFromDB("str_highorder_solver");
-    if(highordersolvername.substr(0, 4) == "HDCS")
+    if (highordersolvername.substr(0, 4) == "HDCS")
     {
         GetUVWTfaceproxy_HDCS(gridIn, nsurf);
         return;
@@ -1384,7 +1384,7 @@ void LESSolverStruct::GetUVWTfaceproxy(Grid *gridIn, int nsurf)
             {
                 int localcellID = i * il1 + j * jl1 + k * kl1;
                 
-                if((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
+                if ((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
                 {
                     for (int m = 0; m <= 3; ++m)
                     {                    
@@ -1479,7 +1479,7 @@ void LESSolverStruct::GetUVWTfaceproxy_HDCS(Grid *gridIn, int nsurf)
 void LESSolverStruct::GetdqdkxietactaCellCenter(Grid *gridIn, int nsurf)
 {
     string highordersolvername = GlobalDataBase::GetStrParaFromDB("str_highorder_solver");
-    if(highordersolvername.substr(0, 4) == "HDCS")
+    if (highordersolvername.substr(0, 4) == "HDCS")
     {
         GetdqdkxietactaCellCenter_HDCS(gridIn, nsurf);
         return;
@@ -1535,7 +1535,7 @@ void LESSolverStruct::GetdqdkxietactaCellCenter(Grid *gridIn, int nsurf)
             {
                 int localcellID = i * il1 + j * jl1 + k * kl1;
                 
-                if((*DiffOrder)(localcellID) == 2)
+                if ((*DiffOrder)(localcellID) == 2)
                 {
                     for (int m = 0; m <= 3; ++ m)
                     {
@@ -1664,9 +1664,9 @@ void LESSolverStruct::ObtainViscosity(Grid *gridIn)
         GlobalDataBase::GetData("newnstep", &iterationStep, PHINT, 1);
     }
 
-    int cflNstep    = parameters->GetCFLVaryStep();
+    int cflNstep = parameters->GetCFLVaryStep();
 
-    if(iterationStep < cflNstep)
+    if (iterationStep < cflNstep)
     {
         Smagorinsky(grid);
 
@@ -3703,13 +3703,13 @@ void LESSolverStruct::ComputeTestFilteredQ(Grid *gridIn)
     //! Get conservative variables for test filtering
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
-    for(int m = IU; m <= IW; ++m)
+    for (int m = IU; m <= IW; ++m)
     {
-        for(int k = kst; k <= ked; ++k)
+        for (int k = kst; k <= ked; ++k)
         {
-            for(int j = jst; j <= jed; ++j)
+            for (int j = jst; j <= jed; ++j)
             {
-                for(int i = ist; i <= ied; ++i)
+                for (int i = ist; i <= ied; ++i)
                 {
                     RDouble rho = q(i, j, k, IR);
                     RDouble primitiveVariable = q(i, j, k, m);
@@ -3775,13 +3775,13 @@ void LESSolverStruct::ComputeTestFilteredQ(Grid *gridIn)
     }
 
     //! Recover primitive variables after test filtering
-    for(int m = IU; m <= IW; ++m)
+    for (int m = IU; m <= IW; ++m)
     {
-        for(int k = kst; k <= ked; ++k)
+        for (int k = kst; k <= ked; ++k)
         {
-            for(int j = jst; j <= jed; ++j)
+            for (int j = jst; j <= jed; ++j)
             {
-                for(int i = ist; i <= ied; ++i)
+                for (int i = ist; i <= ied; ++i)
                 {
                     RDouble rho = testFilteredQ(i, j, k, IR);
                     RDouble conservativeVariable = testFilteredQ(i, j, k, m);
@@ -3831,13 +3831,13 @@ void LESSolverStruct::ComputeTestFilteredQFD(Grid *gridIn)
     // !get conservative variables for test filtering
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
-    for(int m = IU; m <= IW; ++m)
+    for (int m = IU; m <= IW; ++m)
     {
-        for(int k = kst; k <= ked; ++k)
+        for (int k = kst; k <= ked; ++k)
         {
-            for(int j = jst; j <= jed; ++j)
+            for (int j = jst; j <= jed; ++j)
             {
-                for(int i = ist; i <= ied; ++i)
+                for (int i = ist; i <= ied; ++i)
                 {
                     RDouble rho = q(i, j, k, IR);
                     RDouble primitiveVariable = q(i, j, k, m);
@@ -3903,13 +3903,13 @@ void LESSolverStruct::ComputeTestFilteredQFD(Grid *gridIn)
     }
 
     //! Recover primitive variables after test filtering
-    for(int m = IU; m <= IW; ++m)
+    for (int m = IU; m <= IW; ++m)
     {
-        for(int k = kst; k <= ked; ++k)
+        for (int k = kst; k <= ked; ++k)
         {
-            for(int j = jst; j <= jed; ++j)
+            for (int j = jst; j <= jed; ++j)
             {
-                for(int i = ist; i <= ied; ++i)
+                for (int i = ist; i <= ied; ++i)
                 {
                     RDouble rho = testFilteredQ(i, j, k, IR);
                     RDouble conservativeVariable = testFilteredQ(i, j, k, m);
@@ -4097,11 +4097,11 @@ void LESSolverStruct::ComputeTestFilteredTemperature(Grid *gridIn)
     }
 
     //! Recover primitive variables after test filtering
-    for(int k = kst; k <= ked; ++k)
+    for (int k = kst; k <= ked; ++k)
     {
-        for(int j = jst; j <= jed; ++j)
+        for (int j = jst; j <= jed; ++j)
         {
-            for(int i = ist; i <= ied; ++i)
+            for (int i = ist; i <= ied; ++i)
             {
                 RDouble rho = testFilteredQ(i, j, k, IR);
                 RDouble conservativeVariable = testFilteredQ(i, j, k, IR);
@@ -4200,11 +4200,11 @@ void LESSolverStruct::ComputeTestFilteredTemperatureFD(Grid *gridIn)
     }
 
     //! Recover primitive variables after test filtering
-    for(int k = kst; k <= ked; ++k)
+    for (int k = kst; k <= ked; ++k)
     {
-        for(int j = jst; j <= jed; ++j)
+        for (int j = jst; j <= jed; ++j)
         {
-            for(int i = ist; i <= ied; ++i)
+            for (int i = ist; i <= ied; ++i)
             {
                 RDouble rho = testFilteredQ(i, j, k, IR);
                 RDouble conservativeVariable = testFilteredQ(i, j, k, IR);
@@ -4225,7 +4225,7 @@ void LESSolverStruct::ComputeStrainRateTensor(Grid *gridIn)
 {
     Param_LESSolverStruct *parameters = GetControlParameters();
     int subgridScaleModel = parameters->GetSubgridScaleModel();
-    if(subgridScaleModel == 6)
+    if (subgridScaleModel == 6)
     {
         return;
     }
@@ -4865,13 +4865,13 @@ void LESSolverStruct::ComputeModeledStress(Grid *gridIn)
 
     ComputeBetaIJ(grid);
 
-    for(int m = 1; m <= 6; ++m)
+    for (int m = 1; m <= 6; ++m)
     {
-        for(int k = kst; k <= ked; ++k)
+        for (int k = kst; k <= ked; ++k)
         {
-            for(int j = jst; j <= jed; ++j)
+            for (int j = jst; j <= jed; ++j)
             {
-                for(int i = ist; i <= ied; ++i)
+                for (int i = ist; i <= ied; ++i)
                 {
                     RDouble beta = betaIJ(i, j, k, m);
                     RDouble alpha = testFilteredAlphaIJ(i, j, k, m); 

@@ -355,8 +355,8 @@ string Dec2Hex(int data_in)
     stringstream oss;
     string temp;
 
-    oss<< setiosflags(ios::uppercase)<<hex<<data_in;
-    oss>>temp;
+    oss << setiosflags(ios::uppercase) << hex << data_in;
+    oss >> temp;
 
     return temp;
 }

@@ -51,7 +51,7 @@ void MainTaskNonBlocking(ActionKey *actkey)
             int sendProcessID = GetZoneProcessorIDSepMode(iZone);
             int receiveProcessID = GetZoneProcessorIDSepMode(neighborZoneIndex);
 
-            if(currentProcessorID != sendProcessID && currentProcessorID != receiveProcessID)
+            if (currentProcessorID != sendProcessID && currentProcessorID != receiveProcessID)
             {
                 continue;
             }
@@ -59,12 +59,12 @@ void MainTaskNonBlocking(ActionKey *actkey)
             //! Allocate the buffers for sending and receiving.
             DataContainer *receivedBuffer = 0;
             DataContainer *sendBuffer = 0;
-            if(currentProcessorID == receiveProcessID)
+            if (currentProcessorID == receiveProcessID)
             {
                 receivedBuffer = new DataContainer;
                 receivedDataBuffer[iZone].push_back(receivedBuffer);
             }
-            if(currentProcessorID == sendProcessID)
+            if (currentProcessorID == sendProcessID)
             {
                 sendBuffer = new DataContainer;
                 sendDataBuffer[iZone].push_back(sendBuffer);
@@ -76,7 +76,7 @@ void MainTaskNonBlocking(ActionKey *actkey)
     }
 
     //! Step2: MPI waiting for Non-blocking communications.
-    if(PHMPI::GetNumberOfProcessor() > 1)
+    if (PHMPI::GetNumberOfProcessor() > 1)
     {
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }

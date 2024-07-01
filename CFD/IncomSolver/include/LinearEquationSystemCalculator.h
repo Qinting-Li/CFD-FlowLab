@@ -29,13 +29,11 @@ public:
     virtual ~LinearEquationSystemCalculator() {};
 
 public:
-    virtual void explicitSolve(Grid* gridIn, RDouble* x, RDouble* diagCoef, RDouble* b, RDouble* upACOFFace, RDouble* downACOFFace) {};
-    virtual void mathLibSolveInit(Grid* gridIn){};
-    virtual void mathLibSolve(Grid* gridIn, int iEquation, RDouble * x, RDouble * diagCoef, RDouble *b, RDouble * upACOFFace, RDouble * downACOFFace) {};
+    virtual void explicitSolve(Grid *gridIn, RDouble *x, RDouble *diagCoef, RDouble *b, RDouble *upACOFFace, RDouble *downACOFFace) {};
+    virtual void mathLibSolveInit(Grid *gridIn){};
+    virtual void mathLibSolve(Grid *gridIn, int iEquation, RDouble *x, RDouble *diagCoef, RDouble *b, RDouble *upACOFFace, RDouble *downACOFFace) {};
     virtual void mathLibSolveFinalize(){};
-
 };
-
 
 }
 

@@ -52,7 +52,7 @@ void WriteLogFile(const string &data)
 void WriteLogFile(const string &data, bool writeEachProcessor)
 {
     using namespace PHMPI;
-    if(writeEachProcessor)
+    if (writeEachProcessor)
     {
         fstream file;
         OpenLogFile(GetCurrentProcessorID(), file);
@@ -63,7 +63,7 @@ void WriteLogFile(const string &data, bool writeEachProcessor)
     {
 #ifndef LOG_DEBUG
         //! Only server write log.
-        if(GetCurrentProcessorID() == server)
+        if (GetCurrentProcessorID() == server)
 #endif
         {
             fstream file;

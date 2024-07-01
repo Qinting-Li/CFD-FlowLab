@@ -255,14 +255,14 @@ namespace HOUnstruct
 
 int Test0Or1(RDouble & valToTest, RDouble eps = HO_SMALL)
 {
-    if(abs(valToTest) < eps)
+    if (abs(valToTest) < eps)
     {
-        if(abs(valToTest-1) < eps) return 2;
+        if (abs(valToTest-1) < eps) return 2;
         else return 0;
     }
     else
     {
-        if(abs(valToTest-1) < eps) return 1;
+        if (abs(valToTest-1) < eps) return 1;
         else return 2;
     }
 }

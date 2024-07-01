@@ -11,7 +11,7 @@ void VirtualFile::read(void *data, streamsize size)
     }
     else
     {
-        cdata->read(data, static_cast<CharVecSizeType>(size));
+        cdata->Read(data, static_cast<CharVecSizeType>(size));
     }
 }
 
@@ -23,7 +23,7 @@ void VirtualFile::write(void *data, streamsize size)
     }
     else
     {
-        cdata->write(data, static_cast<CharVecSizeType>(size));
+        cdata->Write(data, static_cast<CharVecSizeType>(size));
     }
 }
 
@@ -36,7 +36,7 @@ void VirtualFile::BeginReadWork()
     }
     else
     {
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
     }
 }
 

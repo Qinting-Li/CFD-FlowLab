@@ -18,6 +18,11 @@ inline RDouble * Geo_CellMetrics_Unstruct::GetCellVolume()  const
     return vol;
 }
 
+inline RDouble * Geo_CellMetrics_Unstruct::GetCellSkewness()  const
+{
+    return cellSkewness;
+}
+
 inline void Geo_CellMetrics_Unstruct::SetCellCenterX(RDouble *xcc)
 {
     if (this->xcc && this->xcc != xcc)
@@ -52,6 +57,15 @@ inline void Geo_CellMetrics_Unstruct::SetCellVolume(RDouble *vol)
         delete [] this->vol;
     }
     this->vol = vol;
+}
+
+inline void Geo_CellMetrics_Unstruct::SetCellSkewness(RDouble *skewness)
+{
+    if (this->cellSkewness && this->cellSkewness != skewness)
+    {
+        delete [] this->cellSkewness;
+    }
+    this->cellSkewness = skewness;
 }
 
 inline void Geo_CellMetrics_Unstruct::SetLargestLocalGridLength(RDouble *length)

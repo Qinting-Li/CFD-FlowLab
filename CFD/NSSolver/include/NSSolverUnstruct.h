@@ -108,11 +108,12 @@ public:
     void SpectrumRadiusInviscid(Grid *grid);
     void SpectrumRadiusViscous(Grid *grid);
     void SpectrumRadiusChemical(Grid *grid);
-    void ConservativePreconMatrix(Grid *gridIn);
+    void ConservativePreconMatrix(Grid *gridIn, int sign);
     void Diagonal(Grid *gridIn);
     void ComputeMinTimeStep(Grid *grid, RDouble & minDt, RDouble & maxDt);
     void ReduceMaxTimeStep(Grid *grid, RDouble globalMinDt);
     void LocalTimeStep(Grid *grid);
+    void LimitCFL(Grid *gridIn, RDouble *CFLCell);
 
     //! calculate time step by another methods different with PHengLEI code.
     void LocalTimeStep_Prince(Grid *grid);
@@ -137,8 +138,8 @@ public:
     void InitCGrid(Grid *fgrid_in, Grid *cgrid_in);
     RDouble * CompSoundSpeed(Grid *gridIn);
     RDouble * CompMachNumber(Grid *gridIn);
-    RDouble** ComputeDimensionalVariables(Grid *gridIn);
-    RDouble** ComputePrimitiveVariablesWithMoleFraction(Grid *gridIn);
+    RDouble ** ComputeDimensionalVariables(Grid *gridIn);
+    RDouble ** ComputePrimitiveVariablesWithMoleFraction(Grid *gridIn);
 
     RDouble * ComputeVorticitybyQCriteria(Grid *gridIn);
     void ComputeVorticitybyQCriteria(Grid *gridIn, RDouble * vorticity_x, RDouble * vorticity_y, RDouble * vorticity_z, RDouble * vorticityMagnitude,  RDouble * strain_rate,  RDouble * Q_criteria);
@@ -184,6 +185,7 @@ public:
     void StoreHistoricalResidual(Grid *gridIn);
     void UpdateUnsteadyFlow(Grid *gridIn);
     void ComputePreconditionCoefficient(Grid *grid);
+    void ComputePreconditionCoefficientUnsteady(Grid *gridIn);
     RDouble UnsteadyConvergence(Grid *gridIn);
 
     //Compute the distance between the center of the grid cell on the first layer and the center of the surface cell.

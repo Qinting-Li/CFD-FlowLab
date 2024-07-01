@@ -88,9 +88,6 @@ namespace PHSPACE
             if (TurbEqSolverName == "KE")
             {
                 RDouble TurbEqRelaxCoeff = GlobalDataBase::GetDoubleParaFromDB("TurbEqRelaxCoeff");
-                RDouble *soluRelaxCoeff = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("soluRelaxCoeff"));
-                int *localSolverIndex = reinterpret_cast <int *> (GlobalDataBase::GetDataPtr("localSolverIndex"));
-
 
                 IncomTurbKSolver = new IncomKETurbKEqCalculator();
                 IncomTurbKSolver->SetSolverIndex(IDX::S_ITURBK);
@@ -121,10 +118,8 @@ namespace PHSPACE
                 IncomTurbSASolver->SetSolverIndex(IDX::S_ISA);
 
                 RDouble TurbEqRelaxCoeff = GlobalDataBase::GetDoubleParaFromDB("TurbEqRelaxCoeff");
-                RDouble *soluRelaxCoeff = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("soluRelaxCoeff"));
                 soluRelaxCoeff[IDX::S_ISA] = TurbEqRelaxCoeff;
 
-                int *localSolverIndex = reinterpret_cast <int *> (GlobalDataBase::GetDataPtr("localSolverIndex"));
                 localSolverIndex[IDX::S_ISA] = 0;
 
                 int TurbEqSolMethod = GlobalDataBase::GetIntParaFromDB("TurbEqSolMethod");
@@ -147,10 +142,8 @@ namespace PHSPACE
             IncomEnergySolver = new IncomEnergyEqCalculator();
             IncomEnergySolver->SetSolverIndex(IDX::S_ITEMP);
             RDouble EnergyEqRelaxCoeff = GlobalDataBase::GetDoubleParaFromDB("EnergyEqRelaxCoeff");
-            RDouble *soluRelaxCoeff = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("soluRelaxCoeff"));
             soluRelaxCoeff[IDX::S_ITEMP] = EnergyEqRelaxCoeff;
 
-            int *localSolverIndex = reinterpret_cast <int *> (GlobalDataBase::GetDataPtr("localSolverIndex"));
             localSolverIndex[IDX::S_ITEMP] = 0;
 
             int EnergyEqSolMethod = GlobalDataBase::GetIntParaFromDB("EnergyEqSolMethod");
@@ -171,8 +164,6 @@ namespace PHSPACE
         {
 
             RDouble SpeciesEqRelaxCoeff = GlobalDataBase::GetDoubleParaFromDB("SpeciesEqRelaxCoeff");
-            RDouble *soluRelaxCoeff = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("soluRelaxCoeff"));
-            int *localSolverIndex = reinterpret_cast <int *> (GlobalDataBase::GetDataPtr("localSolverIndex"));
             int SpeciesEqSolMethod = GlobalDataBase::GetIntParaFromDB("SpeciesEqSolMethod");
             int SpeciesEqPrecondMethod = GlobalDataBase::GetIntParaFromDB("SpeciesEqPrecondMethod");
             int SpeciesEqMaxSweep = GlobalDataBase::GetIntParaFromDB("SpeciesEqMaxSweep");
@@ -202,7 +193,7 @@ namespace PHSPACE
                     }
                 }
             }
-            delete[] gasNameList;
+            delete [] gasNameList;
         }
 
     }
@@ -234,7 +225,7 @@ namespace PHSPACE
         if (outnstep % intervalStepFlow == 0 && level == 0 && isSubIterationDump)
         {
             //! To dump restart data for continual simulation.
-            ActionKey* actkeyDumpRestartData = new ActionKey();
+            ActionKey *actkeyDumpRestartData = new ActionKey();
             FillActionKey(actkeyDumpRestartData, DUMP_RESTART, 0);
             DumpRestartData(actkeyDumpRestartData);
             delete actkeyDumpRestartData;
@@ -248,13 +239,13 @@ namespace PHSPACE
                 if (level == 0)
                 {
                     //! To dump airforce coefficient data.
-                    ActionKey* actkeyDumpAirForceCoef = new ActionKey();
+                    ActionKey *actkeyDumpAirForceCoef = new ActionKey();
                     FillActionKey(actkeyDumpAirForceCoef, DUMP_AIR_FORCE_COEF, level);
                     DumpAirForceCoef(actkeyDumpAirForceCoef);
                     delete actkeyDumpAirForceCoef;
 
                     //! To dump wall airforce coefficient data.
-                    ActionKey* actkeyDumpWallAircoef = new ActionKey();
+                    ActionKey *actkeyDumpWallAircoef = new ActionKey();
                     FillActionKey(actkeyDumpWallAircoef, DUMP_CP_DISTRI, 0);
                     //DumpCpDistri(actkeyDumpWallAircoef);
                     delete actkeyDumpWallAircoef;
@@ -263,7 +254,7 @@ namespace PHSPACE
         }
     }
 
-    void IncomUnstructSolver::AirForceCoef(ActionKey* actkey)
+    void IncomUnstructSolver::AirForceCoef(ActionKey *actkey)
     {
         const int ALL_PART = -1;
         AirForceCoefParts(actkey, ALL_PART);
@@ -302,7 +293,7 @@ namespace PHSPACE
         RDouble localCoordAxis1[3];
         RDouble hingeMoment = 0.0;
 
-        if(partID == ALL_PART)
+        if (partID == ALL_PART)
         {
             TorqueRefX = GlobalDataBase::GetDoubleParaFromDB("TorqueRefX");
             TorqueRefY = GlobalDataBase::GetDoubleParaFromDB("TorqueRefY");
@@ -346,25 +337,25 @@ namespace PHSPACE
         RDouble *ycc = grid->GetCellCenterY();
         RDouble *zcc = grid->GetCellCenterZ();
 
-        int * leftCellofFace = grid->GetLeftCellOfFace();
-        int * rightCellofFace = grid->GetRightCellOfFace();
+        int *leftCellofFace = grid->GetLeftCellOfFace();
+        int *rightCellofFace = grid->GetRightCellOfFace();
 
-        RDouble* u = reinterpret_cast<RDouble*>(grid->GetDataPtr("U"));
-        RDouble* v = reinterpret_cast<RDouble*>(grid->GetDataPtr("V"));
-        RDouble* w = reinterpret_cast<RDouble*>(grid->GetDataPtr("W"));
-        RDouble* p = reinterpret_cast<RDouble*>(grid->GetDataPtr("P"));
+        RDouble *u = reinterpret_cast<RDouble *>(grid->GetDataPtr("U"));
+        RDouble *v = reinterpret_cast<RDouble *>(grid->GetDataPtr("V"));
+        RDouble *w = reinterpret_cast<RDouble *>(grid->GetDataPtr("W"));
+        RDouble *p = reinterpret_cast<RDouble *>(grid->GetDataPtr("P"));
 
-        RDouble *dUdx  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdx"));
-        RDouble *dUdy  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdy"));
-        RDouble *dUdz  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdz"));
-        RDouble *dVdx  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dVdx"));
-        RDouble *dVdy  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dVdy"));
-        RDouble *dVdz  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dVdz"));
-        RDouble *dWdx  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdx"));
-        RDouble *dWdy  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdy"));
-        RDouble *dWdz  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdz"));
+        RDouble *dUdx = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdx"));
+        RDouble *dUdy = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdy"));
+        RDouble *dUdz = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdz"));
+        RDouble *dVdx = reinterpret_cast<RDouble *>(grid->GetDataPtr("dVdx"));
+        RDouble *dVdy = reinterpret_cast<RDouble *>(grid->GetDataPtr("dVdy"));
+        RDouble *dVdz = reinterpret_cast<RDouble *>(grid->GetDataPtr("dVdz"));
+        RDouble *dWdx = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdx"));
+        RDouble *dWdy = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdy"));
+        RDouble *dWdz = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdz"));
         RDouble poo = GlobalDataBase::GetDoubleParaFromDB("initP");
-        RDouble *visl = reinterpret_cast< RDouble * > (grid->GetDataPtr("mu"));
+        RDouble *visl = reinterpret_cast<RDouble *>(grid->GetDataPtr("mu"));
 
         RDouble initRho = GlobalDataBase::GetDoubleParaFromDB("initRho");
         RDouble initU = GlobalDataBase::GetDoubleParaFromDB("initU");
@@ -375,7 +366,7 @@ namespace PHSPACE
 
         RDouble refDynamicPressure = initRho * refVelocity * refVelocity;
 
-        RDouble cpx,cpy,cpz;
+        RDouble cpx, cpy, cpz;
         cpx = 0.0;
         cpy = 0.0;
         cpz = 0.0;
@@ -414,7 +405,7 @@ namespace PHSPACE
             string bcName = bcRegion->GetBCName();
 
             // if the bc type is wall, calculate the wall coefficient.
-            if(bcType == PHENGLEI::SOLID_SURFACE)
+            if (bcType == PHENGLEI::SOLID_SURFACE)
             {
                 if (partID != ALL_PART && bcName != partBCName)
                 {
@@ -521,7 +512,7 @@ namespace PHSPACE
                     cpy += dpy;
                     cpz += dpz;
 
-                    if(dumpHingeMoment)
+                    if (dumpHingeMoment)
                     {
                         Post_ForceMoment forceMoment;
                         RDouble point[3] = {xfc[iFace], yfc[iFace], zfc[iFace]};
@@ -550,25 +541,25 @@ namespace PHSPACE
 
         DataContainer *cdata = actkey->GetData();
 
-        cdata->write(&CA_f,sizeof(RDouble));
-        cdata->write(&CA_p,sizeof(RDouble));
-        cdata->write(&CN_f,sizeof(RDouble));
-        cdata->write(&CN_p,sizeof(RDouble));
-        cdata->write(&CZ_f,sizeof(RDouble));
-        cdata->write(&CZ_p,sizeof(RDouble));
+        cdata->Write(&CA_f,sizeof(RDouble));
+        cdata->Write(&CA_p,sizeof(RDouble));
+        cdata->Write(&CN_f,sizeof(RDouble));
+        cdata->Write(&CN_p,sizeof(RDouble));
+        cdata->Write(&CZ_f,sizeof(RDouble));
+        cdata->Write(&CZ_p,sizeof(RDouble));
 
-        cdata->write(&cpx,sizeof(RDouble));
-        cdata->write(&cpy,sizeof(RDouble));
-        cdata->write(&cpz,sizeof(RDouble));
+        cdata->Write(&cpx,sizeof(RDouble));
+        cdata->Write(&cpy,sizeof(RDouble));
+        cdata->Write(&cpz,sizeof(RDouble));
 
-        cdata->write(&Cl_f,sizeof(RDouble));
-        cdata->write(&Cl_p,sizeof(RDouble));
-        cdata->write(&Cn_f,sizeof(RDouble));
-        cdata->write(&Cn_p,sizeof(RDouble));
-        cdata->write(&Cm_f,sizeof(RDouble));
-        cdata->write(&Cm_p,sizeof(RDouble));
+        cdata->Write(&Cl_f,sizeof(RDouble));
+        cdata->Write(&Cl_p,sizeof(RDouble));
+        cdata->Write(&Cn_f,sizeof(RDouble));
+        cdata->Write(&Cn_p,sizeof(RDouble));
+        cdata->Write(&Cm_f,sizeof(RDouble));
+        cdata->Write(&Cm_p,sizeof(RDouble));
 
-        cdata->write(&hingeMoment, sizeof(RDouble));
+        cdata->Write(&hingeMoment, sizeof(RDouble));
     }
 
     void IncomUnstructSolver::InitFlowAsReadingRestart(ActionKey *actkey)
@@ -580,7 +571,7 @@ namespace PHSPACE
             return;
         }
 
-        if(PHMPI::IsParallelRun())
+        if (PHMPI::IsParallelRun())
         {
             actkey->filename = PHSPACE::AddSymbolToFileName(actkey->filename, "_", 0);
         }
@@ -604,11 +595,11 @@ namespace PHSPACE
         ReadData(actkey->filepos, &outnstep, "outnstep");
         GlobalDataBase::UpdateData("outnstep", &outnstep, PHINT, 1);
 
-        RDouble* u = reinterpret_cast<RDouble*>(grid->GetDataPtr("U"));
-        RDouble* v = reinterpret_cast<RDouble*>(grid->GetDataPtr("V"));
-        RDouble* w = reinterpret_cast<RDouble*>(grid->GetDataPtr("W"));
-        RDouble* p = reinterpret_cast<RDouble*>(grid->GetDataPtr("P"));
-        RDouble* rho = reinterpret_cast<RDouble*>(grid->GetDataPtr("rho"));
+        RDouble *u = reinterpret_cast<RDouble *>(grid->GetDataPtr("U"));
+        RDouble *v = reinterpret_cast<RDouble *>(grid->GetDataPtr("V"));
+        RDouble *w = reinterpret_cast<RDouble *>(grid->GetDataPtr("W"));
+        RDouble *p = reinterpret_cast<RDouble *>(grid->GetDataPtr("P"));
+        RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
 
         int nBoundFace = grid->GetNBoundFace();
         int nTotalCell = grid->GetNTotalCell();
@@ -618,7 +609,7 @@ namespace PHSPACE
         string grpName;
 
         ostringstream oss;
-        oss<<"Group"<<gridID;
+        oss << "Group" << gridID;
         grpName = oss.str();
 
         grploc = OpenGroup(actkey->filepos, grpName);
@@ -626,7 +617,7 @@ namespace PHSPACE
         int nTotalCellRestart = 0;
         ReadData(grploc, &nTotalCellRestart, "nTotalCell");
 
-        if(nTotalCellRestart != nTotalCell)
+        if (nTotalCellRestart != nTotalCell)
         {
             ostringstream erroeInfo;
             erroeInfo << " Error: the cell number in flow.dat is not equal to the cell number in grid file !" << endl;
@@ -641,15 +632,15 @@ namespace PHSPACE
         string flowSolverName = GlobalDataBase::GetStrParaFromDB("flowSolverName");
         if (flowSolverName == "CompressibleSIMPLE")
         {
-            RDouble* cRho = reinterpret_cast<RDouble*>(grid->GetDataPtr("cRho"));
+            RDouble *cRho = reinterpret_cast<RDouble *>(grid->GetDataPtr("cRho"));
             ReadData(grploc, cRho, "cRho");
         }
 
         int isSolveTurb = GlobalDataBase::GetIntParaFromDB("isSolveTurb");
         if (isSolveTurb == 1)
         {
-            RDouble *k = reinterpret_cast<RDouble *> (grid->GetDataPtr("Kinetic"));
-            RDouble *e = reinterpret_cast<RDouble *> (grid->GetDataPtr("Epsilon"));
+            RDouble *k = reinterpret_cast<RDouble *>(grid->GetDataPtr("Kinetic"));
+            RDouble *e = reinterpret_cast<RDouble *>(grid->GetDataPtr("Epsilon"));
 
             string TurbEqSolverName = GlobalDataBase::GetStrParaFromDB("TurbEqSolverName");
             if (TurbEqSolverName == "KE")
@@ -666,7 +657,7 @@ namespace PHSPACE
         int isSolveEnergy = GlobalDataBase::GetIntParaFromDB("isSolveEnergy");
         if (isSolveEnergy == 1)
         {
-            RDouble *T = reinterpret_cast<RDouble*> (grid->GetDataPtr("T"));
+            RDouble *T = reinterpret_cast<RDouble *> (grid->GetDataPtr("T"));
             ReadData(grploc, T, "T");
         }
 
@@ -680,7 +671,7 @@ namespace PHSPACE
                 IncomSpeciesEqCalculator* SpeciesSolver = static_cast<IncomSpeciesEqCalculator *>(IncomSpeciesSolver[iGas]);
                 int solverIndex = SpeciesSolver->GetSolverIndex();
                 string varName = varNameIncom[solverIndex];
-                RDouble *q = reinterpret_cast<RDouble*> (grid->GetDataPtr(varName));
+                RDouble *q = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName));
                 ReadData(grploc, q, varName);
             }
         }
@@ -709,17 +700,17 @@ namespace PHSPACE
         int nTotalCell = grid->GetNTotalCell();
         int nTotal = nTotalCell + nBoundFace;
 
-        RDouble* u = reinterpret_cast<RDouble*>(grid->GetDataPtr("U"));
-        RDouble* v = reinterpret_cast<RDouble*>(grid->GetDataPtr("V"));
-        RDouble* w = reinterpret_cast<RDouble*>(grid->GetDataPtr("W"));
-        RDouble* p = reinterpret_cast<RDouble*>(grid->GetDataPtr("P"));
-        RDouble* rho = reinterpret_cast<RDouble*>(grid->GetDataPtr("rho"));
+        RDouble *u = reinterpret_cast<RDouble *>(grid->GetDataPtr("U"));
+        RDouble *v = reinterpret_cast<RDouble *>(grid->GetDataPtr("V"));
+        RDouble *w = reinterpret_cast<RDouble *>(grid->GetDataPtr("W"));
+        RDouble *p = reinterpret_cast<RDouble *>(grid->GetDataPtr("P"));
+        RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
 
         hid_t grploc;
         string grpName;
 
         ostringstream oss;
-        oss<<"Group"<<gridID;
+        oss << "Group" << gridID;
         grpName = oss.str();
 
         grploc = OpenGroup(actkey->filepos, grpName);
@@ -733,15 +724,15 @@ namespace PHSPACE
         string flowSolverName = GlobalDataBase::GetStrParaFromDB("flowSolverName");
         if (flowSolverName == "CompressibleSIMPLE")
         {
-            RDouble* cRho = reinterpret_cast<RDouble*>(grid->GetDataPtr("cRho"));
+            RDouble *cRho = reinterpret_cast<RDouble *>(grid->GetDataPtr("cRho"));
             WriteData(grploc, cRho, "cRho");
         }
 
         int isSolveTurb = GlobalDataBase::GetIntParaFromDB("isSolveTurb");
         if (isSolveTurb == 1)
         {
-            RDouble *k = reinterpret_cast<RDouble *> (grid->GetDataPtr("Kinetic"));
-            RDouble *e = reinterpret_cast<RDouble *> (grid->GetDataPtr("Epsilon"));
+            RDouble *k = reinterpret_cast<RDouble *>(grid->GetDataPtr("Kinetic"));
+            RDouble *e = reinterpret_cast<RDouble *>(grid->GetDataPtr("Epsilon"));
 
             string TurbEqSolverName = GlobalDataBase::GetStrParaFromDB("TurbEqSolverName");
             if (TurbEqSolverName == "KE")
@@ -758,21 +749,21 @@ namespace PHSPACE
         int isSolveEnergy = GlobalDataBase::GetIntParaFromDB("isSolveEnergy");
         if (isSolveEnergy == 1)
         {
-            RDouble *T = reinterpret_cast<RDouble*> (grid->GetDataPtr("T"));
+            RDouble *T = reinterpret_cast<RDouble *>(grid->GetDataPtr("T"));
             WriteData(grploc, T, "T");
         }
 
         int isSolveSpecies = GlobalDataBase::GetIntParaFromDB("isSolveSpecies");
         if (isSolveSpecies == 1)
         {
-            string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
+            string *varNameIncom = reinterpret_cast <string *>(GlobalDataBase::GetDataPtr("varNameIncom"));
             int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
             for (int iGas = 0; iGas < numberOfSpeciesIncom; iGas++)
             {
-                IncomSpeciesEqCalculator* SpeciesSolver = static_cast<IncomSpeciesEqCalculator *>(IncomSpeciesSolver[iGas]);
+                IncomSpeciesEqCalculator *SpeciesSolver = static_cast<IncomSpeciesEqCalculator *>(IncomSpeciesSolver[iGas]);
                 int solverIndex = SpeciesSolver->GetSolverIndex();
                 string varName = varNameIncom[solverIndex];
-                RDouble *q = reinterpret_cast<RDouble*> (grid->GetDataPtr(varName));
+                RDouble *q = reinterpret_cast<RDouble *> (grid->GetDataPtr(varName));
                 WriteData(grploc, q, varName);
             }
         }
@@ -780,7 +771,6 @@ namespace PHSPACE
         WriteData(grploc, &nTotalCell, "nTotalCell");
 
         H5Gclose(grploc);
-
     }
 
     void IncomUnstructSolver::CreateH5RestartFile(ActionKey *actkey)
@@ -792,7 +782,7 @@ namespace PHSPACE
         for (int iZone = 0; iZone < nZones; ++ iZone)
         {
             ostringstream oss;
-            oss<<"Group"<<iZone;
+            oss << "Group" << iZone;
 
             string grpName;
 
@@ -882,7 +872,7 @@ namespace PHSPACE
     {
         int level = actkey->level;
         DataContainer *cdata = actkey->GetData();
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
 
         UnstructGrid *grid = UnstructGridCast(GetGrid(level));
         int GridID = grid->GetGridID()->GetIndex();
@@ -892,21 +882,21 @@ namespace PHSPACE
         using namespace PHENGLEI;
         using namespace IDX;
 
-        RDouble* u = reinterpret_cast<RDouble*>(grid->GetDataPtr("U"));
-        RDouble* v = reinterpret_cast<RDouble*>(grid->GetDataPtr("V"));
-        RDouble* w = reinterpret_cast<RDouble*>(grid->GetDataPtr("W"));
-        RDouble* p = reinterpret_cast<RDouble*>(grid->GetDataPtr("P"));
-        RDouble* rho = reinterpret_cast<RDouble*>(grid->GetDataPtr("rho"));
+        RDouble *u = reinterpret_cast<RDouble *>(grid->GetDataPtr("U"));
+        RDouble *v = reinterpret_cast<RDouble *>(grid->GetDataPtr("V"));
+        RDouble *w = reinterpret_cast<RDouble *>(grid->GetDataPtr("W"));
+        RDouble *p = reinterpret_cast<RDouble *>(grid->GetDataPtr("P"));
+        RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
 
-        RDouble *dUdx  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdx"));
-        RDouble *dUdy  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdy"));
-        RDouble *dUdz  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdz"));
-        RDouble *dVdx  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dVdx"));
-        RDouble *dVdy  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dVdy"));
-        RDouble *dVdz  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dVdz"));
-        RDouble *dWdx  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdx"));
-        RDouble *dWdy  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdy"));
-        RDouble *dWdz  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdz"));
+        RDouble *dUdx = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdx"));
+        RDouble *dUdy = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdy"));
+        RDouble *dUdz = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdz"));
+        RDouble *dVdx = reinterpret_cast<RDouble *>(grid->GetDataPtr("dVdx"));
+        RDouble *dVdy = reinterpret_cast<RDouble *>(grid->GetDataPtr("dVdy"));
+        RDouble *dVdz = reinterpret_cast<RDouble *>(grid->GetDataPtr("dVdz"));
+        RDouble *dWdx = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdx"));
+        RDouble *dWdy = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdy"));
+        RDouble *dWdz = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdz"));
 
         RDouble refDimensionalDensity = GlobalDataBase::GetDoubleParaFromDB("initRho");
         RDouble initU = GlobalDataBase::GetDoubleParaFromDB("initU");
@@ -914,7 +904,7 @@ namespace PHSPACE
         RDouble initW = GlobalDataBase::GetDoubleParaFromDB("initW");
         RDouble refVelocity = sqrt(initU * initU + initV * initV + initW * initW );
         RDouble attack= atan(initV/initU);
-        RDouble *visl = reinterpret_cast< RDouble * > (grid->GetDataPtr("mu"));
+        RDouble *visl = reinterpret_cast<RDouble *>(grid->GetDataPtr("mu"));
         RDouble poo = GlobalDataBase::GetDoubleParaFromDB("initP");
 
         RDouble TorqueRefX, TorqueRefY, TorqueRefZ;
@@ -1187,7 +1177,7 @@ namespace PHSPACE
                 {
                     int iFace = *iter;
                     int le = leftCellofFace[iFace];
-                    if(lableCell[le] == 2)
+                    if (lableCell[le] == 2)
                     {
                         cellCF[le] = faceCF[iFace];
                         cellCP[le] = faceCP[iFace];
@@ -1196,7 +1186,7 @@ namespace PHSPACE
             }
         }
 
-        delete []lableCell;    lableCell = NULL;
+        delete [] lableCell;    lableCell = NULL;
 
         momEqCalculator->CommunicateAnInterfaceVar(cellCP2D[0]);
         momEqCalculator->CommunicateAnInterfaceVar(cellCF2D[0]);
@@ -1306,12 +1296,12 @@ namespace PHSPACE
             }
         }
 
-        delete []faceCP;     faceCP = NULL;
-        delete []faceCF;     faceCF = NULL;
-        delete []faceQ;      faceQ = NULL;
-        delete []nodeWeight; nodeWeight = NULL;
-        delete []faceYPlus;  faceYPlus = NULL;
-        delete []facePW;     facePW = NULL;
+        delete [] faceCP;     faceCP = NULL;
+        delete [] faceCF;     faceCF = NULL;
+        delete [] faceQ;      faceQ = NULL;
+        delete [] nodeWeight; nodeWeight = NULL;
+        delete [] faceYPlus;  faceYPlus = NULL;
+        delete [] facePW;     facePW = NULL;
         DelPointer2(cellQ2D);
         DelPointer2(cellCP2D);
         DelPointer2(cellCF2D);
@@ -1416,16 +1406,16 @@ namespace PHSPACE
             }
         }
 
-        delete []nodeQ;    nodeQ = NULL;
-        delete []nodeCP;    nodeCP = NULL;
-        delete []nodeCF;    nodeCF = NULL;
-        delete []nodeYPlus;    nodeYPlus = NULL;
-        delete []nodePW;    nodePW = NULL;
-        delete []cpFaceCenter;    cpFaceCenter = NULL;
-        delete []cfFaceCenter;    cfFaceCenter = NULL;
-        delete []qFaceCenter;    qFaceCenter = NULL;
-        delete []yPlusFaceCenter;    yPlusFaceCenter = NULL;
-        delete []PWFaceCenter;    PWFaceCenter = NULL;
+        delete [] nodeQ;    nodeQ = NULL;
+        delete [] nodeCP;    nodeCP = NULL;
+        delete [] nodeCF;    nodeCF = NULL;
+        delete [] nodeYPlus;    nodeYPlus = NULL;
+        delete [] nodePW;    nodePW = NULL;
+        delete [] cpFaceCenter;    cpFaceCenter = NULL;
+        delete [] cfFaceCenter;    cfFaceCenter = NULL;
+        delete [] qFaceCenter;    qFaceCenter = NULL;
+        delete [] yPlusFaceCenter;    yPlusFaceCenter = NULL;
+        delete [] PWFaceCenter;    PWFaceCenter = NULL;
 
         int TecioMission = 1;
         PHWrite(cdata, &TecioMission, 1);
@@ -1468,14 +1458,14 @@ namespace PHSPACE
         PHWrite(cdata, &TotalNumFaceNodes, 1);
         PHWrite(cdata, cell2node, TotalNumFaceNodes);
 
-        delete []coorX;    coorX = NULL;
-        delete []coorY;    coorY = NULL;
-        delete []coorZ;    coorZ = NULL;
-        delete []dumpCP;    dumpCP = NULL;
-        delete []dumpCF;    dumpCF = NULL;
-        delete []dumpYPlus;    dumpYPlus = NULL;
-        delete []dumpPW;    dumpPW = NULL;
-        delete []cell2node;    cell2node = NULL;
+        delete [] coorX;    coorX = NULL;
+        delete [] coorY;    coorY = NULL;
+        delete [] coorZ;    coorZ = NULL;
+        delete [] dumpCP;    dumpCP = NULL;
+        delete [] dumpCF;    dumpCF = NULL;
+        delete [] dumpYPlus;    dumpYPlus = NULL;
+        delete [] dumpPW;    dumpPW = NULL;
+        delete [] cell2node;    cell2node = NULL;
     }
 
     void IncomUnstructSolver::IncompressibleInitial(Grid * gridIn)
@@ -1516,7 +1506,7 @@ namespace PHSPACE
         }
     }
 
-    void IncomUnstructSolver::UpdateUnsteadyProperties(Grid* gridIn)
+    void IncomUnstructSolver::UpdateUnsteadyProperties(Grid *gridIn)
     {
         UnstructGrid * grid = UnstructGridCast(gridIn);
         momEqCalculator->UpdateUnsteadyProperties(grid);
@@ -1554,7 +1544,7 @@ namespace PHSPACE
         }
     }
     
-    void IncomUnstructSolver::UpdateUnsteadyFlux(Grid* gridIn)
+    void IncomUnstructSolver::UpdateUnsteadyFlux(Grid *gridIn)
     {
         UnstructGrid * grid = UnstructGridCast(gridIn);
         int isSolveTurb = GlobalDataBase::GetIntParaFromDB("isSolveTurb");
@@ -1592,7 +1582,7 @@ namespace PHSPACE
         }
     }
 
-    void IncomUnstructSolver::UpdateUnsteadyVariable(Grid* grid)
+    void IncomUnstructSolver::UpdateUnsteadyVariable(Grid *grid)
     {
         int isSolveTurb = GlobalDataBase::GetIntParaFromDB("isSolveTurb");
         int isSolveEnergy = GlobalDataBase::GetIntParaFromDB("isSolveEnergy");
@@ -1715,7 +1705,7 @@ namespace PHSPACE
 
     void IncomUnstructSolver::SolveIncomSteadyField()
     {
-        UnstructGrid* grid = UnstructGridCast(GetGeometry()->GetGrid());
+        UnstructGrid *grid = UnstructGridCast(GetGeometry()->GetGrid());
 
         int loopTimes = 1;
         string flowSolverName = GlobalDataBase::GetStrParaFromDB("flowSolverName");
@@ -1750,15 +1740,15 @@ namespace PHSPACE
         SolveSpeciesEquation(grid);
     }
 
-    void IncomUnstructSolver::SolveTurbulenceEquation(Grid* gridIn) 
+    void IncomUnstructSolver::SolveTurbulenceEquation(Grid *gridIn) 
     {
         int isSolveTurb = GlobalDataBase::GetIntParaFromDB("isSolveTurb");
         if (isSolveTurb != 1)
         {
             return;
         }
-        UnstructGrid* grid = UnstructGridCast(gridIn);
-        string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
+        UnstructGrid *grid = UnstructGridCast(gridIn);
+        string *varNameIncom = reinterpret_cast<string *>(GlobalDataBase::GetDataPtr("varNameIncom"));
         
         string TurbEqSolverName = GlobalDataBase::GetStrParaFromDB("TurbEqSolverName");
         if (TurbEqSolverName == "KE")
@@ -1773,26 +1763,26 @@ namespace PHSPACE
         }
     }
 
-    void IncomUnstructSolver::SolveEnergyEquation(Grid* gridIn) 
+    void IncomUnstructSolver::SolveEnergyEquation(Grid *gridIn) 
     {
         int isSolveEnergy = GlobalDataBase::GetIntParaFromDB("isSolveEnergy");
         if (isSolveEnergy != 1)
         {
             return;
         }
-        UnstructGrid* grid = UnstructGridCast(gridIn);
+        UnstructGrid *grid = UnstructGridCast(gridIn);
         IncomEnergySolver->solveScalarEquation(grid, IDX::S_ITEMP);
     }
 
-    void IncomUnstructSolver::SolveSpeciesEquation(Grid* gridIn) 
+    void IncomUnstructSolver::SolveSpeciesEquation(Grid *gridIn) 
     {
         int isSolveSpecies = GlobalDataBase::GetIntParaFromDB("isSolveSpecies");
         if (isSolveSpecies != 1)
         {
             return;
         }
-        UnstructGrid* grid = UnstructGridCast(gridIn);
-        string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
+        UnstructGrid *grid = UnstructGridCast(gridIn);
+        string *varNameIncom = reinterpret_cast<string *>(GlobalDataBase::GetDataPtr("varNameIncom"));
         int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
         for (int iGas = 0; iGas < numberOfSpeciesIncom; iGas++)
         {
@@ -1803,7 +1793,7 @@ namespace PHSPACE
         }
     }
 
-    void IncomUnstructSolver::SolutionIsConverged(Grid* gridIn, bool* flag)
+    void IncomUnstructSolver::SolutionIsConverged(Grid *gridIn, bool *flag)
     {
         UnstructGrid * grid = UnstructGridCast(gridIn);
         int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
@@ -1890,12 +1880,12 @@ namespace PHSPACE
     void IncomUnstructSolver::ComputePostVisualVariables(Post_Visual* postVisualization)
     {
         UnstructGrid *grid = UnstructGridCast(postVisualization->GetGrid());
-        RDouble *u = reinterpret_cast<RDouble *> (grid->GetDataPtr("U"));
-        RDouble *v = reinterpret_cast<RDouble *> (grid->GetDataPtr("V"));
-        RDouble *w = reinterpret_cast<RDouble *> (grid->GetDataPtr("W"));
-        RDouble *p = reinterpret_cast<RDouble *> (grid->GetDataPtr("P"));
-        RDouble* rho = reinterpret_cast<RDouble*> (grid->GetDataPtr("rho"));
-        RDouble* mu = reinterpret_cast<RDouble*> (grid->GetDataPtr("mu"));
+        RDouble *u = reinterpret_cast<RDouble *>(grid->GetDataPtr("U"));
+        RDouble *v = reinterpret_cast<RDouble *>(grid->GetDataPtr("V"));
+        RDouble *w = reinterpret_cast<RDouble *>(grid->GetDataPtr("W"));
+        RDouble *p = reinterpret_cast<RDouble *>(grid->GetDataPtr("P"));
+        RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
+        RDouble *mu = reinterpret_cast<RDouble *>(grid->GetDataPtr("mu"));
 
         postVisualization->UpdateVisualNodeVarPtr("U", u);
         postVisualization->UpdateVisualNodeVarPtr("V", v);
@@ -1910,11 +1900,11 @@ namespace PHSPACE
             string TurbEqSolverName = GlobalDataBase::GetStrParaFromDB("TurbEqSolverName");
             if (TurbEqSolverName == "KE")
             {
-                RDouble *k = reinterpret_cast<RDouble *> (grid->GetDataPtr("Kinetic"));
-                RDouble *e = reinterpret_cast<RDouble *> (grid->GetDataPtr("Epsilon"));
-                RDouble *visl = reinterpret_cast<RDouble *> (grid->GetDataPtr("visl"));
-                RDouble *vist = reinterpret_cast<RDouble *> (grid->GetDataPtr("vist"));
-                RDouble *gen = reinterpret_cast<RDouble *> (grid->GetDataPtr("gen"));
+                RDouble *k = reinterpret_cast<RDouble *>(grid->GetDataPtr("Kinetic"));
+                RDouble *e = reinterpret_cast<RDouble *>(grid->GetDataPtr("Epsilon"));
+                RDouble *visl = reinterpret_cast<RDouble *>(grid->GetDataPtr("visl"));
+                RDouble *vist = reinterpret_cast<RDouble *>(grid->GetDataPtr("vist"));
+                RDouble *gen = reinterpret_cast<RDouble *>(grid->GetDataPtr("gen"));
                 RDouble *yplus = reinterpret_cast<RDouble *>(grid->GetDataPtr("yplus"));
                 RDouble *wDist = reinterpret_cast<RDouble *>(grid->GetWallDist());
 
@@ -1924,8 +1914,8 @@ namespace PHSPACE
             }
             else if (TurbEqSolverName == "SA")
             {
-                RDouble* k = reinterpret_cast<RDouble*> (grid->GetDataPtr("Kinetic"));
-                RDouble *vist = reinterpret_cast<RDouble *> (grid->GetDataPtr("vist"));
+                RDouble *k = reinterpret_cast<RDouble *>(grid->GetDataPtr("Kinetic"));
+                RDouble *vist = reinterpret_cast<RDouble *>(grid->GetDataPtr("vist"));
 
                 postVisualization->UpdateVisualNodeVarPtr("VIS", vist);
                 postVisualization->UpdateVisualNodeVarPtr("TE", k);
@@ -1935,10 +1925,10 @@ namespace PHSPACE
         int isSolveEnergy = GlobalDataBase::GetIntParaFromDB("isSolveEnergy");
         if (isSolveEnergy == 1)
         {
-            RDouble *Enthalpy = reinterpret_cast<RDouble*> (grid->GetDataPtr("Enthalpy"));
-            RDouble *T = reinterpret_cast<RDouble*> (grid->GetDataPtr("T"));
-            RDouble *cp = reinterpret_cast<RDouble*> (grid->GetDataPtr("cp"));
-            RDouble *k = reinterpret_cast<RDouble*> (grid->GetDataPtr("k"));
+            RDouble *Enthalpy = reinterpret_cast<RDouble *>(grid->GetDataPtr("Enthalpy"));
+            RDouble *T = reinterpret_cast<RDouble *>(grid->GetDataPtr("T"));
+            RDouble *cp = reinterpret_cast<RDouble *>(grid->GetDataPtr("cp"));
+            RDouble *k = reinterpret_cast<RDouble *>(grid->GetDataPtr("k"));
 
             postVisualization->UpdateVisualNodeVarPtr("Enthalpy", Enthalpy);
             postVisualization->UpdateVisualNodeVarPtr("T", T);   
@@ -1952,14 +1942,13 @@ namespace PHSPACE
             int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
             for (int iGas = 0; iGas < numberOfSpeciesIncom; iGas++)
             {
-                IncomSpeciesEqCalculator* SpeciesSolver = static_cast<IncomSpeciesEqCalculator *>(IncomSpeciesSolver[iGas]);
-                string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
+                IncomSpeciesEqCalculator *SpeciesSolver = static_cast<IncomSpeciesEqCalculator *>(IncomSpeciesSolver[iGas]);
+                string *varNameIncom = reinterpret_cast<string *>(GlobalDataBase::GetDataPtr("varNameIncom"));
                 int solverIndex = SpeciesSolver->GetSolverIndex();
-                RDouble* specieDataPtr = reinterpret_cast<RDouble*> (grid->GetDataPtr( varNameIncom[solverIndex]));
+                RDouble *specieDataPtr = reinterpret_cast<RDouble *>(grid->GetDataPtr( varNameIncom[solverIndex]));
                 postVisualization->UpdateVisualNodeVarPtr(varNameIncom[solverIndex], specieDataPtr);
             }
         }
-
     }
 
     void IncomUnstructSolver::InitFlowAsRestart() 
@@ -2012,7 +2001,7 @@ namespace PHSPACE
         string restartNSFile = ".\results\flow.dat";
         GlobalDataBase::GetData("restartNSFile", &restartNSFile, PHSTRING, 1);
 
-        if(PHMPI::IsParallelRun())
+        if (PHMPI::IsParallelRun())
         {
             restartNSFile = PHSPACE::AddSymbolToFileName(restartNSFile, "_", 0);
         }
@@ -2033,7 +2022,7 @@ namespace PHSPACE
 
     void IncomUnstructSolver::InitDependentVariables()
     {
-        Grid* gridIn = this->GetGeometry()->GetGrid();
+        Grid *gridIn = this->GetGeometry()->GetGrid();
         UnstructGrid *grid = UnstructGridCast(gridIn);
 
         ConstructLocalCell2GlobalCellMap(grid);
@@ -2043,18 +2032,18 @@ namespace PHSPACE
         IncompressibleInitial(grid);
     }
 
-    void IncomUnstructSolver::ConstructLocalCell2GlobalCellMap(Grid* gridIn)
+    void IncomUnstructSolver::ConstructLocalCell2GlobalCellMap(Grid *gridIn)
     {
-        UnstructGrid* grid = UnstructGridCast(gridIn);
+        UnstructGrid *grid = UnstructGridCast(gridIn);
         int nTotalCell = grid->GetNTotalCell();
         int nBoundFace = grid->GetNBoundFace();
         int nTotalFace = grid->GetNTotalFace();
         int nTotal = nTotalCell + nBoundFace;
-        int* leftCellOfFace = grid->GetLeftCellOfFace();
-        int* rightCellOfFace = grid->GetRightCellOfFace();
+        int *leftCellOfFace = grid->GetLeftCellOfFace();
+        int *rightCellOfFace = grid->GetRightCellOfFace();
 
-        RDouble* neighborCellNumber = NewPointer<RDouble>(nTotal);
-        RDouble* zoneNumberOfNeighborCell = NewPointer<RDouble>(nTotal);
+        RDouble *neighborCellNumber = NewPointer<RDouble>(nTotal);
+        RDouble *zoneNumberOfNeighborCell = NewPointer<RDouble>(nTotal);
 
         for (int iCell = 0; iCell < nTotalCell; iCell++)
         {
@@ -2078,14 +2067,14 @@ namespace PHSPACE
 
         momEqCalculator->CommunicateAnInterfaceVar(zoneNumberOfNeighborCell);
 
-        int* localCell2GlobalMap = grid->GetLocalCell2GlobalMap();
+        int *localCell2GlobalMap = grid->GetLocalCell2GlobalMap();
         if (localCell2GlobalMap == NULL)
         {
             localCell2GlobalMap = new int[nTotal];
             grid->SetLocalCell2GlobalMap(localCell2GlobalMap);
         }
 
-        int* localCell2LocalMap = grid->GetLocalCell2LocalMap();
+        int *localCell2LocalMap = grid->GetLocalCell2LocalMap();
         if (localCell2LocalMap == NULL)
         {
             localCell2LocalMap = new int[nTotal];
@@ -2099,7 +2088,7 @@ namespace PHSPACE
             grid->SetCell2ZoneIDMap(cell2ZoneIDMap);
         }
 
-        int* globalCellNoOfGlobalZones = reinterpret_cast<int*> (GlobalDataBase::GetDataPtr("globalCellNoOfGlobalZones"));
+        int *globalCellNoOfGlobalZones = reinterpret_cast<int *>(GlobalDataBase::GetDataPtr("globalCellNoOfGlobalZones"));
 
         for (int iCell = 0; iCell < nTotal; iCell++)
         {
@@ -2132,7 +2121,7 @@ namespace PHSPACE
         DelPointer(zoneNumberOfNeighborCell);
     }
 
-    void IncomUnstructSolver::SetAxEqbSolver(Grid* gridIn)
+    void IncomUnstructSolver::SetAxEqbSolver(Grid *gridIn)
     {
         UnstructGrid * grid = UnstructGridCast(gridIn);
         int isSolveTurb = GlobalDataBase::GetIntParaFromDB("isSolveTurb");
@@ -2175,9 +2164,9 @@ namespace PHSPACE
         }
     }
 
-    void IncomUnstructSolver::DumpResidual(Grid* gridIn)
+    void IncomUnstructSolver::DumpResidual(Grid *gridIn)
     {
-        UnstructGrid* grid = UnstructGridCast(gridIn);
+        UnstructGrid *grid = UnstructGridCast(gridIn);
         using namespace PHMPI;
         int currentProcessor = GetCurrentProcessorID();
         if (currentProcessor != server)

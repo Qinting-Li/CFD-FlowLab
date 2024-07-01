@@ -31,39 +31,39 @@ namespace PHSPACE
 
     public:
 
-        void CalcGrad(Grid* grid);
-        void solveMomentumEquations(Grid*  grid);
-        void solveScalarEquation(Grid*  grid, int iEquation);
+        void CalcGrad(Grid *grid);
+        void solveMomentumEquations(Grid *grid);
+        void solveScalarEquation(Grid *grid, int iEquation);
         
         void CalcVelocityRes(UnstructGrid *grid);
 
-        void CoefPrepForPres(Grid*  grid);
-        void CorrectFaceFlux(Grid*  grid);
-        void calcFaceFlux(Grid*  grid);
-        void updateBCValue(Grid*  grid);
-        void pressureSourceTerm(Grid*  grid, int iVariable);
-        void BulkVisSourceTerm(Grid*  grid, int iVariable);
-        void GravitySourceTerm(Grid*  grid, int iVariable);
+        void CoefPrepForPres(Grid *grid);
+        void CorrectFaceFlux(Grid *grid);
+        void calcFaceFlux(Grid *grid);
+        void updateBCValue(Grid *grid);
+        void pressureSourceTerm(Grid *grid, int iVariable);
+        void BulkVisSourceTerm(Grid *grid, int iVariable);
+        void GravitySourceTerm(Grid *grid, int iVariable);
 
-        virtual void CalcOtherbCoeff(Grid* gridIn, int iVariable);
+        virtual void CalcOtherbCoeff(Grid *gridIn, int iVariable);
         
-        void SolveExplicitVelocityEquations(Grid*  grid);
-        void UpdateUnsteadyFlux(Grid*  grid);
-        void IncompressibleInitial(Grid*  grid);
-        void CalcWalldistOnWall(Grid*  grid);
-        void UpdateBoundaryPressureAndVelocity(Grid*  grid);
-        void InitFlowAsRestart(Grid*  grid);
-        void AllocateGlobalVar(Grid*  grid);
+        void SolveExplicitVelocityEquations(Grid *grid);
+        void UpdateUnsteadyFlux(Grid *grid);
+        void IncompressibleInitial(Grid *grid);
+        void CalcWalldistOnWall(Grid *grid);
+        void UpdateBoundaryPressureAndVelocity(Grid *grid);
+        void InitFlowAsRestart(Grid *grid);
+        void AllocateGlobalVar(Grid *grid);
         
-        void AllocateUnsteadyVar(Grid*  grid);
-        void InitialUnsteadyVar(Grid*  grid);
-        void UpdateUnsteadyProperties(Grid*  grid);
-        void UpdateProperties(Grid* grid);
+        void AllocateUnsteadyVar(Grid *grid);
+        void InitialUnsteadyVar(Grid *grid);
+        void UpdateUnsteadyProperties(Grid *grid);
+        void UpdateProperties(Grid *grid);
         
-        void GetResidual(Grid *grid, vector<RDouble>& res);
+        void GetResidual(Grid *grid, vector<RDouble> &res);
         void UpdateUnsteadyVariable(Grid *grid);
     };
 
-    void FlowFarField_GetBoundrayData(Grid*  grid, Data_Param* bcData);
+    void FlowFarField_GetBoundrayData(Grid *grid, Data_Param *bcData);
 
 }

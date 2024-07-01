@@ -36,12 +36,12 @@ LIB_EXPORT void HOSolverUnstructParam::Init()
     fvSolDof = (fvSolOrder+1)*(fvSolOrder+2)*(fvSolOrder+3)/6;
 
     pMultiGrid = GlobalDataBase::GetIntParaFromDB("p_multigrid");
-    if(pMultiGrid < 1) pMultiGrid = 1;
+    if (pMultiGrid < 1) pMultiGrid = 1;
 
     uns_scheme_name = GlobalDataBase::GetStrParaFromDB("uns_scheme_name");
 
     RDouble Ma = GetRefMachNumber();
-    R = 1/(HO_GAMA * Ma * Ma);
+    R = 1 / (HO_GAMA * Ma * Ma);
 }
 
 }

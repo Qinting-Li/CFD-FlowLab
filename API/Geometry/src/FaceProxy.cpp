@@ -454,11 +454,11 @@ void ReConstructQlQr_STR(Grid *grid_in, FaceProxy *face_proxy, int neqn, int nst
         LIMIT_FUN = VANALBADA;
     }
 
-    RDouble **dqdx = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarX"));
-    RDouble **dqdy = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarY"));
-    RDouble **dqdz = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarZ"));
+    RDouble **dqdx = reinterpret_cast<RDouble **>(grid->GetDataPtr("gradPrimtiveVarX"));
+    RDouble **dqdy = reinterpret_cast<RDouble **>(grid->GetDataPtr("gradPrimtiveVarY"));
+    RDouble **dqdz = reinterpret_cast<RDouble **>(grid->GetDataPtr("gradPrimtiveVarZ"));
 
-    int le,re,j;
+    int le, re, j;
     for (int iFace = nst; iFace < ned; ++ iFace)
     {
         j  = iFace - nst;

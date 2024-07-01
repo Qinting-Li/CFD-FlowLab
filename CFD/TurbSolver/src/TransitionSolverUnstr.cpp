@@ -1131,10 +1131,10 @@ void TransitionSolverUnstr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy,
         }
     }
 
-    delete[]rhs0;
-    delete[]df;
-    delete[]dqOld;
-    delete[]matrixUx;
+    delete [] rhs0;
+    delete [] df;
+    delete [] dqOld;
+    delete [] matrixUx;
 }
 
 void TransitionSolverUnstr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
@@ -1246,10 +1246,10 @@ void TransitionSolverUnstr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy
         }
     }
 
-    delete[]rhs0;
-    delete[]df;
-    delete[]dqOld;
-    delete[]matrixLx;
+    delete [] rhs0;
+    delete [] df;
+    delete [] dqOld;
+    delete [] matrixLx;
 }
 
 // Bell 20130401 add
@@ -1433,12 +1433,12 @@ RDouble TransitionSolverUnstr::UnsteadyConvergence(Grid *gridIn)
         }
     }
 
-    delete[]primitive0;
-    delete[]primitive1;
-    delete[]primitive2;
-    delete[]qConservative0;
-    delete[]qConservative1;
-    delete[]qConservative2;
+    delete [] primitive0;
+    delete [] primitive1;
+    delete [] primitive2;
+    delete [] qConservative0;
+    delete [] qConservative1;
+    delete [] qConservative2;
 
     RDouble cvg = sqrt(ABS(sum1 / (sum2 + SMALL)));
     return cvg;
@@ -1623,12 +1623,12 @@ void TransitionSolverUnstr::DualTimeSource(Grid *gridIn)
         }
     }
 
-    delete[]primitive0;
-    delete[]primitive1;
-    delete[]primitive2;
-    delete[]qConservative0;
-    delete[]qConservative1;
-    delete[]qConservative2;
+    delete [] primitive0;
+    delete [] primitive1;
+    delete [] primitive2;
+    delete [] qConservative0;
+    delete [] qConservative1;
+    delete [] qConservative2;
 }
 
 void TransitionSolverUnstr::FillField(Grid *gridIn, FieldProxy *fieldProxy, RDouble value)
@@ -2039,17 +2039,17 @@ void TransitionSolverUnstr::SourceFluxTwoEquation(Grid *gridIn)
         spectrumTransition[IRECT][iCell] += specRe * volume;
     }
 
-    delete[]dudx;
-    delete[]dudy;
-    delete[]dudz;
+    delete [] dudx;
+    delete [] dudy;
+    delete [] dudz;
 
-    delete[]dvdx;
-    delete[]dvdy;
-    delete[]dvdz;
+    delete [] dvdx;
+    delete [] dvdy;
+    delete [] dvdz;
 
-    delete[]dwdx;
-    delete[]dwdy;
-    delete[]dwdz;
+    delete [] dwdx;
+    delete [] dwdy;
+    delete [] dwdz;
 }
 
 FaceProxy *TransitionSolverUnstr::CreateFaceProxy(Grid *gridIn)
@@ -2742,13 +2742,13 @@ void TransitionSolverUnstr::ComputeVisflux(Grid *gridIn, FaceProxy *faceProxy, i
 
     }
 
-    delete[]dfd1;
-    delete[]dfd2;
-    delete[]dfdn;
+    delete [] dfd1;
+    delete [] dfd2;
+    delete [] dfdn;
 
-    delete[]f1;
-    delete[]f2;
-    delete[]fMid;
+    delete [] f1;
+    delete [] f2;
+    delete [] fMid;
 }
 
 void TransitionSolverUnstr::Diagonal(Grid *gridIn)
@@ -3133,9 +3133,9 @@ void TransitionSolverUnstr::NNDFlux(Grid *gridIn, FaceProxy *faceProxy, int loca
         }
     }
 
-    delete[]primitiveVariableL;
-    delete[]primitiveVariableR;
-    delete[]f;
+    delete [] primitiveVariableL;
+    delete [] primitiveVariableR;
+    delete [] f;
 }
 
 void TransitionSolverUnstr::GetResidual(ActionKey *actkey)
@@ -3161,7 +3161,7 @@ void TransitionSolverUnstr::CompressDQ(DataContainer *&dataContainer, FieldProxy
     int iNeighborZone = interfaceInformation->FindIthNeighbor(neighborZoneIndex);
     int interfaceNumberBetweenTwoNeighboringZone = interfaceInformation->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend = interfaceInformation->GetFaceIndexForSend(iNeighborZone);
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble **dq = fieldProxy->GetField_UNS();
 
@@ -3191,7 +3191,7 @@ void TransitionSolverUnstr::DecompressDQ(DataContainer *&dataContainer, FieldPro
     int interfaceNumberBetweenTwoNeighboringZone = interfaceInformation->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive = interfaceInformation->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
     RDouble **dq = fieldProxy->GetField_UNS();
 
     for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
@@ -3574,7 +3574,7 @@ void TransitionSolverUnstr::CommunicationInterpointWeight(ActionKey *actkey)
                 InterpointInformation *interpointInformation = grid->GetInterpointInfo();
                 int *nodeValueSliceTransition = reinterpret_cast<int *>(grid->GetDataPtr("nodeValueSliceTransition"));
 
-                cdata->moveto_begin();
+                cdata->MoveToBegin();
 
                 int iNeighbor = interpointInformation->FindIthNeighbor(neighborZoneIndex);
                 int numberOfInterpointsForNeighbor = interpointInformation->GetNumberOfInterpointsForNeighbor(iNeighbor);
@@ -3584,14 +3584,17 @@ void TransitionSolverUnstr::CommunicationInterpointWeight(ActionKey *actkey)
                 int iPoint;
                 int globalPoint;
                 int valueWeight;
+                int *qtmp = new int[numberOfInterpointsForNeighbor];
                 for (int ipointLocal = 0; ipointLocal < numberOfInterpointsForNeighbor; ++ ipointLocal)
                 {
                     iPoint = pointIndexForSend[ipointLocal];
                     globalPoint = interPoint2GlobalPoint[iPoint];
                     valueWeight = nodeValueSliceTransition[globalPoint];
 
-                    cdata->write(&valueWeight, sizeof(int));
+                    qtmp[ipointLocal] = valueWeight;
                 }
+                cdata->Write(qtmp, numberOfInterpointsForNeighbor * sizeof(int));
+                delete [] qtmp;     qtmp = nullptr;
             }
 
             PH_Trade(cdata, send_proc, recv_proc, tag);
@@ -3602,7 +3605,7 @@ void TransitionSolverUnstr::CommunicationInterpointWeight(ActionKey *actkey)
                 InterpointInformation *interpointInformationNeighbor = gridNeighbor->GetInterpointInfo();
                 int *nodeValueSliceTransitionTrade = reinterpret_cast<int *>(gridNeighbor->GetDataPtr("nodeValueSliceTransitionTrade"));
 
-                cdata->moveto_begin();
+                cdata->MoveToBegin();
 
                 int iNeighbor = interpointInformationNeighbor->FindIthNeighbor(iZone);
                 int numberOfInterpointsForNeighbor = interpointInformationNeighbor->GetNumberOfInterpointsForNeighbor(iNeighbor);
@@ -3616,13 +3619,13 @@ void TransitionSolverUnstr::CommunicationInterpointWeight(ActionKey *actkey)
                 {
                     iPoint = pointIndexForReceive[j];
                     globalPoint = interPoint2GlobalPoint[iPoint];
-                    cdata->read(&valueWeight, sizeof(int));
+                    cdata->Read(&valueWeight, sizeof(int));
 
                     nodeValueSliceTransitionTrade[globalPoint] += valueWeight;
                 }
             }
 
-            delete cdata;
+            delete cdata;    cdata = nullptr;
         }
     }
 }
@@ -3720,10 +3723,10 @@ void TransitionSolverUnstr::ReadStatisticalFlow(ActionKey *actkey)
     int nTransitionEquation = parameters->GetNTransitionEquation();
 
     DataContainer *cdata = actkey->GetData();
-    cdata->moveto_begin();
+    cdata->MoveToBegin();
 
     int numberOfStatisticalStep = 0;
-    cdata->read(&numberOfStatisticalStep, sizeof(int));
+    cdata->Read(&numberOfStatisticalStep, sizeof(int));
 
     GlobalDataBase::UpdateData("nStatisticalStep", &numberOfStatisticalStep, PHINT, 1);
 
@@ -3731,7 +3734,7 @@ void TransitionSolverUnstr::ReadStatisticalFlow(ActionKey *actkey)
     {
         for (int iCell = 0; iCell < numberOfTotal; ++ iCell)
         {
-            cdata->read(&qAverageTransition[m][iCell], sizeof(RDouble));
+            cdata->Read(&qAverageTransition[m][iCell], sizeof(RDouble));
         }
     }
 }

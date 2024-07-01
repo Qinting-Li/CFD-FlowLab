@@ -97,7 +97,7 @@ void ThermodynamicFunction::ReadPolynomialCoefficient(DataContainer *cdata)
 
         for (int icoef = 0; icoef < number_of_polynomial_coefficient; ++ icoef)
         {
-            cdata->read(&coef[icoef], sizeof(RDouble));
+            cdata->Read(&coef[icoef], sizeof(RDouble));
         }
     }
     //The curve fit data for the two-temperature model.
@@ -107,13 +107,13 @@ void ThermodynamicFunction::ReadPolynomialCoefficient(DataContainer *cdata)
 
         for (int icoef = 0; icoef < number_of_polynomial_coefficient; ++ icoef)
         {
-            cdata->read(&coef[icoef], sizeof(RDouble));
+            cdata->Read(&coef[icoef], sizeof(RDouble));
         }
     }
 
     for (int icoef = 0; icoef < number_of_polynomial_coefficient; ++ icoef)
     {
-        cdata->read(&enthalpyFitCoefficient[icoef], sizeof(RDouble));
+        cdata->Read(&enthalpyFitCoefficient[icoef], sizeof(RDouble));
     }
 }
 
@@ -125,7 +125,7 @@ void ThermodynamicFunction::WritePolynomialCoefficient(DataContainer *cdata)
 
         for (int icoef = 0; icoef < number_of_polynomial_coefficient; ++ icoef)
         {
-            cdata->append(&coef[icoef], sizeof(RDouble));
+            cdata->Append(&coef[icoef], sizeof(RDouble));
         }
     }
     //The curve fit data for the two-temperature model.
@@ -135,13 +135,13 @@ void ThermodynamicFunction::WritePolynomialCoefficient(DataContainer *cdata)
 
         for (int icoef = 0; icoef < number_of_polynomial_coefficient; ++ icoef)
         {
-            cdata->append(&coef[icoef], sizeof(RDouble));
+            cdata->Append(&coef[icoef], sizeof(RDouble));
         }
     }
 
     for (int icoef = 0; icoef < number_of_polynomial_coefficient; ++ icoef)
     {
-        cdata->append(&enthalpyFitCoefficient[icoef], sizeof(RDouble));
+        cdata->Append(&enthalpyFitCoefficient[icoef], sizeof(RDouble));
     }
 }
 
@@ -288,8 +288,8 @@ void ThermodynamicManager::GenerateData(vector<string> &namelist)
 
 void ThermodynamicManager::Read(DataContainer *cdata)
 {
-    cdata->read(&numberOfTemperatureInterval, sizeof(int));
-    cdata->read(&numberofpolynomialcoefficient, sizeof(int));
+    cdata->Read(&numberOfTemperatureInterval, sizeof(int));
+    cdata->Read(&numberofpolynomialcoefficient, sizeof(int));
 
     for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
     {
@@ -297,10 +297,10 @@ void ThermodynamicManager::Read(DataContainer *cdata)
     }
 
     temperatureStart = new RDouble [numberOfSpecies];
-    cdata->read(temperatureStart, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(temperatureStart, numberOfSpecies * sizeof(RDouble));
 
     temperatureRange = new RDouble[numberOfTemperatureInterval + 1];
-    cdata->read(temperatureRange, (numberOfTemperatureInterval + 1) * sizeof(RDouble));
+    cdata->Read(temperatureRange, (numberOfTemperatureInterval + 1) * sizeof(RDouble));
 
     for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
     {
@@ -310,10 +310,10 @@ void ThermodynamicManager::Read(DataContainer *cdata)
 
 void ThermodynamicManager::Write(DataContainer *cdata)
 {
-    cdata->append(&numberOfTemperatureInterval, sizeof(int));
-    cdata->append(&numberofpolynomialcoefficient, sizeof(int));
-    cdata->append(temperatureStart, numberOfSpecies * sizeof(RDouble));
-    cdata->append(temperatureRange, (numberOfTemperatureInterval + 1) * sizeof(RDouble));
+    cdata->Append(&numberOfTemperatureInterval, sizeof(int));
+    cdata->Append(&numberofpolynomialcoefficient, sizeof(int));
+    cdata->Append(temperatureStart, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(temperatureRange, (numberOfTemperatureInterval + 1) * sizeof(RDouble));
     for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
     {
         thermoDynamicFunction[ispecies]->WritePolynomialCoefficient(cdata);
@@ -468,24 +468,24 @@ void ReactionRate::Create(RDouble **reationCoef)
 
 void ReactionRate::Read(DataContainer *cdata)
 {
-    cdata->read(afr, numberOfReaction * sizeof(RDouble));
-    cdata->read(bfr, numberOfReaction * sizeof(RDouble));
-    cdata->read(cfr, numberOfReaction * sizeof(RDouble));
+    cdata->Read(afr, numberOfReaction * sizeof(RDouble));
+    cdata->Read(bfr, numberOfReaction * sizeof(RDouble));
+    cdata->Read(cfr, numberOfReaction * sizeof(RDouble));
                                         
-    cdata->read(abr, numberOfReaction * sizeof(RDouble));
-    cdata->read(bbr, numberOfReaction * sizeof(RDouble));
-    cdata->read(cbr, numberOfReaction * sizeof(RDouble));
+    cdata->Read(abr, numberOfReaction * sizeof(RDouble));
+    cdata->Read(bbr, numberOfReaction * sizeof(RDouble));
+    cdata->Read(cbr, numberOfReaction * sizeof(RDouble));
 }
 
 void ReactionRate::Write(DataContainer *cdata)
 {
-    cdata->append(afr, numberOfReaction * sizeof(RDouble));
-    cdata->append(bfr, numberOfReaction * sizeof(RDouble));
-    cdata->append(cfr, numberOfReaction * sizeof(RDouble));
+    cdata->Append(afr, numberOfReaction * sizeof(RDouble));
+    cdata->Append(bfr, numberOfReaction * sizeof(RDouble));
+    cdata->Append(cfr, numberOfReaction * sizeof(RDouble));
 
-    cdata->append(abr, numberOfReaction * sizeof(RDouble));
-    cdata->append(bbr, numberOfReaction * sizeof(RDouble));
-    cdata->append(cbr, numberOfReaction * sizeof(RDouble));
+    cdata->Append(abr, numberOfReaction * sizeof(RDouble));
+    cdata->Append(bbr, numberOfReaction * sizeof(RDouble));
+    cdata->Append(cbr, numberOfReaction * sizeof(RDouble));
 }
 
 StoichiometricEquation::StoichiometricEquation()
@@ -643,7 +643,7 @@ void StoichiometricEquation::Read(DataContainer *cdata)
     {
         for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
         {
-            cdata->read(&cvp[irection][ispecies], sizeof(int));
+            cdata->Read(&cvp[irection][ispecies], sizeof(int));
         }
     }
 
@@ -651,7 +651,7 @@ void StoichiometricEquation::Read(DataContainer *cdata)
     {
         for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
         {
-            cdata->read(&cvn[irection][ispecies], sizeof(int));
+            cdata->Read(&cvn[irection][ispecies], sizeof(int));
         }
     }
 
@@ -659,12 +659,12 @@ void StoichiometricEquation::Read(DataContainer *cdata)
     {
         for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
         {
-            cdata->read(&cpz[irection][ispecies], sizeof(RDouble));
+            cdata->Read(&cpz[irection][ispecies], sizeof(RDouble));
         }
     }
 
-    cdata->read(reactionType, numberOfReaction * sizeof(int));
-    cdata->read(isCollisionType, numberOfReaction * sizeof(bool));
+    cdata->Read(reactionType, numberOfReaction * sizeof(int));
+    cdata->Read(isCollisionType, numberOfReaction * sizeof(bool));
 }
 
 void StoichiometricEquation::Write(DataContainer *cdata)
@@ -673,7 +673,7 @@ void StoichiometricEquation::Write(DataContainer *cdata)
     {
         for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
         {
-            cdata->append(&cvp[irection][ispecies], sizeof(int));
+            cdata->Append(&cvp[irection][ispecies], sizeof(int));
         }
     }
 
@@ -681,7 +681,7 @@ void StoichiometricEquation::Write(DataContainer *cdata)
     {
         for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
         {
-            cdata->append(&cvn[irection][ispecies], sizeof(int));
+            cdata->Append(&cvn[irection][ispecies], sizeof(int));
         }
     }
 
@@ -689,12 +689,12 @@ void StoichiometricEquation::Write(DataContainer *cdata)
     {
         for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
         {
-            cdata->append(&cpz[irection][ispecies], sizeof(RDouble));
+            cdata->Append(&cpz[irection][ispecies], sizeof(RDouble));
         }
     }
 
-    cdata->append(reactionType, numberOfReaction * sizeof(int));
-    cdata->append(isCollisionType, numberOfReaction * sizeof(bool));
+    cdata->Append(reactionType, numberOfReaction * sizeof(int));
+    cdata->Append(isCollisionType, numberOfReaction * sizeof(bool));
 }
 
 CurveFitsMethod::CurveFitsMethod()
@@ -984,46 +984,46 @@ void CurveFitsMethod::GenerateData(vector<string> &namelist)
 
 void CurveFitsMethod::Read(DataContainer *cdata)
 {
-    cdata->read(blotter_ai, numberOfSpecies * sizeof(RDouble));
-    cdata->read(blotter_bi, numberOfSpecies * sizeof(RDouble));
-    cdata->read(blotter_ci, numberOfSpecies * sizeof(RDouble));
-    cdata->read(blotter_di, numberOfSpecies * sizeof(RDouble));
-    cdata->read(blotter_ei, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(blotter_ai, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(blotter_bi, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(blotter_ci, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(blotter_di, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(blotter_ei, numberOfSpecies * sizeof(RDouble));
 
-    cdata->read(omega_ai, numberOfSpecies * sizeof(RDouble));
-    cdata->read(omega_bi, numberOfSpecies * sizeof(RDouble));
-    cdata->read(omega_ci, numberOfSpecies * sizeof(RDouble));
-    cdata->read(omega_di, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(omega_ai, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(omega_bi, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(omega_ci, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(omega_di, numberOfSpecies * sizeof(RDouble));
 
-    cdata->read(curvefit_av, 10 * sizeof(RDouble));
-    cdata->read(curvefit_bv, 10 * sizeof(RDouble));
-    cdata->read(curvefit_cv, 10 * sizeof(RDouble));
+    cdata->Read(curvefit_av, 10 * sizeof(RDouble));
+    cdata->Read(curvefit_bv, 10 * sizeof(RDouble));
+    cdata->Read(curvefit_cv, 10 * sizeof(RDouble));
 
-    cdata->read(curvefit_aes, numberOfSpecies * sizeof(RDouble));
-    cdata->read(curvefit_bes, numberOfSpecies * sizeof(RDouble));
-    cdata->read(curvefit_ces, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(curvefit_aes, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(curvefit_bes, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(curvefit_ces, numberOfSpecies * sizeof(RDouble));
 }
 
 void CurveFitsMethod::Write(DataContainer *cdata)
 {
-    cdata->append(blotter_ai, numberOfSpecies * sizeof(RDouble));
-    cdata->append(blotter_bi, numberOfSpecies * sizeof(RDouble));
-    cdata->append(blotter_ci, numberOfSpecies * sizeof(RDouble));
-    cdata->append(blotter_di, numberOfSpecies * sizeof(RDouble));
-    cdata->append(blotter_ei, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(blotter_ai, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(blotter_bi, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(blotter_ci, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(blotter_di, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(blotter_ei, numberOfSpecies * sizeof(RDouble));
 
-    cdata->append(omega_ai, numberOfSpecies * sizeof(RDouble));
-    cdata->append(omega_bi, numberOfSpecies * sizeof(RDouble));
-    cdata->append(omega_ci, numberOfSpecies * sizeof(RDouble));
-    cdata->append(omega_di, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(omega_ai, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(omega_bi, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(omega_ci, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(omega_di, numberOfSpecies * sizeof(RDouble));
 
-    cdata->append(curvefit_av, 10 * sizeof(RDouble));
-    cdata->append(curvefit_bv, 10 * sizeof(RDouble));
-    cdata->append(curvefit_cv, 10 * sizeof(RDouble));
+    cdata->Append(curvefit_av, 10 * sizeof(RDouble));
+    cdata->Append(curvefit_bv, 10 * sizeof(RDouble));
+    cdata->Append(curvefit_cv, 10 * sizeof(RDouble));
 
-    cdata->append(curvefit_aes, numberOfSpecies * sizeof(RDouble));
-    cdata->append(curvefit_bes, numberOfSpecies * sizeof(RDouble));
-    cdata->append(curvefit_ces, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(curvefit_aes, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(curvefit_bes, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(curvefit_ces, numberOfSpecies * sizeof(RDouble));
 }
 
 SchmidtNumber::SchmidtNumber()
@@ -1082,20 +1082,20 @@ void SchmidtNumber::ComputeSpeciesSchmidtNumber(int *ionTypeOfSpecies)
 
 void SchmidtNumber::Read(DataContainer *cdata)
 {
-    cdata->read(scl, numberOfSpecies * sizeof(RDouble));
-    cdata->read(sct, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(scl, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(sct, numberOfSpecies * sizeof(RDouble));
                                         
-    cdata->read(oscl, numberOfSpecies * sizeof(RDouble));
-    cdata->read(osct, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(oscl, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(osct, numberOfSpecies * sizeof(RDouble));
 }
 
 void SchmidtNumber::Write(DataContainer *cdata)
 {
-    cdata->append(scl, numberOfSpecies * sizeof(RDouble));
-    cdata->append(sct, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(scl, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(sct, numberOfSpecies * sizeof(RDouble));
                                           
-    cdata->append(oscl, numberOfSpecies * sizeof(RDouble));
-    cdata->append(osct, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(oscl, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(osct, numberOfSpecies * sizeof(RDouble));
 }
 
 MolecularProperty::MolecularProperty()
@@ -1299,22 +1299,22 @@ void MolecularProperty::Read(DataContainer *cdata)
     schmidt_number->Read(cdata);
     for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
     {
-        cdata->read_string(name_of_species[ispecies]);
+        cdata->ReadString(name_of_species[ispecies]);
     }
 
-    cdata->read(ionTypeOfSpecies, numberOfSpecies * sizeof(int));
-    cdata->read(mass_fraction_reference, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(ionTypeOfSpecies, numberOfSpecies * sizeof(int));
+    cdata->Read(mass_fraction_reference, numberOfSpecies * sizeof(RDouble));
 
-    cdata->read(collisionCrossSection, numberOfSpecies * sizeof(RDouble));
-    cdata->read(characteristicTemperatureOfSpecies, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(collisionCrossSection, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(characteristicTemperatureOfSpecies, numberOfSpecies * sizeof(RDouble));
 
-    cdata->read(molecularWeightDimensional, numberOfSpecies * sizeof(RDouble));
-    cdata->read(molecularWeight, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(molecularWeightDimensional, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(molecularWeight, numberOfSpecies * sizeof(RDouble));
 
-    cdata->read(oMolecularWeightDimensional, numberOfSpecies * sizeof(RDouble));
-    cdata->read(oMolecularWeight, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(oMolecularWeightDimensional, numberOfSpecies * sizeof(RDouble));
+    cdata->Read(oMolecularWeight, numberOfSpecies * sizeof(RDouble));
 
-    cdata->read(thermodynamicProperties, numberOfSpecies * sizeof(Thermo_Param));
+    cdata->Read(thermodynamicProperties, numberOfSpecies * sizeof(Thermo_Param));
 }
 
 void MolecularProperty::Write(DataContainer *cdata)
@@ -1322,22 +1322,22 @@ void MolecularProperty::Write(DataContainer *cdata)
     schmidt_number->Write(cdata);
     for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
     {
-        cdata->append_string(name_of_species[ispecies]);
+        cdata->AppendString(name_of_species[ispecies]);
     }
 
-    cdata->append(ionTypeOfSpecies, numberOfSpecies * sizeof(int));
-    cdata->append(mass_fraction_reference, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(ionTypeOfSpecies, numberOfSpecies * sizeof(int));
+    cdata->Append(mass_fraction_reference, numberOfSpecies * sizeof(RDouble));
 
-    cdata->append(collisionCrossSection, numberOfSpecies * sizeof(RDouble));
-    cdata->append(characteristicTemperatureOfSpecies, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(collisionCrossSection, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(characteristicTemperatureOfSpecies, numberOfSpecies * sizeof(RDouble));
 
-    cdata->append(molecularWeightDimensional, numberOfSpecies * sizeof(RDouble));
-    cdata->append(molecularWeight, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(molecularWeightDimensional, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(molecularWeight, numberOfSpecies * sizeof(RDouble));
 
-    cdata->append(oMolecularWeightDimensional, numberOfSpecies * sizeof(RDouble));
-    cdata->append(oMolecularWeight, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(oMolecularWeightDimensional, numberOfSpecies * sizeof(RDouble));
+    cdata->Append(oMolecularWeight, numberOfSpecies * sizeof(RDouble));
 
-    cdata->append(thermodynamicProperties, numberOfSpecies * sizeof(Thermo_Param));
+    cdata->Append(thermodynamicProperties, numberOfSpecies * sizeof(Thermo_Param));
 }
 
 RDouble * MolecularProperty::GetLaminarSchmidtNumberReciprocal() const
@@ -2598,7 +2598,7 @@ void MixedGas::InitReferenceParameter()
 
         SetAirInformationByExpData();
     }
-    else if (inflowParaType == TEMPERATURE_DENSITY) //where temperature and density are fixed.
+    else if (inflowParaType == TEMPERATURE_DENSITY)    //! where temperature and density are fixed.
     {
         RDouble refDimensionalVelocity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalVelocity");
         RDouble refDimensionalTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
@@ -2608,7 +2608,7 @@ void MixedGas::InitReferenceParameter()
         referenceParameterDimensional.SetTemperature(refDimensionalTemperature);
         referenceParameterDimensional.SetDensity(refDimensionalDensity);
     }
-    else if (inflowParaType == TEMPERATURE_PRESSURE) //where temperature and pressure are fixed.
+    else if (inflowParaType == TEMPERATURE_PRESSURE)    //! where temperature and pressure are fixed.
     {
         RDouble refDimensionalVelocity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalVelocity");
         RDouble refDimensionalTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
@@ -2641,7 +2641,7 @@ void MixedGas::ComputeCoefficientOfStateEquation()
     RDouble gama0 = referenceParameterDimensional.GetAverageSpecificHeatRatio();
     RDouble refMachNumber = referenceParameterDimensional.GetMachNumber();
 
-    //! The variable is the non-dimensional value of 8.314/M，M denotes the non-dimensional molecular weight of the mixture gas.
+    //! The variable is the non-dimensional value of 8.314/M,M denotes the non-dimensional molecular weight of the mixture gas.
     coefficientOfStateEquation = 1.0 / (gama0 * refMachNumber * refMachNumber); //! Universal gas constant.
     GlobalDataBase::UpdateData("coefficientOfStateEquation", &coefficientOfStateEquation, PHDOUBLE, 1);
 }
@@ -3135,18 +3135,18 @@ void MixedGas::Write(DataContainer *cdata)
 
 void MixedGas::CompressData(DataContainer *&cdata)
 {
-    cdata->append(&numberOfSpecies, sizeof(int));
-    cdata->append(&numberOfReaction, sizeof(int));
+    cdata->Append(&numberOfSpecies, sizeof(int));
+    cdata->Append(&numberOfReaction, sizeof(int));
 
     Write(cdata);
 }
 
 void MixedGas::DecompressData(DataContainer *cdata)
 {
-    cdata->moveto_begin();
+    cdata->MoveToBegin();
 
-    cdata->read(&numberOfSpecies, sizeof(int));
-    cdata->read(&numberOfReaction, sizeof(int));
+    cdata->Read(&numberOfSpecies, sizeof(int));
+    cdata->Read(&numberOfReaction, sizeof(int));
 
     CreateAllDataClass(numberOfSpecies, numberOfReaction);
     Read(cdata);
@@ -3254,7 +3254,7 @@ RDouble MixedGas::GetMixedGasMolecularWeightReciprocalWithoutElectron(RDouble *m
 RDouble MixedGas::GetUniversalGasConstant()
 {
     //! To obtain the non-dimensional universal gas constant called R = 8.314J/(mol*K).
-    //RDouble gasConstant = rjmk;//!unit：J/(mol*K)
+    //RDouble gasConstant = rjmk;//! unit: J/(mol*K).
     //RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
     //RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
     //RDouble referenceMass = this->referenceParameterDimensional.GetAverageMolecularWeight();
@@ -3981,7 +3981,7 @@ void MixedGas::ComputeTotalEnthalpyAndDH(RDouble *primitiveVariables, RDouble &g
     RDouble &density = primitiveVariables[IR];
     RDouble &pressure = primitiveVariables[IP];
 
-    //! c1 is product coefficient of the variable dq[IR]，c2 = R*T/Mns - (gama-1)*ens，gama1 = gama-1.
+    //! c1 is product coefficient of the variable dq[IR],c2 = R*T/Mns - (gama-1)*ens,gama1 = gama-1.
     RDouble squareVelocity, c1, c2, gama1;
     squareVelocity = um * um + vm * vm + wm * wm;
     gama1 = gama - 1.0;
@@ -5417,13 +5417,13 @@ bool MixedGas::FindChemicalElement(string species_name, char element_name, int &
             if (element_name == 'N' && species_name[i + 1] == 'a')  //Na
             {
                 coef = 0;
-                bflag = false;   //这个地方没考虑Na的氮化物
+                bflag = false;   //杩欎釜鍦版柟娌¤�冭檻Na鐨勬爱鍖栫墿
             }
 
             if (element_name == 'S' && species_name[i + 1] == 'i')  //Si
             {
                 coef = 0;     //
-                bflag = false;   //这个地方没考虑Si的硫化物
+                bflag = false;   //杩欎釜鍦版柟娌¤�冭檻Si鐨勭～鍖栫墿
             }
         }
     }
@@ -6439,7 +6439,7 @@ void MixedGas::GetTemperatureAndCP(RDouble *prim, RDouble &Tm, RDouble &cp)
         ComputeConstantPressureSpecificHeatByMassFraction(fs, Tm, cp);
 
         //! Remove the memory space.
-        delete [] fs;
+        delete [] fs;    fs = nullptr;
     }
 }
 
@@ -6471,7 +6471,7 @@ RDouble MixedGas::GetTemperature(RDouble *prim)
         //! Compute the temperature using the state equation of mixture gas.
         Tm = pm * M / (ro * R);
         //! Remove the memory space.
-        delete [] fs;
+        delete [] fs;    fs = nullptr;
     }
     return Tm;
 }
@@ -6910,7 +6910,7 @@ void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDou
             b2 += speciesBeta[s] * deltaQ[nNSEquation + s];
         }
     }
-    else //! Multi-temperature model.
+    else    //! Multi-temperature model.
     {
         //! Compute the pressure of electron.
         electronPressure = gas->GetElectronPressure(primitiveVars, electronTemperature);
@@ -6940,7 +6940,7 @@ void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDou
             b3 += speciesGama[iSpices] * deltaQ[nNSEquation + iSpices];
         }
 
-        delete[] speciesGama;    speciesGama = nullptr;
+        delete [] speciesGama;    speciesGama = nullptr;
     }
 
     //! Comoute the fluxes called M*dQ.
@@ -6985,7 +6985,7 @@ void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDou
         flux[nLaminar + 1 + m] += spectrumRadiusTerm * deltaQ[nLaminar + 1 + m];
         flux[nLaminar + 1 + m] *= 0.5 * faceArea;
     }
-    delete[] speciesBeta;    speciesBeta = nullptr;
+    delete [] speciesBeta;    speciesBeta = nullptr;
 }
 
 void ChemicalMXDQR(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDouble ny, RDouble nz, RDouble faceArea, RDouble moveVelocity,
@@ -6994,43 +6994,43 @@ void ChemicalMXDQR(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDo
 {
     using namespace IDX;
     using namespace GAS_SPACE;
-    // The number of species.
+    //! The number of species.
     int nSpecies = nLaminar - nNSEquation + 1;
-    //  int nElectronIndex = GlobalDataBase::GetIntParaFromDB("nElectronIndex");
+    //! int nElectronIndex = GlobalDataBase::GetIntParaFromDB("nElectronIndex");
     RDouble alpha = 0.0, beta = 0.0, gama = 0.0, *speciesBeta;
 
     int mTT = gas->GetmTT();
     int mTE = gas->GetmTE();
     Thermo_Energy  *Thermo_Energy_temparay = gas->GetThermo_Energy_temparay();
-    speciesBeta = Thermo_Energy_temparay->Rms;  //be careful. by dms
+    speciesBeta = Thermo_Energy_temparay->Rms;    //! be careful. by dms
 
     RDouble uVelocity = primitiveVars[IU];
     RDouble vVelocity = primitiveVars[IV];
     RDouble wVelocity = primitiveVars[IW];
     RDouble squareVelocity, absoluteVelocity, relativeVelocity;
 
-    // The absolute velocity.
+    //! The absolute velocity.
     absoluteVelocity = nx * uVelocity + ny * vVelocity + nz * wVelocity;
-    // The relative velocity.
+    //! The relative velocity.
     relativeVelocity = absoluteVelocity - moveVelocity;
-    // Compute squared velocity.
+    //! Compute squared velocity.
     squareVelocity = uVelocity * uVelocity + vVelocity * vVelocity + wVelocity * wVelocity;
 
-    // Obtain the temperatures.
+    //! Obtain the temperatures.
     RDouble transRotationTemperature = temperature[mTT];
     RDouble electronTemperature = temperature[mTE];
 
-    // Compute the total enthalpy.
+    //! Compute the total enthalpy.
     RDouble totalEnthalpy = totalH + 0.5 * squareVelocity;
 
-    // Compute the coefficient b1 and b2 (see formula A.5 in PHengLEI Theory manual).
+    //! Compute the coefficient b1 and b2 (see formula A.5 in PHengLEI Theory manual).
     RDouble b1 = nx * deltaQ[IRU] + ny * deltaQ[IRV] + nz * deltaQ[IRW] - absoluteVelocity * deltaQ[IR];
     RDouble dh = uVelocity * deltaQ[IRU] + vVelocity * deltaQ[IRV] + wVelocity * deltaQ[IRW] - deltaQ[IRE];
     RDouble b2 = 0.0, b3 = 0.0, electronPressure = 0.0;
 
     if (nTemperatureModel == 1)
     {
-        // Compute the coefficients in the chemical reaction.
+        //! Compute the coefficients in the chemical reaction.
         //gas->ComputeCoefficientInMXDQ(primitiveVars, alpha, beta, speciesBeta);
         gas->ComputeCoefficientInMXDQR(primitiveVars, transRotationTemperature, squareVelocity, speciesCvs, totalCv, alpha, beta, speciesBeta);
 
@@ -7040,11 +7040,11 @@ void ChemicalMXDQR(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDo
             b2 += speciesBeta[s] * deltaQ[nNSEquation + s];
         }
     }
-    else // Multi-temperature model.
+    else    //! Multi-temperature model.
     {
-        // Compute the pressure of electron.
+        //! Compute the pressure of electron.
         electronPressure = gas->GetElectronPressure(primitiveVars, electronTemperature);
-        RDouble *speciesGama = Thermo_Energy_temparay->Ees;  //be careful. by dms
+        RDouble *speciesGama = Thermo_Energy_temparay->Ees;    //! be careful. by dms
 
 
         gas->GetMultiTemperatureModelPartialDerivativesR(primitiveVars, transRotationTemperature, electronTemperature,alpha, beta, gama, speciesBeta, speciesGama,
@@ -7071,7 +7071,7 @@ void ChemicalMXDQR(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDo
         }
     }
 
-    // Comoute the fluxes called M*dQ.
+    //! Comoute the fluxes called M*dQ.
     flux[IR ] = relativeVelocity * deltaQ[IR ] + b1;
     flux[IRU] = relativeVelocity * deltaQ[IRU] + b1 * uVelocity     + b2 * nx;
     flux[IRV] = relativeVelocity * deltaQ[IRV] + b1 * vVelocity     + b2 * ny;
@@ -7082,7 +7082,7 @@ void ChemicalMXDQR(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDo
         flux[m] = relativeVelocity * deltaQ[m] + b1 * primitiveVars[m];
     }
 
-    // Modify the fluxes of multi-temperature model.
+    //! Modify the fluxes of multi-temperature model.
     if (nTemperatureModel == 2) 
     {
         flux[nLaminar + 1] = relativeVelocity * deltaQ[nLaminar + 1] + b1 * (primitiveVars[nLaminar + 1] + electronPressure / primitiveVars[IR]) + b3 * absoluteVelocity;
@@ -7093,7 +7093,7 @@ void ChemicalMXDQR(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDo
         flux[nLaminar + 2] = relativeVelocity * deltaQ[nLaminar + 2] + b1 * (primitiveVars[nLaminar + 2] + electronPressure / primitiveVars[IR]) + b3 * absoluteVelocity;
     }
 
-    // To add rM * dQ that is the product of the invscid spectrum radius rM and increment dQ.
+    //! To add rM * dQ that is the product of the invscid spectrum radius rM and increment dQ.
     RDouble spectrumRadiusTerm = iSign * radius / faceArea;
     for (int m = 0; m < nLaminar; ++ m)
     {
@@ -7107,7 +7107,7 @@ void ChemicalMXDQR(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDo
         flux[nLaminar - 1] = 0.0;
     }
 
-    // Modify the fluxes of vibration and electron energy terms.
+    //! Modify the fluxes of vibration and electron energy terms.
     for (int m = 0; m < nTemperatureModel - 1; ++ m)
     {
         flux[nLaminar + 1 + m] += spectrumRadiusTerm * deltaQ[nLaminar + 1 + m];

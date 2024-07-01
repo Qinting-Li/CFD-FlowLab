@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      IncomUnstructSolver.h
 //! @brief     Species solver.
-//! @author    WanYunbo, Bell, XuGang.
+//! @author    Wan Yunbo, Bell, Xu Gang.
 
 #pragma once
 
@@ -38,31 +38,31 @@ namespace PHSPACE
         ~IncomUnstructSolver();
 
     public:
-        void DumpResultFile(Grid* grid, int level = 0);
-        void DumpResidual(Grid* grid);
+        void DumpResultFile(Grid *grid, int level = 0);
+        void DumpResidual(Grid *grid);
         
-        void InitFlowAsReadingRestart(ActionKey* actkey);
-        void ReadRestartH5(ActionKey* actkey);
-        void DumpRestartH5(ActionKey* actkey);
-        void CreateH5RestartFile(ActionKey* actkey);
+        void InitFlowAsReadingRestart(ActionKey *actkey);
+        void ReadRestartH5(ActionKey *actkey);
+        void DumpRestartH5(ActionKey *actkey);
+        void CreateH5RestartFile(ActionKey *actkey);
 
-        void AirForceCoef(ActionKey* actkey);
-        void AirForceCoefParts(ActionKey* actkey, int partID, int Coordinate = GlobalCoordinate);
-        void CpDistriCoef(ActionKey* actkey);
+        void AirForceCoef(ActionKey *actkey);
+        void AirForceCoefParts(ActionKey *actkey, int partID, int Coordinate = GlobalCoordinate);
+        void CpDistriCoef(ActionKey *actkey);
 
-        void IncompressibleInitial(Grid* grid);
-        void UpdateUnsteadyProperties(Grid* grid);
-        void UpdateUnsteadyFlux(Grid* grid);
-        void UpdateUnsteadyVariable(Grid* grid);
-        void GetResidual(Grid *grid, vector<RDouble>& res);
-        void GetPhiName(vector<string>& phiName);
+        void IncompressibleInitial(Grid *grid);
+        void UpdateUnsteadyProperties(Grid *grid);
+        void UpdateUnsteadyFlux(Grid *grid);
+        void UpdateUnsteadyVariable(Grid *grid);
+        void GetResidual(Grid *grid, vector<RDouble> &res);
+        void GetPhiName(vector<string> &phiName);
         void SolveIncomSteadyField();
-        void SolveTurbulenceEquation(Grid* gridIn);
-        void SolveEnergyEquation(Grid* gridIn);
-        void SolveSpeciesEquation(Grid* gridIn);
+        void SolveTurbulenceEquation(Grid *gridIn);
+        void SolveEnergyEquation(Grid *gridIn);
+        void SolveSpeciesEquation(Grid *gridIn);
 
-        void SolutionIsConverged(Grid* grid, bool* flag);
-        virtual void AllocateGlobalVar(Grid * gridIn);
+        void SolutionIsConverged(Grid *grid, bool *flag);
+        virtual void AllocateGlobalVar(Grid *gridIn);
         void InitControlParameters();
         LIB_EXPORT Param_INCompSolverUnstruct * GetControlParameters() const;
         virtual void ComputePostVisualVariables(Post_Visual *postVisualization);
@@ -72,22 +72,22 @@ namespace PHSPACE
         void InitFlowAsRestart();
         bool JudgeIfRestart();
         void InitDependentVariables();
-        void ConstructLocalCell2GlobalCellMap(Grid* grid);
-        void SetAxEqbSolver (Grid* grid);
+        void ConstructLocalCell2GlobalCellMap(Grid *grid);
+        void SetAxEqbSolver (Grid *grid);
 
-        void UpdateUnsteadyFlow(Grid* grid);
+        void UpdateUnsteadyFlow(Grid *grid);
 
     public:
 
-        MomEqCalculator* momEqCalculator;
-        PPEqCalculator* PPEquaCalculator;
-        IncomScalarEqCalculator* IncomTurbKSolver;
-        IncomScalarEqCalculator* IncomTurbEplisionSolver;
-        IncomScalarEqCalculator* IncomTurbSASolver;
-        IncomScalarEqCalculator* IncomEnergySolver;
-        IncomScalarEqCalculator** IncomSpeciesSolver;
+        MomEqCalculator *momEqCalculator;
+        PPEqCalculator *PPEquaCalculator;
+        IncomScalarEqCalculator *IncomTurbKSolver;
+        IncomScalarEqCalculator *IncomTurbEplisionSolver;
+        IncomScalarEqCalculator *IncomTurbSASolver;
+        IncomScalarEqCalculator *IncomEnergySolver;
+        IncomScalarEqCalculator **IncomSpeciesSolver;
 
-        LinearEquationSystemCalculator* AxEqualbCalculator;
+        LinearEquationSystemCalculator *AxEqualbCalculator;
 
     public:
         virtual void Post() {}

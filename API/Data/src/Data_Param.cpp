@@ -56,7 +56,7 @@ LIB_EXPORT void Data_Param::GetData(const string &name, void *data, int type, in
     if (iter != dataSet->end())
     {
         CopyDataValue(data, iter->GetData(), iter->GetType(), iter->GetSize());
-
+ 
         //bcNameSet.insert(name);
         //count ++;
     }
@@ -69,7 +69,7 @@ LIB_EXPORT void Data_Param::GetData(const string &name, void *data, int type, in
     /*int iCount = static_cast<int>(bcNameSet.size()) + 10000;
     if (iCount < count)
     {
-        cout << "  Warning: this data has been read  more times: "<< name.c_str() << endl;
+        cout << "  Warning: this data has been read  more times: " << name.c_str() << endl;
     }*/
 }
 

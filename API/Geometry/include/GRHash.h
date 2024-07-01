@@ -345,7 +345,7 @@ int Hash<T>::erase(const T &p)
             hash2=key%(hash_size-1)|1;
             register CAulong jj;
             CAulong j_prob;
-            for(j_prob=0; j_prob<hash_size; j_prob++) 
+            for (j_prob=0; j_prob<hash_size; j_prob++) 
             {
                 if (hash_table[jj=((hash1+j_prob*hash2)%hash_size)]==0)
                 {

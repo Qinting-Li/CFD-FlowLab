@@ -165,7 +165,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewVersion(fstream &file, int &n
                 TK_Exit::ExceptionExit("Error: sub-version number is not found\n");
             }
             from_string< int >(version2, word1, std::dec);
-            cout << "Format of FIELDVIEW: "<< version1 << "." << version2 << "\n";
+            cout << "Format of FIELDVIEW: " << version1 << "." << version2 << "\n";
             nversion = FIELDVIEW_2_4;
         }
     }

@@ -63,9 +63,9 @@ const int GRID_MIRROR         = 6;
 const int GRID_STRTOUNS       = 7;
 
 //! Type of  rotating reference frame.
-const int STATIONARY_FRAME    = 0;
-const int TRANSLATIONAL_FRAME   = 1;
-const int ROTATIONAL_FRAME      = 2;
+const int STATIONARY_FRAME = 0;
+const int TRANSLATIONAL_FRAME = 1;
+const int ROTATIONAL_FRAME = 2;
 
 //! periodicType
 const int NO_PERIODICITY = 0;
@@ -225,6 +225,15 @@ const int THREE_GHOST_LAYER = 3;    //! Their have three-layer ghost cells.
 
 const int GlobalCoordinate = 0;
 const int LocalCoordinate  = 1;
+
+//! these variables are for overset algorithm.
+const int INACTIVE        = 0;
+const int ACTIVE          = 1;
+const int INTERPOLATION   = -1;
+const int VARIABLEACTIVE  = 2;
+const int DONORCELL       = 3;
+const int EXPLICIT_CONFIG = 0;
+const int IMPLICIT_CONFIG = 1;
 namespace IDX
 {
 const int IR   = 0;
@@ -433,7 +442,8 @@ typedef enum
     Tecplot_Binary,
     Tecplot_ASCII,
     Ensight_Binary,
-    Ensight_ASCII
+    Ensight_ASCII,
+    Paraview
 } VisualfileType;
 
 namespace TEC_SPACE

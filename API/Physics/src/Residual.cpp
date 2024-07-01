@@ -48,15 +48,15 @@ Residual::Residual()
 
 Residual::~Residual()
 {
-    delete []maximumResidual;
-    delete []averageResidual;
-    delete []x;
-    delete []y;
-    delete []z;
-    delete []vol;
-    delete []i;
-    delete []j;
-    delete []k;
+    delete [] maximumResidual;
+    delete [] averageResidual;
+    delete [] x;
+    delete [] y;
+    delete [] z;
+    delete [] vol;
+    delete [] i;
+    delete [] j;
+    delete [] k;
 }
 
 void Residual::SetNvar(int numberOfResidualVariables)
@@ -64,13 +64,13 @@ void Residual::SetNvar(int numberOfResidualVariables)
     this->numberOfResidualVariables = numberOfResidualVariables;
     maximumResidual = new RDouble [numberOfResidualVariables];
     averageResidual = new RDouble [numberOfResidualVariables];
-    x      = new RDouble [numberOfResidualVariables];
-    y      = new RDouble [numberOfResidualVariables];
-    z      = new RDouble [numberOfResidualVariables];
-    vol    = new RDouble [numberOfResidualVariables];
-    i      = new int [numberOfResidualVariables];
-    j      = new int [numberOfResidualVariables];
-    k      = new int [numberOfResidualVariables];
+    x   = new RDouble [numberOfResidualVariables];
+    y   = new RDouble [numberOfResidualVariables];
+    z   = new RDouble [numberOfResidualVariables];
+    vol = new RDouble [numberOfResidualVariables];
+    i   = new int [numberOfResidualVariables];
+    j   = new int [numberOfResidualVariables];
+    k   = new int [numberOfResidualVariables];
 }
 
 ResidualGlobal::ResidualGlobal()
@@ -98,7 +98,7 @@ void ResidualGlobal::InitResidual()
 void ResidualGlobal::CollectResidual(ActionKey *actkey)
 {
     DataContainer *cData = actkey->GetData();
-    cData->moveto_begin();
+    cData->MoveToBegin();
     int nLocalZones = PHMPI::GetNumberofLocalZones();
 
     for (int iZone = 0; iZone < nLocalZones; ++ iZone)
@@ -132,12 +132,12 @@ void ResidualGlobal::CollectResidual(ActionKey *actkey)
     int myid   = PHMPI::GetCurrentProcessorID();
     int server = PHMPI::GetServerProcessorID();
 
-    if(myid == server && residualNormal == NULL)
+    if (myid == server && residualNormal == NULL)
     {
         residualNormal = new RDouble[numberOfResidualVariables];
     }
 
-    if(PHMPI::GetNumberOfProcessor() > 1)
+    if (PHMPI::GetNumberOfProcessor() > 1)
     {
         PH_Reduce(localNorm, residualNormal, numberOfResidualVariables, PH_SUM);
 
@@ -145,14 +145,14 @@ void ResidualGlobal::CollectResidual(ActionKey *actkey)
     }
     else
     {
-        for(int iVar = 0; iVar < numberOfResidualVariables; ++ iVar)
+        for (int iVar = 0; iVar < numberOfResidualVariables; ++ iVar)
         {
             residualNormal[iVar] = localNorm[iVar];
         }
     }
     delete [] localNorm;    localNorm = nullptr;
 
-    if(myid != server)
+    if (myid != server)
     {
         FreeMemory();
     }
@@ -192,11 +192,19 @@ void ResidualGlobal::PrepareFormatedResidual(int outnstep, string &formatRes)
     oss << setw(7) << outnstep << "    ";
 
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-    if(isUnsteady)
+    if (isUnsteady)
     {
         //! Unsteady.
         int innerStep = GlobalDataBase::GetIntParaFromDB("innstep");
-        oss << setw(7) << innerStep;
+        int subTotalIterStep = GlobalDataBase::GetIntParaFromDB("subTotalIterStep");
+        if (outnstep <= 1)
+        {
+            oss << setw(7) << innerStep;
+        }
+        else
+        {
+            oss << setw(7) << subTotalIterStep + innerStep;
+        }
     }
 
     RDouble resAverage = 0.0;
@@ -204,7 +212,7 @@ void ResidualGlobal::PrepareFormatedResidual(int outnstep, string &formatRes)
 
    //for (int m = 0; m < numberOfResidualVariables; ++ m)
    //{
-   //  if((residualNormal[m] != residualNormal[m]) || fabs(residualNormal[m]) > LARGE 
+   //  if ((residualNormal[m] != residualNormal[m]) || fabs(residualNormal[m]) > LARGE 
    //      || std::isnan(residualNormal[m]) || std::isinf(residualNormal[m]))
    //  {
    //      cout << "residual residualNormal[" << m << "] = " << residualNormal[m] << ", on level " << level << endl;
@@ -223,7 +231,7 @@ void ResidualGlobal::PrepareFormatedResidual(int outnstep, string &formatRes)
     RDouble maxResCoorY = maxResidual->GetMaxResCoorY();
     RDouble maxResCoorZ = maxResidual->GetMaxResCoorZ();
     int maxResIndexM = maxResidual->GetMaxResVariableIndex();
-    
+
     oss << sqrt(maximumResidual) << "    ";
     oss << maxResCoorX << "    ";
     oss << maxResCoorY << "    ";
@@ -390,9 +398,9 @@ void MaxResidual::InitMamory()
 
 void MaxResidual::DeleteMamory()
 {
-    if (data != NULL)
+    if (data != nullptr)
     {
-        delete data;
+        delete data;    data = nullptr;
     }
 }
 
@@ -417,7 +425,7 @@ void MaxResidual::ServerCollection()
         if (myid == obj2.rank)
         {
             DataContainer *cData = new DataContainer();
-            cData->moveto_begin();
+            cData->MoveToBegin();
 
             PHWrite(cData, myid);
             PHWrite(cData, maximumResidual);
@@ -427,15 +435,15 @@ void MaxResidual::ServerCollection()
             PHWrite(cData, maxResVariableIndex);
 
             send(cData, server, tag);
-            delete cData;
+            delete cData;    cData = nullptr;
         }
         if (myid == server)
         {
             DataContainer *cData = new DataContainer();
-            cData->moveto_begin();
+            cData->MoveToBegin();
             receive(cData, obj2.rank, tag);
 
-            cData->moveto_begin();
+            cData->MoveToBegin();
             int processorOfmaxResRecv = 0;
             RDouble maxResRecv, xRecv, yRecv, zRecv;
             int maxResVariableIndexRecv;
@@ -454,7 +462,7 @@ void MaxResidual::ServerCollection()
             z = zRecv;
             maxResVariableIndex = maxResVariableIndexRecv;
 
-            delete cData;
+            delete cData;    cData = nullptr;
         }
     }
     PH_Barrier();
@@ -570,7 +578,7 @@ void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **dq, 
             RDouble dResm = dq[iEquation][iCell] * gridScaleUnit;
             RDouble res2 = dResm * dResm;
             residualNormal[iEquation] += res2;
-            if(isErrorData(residualNormal[iEquation]))
+            if (isErrorData(residualNormal[iEquation]))
             {
                 int iZone = grid->GetZoneID();
                 PrintToWindow("residualNormal[", iEquation, "] = ", residualNormal[iEquation]);
@@ -664,7 +672,7 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &dq, i
                     RDouble dResm = dq(i, j, k, m) * gridScaleUnit;
                     RDouble res2 = dResm * dResm;
                     residualNormal[m] += res2;
-                    if(isErrorData(residualNormal[m]))
+                    if (isErrorData(residualNormal[m]))
                     {
                         int iZone = grid->GetZoneID();
                         PrintToWindow("residualNormal[", m, "] = ", residualNormal[m]);
@@ -729,7 +737,7 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &dq, i
     PHWrite(cData, nEquation);
     PHWrite(cData, residualNormal, nEquation);
 
-    delete []residualNormal;
+    delete [] residualNormal;    residualNormal = nullptr;
 }
 
 }

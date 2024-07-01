@@ -113,11 +113,11 @@ void CreateEmptyData(hid_t loc_id, const string &dataName, hsize_t rowNumber, hs
     {
         datatype = H5Tcopy(H5T_NATIVE_INT);
     }
-    else if(type == PHDOUBLE)
+    else if (type == PHDOUBLE)
     {
         datatype = H5Tcopy(H5T_NATIVE_DOUBLE);
     }
-    else if(type == PHSTRING)
+    else if (type == PHSTRING)
     {
         datatype = H5Tcopy(H5T_NATIVE_CHAR);
     }

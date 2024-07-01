@@ -36,6 +36,7 @@ public:
 private:
     void Deforming();
     void SurfaceGridMove(int iStep);
+    void SurfaceGridMoveByImput();
     void TransformGrid();
     void MatchControlPoints();
     void PostTreat();

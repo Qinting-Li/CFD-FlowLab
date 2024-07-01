@@ -230,7 +230,7 @@ void ComputeConservativePreconMatrix(int sign, RDouble **MG, RDouble *prim, RDou
         for (int j = 0; j < neqn; ++ j)
         {
             MG[i][j] = prim[i] * MG[IR][j];
-            if(j == i)
+            if (j == i)
             {
                 MG[i][j] = 1.0;
             }
@@ -265,7 +265,7 @@ void ConservativePreconMatrixVariables(RDouble *field, RDouble *preconMatrix, in
         field[m] = field_tmp[m];
     }
 
-    delete []field_tmp;
+    delete [] field_tmp;    field_tmp = nullptr;
 }
 
 void ConservativePreconMatrixVariables(RDouble *field, RDouble *preconMatrix, RDouble timeCoeff, int neqn)
@@ -361,7 +361,7 @@ void MVXDQ_STD_LP(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble 
             Psi += phi * prim[nm + i] * theta_s[i];
             Psi += -prim[nm + i] * Phi_s[i]/rm;
         }
-        delete []hs;    hs= NULL;
+        delete [] hs;    hs= NULL;
     }
 
     //!To compute M*dQ
@@ -389,9 +389,9 @@ void MVXDQ_STD_LP(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble 
     }
 
     //!Remove the dynamic memory space.
-    delete []Ds;    Ds = NULL;
-    delete []Phi_s;    Ds = NULL;
-    delete []theta_s;    theta_s = NULL;
+    delete [] Ds;    Ds = NULL;
+    delete [] Phi_s;    Ds = NULL;
+    delete [] theta_s;    theta_s = NULL;
 }
 
 void MatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble gama, RDouble *df, int nm, int neqn, int ipn)
@@ -491,7 +491,7 @@ void MatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble gama, RDouble 
         df[m] *= half * ns;
     }
 
-    delete []Qtmp;
+    delete [] Qtmp;    Qtmp = nullptr;
 }
 
 void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble *preconMatrix, RDouble gama, RDouble preconCoeff, RDouble *df, int nm, int neqn, int ipn)
@@ -601,7 +601,7 @@ void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble *preconM
         df[m] *= half * ns;
     }
 
-    delete []Qtmp;
+    delete [] Qtmp;    Qtmp = nullptr;
 }
 
 void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble *preconMatrix, RDouble gama, RDouble preconCoeff, RDouble timeCoeff, RDouble *df, int nm, int neqn, int ipn)
@@ -711,6 +711,6 @@ void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble *preconM
         df[m] *= half * ns;
     }
 
-    delete[] Qtmp;    Qtmp = nullptr;
+    delete [] Qtmp;    Qtmp = nullptr;
 }
 }

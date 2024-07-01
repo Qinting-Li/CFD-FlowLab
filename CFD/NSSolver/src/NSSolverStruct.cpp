@@ -154,7 +154,6 @@ void NSSolverStruct::AllocateGlobalVar(Grid *gridIn)
     RDouble4D *postFaceValue = new RDouble4D(I, J, K, MFace, fortranArray);
     grid->UpdateDataPtr("postFaceValue", postFaceValue);
 
-
     RDouble5D *diagonalMatrix = new RDouble5D(I, J, K, M, M, fortranArray);
     RDouble2D *inverseDiaMatrix = new RDouble2D(M, M, fortranArray);
     RDouble cflStart = parameters->GetCFLStart();
@@ -447,7 +446,6 @@ void NSSolverStruct::AllocateGlobalVar(Grid *gridIn)
         RDouble4D *speciesEes = new RDouble4D(I, J, K, Range(0, nSpeciesNumber - 1), fortranArray);
         RDouble4D *speciesEs = new RDouble4D(I, J, K, Range(0, nSpeciesNumber - 1), fortranArray);
 
-
         grid->UpdateDataPtr("totalCvtr", totalCvtr);   //! total Cvtr.
         grid->UpdateDataPtr("totalCvv", totalCvv);    //! total Cvv.
         grid->UpdateDataPtr("totalCve", totalCve);    //! total Cve.
@@ -481,7 +479,6 @@ void NSSolverStruct::AllocateGlobalVar(Grid *gridIn)
 
 
         grid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, TWO_GHOST_LAYER);
-
     }
 
     //! Save the temperature on wall.
@@ -1283,7 +1280,7 @@ void NSSolverStruct::InitializeSurfaceParameters(Grid *gridIn)
 
     if (nWallBC > 0)
     {
-        RDouble2D *temperatureWall = reinterpret_cast <RDouble2D *> (grid->GetDataPtr("surfaceTemperature"));
+        RDouble2D *temperatureWall = reinterpret_cast<RDouble2D *>(grid->GetDataPtr("surfaceTemperature"));
         if (temperatureWall == NULL)
         {
             temperatureWall = new RDouble2D(Range(0, nWallBC - 1), Range(0, nMaxSurfaceCell - 1), fortranArray);
@@ -1497,10 +1494,6 @@ void NSSolverStruct::InitializeSurfaceParametersFromFile(Grid *gridIn)
             }
         }
 
-
-
-
-
         ++ nIndexOfWall; //! Next wall boundary.
     }
 }
@@ -1684,11 +1677,14 @@ void NSSolverStruct::DumpRestart(ActionKey *actkey)
     int outIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
 
     DataContainer *restartData = actkey->GetData();
-    restartData->moveto_begin();
-    restartData->write(&outIterStep, sizeof(int));
+    restartData->MoveToBegin();
+    restartData->Write(&outIterStep, sizeof(int));
 
     RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
 
+    int nlen = (med - mst + 1) * (kCellEnd - kCellStart + 1) * (jCellEnd - jCellStart + 1) * (iCellEnd - iCellStart + 1);
+    RDouble *qtmp = new RDouble [nlen];
+    int icount = 0;
     for (int m = mst; m <= med; ++ m)
     {
         for (int k = kCellStart; k <= kCellEnd; ++ k)
@@ -1697,11 +1693,14 @@ void NSSolverStruct::DumpRestart(ActionKey *actkey)
             {
                 for (int i = iCellStart; i <= iCellEnd; ++ i)
                 {
-                    restartData->write(&q(i, j, k, m), sizeof(RDouble));
+                    qtmp[icount++] = q(i, j, k, m);
                 }
             }
         }
     }
+    restartData->Write(qtmp, nlen * sizeof(RDouble));
+    icount = 0;
+    delete [] qtmp;     qtmp = nullptr;
 
     RDouble4D &temperatures = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
     int nChemical = parameters->GetChemicalFlag();
@@ -1716,7 +1715,7 @@ void NSSolverStruct::DumpRestart(ActionKey *actkey)
                 {
                     for (int i = iCellStart; i <= iCellEnd; ++ i)
                     {
-                        restartData->write(&temperatures(i, j, k, m), sizeof(RDouble));
+                        restartData->Write(&temperatures(i, j, k, m), sizeof(RDouble));
                     }
                 }
             }
@@ -1730,11 +1729,12 @@ void NSSolverStruct::DumpRestart(ActionKey *actkey)
     }
 
     RDouble physicalTime = GlobalDataBase::GetDoubleParaFromDB("physicalTime");
-    restartData->write(&physicalTime, sizeof(RDouble));
+    restartData->Write(&physicalTime, sizeof(RDouble));
 
     RDouble4D &qn1 = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_unsteady_n1"));
     RDouble4D &qn2 = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_unsteady_n2"));
 
+    qtmp = new RDouble [nlen];
     for (int m = mst; m <= med; ++ m)
     {
         for (int k = kCellStart; k <= kCellEnd; ++ k)
@@ -1743,11 +1743,13 @@ void NSSolverStruct::DumpRestart(ActionKey *actkey)
             {
                 for (int i = iCellStart; i <= iCellEnd; ++ i)
                 {
-                    restartData->write(&qn1(i, j, k, m), sizeof(RDouble));
+                    qtmp[icount++] = qn1(i, j, k, m);
                 }
             }
         }
     }
+    restartData->Write(qtmp, nlen * sizeof(RDouble));
+    icount = 0;
 
     for (int m = mst; m <= med; ++ m)
     {
@@ -1757,11 +1759,13 @@ void NSSolverStruct::DumpRestart(ActionKey *actkey)
             {
                 for (int i = iCellStart; i <= iCellEnd; ++ i)
                 {
-                    restartData->write(&qn2(i, j, k, m), sizeof(RDouble));
+                    qtmp[icount++] = qn2(i, j, k, m);
                 }
             }
         }
     }
+    restartData->Write(qtmp, nlen * sizeof(RDouble));
+    icount = 0;
 
     RDouble4D &residual = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res"));
     RDouble4D &residualn1 = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res_unsteady_n1"));
@@ -1775,11 +1779,13 @@ void NSSolverStruct::DumpRestart(ActionKey *actkey)
             {
                 for (int i = iCellStart; i <= iCellEnd; ++ i)
                 {
-                    restartData->write(&residual(i, j, k, m), sizeof(RDouble));
+                    qtmp[icount++] = residual(i, j, k, m);
                 }
             }
         }
     }
+    restartData->Write(qtmp, nlen * sizeof(RDouble));
+    icount = 0;
 
     for (int m = mst; m <= med; ++ m)
     {
@@ -1789,11 +1795,13 @@ void NSSolverStruct::DumpRestart(ActionKey *actkey)
             {
                 for (int i = iCellStart; i <= iCellEnd; ++ i)
                 {
-                    restartData->write(&residualn1(i, j, k, m), sizeof(RDouble));
+                    qtmp[icount++] = residualn1(i, j, k, m);
                 }
             }
         }
     }
+    restartData->Write(qtmp, nlen * sizeof(RDouble));
+    icount = 0;
 
     for (int m = mst; m <= med; ++ m)
     {
@@ -1803,11 +1811,13 @@ void NSSolverStruct::DumpRestart(ActionKey *actkey)
             {
                 for (int i = iCellStart; i <= iCellEnd; ++ i)
                 {
-                    restartData->write(&residualn2(i, j, k, m), sizeof(RDouble));
+                    qtmp[icount++] = residualn2(i, j, k, m);
                 }
             }
         }
     }
+    restartData->Write(qtmp, nlen * sizeof(RDouble));
+    delete [] qtmp;     qtmp = nullptr;
 }
 
 void NSSolverStruct::DumpRestartH5(ActionKey *actkey)
@@ -2971,10 +2981,10 @@ void NSSolverStruct::ReadRestart(ActionKey *actkey)
     int med = M.last();
 
     DataContainer *restartData = actkey->GetData();
-    restartData->moveto_begin();
+    restartData->MoveToBegin();
 
     int outputStepInterval = 0;
-    restartData->read(&outputStepInterval, sizeof(int));
+    restartData->Read(&outputStepInterval, sizeof(int));
     GlobalDataBase::UpdateData("outnstep", &outputStepInterval, PHINT, 1);
 
     RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
@@ -2987,7 +2997,7 @@ void NSSolverStruct::ReadRestart(ActionKey *actkey)
             {
                 for (int i = iCellStart; i <= iCellEnd; ++ i)
                 {
-                    restartData->read(&q(i, j, k, m), sizeof(RDouble));
+                    restartData->Read(&q(i, j, k, m), sizeof(RDouble));
                 }
             }
         }
@@ -3006,7 +3016,7 @@ void NSSolverStruct::ReadRestart(ActionKey *actkey)
                 {
                     for (int i = iCellStart; i <= iCellEnd; ++ i)
                     {
-                        restartData->read(&temperatures(i, j, k, m), sizeof(RDouble));
+                        restartData->Read(&temperatures(i, j, k, m), sizeof(RDouble));
                     }
                 }
             }
@@ -3066,7 +3076,7 @@ void NSSolverStruct::ReadRestart(ActionKey *actkey)
     else
     {
         //! Start from unsteady flow field.
-        restartData->read(&physicalTime, sizeof(RDouble));
+        restartData->Read(&physicalTime, sizeof(RDouble));
 
         for (int m = mst; m <= med; ++ m)
         {
@@ -3076,7 +3086,7 @@ void NSSolverStruct::ReadRestart(ActionKey *actkey)
                 {
                     for (int i = iCellStart; i <= iCellEnd; ++ i)
                     {
-                        restartData->read(&qn1(i, j, k, m), sizeof(RDouble));
+                        restartData->Read(&qn1(i, j, k, m), sizeof(RDouble));
                     }
                 }
             }
@@ -3090,7 +3100,7 @@ void NSSolverStruct::ReadRestart(ActionKey *actkey)
                 {
                     for (int i = iCellStart; i <= iCellEnd; ++ i)
                     {
-                        restartData->read(&qn2(i, j, k, m), sizeof(RDouble));
+                        restartData->Read(&qn2(i, j, k, m), sizeof(RDouble));
                     }
                 }
             }
@@ -3104,7 +3114,7 @@ void NSSolverStruct::ReadRestart(ActionKey *actkey)
                 {
                     for (int i = iCellStart; i <= iCellEnd; ++ i)
                     {
-                        restartData->read(&residual(i, j, k, m), sizeof(RDouble));
+                        restartData->Read(&residual(i, j, k, m), sizeof(RDouble));
                     }
                 }
             }
@@ -3118,7 +3128,7 @@ void NSSolverStruct::ReadRestart(ActionKey *actkey)
                 {
                     for (int i = iCellStart; i <= iCellEnd; ++ i)
                     {
-                        restartData->read(&residualn1(i, j, k, m), sizeof(RDouble));
+                        restartData->Read(&residualn1(i, j, k, m), sizeof(RDouble));
                     }
                 }
             }
@@ -3132,7 +3142,7 @@ void NSSolverStruct::ReadRestart(ActionKey *actkey)
                 {
                     for (int i = iCellStart; i <= iCellEnd; ++ i)
                     {
-                        restartData->read(&residualn2(i, j, k, m), sizeof(RDouble));
+                        restartData->Read(&residualn2(i, j, k, m), sizeof(RDouble));
                     }
                 }
             }
@@ -3419,25 +3429,25 @@ void NSSolverStruct::AirForceCoefParts(ActionKey *actkey, int partID, int coordi
 
     DataContainer *aerodynamicForceData = actkey->GetData();
 
-    aerodynamicForceData->write(&CA_f, sizeof(RDouble));
-    aerodynamicForceData->write(&CA_p, sizeof(RDouble));
-    aerodynamicForceData->write(&CN_f, sizeof(RDouble));
-    aerodynamicForceData->write(&CN_p, sizeof(RDouble));
-    aerodynamicForceData->write(&CZ_f, sizeof(RDouble));
-    aerodynamicForceData->write(&CZ_p, sizeof(RDouble));
+    aerodynamicForceData->Write(&CA_f, sizeof(RDouble));
+    aerodynamicForceData->Write(&CA_p, sizeof(RDouble));
+    aerodynamicForceData->Write(&CN_f, sizeof(RDouble));
+    aerodynamicForceData->Write(&CN_p, sizeof(RDouble));
+    aerodynamicForceData->Write(&CZ_f, sizeof(RDouble));
+    aerodynamicForceData->Write(&CZ_p, sizeof(RDouble));
 
-    aerodynamicForceData->write(&cpx, sizeof(RDouble));
-    aerodynamicForceData->write(&cpy, sizeof(RDouble));
-    aerodynamicForceData->write(&cpz, sizeof(RDouble));
+    aerodynamicForceData->Write(&cpx, sizeof(RDouble));
+    aerodynamicForceData->Write(&cpy, sizeof(RDouble));
+    aerodynamicForceData->Write(&cpz, sizeof(RDouble));
 
-    aerodynamicForceData->write(&Cl_f, sizeof(RDouble));
-    aerodynamicForceData->write(&Cl_p, sizeof(RDouble));
-    aerodynamicForceData->write(&Cn_f, sizeof(RDouble));
-    aerodynamicForceData->write(&Cn_p, sizeof(RDouble));
-    aerodynamicForceData->write(&Cm_f, sizeof(RDouble));
-    aerodynamicForceData->write(&Cm_p, sizeof(RDouble));
+    aerodynamicForceData->Write(&Cl_f, sizeof(RDouble));
+    aerodynamicForceData->Write(&Cl_p, sizeof(RDouble));
+    aerodynamicForceData->Write(&Cn_f, sizeof(RDouble));
+    aerodynamicForceData->Write(&Cn_p, sizeof(RDouble));
+    aerodynamicForceData->Write(&Cm_f, sizeof(RDouble));
+    aerodynamicForceData->Write(&Cm_p, sizeof(RDouble));
 
-    aerodynamicForceData->write(&hingeMoment, sizeof(RDouble));
+    aerodynamicForceData->Write(&hingeMoment, sizeof(RDouble));
 }
 
 void NSSolverStruct::AirForceCoefBodies(ActionKey *actkey)
@@ -3658,7 +3668,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
 {
     int level = actkey->level;
     DataContainer *wallDistributeData = actkey->GetData();
-    wallDistributeData->moveto_begin();
+    wallDistributeData->MoveToBegin();
 
     StructGrid *grid = StructGridCast(GetGrid(level));
 
@@ -3772,7 +3782,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
     surfaceTemperature = reinterpret_cast <RDouble2D *> (grid->GetDataPtr("surfaceTemperature"));
 
     int nSlipBCModel = GlobalDataBase::GetIntParaFromDB("nSlipBCModel");
-    RDouble3D *surfaceSlipVariables = NULL;
+    RDouble3D *surfaceSlipVariables = nullptr;
     if (nSlipBCModel > 0)
     {
         surfaceSlipVariables = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("surfaceSlipVariables"));
@@ -3798,7 +3808,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
     //! The mass fraction of oxygen and nitrogen under the fully catalytic condition.
     RDouble speciesEnthalpy[MAX_SPECIES_NUM], densityDiffusivity[MAX_SPECIES_NUM];
     string *speciesName;
-    RDouble3D *surfaceMassFraction = NULL;
+    RDouble3D *surfaceMassFraction = nullptr;
     if (nChemical > 0 && numberOfSpecies > 0)
     {
         speciesName = gas->GetNameOfSpecies();
@@ -3806,7 +3816,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
     }
 
     int nRapidFlowfield = parameters->GetRapidFlowfieldMethod();
-    RDouble3D *surfacePressure = NULL;
+    RDouble3D *surfacePressure = nullptr;
     if (nRapidFlowfield > 0)
     {
         surfacePressure = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("surfacePressure"));
@@ -3819,7 +3829,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
     RDouble refSquareVelocity = refVelocity * refVelocity;
     RDouble refDynamicPressure = refDimensionalDensity * refSquareVelocity;
     RDouble refEnergy = refDimensionalDensity * refVelocity * refSquareVelocity;
-    RDouble refHeatFluxDimension = refEnergy * 0.001; //! The dimensional value of total heat flux (kW/m2).
+    RDouble refHeatFluxDimension = refEnergy * 0.001;    //! The dimensional value of total heat flux (kW/m2).
     RDouble refTotalEnthalpy = gas->ComputeReferenceTotalEnthalpy();
     RDouble refLenth = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
     FluidParameter refParam;
@@ -3841,7 +3851,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
     RDouble knLength = parameters->GetCharacteristicLength();
 
     Range M(0, dataNumber - 1);
-    RDouble visualVariables[50]; //! Store the values of variables.
+    RDouble visualVariables[50];    //! Store the values of variables.
     //! the order of variables in the computational array, eg. 0 denotes the coefficient of pressure,
     //! and the value of array indicates the index of the variable in the computation array.
     int variablesOrder[50];
@@ -3920,10 +3930,10 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                     RDouble ny = leftOrRightIndex * yfv(iWall, jWall, kWall, nSurface);
                     RDouble nz = leftOrRightIndex * zfv(iWall, jWall, kWall, nSurface);
 
-                    ////! Obtain the centroid of the surface.
+                    //! Obtain the centroid of the surface.
                     //RDouble xCenterWall, yCenterWall, zCenterWall;
                     //grid->FaceCoor(iWall, jWall, kWall, nSurface, xCenterWall, yCenterWall, zCenterWall);
-                    ////! Obtain the centroid of the cell on the positive first layer.
+                    //! Obtain the centroid of the cell on the positive first layer.
                     //RDouble xCellCenter, yCellCenter, zCellCenter;
                     //grid->CenterCoor(i, j, k, xCellCenter, yCellCenter, zCellCenter);
 
@@ -3946,11 +3956,11 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                     //! Obtain temperature of solid on wall.
                     if (Twall < 0.0) //Adabatic wall.
                     {
-                        nondimTwall = temperature(i, j, k, mTT); //solid temperature.
+                        nondimTwall = temperature(i, j, k, mTT);    //! solid temperature.
                     }
-                    else //Isothermal wall or radiation equilibrium temperature wall.
+                    else    //! Isothermal wall or radiation equilibrium temperature wall.
                     {
-                        nondimTwall = (*surfaceTemperature)(indexOfWall, indexOfCell); //solid temperature.
+                        nondimTwall = (*surfaceTemperature)(indexOfWall, indexOfCell);    //! solid temperature.
                     }
 
                     //! To obtain the variables on wall.
@@ -3959,7 +3969,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                         //! Obtain temperature of flow on wall.
                         for (int m = 0; m < 3; ++ m)
                         {
-                            //flow temperature.
+                            //! flow temperature.
                             wallTemperature[m] = (*surfaceSlipVariables)(indexOfWall, indexOfCell, m);
                             wallVariables[m + 1] = (*surfaceSlipVariables)(indexOfWall, indexOfCell, m + 3);
                         }
@@ -3975,7 +3985,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                         }
                         else
                         {
-                            //The velocity is used to extract the wall streamline, so this velocity is not the real velocity on wall.
+                            //! The velocity is used to extract the wall streamline, so this velocity is not the real velocity on wall.
                             wallVariables[IU] = primitiveVars(i, j, k, IU);
                             wallVariables[IV] = primitiveVars(i, j, k, IV);
                             wallVariables[IW] = primitiveVars(i, j, k, IW);
@@ -3989,7 +3999,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                             wallTemperature[ITV] = temperature(i, j, k, mTV);
                             wallTemperature[ITE] = temperature(i, j, k, mTE);
                         }
-                        else //Isothermal wall or radiation equilibrium temperature wall.
+                        else    //! Isothermal wall or radiation equilibrium temperature wall.
                         {
                             wallTemperature[ITT] = (*surfaceTemperature)(indexOfWall, indexOfCell);
                             wallTemperature[ITV] = wallTemperature[ITT];
@@ -4010,7 +4020,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                                 wallVariables[s] = primitiveVars(i, j, k, s);
                             }
                         }
-                        else // Fully catalytic wall or finite catalytic wall.
+                        else    //! Fully catalytic wall or finite catalytic wall.
                         {
                             for (int s = nNSEquation; s < numberOfSpecies + nNSEquation; ++ s)
                             {
@@ -4018,13 +4028,13 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                             }
                         }
 
-                        if (nTemperatureModel > 1)     //! Multi-Temperature model.
+                        if (nTemperatureModel > 1)    //! Multi-Temperature model.
                         {
                             RDouble ceDivideMe = 0.0;
                             massReciprocal = gas->ComputeMolecularWeightReciprocalWithoutElectron(wallVariables, ceDivideMe);
                             wallVariables[IR] = wallVariables[IP] / (gasConstant * wallTemperature[ITT] * massReciprocal + gasConstant * wallTemperature[ITE] * ceDivideMe);
                         }
-                        else         //! One-Temperature model.
+                        else    //! One-Temperature model.
                         {
                             //! Obtain molecular weight of the mixture gas.
                             massReciprocal = gas->ComputeMolecularWeightReciprocal(wallVariables);
@@ -4173,7 +4183,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                             //! To obtain the dimensional value of heat rate, hf = (nxs * qx + nys * qy + nzs * qz) * (ref_miu * ref_vel^2/ref_len).
                             heatFlux += -(normalComponetX * qx + normalComponetY * qy + normalComponetZ * qz) * oRefReNumber;
                         }
-                        else      //! Non-equilibrium gas.
+                        else    //! Non-equilibrium gas.
                         {
                             //! Compute Heat conductivity.
                             RDouble heatConductivity[3] = { 0.0, 0.0, 0.0 };
@@ -4262,7 +4272,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                         RDouble deltaH = refTotalEnthalpy - wallTotalEnthalpy;
                         StantonNumber = Qw * 1000 / (refDimensionalDensity * refVelocity * deltaH);
 
-                        //Compute the mean free path.
+                        //! Compute the mean free path.
                         meanFreePath = ((viscousCoef * refVicosity) / Pw) * sqrt(0.5 * PI * rjmk * massReciprocal * Tw / refDimensionalMolecular);
                         knudsenNumber = meanFreePath / knLength;
 
@@ -4283,7 +4293,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                         dfy += fvsy;
                         dfz += fvsz;
 
-                        delete geometry3D;
+                        delete geometry3D;    geometry3D = nullptr;
                     }
 
                     RDouble dir = cosa * fvsx + sina * fvsy;
@@ -4305,7 +4315,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                     if (viscousType > INVISCID)
                     {
                         // RDouble3D &wallDistant = *grid->GetWallDist();
-                        // RDouble wallDistantOfFirstCell = wallDistant(i, j, k);   //by dms
+                        // RDouble wallDistantOfFirstCell = wallDistant(i, j, k);    //! by dms
                         RDouble wallDistantOfFirstCell = deltaHeight;
                         yPlus = refReNumber * sqrt(taoWall * densityWall) * wallDistantOfFirstCell / visLaminar;
                         gridReynoldsNumber = refDimensionalDensity * refVelocity * deltaHeight * refLenth / refVicosity;
@@ -4346,7 +4356,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                         }
                     }
 
-                    if (nSlipBCModel > 0)//The slip temperature of flow.
+                    if (nSlipBCModel > 0)    //! The slip temperature of flow.
                     {
                         visualVariables[VISUAL_SLIP_TS] = wallTemperature[ITT] * referenceTemperature;
                         visualVariables[VISUAL_SLIP_TV] = wallTemperature[ITV] * referenceTemperature;
@@ -4359,19 +4369,19 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                     {
                         int varType = visualVariablesType[iVar];
                         int varIndex = variablesOrder[varType];
-                        //The mass fractions of species will be exported.
+                        //! The mass fractions of species will be exported.
                         if (varType == VISUAL_WALL_NS)
                         {
                             continue;
                         }
-                        else //Obtain the other variables.
+                        else    //! Obtain the other variables.
                         {
                             ++ nIndex;
                             dataStore(i, j, k, nIndex) = visualVariables[varIndex];
                         }
                     }
 
-                    //Obtain the mass fractions of species.
+                    //! Obtain the mass fractions of species.
                     if (nWallVariables != dataNumber)
                     {
                         for (int iSpecies = 0; iSpecies < numberOfSpecies; ++ iSpecies)
@@ -4382,11 +4392,11 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
 
                     //! Next grid cell.
                     ++ indexOfCell;
-                }//! i end
-            }//! j end
-        }//! k end
-        ++ indexOfWall; //! Next surface region.
-    }//! iBCRegion end
+                }    //! i end
+            }    //! j end
+        }    //! k end
+        ++ indexOfWall;    //! Next surface region.
+    }    //! iBCRegion end
 
     GhostCell3D(dataStore, ni, nj, nk, dataNumber);
 
@@ -4566,7 +4576,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
         PHWrite(wallDistributeData, &TecioMission, 1);
 
         string bcName = structBC->GetBCName();
-        wallDistributeData->write_string(bcName);
+        wallDistributeData->WriteString(bcName);
 
         int IMxOrNumPts = ied - ist + 1;
         int JMxOrNumElements = jed - jst + 1;
@@ -4590,7 +4600,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
         }
     }
 
-    delete[]wallVariables;
+    delete [] wallVariables;    wallVariables = nullptr;
 }
 
 void NSSolverStruct::ComputeHeatFlux(ActionKey *actkey, RDouble *HeatFlux)
@@ -4818,7 +4828,7 @@ void NSSolverStruct::ComputeHeatFlux(ActionKey *actkey, RDouble *HeatFlux)
                                 wallVariables[s] = primitiveVars(i, j, k, s);
                             }
                         }
-                        else // Fully catalytic wall or finite catalytic wall.
+                        else    //! Fully catalytic wall or finite catalytic wall.
                         {
                             for (int s = nNSEquation; s < numberOfSpecies + nNSEquation; ++ s)
                             {
@@ -4827,13 +4837,13 @@ void NSSolverStruct::ComputeHeatFlux(ActionKey *actkey, RDouble *HeatFlux)
                         }
 
                         RDouble massReciprocal = 0.0;
-                        if (nTemperatureModel > 1)     //! Multi-Temperature model.
+                        if (nTemperatureModel > 1)    //! Multi-Temperature model.
                         {
                             RDouble ceDivideMe = 0.0;
                             massReciprocal = gas->ComputeMolecularWeightReciprocalWithoutElectron(wallVariables, ceDivideMe);
                             wallVariables[IR] = wallVariables[IP] / (gasConstant * wallTemperature[ITT] * massReciprocal + gasConstant * wallTemperature[ITE] * ceDivideMe);
                         }
-                        else         //! One-Temperature model.
+                        else    //! One-Temperature model.
                         {
                             //! Obtain molecular weight of the mixture gas.
                             massReciprocal = gas->ComputeMolecularWeightReciprocal(wallVariables);
@@ -5348,7 +5358,7 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
                                 wallVariables[iLaminar] = primitiveVariables(i, j, k, iLaminar);
                             }
                         }
-                        else //Fully catalytic wall or finite catalytic wall.
+                        else    //! Fully catalytic wall or finite catalytic wall.
                         {
                             for (int iLaminar = nNSEquation; iLaminar < nNSEquation + nSpecies; ++ iLaminar)
                             {
@@ -5356,7 +5366,7 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
                             }
                         }
 
-                        // Compute density on surface.
+                        //! Compute density on surface.
                         RDouble massReciprocal = 0.0;
                         if (nTemperatureModel > 1)    //! Multi-Temperature model.
                         {
@@ -5364,7 +5374,7 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
                             massReciprocal = gas->ComputeMolecularWeightReciprocalWithoutElectron(wallVariables, ceDivideMe);
                             wallVariables[IR] = wallVariables[IP] / (gasConstant * wallTemperature[ITT] * massReciprocal + gasConstant * wallTemperature[ITE] * ceDivideMe);
                         }
-                        else     //! One-Temperature model.
+                        else    //! One-Temperature model.
                         {
                             //! Obtain molecular weight of the mixture gas.
                             massReciprocal = gas->ComputeMolecularWeightReciprocal(wallVariables);
@@ -5524,8 +5534,8 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
     string str = oss.str();
 
     DataContainer *chemicalSurfaceData = actkey->GetData();
-    chemicalSurfaceData->moveto_begin();
-    chemicalSurfaceData->write(const_cast <char *> (str.data()), str.size() * sizeof(char));
+    chemicalSurfaceData->MoveToBegin();
+    chemicalSurfaceData->Write(const_cast <char *> (str.data()), str.size() * sizeof(char));
 }
 
 void NSSolverStruct::GetSurfaceHeatingChange(ActionKey *actkey, RDouble &localMaxHeatChange)
@@ -5742,7 +5752,7 @@ void NSSolverStruct::GetSurfaceHeatingChange(ActionKey *actkey, RDouble &localMa
                                 wallVariables[s] = primitiveVars(i, j, k, s);
                             }
                         }
-                        else // Fully catalytic wall or finite catalytic wall.
+                        else    //! Fully catalytic wall or finite catalytic wall.
                         {
                             for (int s = nNSEquation; s < numberOfSpecies + nNSEquation; ++ s)
                             {
@@ -5751,13 +5761,13 @@ void NSSolverStruct::GetSurfaceHeatingChange(ActionKey *actkey, RDouble &localMa
                         }
 
                         RDouble massReciprocal = 0.0;
-                        if (nTemperatureModel > 1)     //! Multi-Temperature model.
+                        if (nTemperatureModel > 1)    //! Multi-Temperature model.
                         {
                             RDouble ceDivideMe = 0.0;
                             massReciprocal = gas->ComputeMolecularWeightReciprocalWithoutElectron(wallVariables, ceDivideMe);
                             wallVariables[IR] = wallVariables[IP] / (gasConstant * wallTemperature[ITT] * massReciprocal + gasConstant * wallTemperature[ITE] * ceDivideMe);
                         }
-                        else         //! One-Temperature model.
+                        else    //! One-Temperature model.
                         {
                             //! Obtain molecular weight of the mixture gas.
                             massReciprocal = gas->ComputeMolecularWeightReciprocal(wallVariables);
@@ -6131,8 +6141,8 @@ void NSSolverStruct::WriteSurfaceInfo(ActionKey *actkey)
 
     string str = oss.str();
     DataContainer *chemicalSurfaceData = actkey->GetData();
-    chemicalSurfaceData->moveto_begin();
-    chemicalSurfaceData->write(const_cast <char *> (str.data()), str.size() * sizeof(char));
+    chemicalSurfaceData->MoveToBegin();
+    chemicalSurfaceData->Write(const_cast <char *> (str.data()), str.size() * sizeof(char));
 }
 
 void NSSolverStruct::GetResidual(ActionKey *actkey)
@@ -6341,8 +6351,8 @@ void NSSolverStruct::ComputeCp(Grid *gridIn, RDouble4D *&pressureCoef)
                     {
                         (*moleFraction)(i, j, k, m) = moleFractionTemp[m];
                     }
-                    delete []massFractionTemp;
-                    delete []moleFractionTemp;
+                    delete [] massFractionTemp;    massFractionTemp = nullptr;
+                    delete [] moleFractionTemp;    moleFractionTemp = nullptr;
                 }
             }
         }
@@ -9381,7 +9391,7 @@ void NSSolverStruct::SetBCInitialValuesByInterpolation(StructBC *structBC, RDoub
         int ntmodel = gas->GetTemperatureModel();
         RDouble nonDimTv = localDimensionalTemperature / refDimensionalTemperature;
 
-        if (ntmodel > 1)       //! multi-temperature model.
+        if (ntmodel > 1)    //! multi-temperature model.
         {
             RDouble vibrationEnergy = gas->GetMixedGasDimensionalVibrationEnergy(nonDimTv, initMassFraction);
             RDouble electronEnergy  = gas->GetMixedGasDimensionalElectronEnergy(nonDimTv, initMassFraction);
@@ -9728,17 +9738,17 @@ void NSSolverStruct::InitialSetPartialParameter(StructGrid *grid, bool flowTag)
         prim[IR] = density;
 
         int ntmodel = gas->GetTemperatureModel();
-        if (ntmodel ==2)       //! multi-temperature model.
+        if (ntmodel ==2)    //! multi-temperature model.
         {
             gas->ComputeMixtureEve(MassFractions, temperature[1], prim[nEquation-1]);
         }
-        else if (ntmodel ==3)       //! multi-temperature model.
+        else if (ntmodel ==3)    //! multi-temperature model.
         {
             gas->ComputeMixtureEv(MassFractions, temperature[1], prim[nEquation-2]);
             gas->ComputeMixtureEe(MassFractions, temperature[2], prim[nEquation-1]);
         }
 
-        delete[] MassFractions, partialMassFractions;
+        delete [] MassFractions, partialMassFractions;
     }
 
     if(tag)
@@ -10150,8 +10160,8 @@ void NSSolverStruct::FarFieldRiemannInvariants(Grid *gridIn, StructBC *structBC,
     {
         int is3, js3, ks3;
         int it3, jt3, kt3;
-        RDouble* prims3;
-        RDouble* primt3;
+        RDouble *prims3;
+        RDouble *primt3;
         prims3 = new RDouble[nEquation];
         primt3 = new RDouble[nEquation];
 
@@ -11162,6 +11172,56 @@ void NSSolverStruct::ComputePreconditionCoefficient(Grid *gridIn)
     GhostCell3D(preconCoefficient, ni, nj, nk);
 }
 
+void NSSolverStruct::ComputePreconditionCoefficientUnsteady(Grid *gridIn)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    RDouble3D &vol = *(grid->GetCellVolume());
+
+    RDouble3D &dt = *reinterpret_cast< RDouble3D * > (grid->GetDataPtr("dt"));
+    RDouble3D &timeCoefficient = *reinterpret_cast< RDouble3D * > (grid->GetDataPtr("timeCoefficient"));
+    RDouble3D &preconCoefficient = *reinterpret_cast< RDouble3D *> (grid->GetDataPtr("preconCoefficient"));
+    RDouble3D &timeCoefficientInverse = *reinterpret_cast< RDouble3D * > (grid->GetDataPtr("timeCoefficientInverse"));
+
+    Param_NSSolverStruct *parameters = GetControlParameters();
+    RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
+    int ifLocalTimeStep = parameters->GetIfLocalTimeStep();
+
+    SpectrumRadius(grid);
+    TimeStep(grid);
+
+    int iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd;
+    grid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd);
+
+    using namespace IDX;
+
+    for (int k = kCellStart; k <= kCellEnd; ++ k)
+    {
+        for (int j = jCellStart; j <= jCellEnd; ++ j)
+        {
+            for (int i = iCellStart; i <= iCellEnd; ++ i)
+            {
+                RDouble dtemp = dt(i, j, k);
+                if (ifLocalTimeStep != 0)
+                {
+                    dtemp = dt(i, j, k) * vol(i, j, k);
+                }
+                timeCoefficient(i, j, k) = 1.0 + 2.0 / 3.0 * dtemp / physicalTimeStep;
+                timeCoefficientInverse(i, j, k) = 1.0 / timeCoefficient(i, j, k);
+                preconCoefficient(i, j, k) = preconCoefficient(i, j, k) / (timeCoefficientInverse(i, j, k) + (1.0 - timeCoefficientInverse(i, j, k)) * preconCoefficient(i, j, k));
+
+            }
+        }
+    }
+
+    GhostCell3D(timeCoefficient, ni, nj, nk);
+    GhostCell3D(preconCoefficient, ni, nj, nk);
+    GhostCell3D(timeCoefficientInverse, ni, nj, nk);
+}
+
 void NSSolverStruct::ComputeMinTimeStep(Grid *gridIn, RDouble &minDt, RDouble &maxDt)
 {
     StructGrid *grid = StructGridCast(gridIn);
@@ -11672,7 +11732,7 @@ void NSSolverStruct::SpectrumRadiusViscous(Grid *gridIn)
     }
 }
 
-void NSSolverStruct::ConservativePreconMatrix(Grid *gridIn)
+void NSSolverStruct::ConservativePreconMatrix(Grid *gridIn, int sign)
 {
     StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
@@ -11712,7 +11772,7 @@ void NSSolverStruct::ConservativePreconMatrix(Grid *gridIn)
                     qPrecondition[m] = q(i, j, k, m);
                 }
 
-                ComputeConservativePreconMatrix(-1, MG, qPrecondition, gama, preconCoeff, nNSEquation, nEquation);
+                ComputeConservativePreconMatrix(sign, MG, qPrecondition, gama, preconCoeff, nNSEquation, nEquation);
 
                 for (int row = 0; row < nEquation; ++ row)
                 {
@@ -12930,7 +12990,6 @@ void NSSolverStruct::ComputeGradientCellCenter(Grid *gridIn)
         *gradSpeciesCellCenterZ = 0.0;
     }
 
-
     for (int nsurf = 1; nsurf <= ndim; ++ nsurf)
     {
         int il1, jl1, kl1;
@@ -12944,7 +13003,6 @@ void NSSolverStruct::ComputeGradientCellCenter(Grid *gridIn)
         int ked = nk - 1 + kl1;
 
         if (ndim == TWO_D) ked = 1;
-
 
         //! The gradient of u,v,w.
         for (int m = 0; m < ndim; ++ m)
@@ -15164,13 +15222,13 @@ void NSSolverStruct::CompVisFluxnew(Grid *gridIn, Gradient *gradient_uvwt, Field
             }
         }
     }
-    delete [] fvis;     fvis  = NULL;
-    delete [] work;     work  = NULL;
-    delete [] qlr;      qlr   = NULL;
-    delete [] fslr;     fslr  = NULL;
-    delete [] dfsdx;    dfsdx = NULL;
-    delete [] dfsdy;    dfsdy = NULL;
-    delete [] dfsdz;    dfsdz = NULL;
+    delete [] fvis;     fvis  = nullptr;
+    delete [] work;     work  = nullptr;
+    delete [] qlr;      qlr   = nullptr;
+    delete [] fslr;     fslr  = nullptr;
+    delete [] dfsdx;    dfsdx = nullptr;
+    delete [] dfsdy;    dfsdy = nullptr;
+    delete [] dfsdz;    dfsdz = nullptr;
 }
 
 void NSSolverStruct::CompVisFluxnew(Grid *gridIn, FieldProxy *fluxProxy, int iSurface)
@@ -17359,7 +17417,7 @@ void NSSolverStruct::GetInvFaceVar(Grid *gridIn, FieldProxy *qlProxy, FieldProxy
                         psi = 1. - abs(beta20(i, j, k, m) - beta21(i, j, k, m)) / (beta20(i, j, k, m) + beta21(i, j, k, m) + EPSILONTmp);
                         psi = min(1.0, psi / psic);
                         kmkc = kc - kn;
-                        signkmkc = 2.0 * (((signed char*)&kmkc)[sizeof(kmkc) - 1] >> 7) + 1.0;
+                        signkmkc = 2.0 * (((signed char *)&kmkc)[sizeof(kmkc) - 1] >> 7) + 1.0;
                         sigma = (1.0 + signkmkc) / 2. + (1.0 - signkmkc) / 2. * psi;
                         cbeta0(i, j, k, m) = (cBeta0Min + sigma * sigma * (cBeta0Max - cBeta0Min));
 
@@ -17410,7 +17468,7 @@ void NSSolverStruct::GetInvFaceVar(Grid *gridIn, FieldProxy *qlProxy, FieldProxy
                         psi = 1. - abs(beta20(i, j, k, m) - beta21(i, j, k, m)) / (beta20(i, j, k, m) + beta21(i, j, k, m) + EPSILONTmp);
                         psi = min(1.0, psi / psic);
                         kmkc = kc - kn;
-                        signkmkc = 2.0 * (((signed char*)&kmkc)[sizeof(kmkc) - 1] >> 7) + 1.0;
+                        signkmkc = 2.0 * (((signed char *)&kmkc)[sizeof(kmkc) - 1] >> 7) + 1.0;
                         sigma = (1.0 + signkmkc) / 2. + (1.0 - signkmkc) / 2. * psi;
                         cbeta0(i, j, k, m) = (cBeta0Min + sigma * sigma * (cBeta0Max - cBeta0Min));
 
@@ -20146,7 +20204,7 @@ void NSSolverStruct::CompressGradientandLimitToInterfaceOnlyForMixGrid(DataConta
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble4D &dqdx_cc = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdx_cc_ruvwpt"));
     RDouble4D &dqdy_cc = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdy_cc_ruvwpt"));
@@ -20193,7 +20251,7 @@ void NSSolverStruct::DecompressGradientandLimitToInterfaceOnlyForMixGrid(DataCon
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble4D &gradUVWTCellCenterX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
     RDouble4D &gradUVWTCellCenterY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
@@ -20259,7 +20317,7 @@ void NSSolverStruct::CompressQlQrToInterfaceOnlyForMixGrid(DataContainer *&dataC
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble4D &QLI = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql1"));
     RDouble4D &QLJ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql2"));
@@ -20371,7 +20429,7 @@ void NSSolverStruct::DecompressQlQrToInterfaceOnlyForMixGrid(DataContainer *&dat
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble4D &QLI = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql1"));
     RDouble4D &QLJ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql2"));
@@ -20480,7 +20538,7 @@ void NSSolverStruct::CompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&d
     if (gridtypeofcurrentZone == gridtypeofneighborZone)
     {
         RDouble uploadData = 0.0;
-        dataContainer->moveto_begin();
+        dataContainer->MoveToBegin();
         PHWrite(dataContainer, uploadData);
         return;
     }
@@ -20492,7 +20550,7 @@ void NSSolverStruct::CompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&d
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     Param_NSSolverStruct *parameters = GetControlParameters();
     int viscousType = parameters->GetViscousType();
@@ -20742,7 +20800,7 @@ void NSSolverStruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *
     if (gridtypeofcurrentZone == gridtypeofneighborZone)
     {
         RDouble downdData = 0.0;
-        dataContainer->moveto_begin();
+        dataContainer->MoveToBegin();
         PHRead(dataContainer, downdData);
         return;
     }
@@ -20754,7 +20812,7 @@ void NSSolverStruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     Param_NSSolverStruct *parameters = GetControlParameters();
     int viscousType = parameters->GetViscousType();
@@ -21005,7 +21063,7 @@ void NSSolverStruct::CompressDQ(DataContainer *&dataContainer, FieldProxy *field
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble4D &fieldSend = fieldProxy->GetField_STR();
 
@@ -21047,7 +21105,7 @@ void NSSolverStruct::DecompressDQ(DataContainer *&dataContainer, FieldProxy *fie
     RDouble rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
     rotationAngle = rotationAngle * PI / 180;
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble4D &fieldRecv = fieldProxy->GetField_STR();
 
@@ -21338,17 +21396,17 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
                 string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_MODELED_DISSIPATION);
                 postVisualization->UpdateVisualNodeVarPtr(varName, q_turb, IDX::IKW);
             }
-            if (viscousName.substr(0, 17) == "2eq-kw-menter-sst")   //! for blending function F1 and F2.
+            if (viscousName.substr(0, 17) == "2eq-kw-menter-sst")    //! for blending function F1 and F2.
             {
                 if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_SST_F1))
                 {
-                    RDouble3D &blend = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("blend"));   // for blengding function F1
+                    RDouble3D &blend = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("blend"));    //! for blengding function F1
                     string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_SST_F1);
                     postVisualization->UpdateVisualNodeVarPtr(varName, blend);
                 }
                 if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_SST_F2))
                 {
-                    RDouble3D &SST_F2 = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("SST_F2"));   //! for blengding function F2
+                    RDouble3D &SST_F2 = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("SST_F2"));    //! for blengding function F2
                     string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_SST_F2);
                     postVisualization->UpdateVisualNodeVarPtr(varName, SST_F2);
                 }
@@ -21367,13 +21425,13 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
                     }
                     if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_TRANSITION_GAMAEFF))
                     {
-                        RDouble3D &gamaeff = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gamaeff"));   // for transition gamaeff
+                        RDouble3D &gamaeff = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gamaeff"));    //! for transition gamaeff
                         string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_TRANSITION_GAMAEFF);
                         postVisualization->UpdateVisualNodeVarPtr(varName, gamaeff);
                     }
                     if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_TRANSITION_RESCF))
                     {
-                        RDouble3D &rescf = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("rescf"));   // for transition Rescf
+                        RDouble3D &rescf = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("rescf"));    //! for transition Rescf
                         string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_TRANSITION_RESCF);
                         postVisualization->UpdateVisualNodeVarPtr(varName, rescf);
                     }
@@ -21440,22 +21498,13 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
             postVisualization->UpdateVisualNodeVarPtr(varName, *Q_criteria);
         }
 
-        delete vorticity_x;
-        delete vorticity_y;
-        delete vorticity_z;
-        delete vorticityMagnitude;
-        delete strain_rate;
-        delete Q_criteria;
+        delete vorticity_x;    vorticity_x = nullptr;
+        delete vorticity_y;    vorticity_y = nullptr;
+        delete vorticity_z;    vorticity_z = nullptr;
+        delete vorticityMagnitude;    vorticityMagnitude = nullptr;
+        delete strain_rate;    strain_rate = nullptr;
+        delete Q_criteria;    Q_criteria = nullptr;
 
-    }
-    else if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VORTICITY_X)
-        || postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VORTICITY_Y)
-        || postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VORTICITY_Z)
-        || postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VORTICITY_MAGNITUDE)
-        || postVisualization->IsNeedVisualization(PHSPACE::VISUAL_STRAIN_RATE)
-        || postVisualization->IsNeedVisualization(PHSPACE::VISUAL_Q_CRITERIA))
-    {
-        TK_Exit::ExceptionExit("Error: can not visualization vorticity when plotFieldType = 0!");
     }
 
     if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_CP))
@@ -21475,7 +21524,7 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
     int numberOfSpecies = parameters->GetNumberOfSpecies();
     int isUseNoneqCond = parameters->GetNonequilibriumConditionFlag();
 
-        //! To write the vibratial temperature and vibrational energy.
+    //! To write the vibratial temperature and vibrational energy.
     if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_TEMPERATURE_VIBRATION))
     {
         string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_TEMPERATURE_VIBRATION);
@@ -21526,6 +21575,29 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
         }
     }
 
+    RDouble4D &gradUVWTCellCenterX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
+    RDouble4D &gradUVWTCellCenterY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
+    if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_GRADIENT_UX))
+    {
+        string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_GRADIENT_UX);
+        postVisualization->UpdateVisualNodeVarPtr(varName, gradUVWTCellCenterX, 0);
+    }
+    if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_GRADIENT_UY))
+    {
+        string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_GRADIENT_UY);
+        postVisualization->UpdateVisualNodeVarPtr(varName, gradUVWTCellCenterY, 0);
+    }
+    if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_GRADIENT_VX))
+    {
+        string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_GRADIENT_VX);
+        postVisualization->UpdateVisualNodeVarPtr(varName, gradUVWTCellCenterX, 1);
+    }
+    if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_GRADIENT_VY))
+    {
+        string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_GRADIENT_VY);
+        postVisualization->UpdateVisualNodeVarPtr(varName, gradUVWTCellCenterY, 1);
+    }
+
     if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_DIMENSIONAL_DENSITY)
         || postVisualization->IsNeedVisualization(PHSPACE::VISUAL_DIMENSIONAL_U)
         || postVisualization->IsNeedVisualization(PHSPACE::VISUAL_DIMENSIONAL_V)
@@ -21570,7 +21642,7 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
             string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_DIMENSIONAL_TEMPERATURE);
             postVisualization->UpdateVisualNodeVarPtr(varName, *dimensionalVariables, 5);
         }
-        delete dimensionalVariables;
+        delete dimensionalVariables;    dimensionalVariables = nullptr;
     }
 
     //! To write the mass fractions of species.
@@ -21600,7 +21672,7 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
                 string varName = "molefraction-" + varname[m];
                 postVisualization->UpdateVisualNodeVarPtr(varName, *moleFraction, m);
     }
-            delete moleFraction;
+            delete moleFraction;    moleFraction = nullptr;
         }
 
     if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_GAMA)
@@ -21639,8 +21711,8 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
             }
         }
         postVisualization->UpdateVisualNodeVarPtr(varName, *refgama, 0);
-        delete refgama;
-        delete[] primitiveVars;
+        delete refgama;    refgama = nullptr;
+        delete [] primitiveVars;    primitiveVars = nullptr;
     }
 
 
@@ -21672,7 +21744,7 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
             }
         }
         postVisualization->UpdateVisualNodeVarPtr(varName, *cfl, 0);
-        delete cfl;
+        delete cfl;    cfl = nullptr;
     }
 
     if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_CFL2))
@@ -21703,7 +21775,7 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
             }
         }
         postVisualization->UpdateVisualNodeVarPtr(varName, *cfl, 0);
-        delete cfl;
+        delete cfl;    cfl = nullptr;
     }
 
     if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_MACH))
@@ -21714,18 +21786,18 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
         postVisualization->UpdateVisualNodeVarPtr(varName, mach);
     }
 
-    //Write the non-equilibrium number.
+    //! Write the non-equilibrium number.
     if (nChemical > 0 && isUseNoneqCond > 0)
     {
         RDouble4D *noneqNumber = ComputeNonequiliriumNumber(grid);
 
-        //The Damkohler number.
+        //! The Damkohler number.
         if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_DAMKOHLER_NUMBER))
         {
             string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_DAMKOHLER_NUMBER);
             postVisualization->UpdateVisualNodeVarPtr(varName, *noneqNumber, 0);
         }
-        //The vibrational non-equilibrium number.
+        //! The vibrational non-equilibrium number.
         if (nTemperatureModel > 1 && postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VIBNONEQ_NUMBER))
         {
             string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_VIBNONEQ_NUMBER);

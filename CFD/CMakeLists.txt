@@ -221,6 +221,14 @@ ${NSSOLVER_CPP_PATH}/Param_NSSolverStruct.cpp
 )
 source_group(NSSolver\\src FILES ${NSSOLVER_CPP_LIST})
 
+# file(GLOB_RECURSE NSSOLVER_H_LIST "NSSolver/*.h")
+# source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NSSOLVER_H_LIST}) 
+# FIND_INCLUDE_DIR(NSSOLVER_H_PATH NSSolver)
+# include_directories(${NSSOLVER_H_PATH})
+
+# file(GLOB_RECURSE NSSOLVER_CPP_LIST "NSSolver/*.cpp")
+# source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NSSOLVER_CPP_LIST}) 
+
 # set directory of TurbSolver:
 set(TurbSOLVER_H_PATH        TurbSolver/include)
 set(TurbSOLVER_H_LIST

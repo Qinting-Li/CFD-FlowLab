@@ -47,7 +47,7 @@ void GridGroup::SetGlobalZoneLayout()
 {
     using namespace PHMPI;
 
-    if(!GetZoneGridType())
+    if (!GetZoneGridType())
     {
         SetNumberOfGlobalZones(nzones);
         CreateZoneProcessorIDDump(nzones);

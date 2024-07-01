@@ -12,7 +12,7 @@ IncomEnergyEqCalculator::~IncomEnergyEqCalculator()
 {
 }
 
-void IncomEnergyEqCalculator::CalcGrad(Grid* gridIn)
+void IncomEnergyEqCalculator::CalcGrad(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
@@ -26,40 +26,40 @@ void IncomEnergyEqCalculator::CalcGrad(Grid* gridIn)
     GradientCalculation(grid, "T", "d" + varName + "dx", "d" + varName + "dy", "d" + varName + "dz");
 }
 
-void IncomEnergyEqCalculator::calWallBC(Grid*  gridIn, vector<int>* faceIndex, Data_Param* bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff,  RDouble *q,
+void IncomEnergyEqCalculator::calWallBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
     RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
     int nTotalCell = grid->GetNTotalCell();
-    int* leftCellOfFace = grid->GetLeftCellOfFace();
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
 
-    RDouble* xfn = grid->GetFaceNormalX();
-    RDouble* yfn = grid->GetFaceNormalY();
-    RDouble* zfn = grid->GetFaceNormalZ();
-    RDouble* area = grid->GetFaceArea();
+    RDouble *xfn = grid->GetFaceNormalX();
+    RDouble *yfn = grid->GetFaceNormalY();
+    RDouble *zfn = grid->GetFaceNormalZ();
+    RDouble *area = grid->GetFaceArea();
 
-    RDouble* xcc = grid->GetCellCenterX();
-    RDouble* ycc = grid->GetCellCenterY();
-    RDouble* zcc = grid->GetCellCenterZ();
+    RDouble *xcc = grid->GetCellCenterX();
+    RDouble *ycc = grid->GetCellCenterY();
+    RDouble *zcc = grid->GetCellCenterZ();
 
-    RDouble* xfc = grid->GetFaceCenterX();
-    RDouble* yfc = grid->GetFaceCenterY();
-    RDouble* zfc = grid->GetFaceCenterZ();
+    RDouble *xfc = grid->GetFaceCenterX();
+    RDouble *yfc = grid->GetFaceCenterY();
+    RDouble *zfc = grid->GetFaceCenterZ();
 
-    string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
+    string *varNameIncom = reinterpret_cast<string *>(GlobalDataBase::GetDataPtr("varNameIncom"));
     int solverIndex = GetSolverIndex();
     string varName = varNameIncom[solverIndex];
 
-    RDouble* phi = reinterpret_cast<RDouble*>(grid->GetDataPtr("T"));
-    RDouble* cp = reinterpret_cast<RDouble*>(grid->GetDataPtr("cp"));
-    RDouble* u = reinterpret_cast<RDouble*>(grid->GetDataPtr("U"));
-    RDouble* v = reinterpret_cast<RDouble*>(grid->GetDataPtr("V"));
-    RDouble* w = reinterpret_cast<RDouble*>(grid->GetDataPtr("W"));
-    RDouble* dphidx = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dx"));
-    RDouble* dphidy = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dy"));
-    RDouble* dphidz = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dz"));
-    RDouble **DiffusionCoeff = reinterpret_cast <RDouble **> (GlobalDataBase::GetDataPtr("DiffusionCoeff"));
+    RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr("T"));
+    RDouble *cp = reinterpret_cast<RDouble *>(grid->GetDataPtr("cp"));
+    RDouble *u = reinterpret_cast<RDouble *>(grid->GetDataPtr("U"));
+    RDouble *v = reinterpret_cast<RDouble *>(grid->GetDataPtr("V"));
+    RDouble *w = reinterpret_cast<RDouble *>(grid->GetDataPtr("W"));
+    RDouble *dphidx = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dx"));
+    RDouble *dphidy = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dy"));
+    RDouble *dphidz = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dz"));
+    RDouble **DiffusionCoeff = reinterpret_cast<RDouble **>(GlobalDataBase::GetDataPtr("DiffusionCoeff"));
     
     for (std::size_t iFace = 0; iFace < faceIndex->size(); ++iFace)
     {
@@ -71,53 +71,51 @@ void IncomEnergyEqCalculator::calWallBC(Grid*  gridIn, vector<int>* faceIndex, D
         RDouble dy = yfc[iFacelocal] - ycc[le];
         RDouble dz = zfc[iFacelocal] - zcc[le];
 
-        RDouble area2 = DiffusionCoeff[solverIndex][re] * 
-            area[iFacelocal] / (xfn[iFacelocal] * dx + yfn[iFacelocal] * dy + zfn[iFacelocal] * dz);
+        RDouble area2 = DiffusionCoeff[solverIndex][re] * area[iFacelocal] / (xfn[iFacelocal] * dx + yfn[iFacelocal] * dy + zfn[iFacelocal] * dz);
         RDouble ax = DiffusionCoeff[solverIndex][re] * xfn[iFacelocal] * area[iFacelocal] - dx * area2;
         RDouble ay = DiffusionCoeff[solverIndex][re] * yfn[iFacelocal] * area[iFacelocal] - dy * area2;
         RDouble az = DiffusionCoeff[solverIndex][re] * zfn[iFacelocal] * area[iFacelocal] - dz * area2;
 
         diagMatrixCoeff[le] += area2 / cp[le] * matrixCoeff;
         bCoeff[le] += area2 * phi[re] + dphidx[le] * ax + dphidy[le] * ay + dphidz[le] * az;
-
     }
 }
 
-void IncomEnergyEqCalculator::calVelocityInletBC(Grid*  gridIn, vector<int>* faceIndex, Data_Param* bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff,  RDouble *q,
+void IncomEnergyEqCalculator::calVelocityInletBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
     RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
     int nTotalCell =grid->GetNTotalCell();
-    int* leftCellOfFace  = grid->GetLeftCellOfFace();
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
 
-    RDouble* xfn  = grid->GetFaceNormalX();
-    RDouble* yfn  = grid->GetFaceNormalY();
-    RDouble* zfn  = grid->GetFaceNormalZ();
+    RDouble *xfn  = grid->GetFaceNormalX();
+    RDouble *yfn  = grid->GetFaceNormalY();
+    RDouble *zfn  = grid->GetFaceNormalZ();
     RDouble *area = grid->GetFaceArea();
 
-    RDouble* xcc  = grid->GetCellCenterX();
-    RDouble* ycc  = grid->GetCellCenterY();
-    RDouble* zcc  = grid->GetCellCenterZ();
+    RDouble *xcc  = grid->GetCellCenterX();
+    RDouble *ycc  = grid->GetCellCenterY();
+    RDouble *zcc  = grid->GetCellCenterZ();
 
-    RDouble* xfc  = grid->GetFaceCenterX();
-    RDouble* yfc  = grid->GetFaceCenterY();
-    RDouble* zfc  = grid->GetFaceCenterZ();
+    RDouble *xfc  = grid->GetFaceCenterX();
+    RDouble *yfc  = grid->GetFaceCenterY();
+    RDouble *zfc  = grid->GetFaceCenterZ();
 
     string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
     int solverIndex = GetSolverIndex();
     string varName = varNameIncom[solverIndex];
 
-    RDouble* Enthalpy = reinterpret_cast<RDouble*>(grid->GetDataPtr(varName));
-    RDouble* phi= reinterpret_cast<RDouble *>(grid->GetDataPtr("T"));
-    RDouble* cp = reinterpret_cast<RDouble *>(grid->GetDataPtr("cp"));
-    RDouble* u = reinterpret_cast<RDouble *>(grid->GetDataPtr("U"));
-    RDouble* v = reinterpret_cast<RDouble *>(grid->GetDataPtr("V"));
-    RDouble* w = reinterpret_cast<RDouble *>(grid->GetDataPtr("W"));
-    RDouble* dphidx = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dx"));
-    RDouble* dphidy = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dy"));
-    RDouble* dphidz = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dz"));
-    RDouble* FaceFlux = reinterpret_cast<RDouble *>(grid->GetDataPtr("FaceFlux"));
+    RDouble *Enthalpy = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName));
+    RDouble *phi= reinterpret_cast<RDouble *>(grid->GetDataPtr("T"));
+    RDouble *cp = reinterpret_cast<RDouble *>(grid->GetDataPtr("cp"));
+    RDouble *u = reinterpret_cast<RDouble *>(grid->GetDataPtr("U"));
+    RDouble *v = reinterpret_cast<RDouble *>(grid->GetDataPtr("V"));
+    RDouble *w = reinterpret_cast<RDouble *>(grid->GetDataPtr("W"));
+    RDouble *dphidx = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dx"));
+    RDouble *dphidy = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dy"));
+    RDouble *dphidz = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dz"));
+    RDouble *FaceFlux = reinterpret_cast<RDouble *>(grid->GetDataPtr("FaceFlux"));
     RDouble **DiffusionCoeff = reinterpret_cast <RDouble **> (GlobalDataBase::GetDataPtr("DiffusionCoeff"));
     
     for (int iFace = 0; iFace < faceIndex->size(); ++ iFace)
@@ -148,43 +146,43 @@ void IncomEnergyEqCalculator::calVelocityInletBC(Grid*  gridIn, vector<int>* fac
     }
 }
 
-void IncomEnergyEqCalculator::calPressureOutletBC(Grid*  gridIn, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-    RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff)
+void IncomEnergyEqCalculator::calPressureOutletBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+    RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
     int nTotalCell = grid->GetNTotalCell();
-    int* leftCellOfFace = grid->GetLeftCellOfFace();
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
 
-    RDouble* xfn = grid->GetFaceNormalX();
-    RDouble* yfn = grid->GetFaceNormalY();
-    RDouble* zfn = grid->GetFaceNormalZ();
+    RDouble *xfn = grid->GetFaceNormalX();
+    RDouble *yfn = grid->GetFaceNormalY();
+    RDouble *zfn = grid->GetFaceNormalZ();
     RDouble *area = grid->GetFaceArea();
 
-    RDouble* xcc = grid->GetCellCenterX();
-    RDouble* ycc = grid->GetCellCenterY();
-    RDouble* zcc = grid->GetCellCenterZ();
+    RDouble *xcc = grid->GetCellCenterX();
+    RDouble *ycc = grid->GetCellCenterY();
+    RDouble *zcc = grid->GetCellCenterZ();
 
-    RDouble* xfc = grid->GetFaceCenterX();
-    RDouble* yfc = grid->GetFaceCenterY();
-    RDouble* zfc = grid->GetFaceCenterZ();
+    RDouble *xfc = grid->GetFaceCenterX();
+    RDouble *yfc = grid->GetFaceCenterY();
+    RDouble *zfc = grid->GetFaceCenterZ();
 
     string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
     int solverIndex = GetSolverIndex();
     string varName = varNameIncom[solverIndex];
 
-    RDouble* Enthalpy = reinterpret_cast<RDouble*>(grid->GetDataPtr(varName));
-    RDouble* phi = reinterpret_cast<RDouble*>(grid->GetDataPtr("T"));
+    RDouble *Enthalpy = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName));
+    RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr("T"));
     
-    RDouble* cp = reinterpret_cast<RDouble*>(grid->GetDataPtr("cp"));
-    RDouble* u = reinterpret_cast<RDouble*>(grid->GetDataPtr("U"));
-    RDouble* v = reinterpret_cast<RDouble*>(grid->GetDataPtr("V"));
-    RDouble* w = reinterpret_cast<RDouble*>(grid->GetDataPtr("W"));
-    RDouble* dphidx = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dx"));
-    RDouble* dphidy = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dy"));
-    RDouble* dphidz = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dz"));
-    RDouble* FaceFlux = reinterpret_cast<RDouble*>(grid->GetDataPtr("FaceFlux"));
-    RDouble **DiffusionCoeff = reinterpret_cast <RDouble **> (GlobalDataBase::GetDataPtr("DiffusionCoeff"));
+    RDouble *cp = reinterpret_cast<RDouble *>(grid->GetDataPtr("cp"));
+    RDouble *u = reinterpret_cast<RDouble *>(grid->GetDataPtr("U"));
+    RDouble *v = reinterpret_cast<RDouble *>(grid->GetDataPtr("V"));
+    RDouble *w = reinterpret_cast<RDouble *>(grid->GetDataPtr("W"));
+    RDouble *dphidx = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dx"));
+    RDouble *dphidy = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dy"));
+    RDouble *dphidz = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dz"));
+    RDouble *FaceFlux = reinterpret_cast<RDouble *>(grid->GetDataPtr("FaceFlux"));
+    RDouble **DiffusionCoeff = reinterpret_cast<RDouble **>(GlobalDataBase::GetDataPtr("DiffusionCoeff"));
     
     for (int iFace = 0; iFace < faceIndex->size(); ++iFace)
     {
@@ -213,49 +211,49 @@ void IncomEnergyEqCalculator::calPressureOutletBC(Grid*  gridIn, vector<int>* fa
     }
 }
 
-void IncomEnergyEqCalculator::calPressureInletBC(Grid*  grid, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-    RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff)
+void IncomEnergyEqCalculator::calPressureInletBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+    RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
 {
     calVelocityInletBC(grid, faceIndex, bcData, diagMatrixCoeff, bCoeff, q, dqdx, dqdy, dqdz, mu, matrixCoeff);
 }
 
-void IncomEnergyEqCalculator::calFarfieldBC(Grid*  gridIn, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-    RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff)
+void IncomEnergyEqCalculator::calFarfieldBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+    RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
     int nTotalCell = grid->GetNTotalCell();
-    int* leftCellOfFace = grid->GetLeftCellOfFace();
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
 
-    RDouble* xfn = grid->GetFaceNormalX();
-    RDouble* yfn = grid->GetFaceNormalY();
-    RDouble* zfn = grid->GetFaceNormalZ();
+    RDouble *xfn = grid->GetFaceNormalX();
+    RDouble *yfn = grid->GetFaceNormalY();
+    RDouble *zfn = grid->GetFaceNormalZ();
     RDouble *area = grid->GetFaceArea();
 
-    RDouble* xcc = grid->GetCellCenterX();
-    RDouble* ycc = grid->GetCellCenterY();
-    RDouble* zcc = grid->GetCellCenterZ();
+    RDouble *xcc = grid->GetCellCenterX();
+    RDouble *ycc = grid->GetCellCenterY();
+    RDouble *zcc = grid->GetCellCenterZ();
 
-    RDouble* xfc = grid->GetFaceCenterX();
-    RDouble* yfc = grid->GetFaceCenterY();
-    RDouble* zfc = grid->GetFaceCenterZ();
+    RDouble *xfc = grid->GetFaceCenterX();
+    RDouble *yfc = grid->GetFaceCenterY();
+    RDouble *zfc = grid->GetFaceCenterZ();
 
     string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
     int solverIndex = GetSolverIndex();
     string varName = varNameIncom[solverIndex];
 
-    RDouble* Enthalpy = reinterpret_cast<RDouble*>(grid->GetDataPtr(varName));
-    RDouble* phi = reinterpret_cast<RDouble*>(grid->GetDataPtr("T"));
+    RDouble *Enthalpy = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName));
+    RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr("T"));
     
-    RDouble* cp = reinterpret_cast<RDouble*>(grid->GetDataPtr("cp"));
-    RDouble* u = reinterpret_cast<RDouble*>(grid->GetDataPtr("U"));
-    RDouble* v = reinterpret_cast<RDouble*>(grid->GetDataPtr("V"));
-    RDouble* w = reinterpret_cast<RDouble*>(grid->GetDataPtr("W"));
-    RDouble* dphidx = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dx"));
-    RDouble* dphidy = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dy"));
-    RDouble* dphidz = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dz"));
-    RDouble* FaceFlux = reinterpret_cast<RDouble*>(grid->GetDataPtr("FaceFlux"));
-    RDouble **DiffusionCoeff = reinterpret_cast <RDouble **> (GlobalDataBase::GetDataPtr("DiffusionCoeff"));
+    RDouble *cp = reinterpret_cast<RDouble *>(grid->GetDataPtr("cp"));
+    RDouble *u = reinterpret_cast<RDouble *>(grid->GetDataPtr("U"));
+    RDouble *v = reinterpret_cast<RDouble *>(grid->GetDataPtr("V"));
+    RDouble *w = reinterpret_cast<RDouble *>(grid->GetDataPtr("W"));
+    RDouble *dphidx = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dx"));
+    RDouble *dphidy = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dy"));
+    RDouble *dphidz = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dz"));
+    RDouble *FaceFlux = reinterpret_cast<RDouble *>(grid->GetDataPtr("FaceFlux"));
+    RDouble **DiffusionCoeff = reinterpret_cast<RDouble **>(GlobalDataBase::GetDataPtr("DiffusionCoeff"));
     
     for (int iFace = 0; iFace < faceIndex->size(); ++iFace)
     {
@@ -285,8 +283,8 @@ void IncomEnergyEqCalculator::calFarfieldBC(Grid*  gridIn, vector<int>* faceInde
     }
 }
 
-void IncomEnergyEqCalculator::calInterfaceBC(Grid*  gridIn, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-    RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff)
+void IncomEnergyEqCalculator::calInterfaceBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+    RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
@@ -305,7 +303,7 @@ void IncomEnergyEqCalculator::calInterfaceBC(Grid*  gridIn, vector<int>* faceInd
     RDouble *upperMatrixCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("upperMatrixCoeff"));
     RDouble *lowerMatrixCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("lowerMatrixCoeff"));
     RDouble *FaceFlux = reinterpret_cast<RDouble *>(grid->GetDataPtr("FaceFlux"));
-    RDouble* cp = reinterpret_cast<RDouble*>(grid->GetDataPtr("cp"));
+    RDouble *cp = reinterpret_cast<RDouble *>(grid->GetDataPtr("cp"));
 
     for (std::size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
     {
@@ -342,7 +340,7 @@ void IncomEnergyEqCalculator::calInterfaceBC(Grid*  gridIn, vector<int>* faceInd
     }
 }
 
-void IncomEnergyEqCalculator::CalcOtherbCoeff(Grid* gridIn, int iEquation)
+void IncomEnergyEqCalculator::CalcOtherbCoeff(Grid *gridIn, int iEquation)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
@@ -377,11 +375,11 @@ void IncomEnergyEqCalculator::CalcOtherbCoeff(Grid* gridIn, int iEquation)
     RDouble *tauu2 = new double [3];
     RDouble *sf = new double [3];
 
-    RDouble* vol = grid->GetCellVolume();
-    RDouble* dpdx = reinterpret_cast<RDouble*>(grid->GetDataPtr("dpdx"));
-    RDouble* dpdy = reinterpret_cast<RDouble*>(grid->GetDataPtr("dpdy"));
-    RDouble* dpdz = reinterpret_cast<RDouble*>(grid->GetDataPtr("dpdz"));
-    RDouble* p= reinterpret_cast<RDouble*>(grid->GetDataPtr("P"));
+    RDouble *vol = grid->GetCellVolume();
+    RDouble *dpdx = reinterpret_cast<RDouble *>(grid->GetDataPtr("dpdx"));
+    RDouble *dpdy = reinterpret_cast<RDouble *>(grid->GetDataPtr("dpdy"));
+    RDouble *dpdz = reinterpret_cast<RDouble *>(grid->GetDataPtr("dpdz"));
+    RDouble *p = reinterpret_cast<RDouble *>(grid->GetDataPtr("P"));
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     UnstructBCSet **bcr = grid->GetBCRecord();
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
@@ -476,7 +474,7 @@ void IncomEnergyEqCalculator::CalcOtherbCoeff(Grid* gridIn, int iEquation)
     {
         RDouble dt = GlobalDataBase::GetDoubleParaFromDB("dt");
 
-        RDouble* pOld = reinterpret_cast<RDouble*>(grid->GetDataPtr("POld"));
+        RDouble *pOld = reinterpret_cast<RDouble *>(grid->GetDataPtr("POld"));
         for (int iCell = 0; iCell < nTotalCell; ++iCell)
         {
             bCoeff[iCell] += ((p[iCell]-pOld[iCell])/dt) * vol[iCell];
@@ -484,9 +482,9 @@ void IncomEnergyEqCalculator::CalcOtherbCoeff(Grid* gridIn, int iEquation)
     }
     DelPointer2(tau1);
     DelPointer2(tau2);
-    delete[] tauu1;
-    delete[] tauu2;
-    delete[] sf;
+    delete [] tauu1;
+    delete [] tauu2;
+    delete [] sf;
 }
 
 void IncomEnergyEqCalculator::GetResidual(Grid *gridIn, vector<RDouble>& res)
@@ -553,24 +551,24 @@ void IncomEnergyEqCalculator::UpdateUnsteadyVariable(Grid *grid)
 
 }
 
-void IncomEnergyEqCalculator::UpdateBCValue(Grid*  gridIn)
+void IncomEnergyEqCalculator::UpdateBCValue(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn); 
-    string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
+    string *varNameIncom = reinterpret_cast<string *>(GlobalDataBase::GetDataPtr("varNameIncom"));
     int solverIndex = GetSolverIndex();
     string varName = varNameIncom[solverIndex];
 
     int nTotalCell = grid->GetNTotalCell();
     int *leftCellOfFace = grid->GetLeftCellOfFace();
     RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr("T"));
-    RDouble* Enthalpy = reinterpret_cast<RDouble*>(grid->GetDataPtr(varName));
-    RDouble* cp = reinterpret_cast<RDouble*>(grid->GetDataPtr("cp"));
+    RDouble *Enthalpy = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName));
+    RDouble *cp = reinterpret_cast<RDouble *>(grid->GetDataPtr("cp"));
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
-    int* rightCellOfFace = grid->GetRightCellOfFace();
-    RDouble* faceCenterX = grid->GetFaceCenterX();
-    RDouble* faceCenterY = grid->GetFaceCenterY();
-    RDouble* faceCenterZ = grid->GetFaceCenterZ();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
+    RDouble * faceCenterX = grid->GetFaceCenterX();
+    RDouble * faceCenterY = grid->GetFaceCenterY();
+    RDouble * faceCenterZ = grid->GetFaceCenterZ();
     RDouble *FaceFlux = reinterpret_cast<RDouble *>(grid->GetDataPtr("FaceFlux"));
     
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
@@ -596,10 +594,10 @@ void IncomEnergyEqCalculator::UpdateBCValue(Grid*  gridIn)
                 }
                 else if (bcData->IsExist("TPolynomial", PHDOUBLE, 4))
                 {
-                    RDouble* TPolynomial = new RDouble[4];
+                    RDouble *TPolynomial = new RDouble[4];
                     bcData->GetData("TPolynomial", TPolynomial, PHDOUBLE, 4);
                     spBound = TPolynomial[0] + TPolynomial[1] * faceCenterX[iFacelocal] + TPolynomial[2] * faceCenterY[iFacelocal]
-                        + TPolynomial[3] * faceCenterZ[iFacelocal];
+                            + TPolynomial[3] * faceCenterZ[iFacelocal];
                 }
 
                 phi[re] = spBound;
@@ -656,9 +654,9 @@ void IncomEnergyEqCalculator::UpdateBCValue(Grid*  gridIn)
                     Enthalpy[re] = cp[re] * spBound;
                 }
             }
-            else if(bcData->IsExist("TPolynomial", PHDOUBLE, 3))
+            else if (bcData->IsExist("TPolynomial", PHDOUBLE, 3))
             {
-                RDouble* TPolynomial = new RDouble[3];
+                RDouble *TPolynomial = new RDouble[3];
                 bcData->GetData("TPolynomial", TPolynomial, PHDOUBLE, 3);
                 for (int iFace = 0; iFace < faceIndex->size(); ++iFace)
                 {
@@ -714,9 +712,9 @@ void IncomEnergyEqCalculator::UpdateBCValue(Grid*  gridIn)
                     Enthalpy[re] = cp[re] * spBound;
                 }
             }
-            else if(bcData->IsExist("TPolynomial", PHDOUBLE, 3))
+            else if (bcData->IsExist("TPolynomial", PHDOUBLE, 3))
             {
-                RDouble* TPolynomial = new RDouble[3];
+                RDouble *TPolynomial = new RDouble[3];
                 bcData->GetData("TPolynomial", TPolynomial, PHDOUBLE, 3);
                 for (int iFace = 0; iFace < faceIndex->size(); ++iFace)
                 {
@@ -763,7 +761,7 @@ void IncomEnergyEqCalculator::UpdateBCValue(Grid*  gridIn)
     CommunicateAnInterfaceVar(Enthalpy);
 }
 
-void IncomEnergyEqCalculator::InitFlowAsRestart(Grid* gridIn)
+void IncomEnergyEqCalculator::InitFlowAsRestart(Grid *gridIn)
 {
     IncomScalarEqCalculator::InitFlowAsRestart(gridIn);
     UnstructGrid *grid = UnstructGridCast(gridIn); 
@@ -777,7 +775,7 @@ void IncomEnergyEqCalculator::InitFlowAsRestart(Grid* gridIn)
     RDouble initCPg = GlobalDataBase::GetDoubleParaFromDB("initCPg");
     RDouble initT = GlobalDataBase::GetDoubleParaFromDB("initT");
     RDouble initPhi = initCPg * initT;
-    RDouble* phi = reinterpret_cast<RDouble*>(grid->GetDataPtr(varNameIncom[solverIndex]));
+    RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(varNameIncom[solverIndex]));
     PHSPACE::SetField(phi, initPhi, nTotal);
 
     GAS_SPACE::gas->SetGasCp("gasCp");
@@ -804,7 +802,6 @@ void IncomEnergyEqCalculator::AllocateGlobalVar(Grid *gridIn)
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
-    
     RDouble *t = NewPointer<RDouble>(nTotal);
     grid->UpdateDataPtr("T", t);
 
@@ -814,10 +811,10 @@ void IncomEnergyEqCalculator::AllocateGlobalVar(Grid *gridIn)
     RDouble *k = NewPointer<RDouble>(nTotal);
     grid->UpdateDataPtr("k", k);
 
-    RDouble* wallq = NewPointer<RDouble>(nBoundFace);
+    RDouble *wallq = NewPointer<RDouble>(nBoundFace);
     grid->UpdateDataPtr("wallq", wallq);
 
-    RDouble* heatFlux = NewPointer<RDouble>(nTotal);
+    RDouble *heatFlux = NewPointer<RDouble>(nTotal);
     grid->UpdateDataPtr("heatFlux", heatFlux);
 }
 
@@ -858,7 +855,7 @@ void IncomEnergyEqCalculator::IncompressibleInitial(Grid * gridIn)
     InitialUnsteadyVar(grid);
 }
 
-void IncomEnergyEqCalculator::UpdateProperties(Grid* gridIn)
+void IncomEnergyEqCalculator::UpdateProperties(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     RDouble *u = reinterpret_cast<RDouble *>(grid->GetDataPtr("U"));
@@ -872,7 +869,7 @@ void IncomEnergyEqCalculator::UpdateProperties(Grid* gridIn)
     int nBoundFace = grid->GetNBoundFace();
     int nTotalCell = grid->GetNTotalCell();
     int nIFace = grid->GetNIFace();
-    int* rightCellOfFace = grid->GetRightCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
     RDouble tMin = 1.0;
     RDouble tMax = 5000.0;
 

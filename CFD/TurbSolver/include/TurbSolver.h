@@ -102,15 +102,15 @@ const int IDDES = 3;
 //! Allmaras S R, 2012.
 inline RDouble PositiveSA(RDouble &nueNegative, RDouble &viscousLaminar, RDouble &rho)
 {
-    if(nueNegative < 0.0)
+    if (nueNegative < 0.0)
     {
         RDouble xsi = nueNegative / (viscousLaminar / rho);
         RDouble xsi3 = xsi * xsi * xsi;
-        return nueNegative * (16.0 + xsi3) / (16.0 - xsi3); 
+        return nueNegative * (16.0 + xsi3) / (16.0 - xsi3);
     }
     else
     {
-        return nueNegative; 
-    }    
+        return nueNegative;
+    }
 }
 }

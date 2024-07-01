@@ -190,6 +190,8 @@ public:
 
     RDouble ComputeReferenceTotalEnthalpy();
 
+    void ComputePTotal();
+
 };
 
 }

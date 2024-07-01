@@ -31,18 +31,18 @@ public:
     virtual ~IncomKETurbKEqCalculator();
 
     void AllocateGlobalVar(Grid *grid);
-    void InitFlowAsRestart(Grid* grid);
-    void IncompressibleInitial(Grid* grid);
-    void SetDiffusionCoeff(Grid* grid);
-    void UpdateProperties(Grid* grid);
+    void InitFlowAsRestart(Grid *grid);
+    void IncompressibleInitial(Grid *grid);
+    void SetDiffusionCoeff(Grid *grid);
+    void UpdateProperties(Grid *grid);
 
-    void CalcOtherMatrixACoeff(Grid* grid);
-    void CalcOtherbCoeff(Grid* grid, int iEquation);
+    void CalcOtherMatrixACoeff(Grid *grid);
+    void CalcOtherbCoeff(Grid *grid, int iEquation);
     
-    void GetResidual(Grid *grid, vector<RDouble>& res);
-    void InitialUnsteadyVar(Grid* grid);
-    void UpdateUnsteadyVariable(Grid* grid);
-    void UpdateBCValue(Grid*  grid);
+    void GetResidual(Grid *grid, vector<RDouble> &res);
+    void InitialUnsteadyVar(Grid *grid);
+    void UpdateUnsteadyVariable(Grid *grid);
+    void UpdateBCValue(Grid *grid);
 
 };
 

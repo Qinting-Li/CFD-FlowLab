@@ -236,7 +236,7 @@ void BoundaryCluster::OutputHoleSurfaceGrid(ofstream &outFile, BasalGrid *basalG
                 {
                     is = i-1;
                     int mm = ni*nj*ks + ni*js + is;
-                    outFile.write((char*)&x[mm], sizeof(RDouble));
+                    outFile.write((char *)&x[mm], sizeof(RDouble));
                 }
             }
         }
@@ -251,7 +251,7 @@ void BoundaryCluster::OutputHoleSurfaceGrid(ofstream &outFile, BasalGrid *basalG
                 {
                     is = i-1;
                     int mm = ni*nj*ks + ni*js + is;
-                    outFile.write((char*)&y[mm], sizeof(RDouble));
+                    outFile.write((char *)&y[mm], sizeof(RDouble));
                 }
             }
         }
@@ -266,7 +266,7 @@ void BoundaryCluster::OutputHoleSurfaceGrid(ofstream &outFile, BasalGrid *basalG
                 {
                     is = i-1;
                     int mm = ni*nj*ks + ni*js + is;
-                    outFile.write((char*)&z[mm], sizeof(RDouble));
+                    outFile.write((char *)&z[mm], sizeof(RDouble));
                 }
             }
         }
@@ -285,21 +285,21 @@ void BoundaryCluster::OutputHoleSurfaceDimension(ofstream &outFile)
         nk = ked[iFace]-kst[iFace]+1;
         if (nk == 1)
         {
-            outFile.write((char*)&ni, sizeof(int));
-            outFile.write((char*)&nj, sizeof(int));
-            outFile.write((char*)&nk, sizeof(int));
+            outFile.write((char *)&ni, sizeof(int));
+            outFile.write((char *)&nj, sizeof(int));
+            outFile.write((char *)&nk, sizeof(int));
         }
         else if (nj == 1)
         {
-            outFile.write((char*)&ni, sizeof(int));
-            outFile.write((char*)&nk, sizeof(int));
-            outFile.write((char*)&nj, sizeof(int));
+            outFile.write((char *)&ni, sizeof(int));
+            outFile.write((char *)&nk, sizeof(int));
+            outFile.write((char *)&nj, sizeof(int));
         }
         else
         {
-            outFile.write((char*)&nj, sizeof(int));
-            outFile.write((char*)&nk, sizeof(int));
-            outFile.write((char*)&ni, sizeof(int));
+            outFile.write((char *)&nj, sizeof(int));
+            outFile.write((char *)&nk, sizeof(int));
+            outFile.write((char *)&ni, sizeof(int));
         }
     }
 

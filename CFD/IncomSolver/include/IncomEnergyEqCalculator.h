@@ -28,36 +28,36 @@ public:
 
 public:
 
-    void InitFlowAsRestart(Grid* gridIn);
+    void InitFlowAsRestart(Grid *gridIn);
     void AllocateGlobalVar(Grid *gridIn);
-    void IncompressibleInitial(Grid* grid);
-    void UpdateProperties(Grid* grid);
+    void IncompressibleInitial(Grid *grid);
+    void UpdateProperties(Grid *grid);
 
-    void CalcGrad(Grid*  grid);
-    void CalcOtherbCoeff(Grid* grid, int iEquation);
+    void CalcGrad(Grid *grid);
+    void CalcOtherbCoeff(Grid *grid, int iEquation);
 
-    void calWallBC(Grid*  grid, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-        RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff);
+    void calWallBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff);
 
-    void calVelocityInletBC(Grid*  grid, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-        RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff);
+    void calVelocityInletBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff);
 
-    void calPressureInletBC(Grid*  grid, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-        RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff);
+    void calPressureInletBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff);
     
-    void calPressureOutletBC(Grid*  grid, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-        RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff);
+    void calPressureOutletBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff);
     
-    void calFarfieldBC(Grid*  grid, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-        RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff);
+    void calFarfieldBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff);
 
-    void calInterfaceBC(Grid* gridIn, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-        RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff);
+    void calInterfaceBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff);
 
-    void GetResidual(Grid *grid, vector<RDouble>& res);
-    void InitialUnsteadyVar(Grid* grid);
-    void UpdateUnsteadyVariable(Grid* grid);
-    void UpdateBCValue(Grid*  grid);
+    void GetResidual(Grid *grid, vector<RDouble> &res);
+    void InitialUnsteadyVar(Grid *grid);
+    void UpdateUnsteadyVariable(Grid *grid);
+    void UpdateBCValue(Grid *grid);
 };
 
 }

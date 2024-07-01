@@ -99,24 +99,24 @@ public:
     void SetGasCp(string gasCp);
     void SetGasK(string gasK);
 
-    string* GetGasName() { return gasNameList; }
-    RDouble* GetGasMolarMass() { return gasMolarMassList; }
-    RDouble* GetGasRho() { return gasRhoList; }
-    RDouble* GetGasMu() { return gasMuList; }
-    RDouble* GetGasCp() { return gasCpList; }
-    RDouble* GetGasK() { return gasKList; }
+    string * GetGasName() { return gasNameList; }
+    RDouble * GetGasMolarMass() { return gasMolarMassList; }
+    RDouble * GetGasRho() { return gasRhoList; }
+    RDouble * GetGasMu() { return gasMuList; }
+    RDouble * GetGasCp() { return gasCpList; }
+    RDouble * GetGasK() { return gasKList; }
 
 public:
-    void UpdateRg(UnstructGrid* grid, RDouble* Rg);
-    void UpdateRho(UnstructGrid* grid, RDouble* rho);
-    void UpdateMu(UnstructGrid* grid, RDouble* mu);
-    void UpdateCp(UnstructGrid* grid, RDouble* cp);
-    void UpdateK(UnstructGrid* grid, RDouble* k);
-    void UpdateMassDiff(UnstructGrid* grid, int iGas, RDouble* massdiff);
+    void UpdateRg(UnstructGrid *grid, RDouble *Rg);
+    void UpdateRho(UnstructGrid *grid, RDouble *rho);
+    void UpdateMu(UnstructGrid *grid, RDouble *mu);
+    void UpdateCp(UnstructGrid *grid, RDouble *cp);
+    void UpdateK(UnstructGrid *grid, RDouble *k);
+    void UpdateMassDiff(UnstructGrid *grid, int iGas, RDouble *massdiff);
 
 protected:
     void ComputePhiIJ();
-    void ComputeAmountOfSubstance(UnstructGrid* grid, RDouble** amountOfSubstance, RDouble** amountFracOfSubstance);
+    void ComputeAmountOfSubstance(UnstructGrid *grid, RDouble **amountOfSubstance, RDouble **amountFracOfSubstance);
     void SetPropertyLib();
 
 private:

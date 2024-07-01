@@ -240,7 +240,7 @@ void ReadGridgenBC(fstream &file, DataContainer *cDdata)
     line = FindNextWord(line, word, separator);
     int flowSolverId;
     from_string <int> (flowSolverId, word, std::dec);
-    cDdata->write(&flowSolverId, sizeOfIntType);
+    cDdata->Write(&flowSolverId, sizeOfIntType);
     cout << "flow_solver_id = " << flowSolverId << "\n";
 
     ReadNewLine(file, line);
@@ -248,7 +248,7 @@ void ReadGridgenBC(fstream &file, DataContainer *cDdata)
     int numberOfBlocks;
     from_string <int> (numberOfBlocks, word, std::dec);
 
-    cDdata->write(&numberOfBlocks, sizeOfIntType);
+    cDdata->Write(&numberOfBlocks, sizeOfIntType);
 
     cout << "number_of_blocks = " << numberOfBlocks << "\n";
 
@@ -270,9 +270,9 @@ void ReadGridgenBC(fstream &file, DataContainer *cDdata)
             from_string <int> (nk, word, std::dec);
         }
 
-        cDdata->write(&ni, sizeOfIntType);
-        cDdata->write(&nj, sizeOfIntType);
-        cDdata->write(&nk, sizeOfIntType);
+        cDdata->Write(&ni, sizeOfIntType);
+        cDdata->Write(&nj, sizeOfIntType);
+        cDdata->Write(&nk, sizeOfIntType);
 
         int wordwidth = 8;
 
@@ -288,13 +288,13 @@ void ReadGridgenBC(fstream &file, DataContainer *cDdata)
         string blockName;
         ReadNewLine(file, line);
         line = FindNextWord(line, blockName, separator);
-        cDdata->write_string(blockName);
+        cDdata->WriteString(blockName);
 
         int nBCRegion;
         ReadNewLine(file, line);
         line = FindNextWord(line, word, separator);
         from_string <int> (nBCRegion, word, std::dec);
-        cDdata->write(&nBCRegion, sizeOfIntType);
+        cDdata->Write(&nBCRegion, sizeOfIntType);
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
@@ -323,17 +323,17 @@ void ReadGridgenBC(fstream &file, DataContainer *cDdata)
                 kmax = 1;
             }
 
-            cDdata->write(&imin, sizeOfIntType);
-            cDdata->write(&imax, sizeOfIntType);
-            cDdata->write(&jmin, sizeOfIntType);
-            cDdata->write(&jmax, sizeOfIntType);
-            cDdata->write(&kmin, sizeOfIntType);
-            cDdata->write(&kmax, sizeOfIntType);
+            cDdata->Write(&imin, sizeOfIntType);
+            cDdata->Write(&imax, sizeOfIntType);
+            cDdata->Write(&jmin, sizeOfIntType);
+            cDdata->Write(&jmax, sizeOfIntType);
+            cDdata->Write(&kmin, sizeOfIntType);
+            cDdata->Write(&kmax, sizeOfIntType);
 
             line = FindNextWord(line, word, separator);
             from_string <int> (BCType, word, std::dec);
 
-            cDdata->write(&BCType, sizeOfIntType);
+            cDdata->Write(&BCType, sizeOfIntType);
 
             if (IsInterface(BCType))
             {
@@ -365,14 +365,14 @@ void ReadGridgenBC(fstream &file, DataContainer *cDdata)
                 line = FindNextWord(line, word, separator);
                 from_string <int> (nbt, word, std::dec);
 
-                cDdata->write(&imin, sizeOfIntType);
-                cDdata->write(&imax, sizeOfIntType);
-                cDdata->write(&jmin, sizeOfIntType);
-                cDdata->write(&jmax, sizeOfIntType);
-                cDdata->write(&kmin, sizeOfIntType);
-                cDdata->write(&kmax, sizeOfIntType);
+                cDdata->Write(&imin, sizeOfIntType);
+                cDdata->Write(&imax, sizeOfIntType);
+                cDdata->Write(&jmin, sizeOfIntType);
+                cDdata->Write(&jmax, sizeOfIntType);
+                cDdata->Write(&kmin, sizeOfIntType);
+                cDdata->Write(&kmax, sizeOfIntType);
 
-                cDdata->write(&nbt, sizeOfIntType);
+                cDdata->Write(&nbt, sizeOfIntType);
             }
         }
     }
@@ -631,11 +631,11 @@ void GridRefine::Init(DataContainer *cDdata)
 {
     CharVecSizeType sizeOfIntType = sizeof(int);
 
-    cDdata->moveto_begin();
+    cDdata->MoveToBegin();
     int flowSolverId;
-    cDdata->read(&flowSolverId, sizeOfIntType);
+    cDdata->Read(&flowSolverId, sizeOfIntType);
 
-    cDdata->read(&numberOfBlocks, sizeOfIntType);
+    cDdata->Read(&numberOfBlocks, sizeOfIntType);
 
     cout << "number_of_blocks = " << numberOfBlocks << "\n";
 
@@ -651,12 +651,12 @@ void GridRefine::Init(DataContainer *cDdata)
     {
         int ni, nj, nk;
 
-        cDdata->read(&ni, sizeOfIntType);
-        cDdata->read(&nj, sizeOfIntType);
-        cDdata->read(&nk, sizeOfIntType);
+        cDdata->Read(&ni, sizeOfIntType);
+        cDdata->Read(&nj, sizeOfIntType);
+        cDdata->Read(&nk, sizeOfIntType);
 
         string blockname;
-        cDdata->read_string(blockname);
+        cDdata->ReadString(blockname);
 
         BlockRefine *block = refblock[iZone];
 
@@ -665,7 +665,7 @@ void GridRefine::Init(DataContainer *cDdata)
         block->SetNK(nk);
 
         int nBCRegion;
-        cDdata->read(&nBCRegion, sizeOfIntType);
+        cDdata->Read(&nBCRegion, sizeOfIntType);
 
         vector <BlockBCRefine *> &BCList = block->GetBCList();
 
@@ -675,13 +675,13 @@ void GridRefine::Init(DataContainer *cDdata)
         {
             int imin, imax, jmin, jmax, kmin, kmax, BCType;
 
-            cDdata->read(&imin, sizeOfIntType);
-            cDdata->read(&imax, sizeOfIntType);
-            cDdata->read(&jmin, sizeOfIntType);
-            cDdata->read(&jmax, sizeOfIntType);
-            cDdata->read(&kmin, sizeOfIntType);
-            cDdata->read(&kmax, sizeOfIntType);
-            cDdata->read(&BCType, sizeOfIntType);
+            cDdata->Read(&imin, sizeOfIntType);
+            cDdata->Read(&imax, sizeOfIntType);
+            cDdata->Read(&jmin, sizeOfIntType);
+            cDdata->Read(&jmax, sizeOfIntType);
+            cDdata->Read(&kmin, sizeOfIntType);
+            cDdata->Read(&kmax, sizeOfIntType);
+            cDdata->Read(&BCType, sizeOfIntType);
 
             BlockBCRefine *BCRefined = new BlockBCRefine();
             BCList[iBCRegion] = BCRefined;
@@ -691,13 +691,13 @@ void GridRefine::Init(DataContainer *cDdata)
             if (IsInterface(BCType))
             {
                 int indexOfTargetBoundary;
-                cDdata->read(&imin, sizeOfIntType);
-                cDdata->read(&imax, sizeOfIntType);
-                cDdata->read(&jmin, sizeOfIntType);
-                cDdata->read(&jmax, sizeOfIntType);
-                cDdata->read(&kmin, sizeOfIntType);
-                cDdata->read(&kmax, sizeOfIntType);
-                cDdata->read(&indexOfTargetBoundary , sizeOfIntType);
+                cDdata->Read(&imin, sizeOfIntType);
+                cDdata->Read(&imax, sizeOfIntType);
+                cDdata->Read(&jmin, sizeOfIntType);
+                cDdata->Read(&jmax, sizeOfIntType);
+                cDdata->Read(&kmin, sizeOfIntType);
+                cDdata->Read(&kmax, sizeOfIntType);
+                cDdata->Read(&indexOfTargetBoundary , sizeOfIntType);
 
                 BCRefined->SetPatchContent(BCType, imin, imax, jmin, jmax, kmin, kmax);
             }
@@ -744,18 +744,18 @@ void GridRefine::DumpLayout(DataContainer *cDdata)
 
     CharVecSizeType sizeOfIntType = sizeof(int);
 
-    cDdata->moveto_begin();
+    cDdata->MoveToBegin();
 
     file << setiosflags(ios::right);
     int wordwidth = 8;
 
     int flowSolverID;
-    cDdata->read(&flowSolverID, sizeOfIntType);
+    cDdata->Read(&flowSolverID, sizeOfIntType);
 
     file << setw(wordwidth) << flowSolverID << "\n";
 
     int numberOfBlocks;
-    cDdata->read(&numberOfBlocks, sizeOfIntType);
+    cDdata->Read(&numberOfBlocks, sizeOfIntType);
 
     file << setw(wordwidth) << numberOfBlocks << "\n";
 
@@ -765,9 +765,9 @@ void GridRefine::DumpLayout(DataContainer *cDdata)
     {
         int ni, nj, nk;
 
-        cDdata->read(&ni, sizeOfIntType);
-        cDdata->read(&nj, sizeOfIntType);
-        cDdata->read(&nk, sizeOfIntType);
+        cDdata->Read(&ni, sizeOfIntType);
+        cDdata->Read(&nj, sizeOfIntType);
+        cDdata->Read(&nk, sizeOfIntType);
 
         file << setw(wordwidth) << 2 * ni - 1;
         file << setw(wordwidth) << 2 * nj - 1;
@@ -780,12 +780,12 @@ void GridRefine::DumpLayout(DataContainer *cDdata)
         file << "\n";
 
         string blockName;
-        cDdata->read_string(blockName);
+        cDdata->ReadString(blockName);
 
         file << blockName << "\n";
 
         int nBCRegion;
-        cDdata->read(&nBCRegion, sizeOfIntType);
+        cDdata->Read(&nBCRegion, sizeOfIntType);
 
         file << setw(wordwidth) << nBCRegion << "\n";
 
@@ -793,13 +793,13 @@ void GridRefine::DumpLayout(DataContainer *cDdata)
         {
             int imin, imax, jmin, jmax, kmin, kmax, BCType;
 
-            cDdata->read(&imin, sizeOfIntType);
-            cDdata->read(&imax, sizeOfIntType);
-            cDdata->read(&jmin, sizeOfIntType);
-            cDdata->read(&jmax, sizeOfIntType);
-            cDdata->read(&kmin, sizeOfIntType);
-            cDdata->read(&kmax, sizeOfIntType);
-            cDdata->read(&BCType, sizeOfIntType);
+            cDdata->Read(&imin, sizeOfIntType);
+            cDdata->Read(&imax, sizeOfIntType);
+            cDdata->Read(&jmin, sizeOfIntType);
+            cDdata->Read(&jmax, sizeOfIntType);
+            cDdata->Read(&kmin, sizeOfIntType);
+            cDdata->Read(&kmax, sizeOfIntType);
+            cDdata->Read(&BCType, sizeOfIntType);
 
             file << setw(wordwidth) << MapBC(imin);
             file << setw(wordwidth) << MapBC(imax);
@@ -817,13 +817,13 @@ void GridRefine::DumpLayout(DataContainer *cDdata)
             if (IsInterface(BCType))
             {
                 int nbt;
-                cDdata->read(&imin, sizeOfIntType);
-                cDdata->read(&imax, sizeOfIntType);
-                cDdata->read(&jmin, sizeOfIntType);
-                cDdata->read(&jmax, sizeOfIntType);
-                cDdata->read(&kmin, sizeOfIntType);
-                cDdata->read(&kmax, sizeOfIntType);
-                cDdata->read(&nbt , sizeOfIntType);
+                cDdata->Read(&imin, sizeOfIntType);
+                cDdata->Read(&imax, sizeOfIntType);
+                cDdata->Read(&jmin, sizeOfIntType);
+                cDdata->Read(&jmax, sizeOfIntType);
+                cDdata->Read(&kmin, sizeOfIntType);
+                cDdata->Read(&kmax, sizeOfIntType);
+                cDdata->Read(&nbt , sizeOfIntType);
 
                 file << setw(wordwidth) << MapBC(imin);
                 file << setw(wordwidth) << MapBC(imax);
@@ -887,7 +887,7 @@ void GridRefine::DumpGrid()
     {
         delete structGrids[iZone];
     }
-    delete []structGrids;
+    delete [] structGrids;
 }
 
 void GridRefine::RefineStructGrid()

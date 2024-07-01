@@ -97,8 +97,12 @@ public:
     //! Low-speed Precondition Coefficient.
     virtual void ComputePreconditionCoefficient(Grid *grid);
 
+    //! Low-speed Precondition Coefficient for unsteady.
+    virtual void ComputePreconditionCoefficientUnsteady(Grid *grid);
+
     //! Low-speed Conservative Precondition Matrix.
-    virtual void ConservativePreconMatrix(Grid *grid);
+    //! solve M * T-, when sign = -1;
+    virtual void ConservativePreconMatrix(Grid *grid, int sign);
 
     //! Inviscid flux.
     virtual void InviscidFlux(Grid *grid);
@@ -156,14 +160,14 @@ public:
     virtual void SolveMatrixLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
 
     //! Implicit Line LU-SGS time integration method.
-    virtual void SolveLineLUSGSForward(Grid* grid, FieldProxy* dqProxy, FieldProxy* LUplusDQ, RDouble& sweepNormal);
-    virtual void SolveLineLUSGSBackward(Grid* grid, FieldProxy* dqProxy, FieldProxy* LUplusDQ, RDouble& sweepNormal);
+    virtual void SolveLineLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+    virtual void SolveLineLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
 
     //! To determine the CFL number of the next iteration step.
     virtual void DetermineCFLNumber(Grid *grid, FieldProxy *dqProxy, FieldProxy *dqProxy1);
 
     //! Line implicit LU-SGS time integration method.
-    virtual void LineLUSGS(Grid* grid, int level);
+    virtual void LineLUSGS(Grid *grid, int level);
 
     virtual void LHSMatrixs(Grid *grid);
 

@@ -55,10 +55,10 @@ void LESSolverUnstr::DeAllocateGlobalVar(Grid *gridIn)
     DelPointer2(strainRateTensor);
 
     RDouble *cellLengthScale  = reinterpret_cast<RDouble *> (grid->GetDataPtr("cellLengthScale"));
-    delete []cellLengthScale;
+    delete [] cellLengthScale;
 
     RDouble *wallFunction  = reinterpret_cast<RDouble *> (grid->GetDataPtr("wallFunction"));
-    delete []wallFunction;
+    delete [] wallFunction;
 }
 
 void LESSolverUnstr::InitFlowAsRestart()
@@ -415,7 +415,7 @@ void LESSolverUnstr::ComputeGradient(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
-    if(grid->IsFinestGrid())
+    if (grid->IsFinestGrid())
     {
         GetGradientField(grid);
     }
@@ -866,7 +866,7 @@ void LESSolverUnstr::ComputeStrainRateTensor(Grid *gridIn)
 {
     Param_LESSolverUnstruct *parameters = GetControlParameters();
     int subgridScaleModel = parameters->GetSubgridScaleModel();
-    if(subgridScaleModel == 6)
+    if (subgridScaleModel == 6)
     {
         return;
     }
@@ -1009,10 +1009,10 @@ void LESSolverUnstr::UploadInterfaceValue(ActionKey *actkey)
     InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
     if (interfaceInformation == 0) return;
 
-    RDouble* viscousTurbulence = reinterpret_cast<RDouble*> (grid->GetDataPtr("vist"));
+    RDouble *viscousTurbulence = reinterpret_cast<RDouble *>(grid->GetDataPtr("vist"));
     PHSPACE::UploadInterfaceValue(grid, viscousTurbulence, "vist");
 
-    RDouble* subgridScaleEnergy = reinterpret_cast<RDouble*> (grid->GetDataPtr("subgridScaleEnergy"));
+    RDouble *subgridScaleEnergy = reinterpret_cast<RDouble *>(grid->GetDataPtr("subgridScaleEnergy"));
     PHSPACE::UploadInterfaceValue(grid, subgridScaleEnergy, "subgridScaleEnergy");
 }
 

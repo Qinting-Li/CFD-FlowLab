@@ -43,8 +43,8 @@ private:
     void InFlowBC(Grid *grid, StructBC *structBC);
     void OutFlowBC(Grid *gridIn, StructBC *structBC);
     void VisWall(Grid *gridIn, StructBC *structBC);
-    void VisWallWithWallFunctionStandard(Grid* gridIn, StructBC *structBC);
-    void VisWallWithWallFunctionPAB3D(Grid* gridIn, StructBC *structBC);
+    void VisWallWithWallFunctionStandard(Grid *gridIn, StructBC *structBC);
+    void VisWallWithWallFunctionPAB3D(Grid *gridIn, StructBC *structBC);
     void SymmetryBC(Grid *gridIn, StructBC *structBC);
     void FarFieldBC(Grid *gridIn, StructBC *structBC);
     void CornerPoint(Grid *gridIn);

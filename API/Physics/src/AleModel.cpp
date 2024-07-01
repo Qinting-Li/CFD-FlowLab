@@ -775,7 +775,7 @@ void AleModel::ReadGridCoordinate(fstream &file, int iZone)
         grid->UpdateCoordinate(cdata);
     }
 
-    delete cdata;
+    delete cdata;    cdata = nullptr;
 }
 
 void AleModel::GridSurfaceVelocity(Grid *grid, RDouble *xt, RDouble *yt, RDouble *zt)

@@ -25,7 +25,7 @@ void Param_INCompSolverUnstruct::setInComEquaMap()
 {
     using namespace IDX;
 
-    int* varIndex = new int[50];
+    int *varIndex = new int[50];
     for (int iIndex = 0; iIndex < 50; iIndex++)
     {
         varIndex[iIndex] = 0;
@@ -62,62 +62,61 @@ void Param_INCompSolverUnstruct::setInComEquaMap()
 
     GlobalDataBase::UpdateDataPtr("varNameIncom", varNameIncom);
 
-    RDouble* soluRelaxCoeff = new RDouble[50];
+    RDouble *soluRelaxCoeff = new RDouble[50];
     for (int iIndex = 0; iIndex < 50; iIndex++)
     {
         soluRelaxCoeff[iIndex] = 0.0;
     }
     GlobalDataBase::UpdateDataPtr("soluRelaxCoeff", soluRelaxCoeff);
 
-    RDouble* solutionRes = new RDouble[50];
+    RDouble *solutionRes = new RDouble[50];
     for (int iIndex = 0; iIndex < 50; iIndex++)
     {
         solutionRes[iIndex] = 0.0;
     }
     GlobalDataBase::UpdateDataPtr("solutionRes", solutionRes);
 
-    RDouble** DiffusionCoeff = new RDouble*[50];
+    RDouble **DiffusionCoeff = new RDouble* [50];
     for (int iIndex = 0; iIndex < 50; iIndex++)
     {
         DiffusionCoeff[iIndex] = nullptr;
     }
     GlobalDataBase::UpdateDataPtr("DiffusionCoeff", DiffusionCoeff);
 
-    int* localSolverIndex = new int[50];
+    int *localSolverIndex = new int[50];
     for (int iSolverIndex = 0; iSolverIndex < 50; iSolverIndex++)
     {
         localSolverIndex[iSolverIndex] = -1;
     }
     GlobalDataBase::UpdateDataPtr("localSolverIndex", localSolverIndex);
 
-    int* maxIterOfEachEq = new int[50];
+    int *maxIterOfEachEq = new int[50];
     for (int iEquation = 0; iEquation < 50; iEquation++)
     {
         maxIterOfEachEq[iEquation] = -1;
     }
     GlobalDataBase::UpdateDataPtr("maxIterOfEachEq", maxIterOfEachEq);
 
-    RDouble* iterTolOfEachEq = new RDouble [50];
+    RDouble *iterTolOfEachEq = new RDouble [50];
     for (int iEquation = 0; iEquation < 50; iEquation++)
     {
         iterTolOfEachEq[iEquation] = 1.0e-2;
     }
     GlobalDataBase::UpdateDataPtr("iterTolOfEachEq", iterTolOfEachEq);
 
-    int* solMethodOfLinEqSystem = new int[50];
+    int *solMethodOfLinEqSystem = new int[50];
     for (int iEquation = 0; iEquation < 50; iEquation++)
     {
         solMethodOfLinEqSystem[iEquation] = -1;
     }
     GlobalDataBase::UpdateDataPtr("solMethodOfLinEqSystem", solMethodOfLinEqSystem);
 
-    int* precondMethodOfLinEqSystem = new int[50];
+    int *precondMethodOfLinEqSystem = new int[50];
     for (int iEquation = 0; iEquation < 50; iEquation++)
     {
         precondMethodOfLinEqSystem[iEquation] = -1;
     }
     GlobalDataBase::UpdateDataPtr("precondMethodOfLinEqSystem", precondMethodOfLinEqSystem);
 }
-
 
 }

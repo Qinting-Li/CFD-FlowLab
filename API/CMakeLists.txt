@@ -523,6 +523,7 @@ ${PostProcess_H_PATH}/ForceProcessUnstruct.h
 ${PostProcess_H_PATH}/PostProcessData.h
 ${PostProcess_H_PATH}/Post_Probes.h
 ${PostProcess_H_PATH}/Post_ProbesWrite.h
+${PostProcess_H_PATH}/Post_WriteParaview.h
 )
 source_group(PostProcess\\include FILES ${PostProcess_H_LIST}) 
 include_directories(${PostProcess_H_PATH})
@@ -541,6 +542,7 @@ ${PostProcess_CPP_PATH}/ForceProcessUnstruct.cpp
 ${PostProcess_CPP_PATH}/PostProcessData.cpp
 ${PostProcess_CPP_PATH}/Post_Probes.cpp
 ${PostProcess_CPP_PATH}/Post_ProbesWrite.cpp
+${PostProcess_CPP_PATH}/Post_WriteParaview.cpp
 )
 source_group(PostProcess\\src FILES ${PostProcess_CPP_LIST})
 

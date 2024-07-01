@@ -333,60 +333,60 @@ int PH_Gatherv(void *sendBuffer, int sendCount, void *receiveBuffer, int *receiv
 
 void send(DataChar *dataChar, int to, int tag)
 {
-    int nlen = static_cast<int>(dataChar->size());
+    int nlen = static_cast<int>(dataChar->Size());
 
     //! It is necessary to judge whether the data length is zero.
     if (nlen <= 0) return;
 
-    PH_Send(dataChar->begin(), nlen, to, tag);
+    PH_Send(dataChar->Begin(), nlen, to, tag);
 }
 
 void send(DataChar *dataChar, int to, vector<PH_Request> &requestContainer, int tag)
 {
-    int nlen = static_cast<int>(dataChar->size());
+    int nlen = static_cast<int>(dataChar->Size());
 
     //! It is necessary to judge whether the data length is zero.
     if (nlen <= 0) return;
 
     requestContainer.push_back(MPI_REQUEST_NULL);
 
-    PH_Send(dataChar->begin(), nlen, to, tag, &requestContainer.back());
+    PH_Send(dataChar->Begin(), nlen, to, tag, &requestContainer.back());
 }
 
 void receive(DataChar *dataChar, int from, int tag)
 {
-    int nlen = static_cast<int>(dataChar->size());
+    int nlen = static_cast<int>(dataChar->Size());
 
     //! It is necessary to judge whether the data length is zero.
     if (nlen <= 0) return;
 
-    PH_Receive(dataChar->begin(), nlen, from, tag);
+    PH_Receive(dataChar->Begin(), nlen, from, tag);
 }
 
 void receive(DataChar *dataChar, int from, vector<PH_Request> &requestContainer, int tag)
 {
-    int nlen = static_cast<int>(dataChar->size());
+    int nlen = static_cast<int>(dataChar->Size());
 
     //! It is necessary to judge whether the data length is zero.
     if (nlen <= 0) return;
 
     requestContainer.push_back(MPI_REQUEST_NULL);
 
-    PH_Receive(dataChar->begin(), nlen, from, tag, &requestContainer.back());
+    PH_Receive(dataChar->Begin(), nlen, from, tag, &requestContainer.back());
 }
 
 void send(DataContainer *dataContainer, int to, int tag)
 {
-    CharVecSizeType nlen = dataContainer->size();
+    CharVecSizeType nlen = dataContainer->Size();
 
     PH_Send(&nlen, sizeof(streamsize), to, tag);
 
     //! It is necessary to judge whether the data length is zero.
     if (nlen <= 0) return;
 
-    for (ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i)
+    for (ContainerSizeType i = 0; i < dataContainer->ElementSize(); ++ i)
     {
-        send(dataContainer->getiter(i), to, tag);
+        send(dataContainer->GetIter(i), to, tag);
     }
 }
 
@@ -395,9 +395,9 @@ void send(DataContainer *dataContainer, int to, streamsize nlen, int tag)
     //! It is necessary to judge whether the data length is zero.
     if (nlen <= 0) return;
 
-    for (ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i)
+    for (ContainerSizeType i = 0; i < dataContainer->ElementSize(); ++ i)
     {
-        send(dataContainer->getiter(i), to, tag);
+        send(dataContainer->GetIter(i), to, tag);
     }
 }
 
@@ -406,9 +406,9 @@ void send(DataContainer *dataContainer, int to, streamsize nlen, vector<PH_Reque
     //! It is necessary to judge whether the data length is zero.
     if (nlen <= 0) return;
 
-    for (ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i)
+    for (ContainerSizeType i = 0; i < dataContainer->ElementSize(); ++ i)
     {
-        send(dataContainer->getiter(i), to, requestContainer, tag);
+        send(dataContainer->GetIter(i), to, requestContainer, tag);
     }
 }
 
@@ -419,11 +419,11 @@ void receive(DataContainer *dataContainer, int from, int tag)
 
     if (nlen <= 0) return;
 
-    dataContainer->secure_absolute_space(static_cast< CharVecSizeType >(nlen));
+    dataContainer->SecureAbsoluteSpace(static_cast< CharVecSizeType >(nlen));
 
-    for (ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i)
+    for (ContainerSizeType i = 0; i < dataContainer->ElementSize(); ++ i)
     {
-        receive(dataContainer->getiter(i), from, tag);
+        receive(dataContainer->GetIter(i), from, tag);
     }
 }
 
@@ -431,11 +431,11 @@ void receive(DataContainer *dataContainer, int from, CharVecSizeType nlen, int t
 {
     if (nlen <= 0) return;
 
-    dataContainer->secure_absolute_space(nlen);
+    dataContainer->SecureAbsoluteSpace(nlen);
 
-    for (ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i)
+    for (ContainerSizeType i = 0; i < dataContainer->ElementSize(); ++ i)
     {
-        receive(dataContainer->getiter(i), from, tag);
+        receive(dataContainer->GetIter(i), from, tag);
     }
 }
 
@@ -443,11 +443,11 @@ void receive(DataContainer *dataContainer, int from, CharVecSizeType nlen, vecto
 {
     if (nlen <= 0) return;
 
-    dataContainer->secure_absolute_space(nlen);
+    dataContainer->SecureAbsoluteSpace(nlen);
 
-    for (ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i)
+    for (ContainerSizeType i = 0; i < dataContainer->ElementSize(); ++ i)
     {
-        receive(dataContainer->getiter(i), from, requestContainer, tag);
+        receive(dataContainer->GetIter(i), from, requestContainer, tag);
     }
 }
 

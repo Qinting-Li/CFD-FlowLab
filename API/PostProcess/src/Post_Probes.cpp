@@ -621,7 +621,7 @@ DumpToFileASCII::DumpToFileASCII(vector<DataContainer *> datalist_in, string fil
 
     for (unsigned int iZone = 0; iZone < dataList.size(); ++ iZone)
     {
-        dataList[iZone]->moveto_begin();
+        dataList[iZone]->MoveToBegin();
     }
     nVariables = 0;
 }

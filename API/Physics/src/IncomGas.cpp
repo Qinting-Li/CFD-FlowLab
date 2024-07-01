@@ -38,7 +38,7 @@ namespace GAS_SPACE
         int massdiffType = GlobalDataBase::GetIntParaFromDB("massdiffType");
         if (massdiffType == massDiffDiluteApprox)
         {
-            delete[] dilute;
+            delete [] dilute;
         }
     }
 
@@ -180,12 +180,12 @@ namespace GAS_SPACE
         }
     }
 
-    void IncomGas::UpdateRg(UnstructGrid* grid, RDouble* Rg)
+    void IncomGas::UpdateRg(UnstructGrid *grid, RDouble *Rg)
     {
         int nTotal = grid->GetNTotalCell() + grid->GetNBoundFace();
         int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
         string speciesNameIncom = gasNameList[0];
-        RDouble* massFracOfGas = reinterpret_cast<RDouble*>(grid->GetDataPtr(speciesNameIncom));
+        RDouble *massFracOfGas = reinterpret_cast<RDouble *>(grid->GetDataPtr(speciesNameIncom));
         RDouble gasR = 8.314;
         if (massFracOfGas == NULL)
         {
@@ -199,7 +199,7 @@ namespace GAS_SPACE
             SetField(Rg, 0.0 , nTotal);
             for (int iGas = 0; iGas < numberOfSpeciesIncom; ++iGas)
             {
-                massFracOfGas = reinterpret_cast<RDouble*>(grid->GetDataPtr(gasNameList[iGas]));
+                massFracOfGas = reinterpret_cast<RDouble *>(grid->GetDataPtr(gasNameList[iGas]));
                 for (int iCell = 0; iCell < nTotal; ++iCell)
                 {
                     Rg[iCell] += massFracOfGas[iCell] * gasR / gasMolarMassList[iGas];
@@ -208,7 +208,7 @@ namespace GAS_SPACE
         }        
     }
 
-    void IncomGas::UpdateRho(UnstructGrid* grid, RDouble* rho)
+    void IncomGas::UpdateRho(UnstructGrid *grid, RDouble *rho)
     {
         RDouble refT = GlobalDataBase::GetDoubleParaFromDB("refT");
         RDouble refP = GlobalDataBase::GetDoubleParaFromDB("refP");
@@ -223,9 +223,9 @@ namespace GAS_SPACE
         case rhoIncompressibleIdealGas:
         {
             int nTotal = grid->GetNTotalCell() + grid->GetNBoundFace();
-            RDouble* T = reinterpret_cast<RDouble*>(grid->GetDataPtr("T"));
-            RDouble* Rg = reinterpret_cast<RDouble*>(grid->GetDataPtr("Rg"));
-            RDouble* cRho = reinterpret_cast<RDouble*>(grid->GetDataPtr("cRho"));
+            RDouble *T = reinterpret_cast<RDouble *>(grid->GetDataPtr("T"));
+            RDouble *Rg = reinterpret_cast<RDouble *>(grid->GetDataPtr("Rg"));
+            RDouble *cRho = reinterpret_cast<RDouble *>(grid->GetDataPtr("cRho"));
             
             if (T == NULL)
             {
@@ -250,10 +250,10 @@ namespace GAS_SPACE
         case rhoIdealGas:
         {
             int nTotal = grid->GetNTotalCell() + grid->GetNBoundFace();
-            RDouble* T = reinterpret_cast<RDouble*>(grid->GetDataPtr("T"));
-            RDouble* p = reinterpret_cast<RDouble*>(grid->GetDataPtr("P"));
-            RDouble* Rg = reinterpret_cast<RDouble*>(grid->GetDataPtr("Rg"));
-            RDouble* cRho = reinterpret_cast<RDouble*>(grid->GetDataPtr("cRho"));
+            RDouble *T = reinterpret_cast<RDouble *>(grid->GetDataPtr("T"));
+            RDouble *p = reinterpret_cast<RDouble *>(grid->GetDataPtr("P"));
+            RDouble *Rg = reinterpret_cast<RDouble *>(grid->GetDataPtr("Rg"));
+            RDouble *cRho = reinterpret_cast<RDouble *>(grid->GetDataPtr("cRho"));
 
             if (T == NULL)
             {
@@ -279,7 +279,7 @@ namespace GAS_SPACE
         {
             int nTotal = grid->GetNTotalCell() + grid->GetNBoundFace();
             string speciesNameIncom = gasNameList[0];
-            RDouble* massFracOfGas = reinterpret_cast<RDouble*>(grid->GetDataPtr(speciesNameIncom));
+            RDouble *massFracOfGas = reinterpret_cast<RDouble *>(grid->GetDataPtr(speciesNameIncom));
             int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
             for (int iCell = 0; iCell < nTotal; ++iCell)
             {
@@ -289,7 +289,7 @@ namespace GAS_SPACE
             for (int iGas = 1; iGas < numberOfSpeciesIncom; ++iGas)
             {
                 speciesNameIncom = gasNameList[iGas];
-                massFracOfGas = reinterpret_cast<RDouble*>(grid->GetDataPtr(speciesNameIncom));
+                massFracOfGas = reinterpret_cast<RDouble *>(grid->GetDataPtr(speciesNameIncom));
 
                 for (int iCell = 0; iCell < nTotal; ++iCell)
                 {
@@ -307,7 +307,7 @@ namespace GAS_SPACE
         }
     }
 
-    void IncomGas::UpdateMu(UnstructGrid* grid, RDouble* mu)
+    void IncomGas::UpdateMu(UnstructGrid *grid, RDouble *mu)
     {
         RDouble refT = GlobalDataBase::GetDoubleParaFromDB("refT");
         int muType = GlobalDataBase::GetIntParaFromDB("muType");
@@ -321,7 +321,7 @@ namespace GAS_SPACE
         case muSutherLand:
         {
             int nTotal = grid->GetNTotalCell() + grid->GetNBoundFace();
-            RDouble* T = reinterpret_cast<RDouble*>(grid->GetDataPtr("T"));
+            RDouble *T = reinterpret_cast<RDouble *>(grid->GetDataPtr("T"));
             int coeOfSutherland = GlobalDataBase::GetIntParaFromDB("numOfCoeSutherland");
 
             if (coeOfSutherland == 2)
@@ -347,9 +347,9 @@ namespace GAS_SPACE
         {
             int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
             int nTotal = grid->GetNTotalCell() + grid->GetNBoundFace();
-            RDouble* sumOfAmount = NewPointer<RDouble>(nTotal);
-            RDouble** amountOfSubstance = NewPointer2<RDouble>(numberOfSpeciesIncom, nTotal);
-            RDouble** amountFracOfSubstance = NewPointer2<RDouble>(numberOfSpeciesIncom, nTotal);
+            RDouble *sumOfAmount = NewPointer<RDouble>(nTotal);
+            RDouble **amountOfSubstance = NewPointer2<RDouble>(numberOfSpeciesIncom, nTotal);
+            RDouble **amountFracOfSubstance = NewPointer2<RDouble>(numberOfSpeciesIncom, nTotal);
             ComputeAmountOfSubstance(grid, amountOfSubstance, amountFracOfSubstance);
 
             for (int iCell = 0; iCell < nTotal; ++iCell)
@@ -389,7 +389,7 @@ namespace GAS_SPACE
             int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
             int nTotal = grid->GetNTotalCell() + grid->GetNBoundFace();
             string speciesNameIncom = gasNameList[0];
-            RDouble* massFracOfGas = reinterpret_cast<RDouble*>(grid->GetDataPtr(speciesNameIncom));
+            RDouble *massFracOfGas = reinterpret_cast<RDouble *>(grid->GetDataPtr(speciesNameIncom));
 
             for (int iCell = 0; iCell < nTotal; ++iCell)
             {
@@ -399,7 +399,7 @@ namespace GAS_SPACE
             for (int iGas = 1; iGas < numberOfSpeciesIncom; ++iGas)
             {
                 speciesNameIncom = gasNameList[iGas];
-                massFracOfGas = reinterpret_cast<RDouble*>(grid->GetDataPtr(speciesNameIncom));
+                massFracOfGas = reinterpret_cast<RDouble *>(grid->GetDataPtr(speciesNameIncom));
                 for (int iCell = 0; iCell < nTotal; ++iCell)
                 {
                     mu[iCell] += massFracOfGas[iCell] * gasMuList[iGas];
@@ -427,7 +427,7 @@ namespace GAS_SPACE
         }
     }
 
-    void IncomGas::UpdateCp(UnstructGrid* grid, RDouble* cp)
+    void IncomGas::UpdateCp(UnstructGrid *grid, RDouble *cp)
     {
         int cpType = GlobalDataBase::GetIntParaFromDB("cpType");
         switch (cpType)
@@ -442,7 +442,7 @@ namespace GAS_SPACE
             int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
             int nTotal = grid->GetNTotalCell() + grid->GetNBoundFace();
             string speciesNameIncom = gasNameList[0];
-            RDouble* massFracOfGas = reinterpret_cast<RDouble*>(grid->GetDataPtr(speciesNameIncom));
+            RDouble *massFracOfGas = reinterpret_cast<RDouble *>(grid->GetDataPtr(speciesNameIncom));
 
             for (int iCell = 0; iCell < nTotal; ++iCell)
             {
@@ -452,7 +452,7 @@ namespace GAS_SPACE
             for (int iGas = 1; iGas < numberOfSpeciesIncom; ++iGas)
             {
                 speciesNameIncom = gasNameList[iGas];
-                massFracOfGas = reinterpret_cast<RDouble*>(grid->GetDataPtr(speciesNameIncom));
+                massFracOfGas = reinterpret_cast<RDouble *>(grid->GetDataPtr(speciesNameIncom));
                 for (int iCell = 0; iCell < nTotal; ++iCell)
                 {
                     cp[iCell] += massFracOfGas[iCell] * gasCpList[iGas];
@@ -480,7 +480,7 @@ namespace GAS_SPACE
         }
     }
 
-    void IncomGas::UpdateK(UnstructGrid* grid, RDouble* k)
+    void IncomGas::UpdateK(UnstructGrid *grid, RDouble *k)
     {
         int kType = GlobalDataBase::GetIntParaFromDB("kType");
         switch (kType)
@@ -495,7 +495,7 @@ namespace GAS_SPACE
             int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
             int nTotal = grid->GetNTotalCell() + grid->GetNBoundFace();
             string speciesNameIncom = gasNameList[0];
-            RDouble* massFracOfGas = reinterpret_cast<RDouble*>(grid->GetDataPtr(speciesNameIncom));
+            RDouble *massFracOfGas = reinterpret_cast<RDouble *>(grid->GetDataPtr(speciesNameIncom));
 
             for (int iCell = 0; iCell < nTotal; ++iCell)
             {
@@ -505,7 +505,7 @@ namespace GAS_SPACE
             for (int iGas = 1; iGas < numberOfSpeciesIncom; ++iGas)
             {
                 speciesNameIncom = gasNameList[iGas];
-                massFracOfGas = reinterpret_cast<RDouble*>(grid->GetDataPtr(speciesNameIncom));
+                massFracOfGas = reinterpret_cast<RDouble *>(grid->GetDataPtr(speciesNameIncom));
                 for (int iCell = 0; iCell < nTotal; ++iCell)
                 {
                     k[iCell] += massFracOfGas[iCell] * gasKList[iGas];
@@ -519,9 +519,9 @@ namespace GAS_SPACE
         {
             int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
             int nTotal = grid->GetNTotalCell() + grid->GetNBoundFace();
-            RDouble* sumOfAmount = NewPointer<RDouble>(nTotal);
-            RDouble** amountOfSubstance = NewPointer2<RDouble>(numberOfSpeciesIncom, nTotal);
-            RDouble** amountFracOfSubstance = NewPointer2<RDouble>(numberOfSpeciesIncom, nTotal);
+            RDouble *sumOfAmount = NewPointer<RDouble>(nTotal);
+            RDouble **amountOfSubstance = NewPointer2<RDouble>(numberOfSpeciesIncom, nTotal);
+            RDouble **amountFracOfSubstance = NewPointer2<RDouble>(numberOfSpeciesIncom, nTotal);
             ComputeAmountOfSubstance(grid, amountOfSubstance, amountFracOfSubstance);
 
             for (int iCell = 0; iCell < nTotal; ++iCell)
@@ -575,7 +575,7 @@ namespace GAS_SPACE
         }
     }
 
-    void IncomGas::UpdateMassDiff(UnstructGrid* grid, int iGas, RDouble* massdiff)
+    void IncomGas::UpdateMassDiff(UnstructGrid *grid, int iGas, RDouble *massdiff)
     {
         RDouble sct = 0.7;
         int isSolveTurb = GlobalDataBase::GetIntParaFromDB("isSolveTurb");
@@ -585,7 +585,7 @@ namespace GAS_SPACE
             case massDiffConstantDiluteApprox:
             {
                 int nTotal = grid->GetNTotalCell() + grid->GetNBoundFace();
-                RDouble* rho = reinterpret_cast<RDouble*>(grid->GetDataPtr("rho"));
+                RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
 
                 if (isSolveTurb == 0)
                 {
@@ -596,7 +596,7 @@ namespace GAS_SPACE
                 }
                 else
                 {
-                    RDouble* vist = reinterpret_cast<RDouble*>(grid->GetDataPtr("vist"));
+                    RDouble *vist = reinterpret_cast<RDouble *>(grid->GetDataPtr("vist"));
                     for (int iCell = 0; iCell < nTotal; ++iCell)
                     {
                         massdiff[iCell] = rho[iCell] * dilute[0];
@@ -609,7 +609,7 @@ namespace GAS_SPACE
             case massDiffDiluteApprox:
             {
                 int nTotal = grid->GetNTotalCell() + grid->GetNBoundFace();
-                RDouble* rho = reinterpret_cast<RDouble*>(grid->GetDataPtr("rho"));
+                RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
 
                 if (isSolveTurb == 0)
                 {
@@ -620,7 +620,7 @@ namespace GAS_SPACE
                 }
                 else
                 {
-                    RDouble* vist = reinterpret_cast<RDouble*>(grid->GetDataPtr("vist"));
+                    RDouble *vist = reinterpret_cast<RDouble *>(grid->GetDataPtr("vist"));
                     for (int iCell = 0; iCell < nTotal; ++iCell)
                     {
                         massdiff[iCell] = rho[iCell] * dilute[iGas];
@@ -638,9 +638,9 @@ namespace GAS_SPACE
             case massDiffUnityLewisNumber:
             {
                 int nTotal = grid->GetNTotalCell() + grid->GetNBoundFace();
-                RDouble* k = reinterpret_cast<RDouble*>(grid->GetDataPtr("k"));
-                RDouble* cp = reinterpret_cast<RDouble*>(grid->GetDataPtr("cp"));
-                RDouble* rho = reinterpret_cast<RDouble*>(grid->GetDataPtr("rho"));
+                RDouble *k = reinterpret_cast<RDouble *>(grid->GetDataPtr("k"));
+                RDouble *cp = reinterpret_cast<RDouble *>(grid->GetDataPtr("cp"));
+                RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
                 for (int iCell = 0; iCell < nTotal; ++iCell)
                 {
                     massdiff[iCell] = k[iCell] / (rho[iCell] * cp[iCell]);
@@ -672,13 +672,13 @@ namespace GAS_SPACE
         }
     }
 
-    void IncomGas::ComputeAmountOfSubstance(UnstructGrid* grid, RDouble** amountOfSubstance, RDouble** amountFracOfSubstance)
+    void IncomGas::ComputeAmountOfSubstance(UnstructGrid *grid, RDouble **amountOfSubstance, RDouble **amountFracOfSubstance)
     {
         int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
         int nTotal = grid->GetNTotalCell() + grid->GetNBoundFace();
-        RDouble* vol = grid->GetCellVolume();
-        RDouble* rho = reinterpret_cast<RDouble*>(grid->GetDataPtr("rho"));
-        RDouble* totalAmountOfSubstance = new RDouble[nTotal];
+        RDouble *vol = grid->GetCellVolume();
+        RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
+        RDouble *totalAmountOfSubstance = new RDouble[nTotal];
         for (int iCell = 0; iCell < nTotal; ++iCell)
         {
             totalAmountOfSubstance[iCell] = 0.0;
@@ -701,7 +701,7 @@ namespace GAS_SPACE
             {
                 string speciesNameIncom = gasNameList[iGas];
                 RDouble molarMass = gasMolarMassList[iGas];
-                RDouble* massFracOfGas = reinterpret_cast<RDouble*>(grid->GetDataPtr(speciesNameIncom));
+                RDouble *massFracOfGas = reinterpret_cast<RDouble *>(grid->GetDataPtr(speciesNameIncom));
 
                 for (int iCell = 0; iCell < nTotal; ++iCell)
                 {
@@ -719,7 +719,7 @@ namespace GAS_SPACE
             }
         }
 
-        delete[] totalAmountOfSubstance;
+        delete [] totalAmountOfSubstance;
     }
 
     void IncomGas::SetPropertyLib()

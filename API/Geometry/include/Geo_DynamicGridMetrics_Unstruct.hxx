@@ -12,6 +12,22 @@ inline void Geo_DynamicGridMetrics_Unstruct::SetFaceVelocityZ(RDouble *zfv)
 {
     this->zfv = zfv;
 }
+
+inline void Geo_DynamicGridMetrics_Unstruct::SetCellVelocityX(RDouble *xcv)
+{
+    this->xcv = xcv;
+}
+
+inline void Geo_DynamicGridMetrics_Unstruct::SetCellVelocityY(RDouble *ycv)
+{
+    this->ycv = ycv;
+}
+
+inline void Geo_DynamicGridMetrics_Unstruct::SetCellVelocityZ(RDouble *zcv)
+{
+    this->zcv = zcv;
+}
+
 inline void Geo_DynamicGridMetrics_Unstruct::SetFaceNormalVelocity(RDouble *vgn)
 {
     this->vgn = vgn;
@@ -35,6 +51,21 @@ inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetFaceVelocityY() const
 inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetFaceVelocityZ() const
 {
     return zfv;
+}
+
+inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetCellVelocityX() const
+{
+    return xcv;
+}
+
+inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetCellVelocityY() const
+{
+    return ycv;
+}
+
+inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetCellVelocityZ() const
+{
+    return zcv;
 }
 
 inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetFaceNormalVelocity() const

@@ -584,9 +584,9 @@ private:
     void DecodeGrid(DataContainer *cdata);
     void DumpWalldist(ActionKey *actkey);
     void ReadWalldist(RDouble *wallDistIn);
-    void ReadNearestwallfacenormalx(RDouble* nearestwallfaceNormalxIn);
-    void ReadNearestwallfacenormaly(RDouble* nearestwallfaceNormalyIn);
-    void ReadNearestwallfacenormalz(RDouble* nearestwallfaceNormalzIn);
+    void ReadNearestwallfacenormalx(RDouble *nearestwallfaceNormalxIn);
+    void ReadNearestwallfacenormaly(RDouble *nearestwallfaceNormalyIn);
+    void ReadNearestwallfacenormalz(RDouble *nearestwallfaceNormalzIn);
     void GetCellCenter(ActionKey *actkey);
     void TranslateCellCenter(ActionKey *actkey);
     bool CommunicateNodeLocation();

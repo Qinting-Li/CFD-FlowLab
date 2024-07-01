@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      Pre_GridCombine.h
 //! @brief     Explain this file briefly.
-//! @author    xxx
+//! @author    Xu Gang.
 
 #pragma once
 #include "PHMpi.h"
@@ -57,6 +57,7 @@ private:
 
     //! Establish the nodes' connection between zone and whole.
     void MergeNode2All();
+    //void MergeNode2AllNew();
 
     //! Establish the cells' connection between zone and whole.
     void MergeCell2All();
@@ -85,7 +86,7 @@ private:
     vector<RDouble> GetGlobalz() { return Globalz; }
 
     int * GetNodeNumberOfAllFace() { return node_number_of_all_face; }
-    vector<int> GetAllFace2Node() { return allface2node; }
+    vector <int> GetAllFace2Node() { return allface2node; }
     int * GetLeftCellOfAllFace() { return left_cell_of_all_face; }
     int * GetRightCellOfAllFace() { return right_cell_of_all_face; }
 
@@ -98,8 +99,8 @@ private:
     //! Combined single block grid.
     UnstructGrid *grid_all;
 
-    //! The number of total zones.
-    int numberOfZones;
+    //! The number of Local zones.
+    int numberOfLocalZones;
 
     //! The number of total cells.
     int nTotalCell;
@@ -123,7 +124,7 @@ private:
     int **cell2all;
 
     //! The grid's information in each zone.
-    int *nTotalNodeEachZone, *nTotalFaceEachZone, *nTotalCellEachZone, *nIFaces;
+    int *nTotalNodeEachLocalZone, *nTotalFaceEachLocalZone, *nTotalCellEachLocalZone, *nIFaces;
 
     //! Global coordinates.
     vector<RDouble> Globalx, Globaly, Globalz;
@@ -145,10 +146,10 @@ private:
     bool *isGlobalInterFace;
 
     //! Face to node: node index of each face after combination.
-    vector<int> allface2node;
+    vector <int> allface2node;
 
-    set<int> zoneIDinCurrentProc;
-    map<int, int> zoneIndexMap;
+    set <int> zoneIDinCurrentProc;
+    map <int, int> zoneIndexMap;
 };
 
 }

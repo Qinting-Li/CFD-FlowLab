@@ -96,13 +96,14 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
         int faceIndexinHash = faceHash.insert(face, isFaceExist) - 1;
 
         // Push the node into node list of GRAdvanceFront.
-        if(isFaceExist)
+        if (isFaceExist)
         {
             // the coarse face have been built.
             delete face;
             face = faceHash[faceIndexinHash];
             fmark[iFace] = face->GetID();
-        }else
+        }
+        else
         {
             // build new coarse face.
             face->SetID(cnTFace);
@@ -215,7 +216,7 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
     // some cells may not have been merged, merge them now
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if(cell2coarsegridcell[iCell] == -1)
+        if (cell2coarsegridcell[iCell] == -1)
         {
             cell2coarsegridcell[iCell] = cnTCell ++;
         }
@@ -300,13 +301,13 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOncebyMGridgen()
     {
         adjncyNew[iFace] = static_cast<idxtype>(adjncy[iFace]);
     }
-    delete []xadj;
-    delete []adjncy;
+    delete [] xadj;
+    delete [] adjncy;
 
     int nDim = PHSPACE::GetDim();
     int minCoarseCellNumber = 1;
     int maxCoarseCellNumber = 6;
-    if(nDim == PHSPACE::THREE_D)
+    if (nDim == PHSPACE::THREE_D)
     {
         minCoarseCellNumber = 4;
         maxCoarseCellNumber = 10;
@@ -321,10 +322,10 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOncebyMGridgen()
     //! ParMGridgen should be used in future, then, the parMetis should be followed.
     //! For now, the serial version of mgridgen is used even in parallel.
 
-    delete []xadjNew;
-    delete []adjncyNew;   
-    delete []adjncywgt; 
-    delete []bcArea;
+    delete [] xadjNew;
+    delete [] adjncyNew;   
+    delete [] adjncywgt; 
+    delete [] bcArea;
 
     //! Now, construct the basic geometry information of coarse grid.
     int cnTCell = nparts;
@@ -511,7 +512,7 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnceWithoutSkewnessLimit()
     // some cells may not have been merged, merge them now
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if(cell2coarsegridcell[iCell] == -1)
+        if (cell2coarsegridcell[iCell] == -1)
         {
             cell2coarsegridcell[iCell] = cnTCell ++;
         }
@@ -583,7 +584,7 @@ void Mesh_Agglomeration::AspectRatioModifyBySkewness(RDouble *ratio, RDouble * x
             for (int jFace = 0; jFace < nFace; ++ jFace)
             {
                 int faceID = cell2face[cellID][jFace];
-                if(faceID == iFace) continue;
+                if (faceID == iFace) continue;
 
                 dx = xfc[faceID] - xcc[iFace];
                 dy = yfc[faceID] - ycc[iFace];
@@ -593,7 +594,7 @@ void Mesh_Agglomeration::AspectRatioModifyBySkewness(RDouble *ratio, RDouble * x
                 if (dot >  1.0) dot =   1.0;
                 if (dot < -1.0) dot = - 1.0;
 
-                if(right_cell_of_face[faceID] == cellID)
+                if (right_cell_of_face[faceID] == cellID)
                 {
                     dot *= -1;
                 }
@@ -609,7 +610,7 @@ void Mesh_Agglomeration::AspectRatioModifyBySkewness(RDouble *ratio, RDouble * x
 
         ratio[iFace] *= factor;
 
-        if(minAngle < limitAngle) ratio[iFace] = -1;
+        if (minAngle < limitAngle) ratio[iFace] = -1;
     }
 }
 

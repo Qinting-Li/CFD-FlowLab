@@ -72,7 +72,7 @@ public:
     ~SimpleMovingMesh();
 
 public:
-    int meshDoformingMethod;      //! 0 - not doformed; 1 - rbf; 2 - spring; 3 - mapping¡­¡­
+    int meshDoformingMethod;    //! 0 - not doformed; 1 - rbf; 2 - spring; 3 - mapping
 
 public:
     Grid *grid;
@@ -89,11 +89,11 @@ public:
     vector< RDouble > zPresent;
 
 public:
-    void SetInitCoordinate(Grid* grid     );
-    void CalInitCoordinate(SixDofParameter    * sixDof   );
+    void SetInitCoordinate(Grid *grid);
+    void CalInitCoordinate(SixDofParameter *sixDof);
 
     void Deforming        ();
-    void RigidMoving      (SixDofParameter    * sixDof   );
+    void RigidMoving      (SixDofParameter *sixDof);
     void UpdateGrid       ();
 };
 
@@ -120,11 +120,11 @@ public:
 
     DeformingParameter *presentDeforming; //! the current Deforming parameters.
 
-    Grid* grid;
+    Grid *grid;
     SimpleMovingMesh   *movingMesh;
 
 public:
-    void Initialize(Grid* grid, int bodyIndex);
+    void Initialize(Grid *grid, int bodyIndex);
     void Restart();
     void PreProcess();
     void PreProcessRigidMoving();

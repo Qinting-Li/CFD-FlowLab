@@ -315,25 +315,25 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID, int Coordinate
         }
     }
 
-    this->CollectData->write(&CA_f, sizeof(RDouble));
-    this->CollectData->write(&CA_p, sizeof(RDouble));
-    this->CollectData->write(&CN_f, sizeof(RDouble));
-    this->CollectData->write(&CN_p, sizeof(RDouble));
-    this->CollectData->write(&CZ_f, sizeof(RDouble));
-    this->CollectData->write(&CZ_p, sizeof(RDouble));
+    this->CollectData->Write(&CA_f, sizeof(RDouble));
+    this->CollectData->Write(&CA_p, sizeof(RDouble));
+    this->CollectData->Write(&CN_f, sizeof(RDouble));
+    this->CollectData->Write(&CN_p, sizeof(RDouble));
+    this->CollectData->Write(&CZ_f, sizeof(RDouble));
+    this->CollectData->Write(&CZ_p, sizeof(RDouble));
 
-    this->CollectData->write(&cpx, sizeof(RDouble));
-    this->CollectData->write(&cpy, sizeof(RDouble));
-    this->CollectData->write(&cpz, sizeof(RDouble));
+    this->CollectData->Write(&cpx, sizeof(RDouble));
+    this->CollectData->Write(&cpy, sizeof(RDouble));
+    this->CollectData->Write(&cpz, sizeof(RDouble));
 
-    this->CollectData->write(&Cl_f, sizeof(RDouble));
-    this->CollectData->write(&Cl_p, sizeof(RDouble));
-    this->CollectData->write(&Cn_f, sizeof(RDouble));
-    this->CollectData->write(&Cn_p, sizeof(RDouble));
-    this->CollectData->write(&Cm_f, sizeof(RDouble));
-    this->CollectData->write(&Cm_p, sizeof(RDouble));
+    this->CollectData->Write(&Cl_f, sizeof(RDouble));
+    this->CollectData->Write(&Cl_p, sizeof(RDouble));
+    this->CollectData->Write(&Cn_f, sizeof(RDouble));
+    this->CollectData->Write(&Cn_p, sizeof(RDouble));
+    this->CollectData->Write(&Cm_f, sizeof(RDouble));
+    this->CollectData->Write(&Cm_p, sizeof(RDouble));
 
-    this->CollectData->write(&hingeMoment, sizeof(RDouble));
+    this->CollectData->Write(&hingeMoment, sizeof(RDouble));
 }
 
 void ForceProcessStruct::CompForce()

@@ -36,7 +36,7 @@ class FluidParameter
 private:
     RDouble machnumber;
     RDouble density, pressure, temperature;
-    RDouble sound_velocity, enthalpy;       //! The speed of sound, enthapy.
+    RDouble sound_velocity, enthalpy;    //! The speed of sound, enthapy.
     RDouble velocity, velocity_x, velocity_y, velocity_z;
     RDouble viscosity;
     RDouble average_molecular_weight;
@@ -384,7 +384,7 @@ public:
     //! @param[in ]: gama is the specific heat ratio.
     //! @param[out]: enthalpy denotes the static enthalpy.
     //! @param[in ]: temperatures stores the translation-rotation temperature, vibration temperature and the electron temperature.
-    virtual void ComputeEnthalpyByPrimitive(RDouble *primitiveVariables, RDouble &gama, RDouble &enthalpy, RDouble* temperatures){};
+    virtual void ComputeEnthalpyByPrimitive(RDouble *primitiveVariables, RDouble &gama, RDouble &enthalpy, RDouble *temperatures){};
 
     //! To obtain the total energy E = e + 1/2*V2.
     //! @param[in ]: primitiveVariables is an array of saving the primitive variables, gama is the specific heat ratio of the mixture gas.
@@ -1173,18 +1173,18 @@ public:
     virtual void SetGasMu(string gasMu) {};
     virtual void SetGasCp(string gasCp) {};
     virtual void SetGasK(string gasK) {};
-    virtual string*  GetGasName() { return gasNameList; }
-    virtual RDouble* GetGasMolarMass() { return gasMolarMassList; }
-    virtual RDouble* GetGasRho() { return gasRhoList; }
-    virtual RDouble* GetGasMu() { return gasMuList; }
-    virtual RDouble* GetGasCp() { return gasCpList; }
-    virtual RDouble* GetGasK() { return gasKList; }
-    virtual void UpdateRg(UnstructGrid* grid, RDouble* Rg) {};
-    virtual void UpdateRho(UnstructGrid* grid, RDouble* rho) {};
-    virtual void UpdateMu(UnstructGrid* grid, RDouble* mu) {};
-    virtual void UpdateCp(UnstructGrid* grid, RDouble* cp) {};
-    virtual void UpdateK(UnstructGrid* grid, RDouble* k) {};
-    virtual void UpdateMassDiff(UnstructGrid* grid, int iGas, RDouble* massdiff) {};
+    virtual string * GetGasName() { return gasNameList; }
+    virtual RDouble * GetGasMolarMass() { return gasMolarMassList; }
+    virtual RDouble * GetGasRho() { return gasRhoList; }
+    virtual RDouble * GetGasMu() { return gasMuList; }
+    virtual RDouble * GetGasCp() { return gasCpList; }
+    virtual RDouble * GetGasK() { return gasKList; }
+    virtual void UpdateRg(UnstructGrid *grid, RDouble *Rg) {};
+    virtual void UpdateRho(UnstructGrid *grid, RDouble *rho) {};
+    virtual void UpdateMu(UnstructGrid *grid, RDouble *mu) {};
+    virtual void UpdateCp(UnstructGrid *grid, RDouble *cp) {};
+    virtual void UpdateK(UnstructGrid *grid, RDouble *k) {};
+    virtual void UpdateMassDiff(UnstructGrid *grid, int iGas, RDouble *massdiff) {};
     protected:
 
         //! SutherLand
@@ -1195,22 +1195,22 @@ public:
         //RDouble mu0;
 
         //! Ideal gas mixing law for Mu
-        RDouble** phiij;
+        RDouble **phiij;
 
         //! Calculation of mass diffusion coefficient
         //! massDiffConstantDiluteApprox
         //RDouble sct;
-        RDouble* dilute;
+        RDouble *dilute;
 
         //RDouble refP;
         //RDouble gasR;
 
-        string* gasNameList;
-        RDouble* gasMolarMassList;
-        RDouble* gasRhoList;
-        RDouble* gasMuList;
-        RDouble* gasCpList;
-        RDouble* gasKList;
+        string *gasNameList;
+        RDouble *gasMolarMassList;
+        RDouble *gasRhoList;
+        RDouble *gasMuList;
+        RDouble *gasCpList;
+        RDouble *gasKList;
 };
 
 extern Gas *gas;

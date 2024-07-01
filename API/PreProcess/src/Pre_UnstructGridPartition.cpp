@@ -189,9 +189,9 @@ Grid ** Pre_UnstructGridPartition::CreateAllPartGrid()
         GridID *index = new GridID(iproc);
         grids[iproc] = CreateGridGeneral(UNSTRUCTGRID, index, 0, GetDim());
         
-        ComputeGridForPartition(static_cast<UnstructGrid*>(grids[iproc]), iproc);
+        ComputeGridForPartition(static_cast<UnstructGrid *>(grids[iproc]), iproc);
         
-        ComputeGlobalToLocalCellToNodeMapping(static_cast<UnstructGrid*>(grids[iproc]), iproc);
+        ComputeGlobalToLocalCellToNodeMapping(static_cast<UnstructGrid *>(grids[iproc]), iproc);
     }
 
     if (!IsParallelPartition())
@@ -245,7 +245,7 @@ LIB_EXPORT void Pre_UnstructGridPartition::PartitionGridParallel(const string &o
 #pragma warning(default:4100)
 void Pre_UnstructGridPartition::GetVertexDist()
 {
-    //if(parallelPartitionMethod == METIS_METHOD) return;
+    //if (parallelPartitionMethod == METIS_METHOD) return;
 
 #if IDXTYPEWIDTH == 32
     PrintToWindow("  Using 32-bit METIS/PARMETIS lib ...\n");
@@ -570,7 +570,7 @@ void Pre_UnstructGridPartition::SwapInterface(int *neighborCell, int iZone, int 
     int myid = GetCurrentProcessorID();
 
     DataContainer *cdata = new DataContainer();
-    cdata->moveto_begin();
+    cdata->MoveToBegin();
 
     if (myid == send_proc)
     {
@@ -581,13 +581,16 @@ void Pre_UnstructGridPartition::SwapInterface(int *neighborCell, int iZone, int 
             int ineighbor = interfaceInfo->FindIthNeighbor(jZone);
             int nIFaceOfNeighbor = interfaceInfo->GetNIFaceOfNeighbor(ineighbor);
             int *faceIndexForSend = interfaceInfo->GetFaceIndexForSend(ineighbor);
+            int *qtmp = new int[nIFaceOfNeighbor];
             int iFace, sourceCell;
             for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
             {
                 iFace = faceIndexForSend[iLocalFace];
                 grid->GetSourceIndex(iFace, 1, sourceCell);
-                cdata->write(&sourceCell, sizeof(int));
+                qtmp[iLocalFace] = sourceCell;
             }
+            cdata->Write(qtmp, nIFaceOfNeighbor * sizeof(int));
+            delete [] qtmp;    qtmp = nullptr;
         }
     }
 
@@ -603,18 +606,18 @@ void Pre_UnstructGridPartition::SwapInterface(int *neighborCell, int iZone, int 
             int iFace;
             int nIFaceOfNeighbor = interfaceInfo->GetNIFaceOfNeighbor(ineighbor);
             int *faceIndexForRecv = interfaceInfo->GetFaceIndexForRecv(ineighbor);
-            cdata->moveto_begin();
+            cdata->MoveToBegin();
             for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
             {
                 iFace = faceIndexForRecv[iLocalFace];
                 int cellIndex;
-                cdata->read(&cellIndex, sizeof(int));
+                cdata->Read(&cellIndex, sizeof(int));
                 neighborCell[iFace] = cellIndex;
             }
         }
     }
 
-    delete cdata;
+    delete cdata;    cdata = nullptr;
 }
 
 void Pre_UnstructGridPartition::SetProcessorList()
@@ -991,7 +994,11 @@ void Pre_UnstructGridPartition::SwapInterfaceTopo(int iZone, int jZone)
             int *faceIndexForSend = interfaceInfo->GetFaceIndexForSend(ineighbor);
             int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
             int iFace, le, partIndex, localInterfaceIndex, bcFaceIndex;
-            cdata->moveto_begin();
+            cdata->MoveToBegin();
+            int nm = 2;
+            int nlen = nm * nIFaceOfNeighbor;
+            int ntmp = 0;
+            int *qtmp = new int [nlen];
             for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
             {
                 iFace = faceIndexForSend[iLocalFace];
@@ -1001,9 +1008,11 @@ void Pre_UnstructGridPartition::SwapInterfaceTopo(int iZone, int jZone)
                 partIndex = part2GlobalZoneIndex[part[le]];    // global zone index in new partition.
                 localInterfaceIndex = interfaceIndexInBC_send[bcFaceIndex]; // local interface index in new partition.
 
-                cdata->write(&partIndex, sizeof(int));              // interFace2ZoneID
-                cdata->write(&localInterfaceIndex, sizeof(int));    // interFace2InterFaceID
+                qtmp[ntmp++] = partIndex;              // interFace2ZoneID
+                qtmp[ntmp++] = localInterfaceIndex;    // interFace2InterFaceID
             }
+            cdata->Write(qtmp, nlen * sizeof(int));
+            delete [] qtmp;    qtmp = nullptr;
         }
     }
 
@@ -1021,14 +1030,14 @@ void Pre_UnstructGridPartition::SwapInterfaceTopo(int iZone, int jZone)
             int nIFaceOfNeighbor = interfaceInfo->GetNIFaceOfNeighbor(ineighbor);
             int *faceIndexForRecv = interfaceInfo->GetFaceIndexForRecv(ineighbor);
             int iFace, globalZoneIndexInNeighbor, localInterfaceIndexInNeighbor, bcFaceIndex;
-            cdata->moveto_begin();
+            cdata->MoveToBegin();
             for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
             {
                 iFace = faceIndexForRecv[iLocalFace];
                 bcFaceIndex = interFace2BoundaryFace[iFace];
                 
-                cdata->read(&globalZoneIndexInNeighbor, sizeof(int));
-                cdata->read(&localInterfaceIndexInNeighbor, sizeof(int));
+                cdata->Read(&globalZoneIndexInNeighbor, sizeof(int));
+                cdata->Read(&localInterfaceIndexInNeighbor, sizeof(int));
 
                 partIndexInNewPartion_recv[bcFaceIndex] = globalZoneIndexInNeighbor;
                 interfaceIndexInBC_recv[bcFaceIndex] = localInterfaceIndexInNeighbor;
@@ -1036,7 +1045,7 @@ void Pre_UnstructGridPartition::SwapInterfaceTopo(int iZone, int jZone)
         }
     }
 
-    delete cdata;
+    delete cdata;    cdata = nullptr;
 }
 
 bool Pre_UnstructGridPartition::FindMatchPart(UnstructGrid *grid, int izone_t, int iface_t, int ie_t, int *interface_interfaceid_t)
@@ -1795,7 +1804,7 @@ void Pre_UnstructGridPartition::SetInterfaceInfoPart(int iZone, UnstructGrid *gr
             //! ii_local: the index of interface counts from 0.
             int ii_local = face_mark[iFace] - nphysi;
 
-            //! interface_interfaceid£ºtemporarily records local index of the neighbor interface cell.
+            //! interface_interfaceidtemporarily records local index of the neighbor interface cell.
             //! It will be modified to the interface index of neighbor zone.
             if (part[le] == iZone)
             {
@@ -1892,7 +1901,7 @@ void Pre_UnstructGridPartition::ModifyInterpointInfoPart(Grid **grids)
 {
     for (int iproc = 0; iproc < maxProcessor; ++ iproc)
     {
-        UnstructGrid *gridpart = static_cast<UnstructGrid*>(grids[iproc]);
+        UnstructGrid *gridpart = static_cast<UnstructGrid *>(grids[iproc]);
         InterpointInformation *interpointInformation = gridpart->GetInterpointInfo();
 
         int i_nIPoint = interpointInformation->GetNumberOfInterpoints();
@@ -1972,7 +1981,7 @@ void Pre_UnstructGridPartition::SetInterfaceInfoPartForParallelPartition(int iZo
             //! ii_local: the index of interface counts from 0.
             int ii_local = face_mark[iFace] - nphysi;
 
-            //! interface_interfaceid£ºtemporarily records local index of the neighbor interface cell.
+            //! interface_interfaceidtemporarily records local index of the neighbor interface cell.
             //! It will be modified to the interface index of neighbor zone.
             if (part[le] == iZone)
             {
@@ -2542,7 +2551,7 @@ void Pre_UnstructGridPartition::WriteWalldist(const string &out_grid_file)
     }
     
     H5Fclose(actkey->filepos);
-    delete actkey;    actkey = NULL;
+    delete actkey;    actkey = nullptr;
 }
 
 void Pre_UnstructGridPartition::WriteWalldist(ActionKey *actkey, UnstructGrid *gridPart)
@@ -2746,7 +2755,7 @@ void Pre_UnstructGridPartition::ComputeGlobalToLocalCellToNodeMapping(UnstructGr
 
 bool Pre_UnstructGridPartition::IsParallelPartition()
 {
-    //if(PHMPI::GetNumberofGlobalZones() > 1)
+    //if (PHMPI::GetNumberofGlobalZones() > 1)
     if (vtxdist)
     {
         return true;
@@ -2943,10 +2952,10 @@ void Pre_UnstructGridPartition::DumpParallelPartitionGrid(const string &gridFile
         }
     }
 
-    file.write(reinterpret_cast<char*>(&nBlocks), sizeof(int));
-    file.write(reinterpret_cast<char*>(block_proc), nBlocks * sizeof(int));
-    file.write(reinterpret_cast<char*>(block_idx), nBlocks * sizeof(int));
-    file.write(reinterpret_cast<char*>(block_type), nBlocks * sizeof(int));
+    file.write(reinterpret_cast<char *>(&nBlocks), sizeof(int));
+    file.write(reinterpret_cast<char *>(block_proc), nBlocks * sizeof(int));
+    file.write(reinterpret_cast<char *>(block_idx), nBlocks * sizeof(int));
+    file.write(reinterpret_cast<char *>(block_type), nBlocks * sizeof(int));
     
     for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {

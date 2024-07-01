@@ -364,7 +364,7 @@ void TurbSolverStr::InitFlowAsReadingProtectedRestart(ActionKey *actkey)
     string protectionTurbFile1 = "./results/turb1.dat";
     GlobalDataBase::GetData("protectionTurbFile1", &protectionTurbFile1, PHSTRING, 1);
 
-    if(PHMPI::IsParallelRun())
+    if (PHMPI::IsParallelRun())
     {
         protectionTurbFile0 = PHSPACE::AddSymbolToFileName(protectionTurbFile0, "_", 0);
         protectionTurbFile1 = PHSPACE::AddSymbolToFileName(protectionTurbFile1, "_", 0);
@@ -382,12 +382,12 @@ void TurbSolverStr::InitFlowAsReadingProtectedRestart(ActionKey *actkey)
         RestartFile = 1;
     }
 
-    if(infile_0 && infile_1)     //If both flow0 and flow1 exist,determine which file to use by the last modified time.
+    if (infile_0 && infile_1)     //If both flow0 and flow1 exist,determine which file to use by the last modified time.
     {
         RDouble TimeFile0, TimeFile1;
         TIME_SPACE::GetFileModifiedTime(protectionTurbFile0, TimeFile0);
         TIME_SPACE::GetFileModifiedTime(protectionTurbFile1, TimeFile1);
-        if(TimeFile0 < TimeFile1)
+        if (TimeFile0 < TimeFile1)
         {
             RestartFile = 0;
         }
@@ -397,7 +397,7 @@ void TurbSolverStr::InitFlowAsReadingProtectedRestart(ActionKey *actkey)
         }
     }
 
-    if(RestartFile == 0)
+    if (RestartFile == 0)
     {
         actkey->filename = protectionTurbFile0;
     }
@@ -451,10 +451,14 @@ void TurbSolverStr::DumpRestart(ActionKey *actkey)
     int outerIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
 
     DataContainer *dataContainer = actkey->GetData();
-    dataContainer->moveto_begin();
-    dataContainer->write(&outerIterStep, sizeof(int));
+    dataContainer->MoveToBegin();
+    dataContainer->Write(&outerIterStep, sizeof(int));
 
     RDouble4D &qTurbulence = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_turb"));
+
+    int nlen = (med - mst + 1) * (ked - kst + 1) * (jed - jst + 1) * (ied - ist + 1);
+    RDouble *qtmp = new RDouble [nlen];
+    int count = 0;
 
     for (int m = mst; m <= med; ++m)
     {
@@ -464,11 +468,13 @@ void TurbSolverStr::DumpRestart(ActionKey *actkey)
             {
                 for (int i = ist; i <= ied; ++i)
                 {
-                    dataContainer->write(&qTurbulence(i, j, k, m), sizeof(RDouble));
+                    qtmp[count++] = qTurbulence(i, j, k, m);
                 }
             }
         }
     }
+    dataContainer->Write(qtmp, nlen * sizeof(RDouble));
+    count = 0;
 
     int isUnsteady = parameters->GetIsUnsteady();
     if (isUnsteady)
@@ -484,11 +490,14 @@ void TurbSolverStr::DumpRestart(ActionKey *actkey)
                 {
                     for (int i = ist; i <= ied; ++i)
                     {
-                        dataContainer->write(&qTurbUnsteadyn1(i, j, k, m), sizeof(RDouble));
+                        qtmp[count++] = qTurbUnsteadyn1(i, j, k, m);
                     }
                 }
             }
         }
+        dataContainer->Write(qtmp, nlen * sizeof(RDouble));
+        count = 0;
+
 
         for (int m = mst; m <= med; ++m)
         {
@@ -498,11 +507,13 @@ void TurbSolverStr::DumpRestart(ActionKey *actkey)
                 {
                     for (int i = ist; i <= ied; ++i)
                     {
-                        dataContainer->write(&qTurbUnsteadyn2(i, j, k, m), sizeof(RDouble));
+                        qtmp[count++] = qTurbUnsteadyn2(i, j, k, m);
                     }
                 }
             }
         }
+        dataContainer->Write(qtmp, nlen * sizeof(RDouble));
+        count = 0;
 
         RDouble4D &residualTurbulence = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("res_turb"));
         RDouble4D &residualTurbUnsteadyn1 = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("res_turb_unsteady_n1"));
@@ -516,11 +527,13 @@ void TurbSolverStr::DumpRestart(ActionKey *actkey)
                 {
                     for (int i = ist; i <= ied; ++i)
                     {
-                        dataContainer->write(&residualTurbulence(i, j, k, m), sizeof(RDouble));
+                        qtmp[count++] = residualTurbulence(i, j, k, m);
                     }
                 }
             }
         }
+        dataContainer->Write(qtmp, nlen * sizeof(RDouble));
+        count = 0;
 
         for (int m = mst; m <= med; ++m)
         {
@@ -530,11 +543,13 @@ void TurbSolverStr::DumpRestart(ActionKey *actkey)
                 {
                     for (int i = ist; i <= ied; ++i)
                     {
-                        dataContainer->write(&residualTurbUnsteadyn1(i, j, k, m), sizeof(RDouble));
+                        qtmp[count++] = residualTurbUnsteadyn1(i, j, k, m);
                     }
                 }
             }
         }
+        dataContainer->Write(qtmp, nlen * sizeof(RDouble));
+        count = 0;
 
         for (int m = mst; m <= med; ++m)
         {
@@ -544,12 +559,15 @@ void TurbSolverStr::DumpRestart(ActionKey *actkey)
                 {
                     for (int i = ist; i <= ied; ++i)
                     {
-                        dataContainer->write(&residualTurbUnsteadyn2(i, j, k, m), sizeof(RDouble));
+                        qtmp[count++] = residualTurbUnsteadyn2(i, j, k, m);
                     }
                 }
             }
         }
+        dataContainer->Write(qtmp, nlen * sizeof(RDouble));
+        count = 0;
     }
+    delete [] qtmp;    qtmp = nullptr;
 }
 
 void TurbSolverStr::DumpRestartH5(ActionKey *actkey)
@@ -785,9 +803,9 @@ void TurbSolverStr::ReadRestart(ActionKey *actkey)
     int med = M.last();
 
     DataContainer *dataContainer = actkey->GetData();
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
     int outnstepofTurb = 0;
-    dataContainer->read(&outnstepofTurb, sizeof(int));
+    dataContainer->Read(&outnstepofTurb, sizeof(int));
 
     int outIterstepofNS = GlobalDataBase::GetIntParaFromDB("outnstep");
 
@@ -799,7 +817,7 @@ void TurbSolverStr::ReadRestart(ActionKey *actkey)
             {
                 for (int i = ist; i <= ied; ++i)
                 {
-                    dataContainer->read(&qTurbulence(i, j, k, m), sizeof(RDouble));
+                    dataContainer->Read(&qTurbulence(i, j, k, m), sizeof(RDouble));
                 }
             }
         }
@@ -847,7 +865,7 @@ void TurbSolverStr::ReadRestart(ActionKey *actkey)
                     {
                         for (int i = ist; i <= ied; ++i)
                         {
-                            dataContainer->read(&qTurbulencen1(i, j, k, m), sizeof(RDouble));
+                            dataContainer->Read(&qTurbulencen1(i, j, k, m), sizeof(RDouble));
                         }
                     }
                 }
@@ -861,7 +879,7 @@ void TurbSolverStr::ReadRestart(ActionKey *actkey)
                     {
                         for (int i = ist; i <= ied; ++i)
                         {
-                            dataContainer->read(&qTurbulencen2(i, j, k, m), sizeof(RDouble));
+                            dataContainer->Read(&qTurbulencen2(i, j, k, m), sizeof(RDouble));
                         }
                     }
                 }
@@ -875,7 +893,7 @@ void TurbSolverStr::ReadRestart(ActionKey *actkey)
                     {
                         for (int i = ist; i <= ied; ++i)
                         {
-                            dataContainer->read(&residualTurbulence(i, j, k, m), sizeof(RDouble));
+                            dataContainer->Read(&residualTurbulence(i, j, k, m), sizeof(RDouble));
                         }
                     }
                 }
@@ -889,7 +907,7 @@ void TurbSolverStr::ReadRestart(ActionKey *actkey)
                     {
                         for (int i = ist; i <= ied; ++i)
                         {
-                            dataContainer->read(&residualTurbulencen1(i, j, k, m), sizeof(RDouble));
+                            dataContainer->Read(&residualTurbulencen1(i, j, k, m), sizeof(RDouble));
                         }
                     }
                 }
@@ -903,7 +921,7 @@ void TurbSolverStr::ReadRestart(ActionKey *actkey)
                     {
                         for (int i = ist; i <= ied; ++i)
                         {
-                            dataContainer->read(&residualTurbulencen2(i, j, k, m), sizeof(RDouble));
+                            dataContainer->Read(&residualTurbulencen2(i, j, k, m), sizeof(RDouble));
                         }
                     }
                 }
@@ -1344,12 +1362,12 @@ RDouble TurbSolverStr::UnsteadyConvergence(Grid *gridIn)
         }
     }
 
-    delete[] qTurb0;    qTurb0 = NULL;
-    delete[] qTurb1;    qTurb1 = NULL;
-    delete[] qTurb2;    qTurb2 = NULL;
-    delete[] qTurbConserve0;    qTurbConserve0 = NULL;
-    delete[] qTurbConserve1;    qTurbConserve1 = NULL;
-    delete[] qTurbConserve2;    qTurbConserve2 = NULL;
+    delete [] qTurb0;    qTurb0 = NULL;
+    delete [] qTurb1;    qTurb1 = NULL;
+    delete [] qTurb2;    qTurb2 = NULL;
+    delete [] qTurbConserve0;    qTurbConserve0 = NULL;
+    delete [] qTurbConserve1;    qTurbConserve1 = NULL;
+    delete [] qTurbConserve2;    qTurbConserve2 = NULL;
 
     RDouble unsteadyConvergence = sqrt(ABS(summedPrimitive / (summedConserve + SMALL)));
     return unsteadyConvergence;
@@ -1543,12 +1561,12 @@ void TurbSolverStr::DualTimeSource(Grid *gridIn)
         }
     }
 
-    delete[]qTurbPrimtive0;
-    delete[]qTurbPrimtive1;
-    delete[]qTurbPrimtive2;
-    delete[]qTurbConserve0;
-    delete[]qTurbConserve1;
-    delete[]qTurbConserve2;
+    delete [] qTurbPrimtive0;
+    delete [] qTurbPrimtive1;
+    delete [] qTurbPrimtive2;
+    delete [] qTurbConserve0;
+    delete [] qTurbConserve1;
+    delete [] qTurbConserve2;
 }
 
 RDouble TurbSolverStr::GetDistance(Grid *gridIn, int i, int j, int k)
@@ -1752,7 +1770,7 @@ void TurbSolverStr::SourceFluxOneEquationOriginal(Grid *gridIn)
     }
 }
 
-//! Hekun test by using chant SA  source model.
+//! He Kun test by using chant SA source model.
 void TurbSolverStr::SourceFluxOneEquationNew(Grid *gridIn)
 {
     StructGrid *grid = StructGridCast(gridIn);
@@ -1952,6 +1970,9 @@ void TurbSolverStr::Crossing(Grid *gridIn)
 void TurbSolverStr::Blending(Grid *gridIn)
 {
     StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
 
     RDouble4D &qLaminar = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
     RDouble4D &qTurbulence = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_turb"));
@@ -2018,6 +2039,7 @@ void TurbSolverStr::Blending(Grid *gridIn)
         }
     }
     grid->GhostCell3DExceptInterface(blend);
+    FillCornerPoint3D(blend, ni, nj, nk);
     //GhostCell3D(blend, ni, nj, nk);
     //PHSPACE::CommunicateInterfaceValue(grid, &blend, "blend");
 }
@@ -2395,7 +2417,7 @@ void TurbSolverStr::SpectrumRadiusOfOneEquation(Grid *gridIn)
                     RDouble vl = qLaminar(i, j, k, IV);
                     RDouble wl = qLaminar(i, j, k, IW);
                     RDouble Vn = ul * nx + vl * ny + wl * nz - vgn;
-                    if(ifLowSpeedPrecon != 0)
+                    if (ifLowSpeedPrecon != 0)
                     {
                         RDouble timeCoeff = (*timeCoefficientInverse)(i, j, k);
                         RDouble preconCoeff = (*preconCoefficient)(i, j, k);
@@ -2552,7 +2574,7 @@ void TurbSolverStr::SpectrumRadiusOfTwoEquation(Grid *gridIn)
         dualTimeSpectrumC2 = dualTimeCoefficient[6];
     }
 
-    if(nDiagonalModifiedTurb == 0)
+    if (nDiagonalModifiedTurb == 0)
     {
         for (int k = kst; k <= ked; ++k)
         {
@@ -2706,7 +2728,7 @@ void TurbSolverStr::SpectrumRadiusOfTwoEquation(Grid *gridIn)
             }
         }
     }
-    if(nDiagonalModifiedTurb != 0)
+    if (nDiagonalModifiedTurb != 0)
     {
         int ni = grid->GetNI();
         int nj = grid->GetNJ();
@@ -3162,8 +3184,8 @@ void TurbSolverStr::NNDFlux(Grid *gridIn, FieldProxy *qLeftProxy, FieldProxy *qR
             }
         }
     }
-    delete[]priml;
-    delete[]primr;
+    delete [] priml;
+    delete [] primr;
 }
 
 void TurbSolverStr::LoadFlux(Grid *gridIn, FieldProxy *fluxProxy, int iSurface)
@@ -3342,8 +3364,8 @@ void TurbSolverStr::RotateVectorFromInterface(Grid *gridIn, const int &neighborZ
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    double rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
-    rotationAngle = rotationAngle * PI / 180;
+    RDouble rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
+    rotationAngle = rotationAngle * PI / 180.0;
     if (nEquation > 0)
     {
         RDouble4D &fieldRecvTurbY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradTurbulenceCellCenterY"));
@@ -3710,7 +3732,7 @@ void TurbSolverStr::CompVisFluxOneEquation(Grid *gridIn, FieldProxy *fluxProxy, 
             }
         }
     }
-    delete[]fvis;    fvis = NULL;
+    delete [] fvis;    fvis = NULL;
 }
 
 void TurbSolverStr::CompVisFluxTwoEquation(Grid *gridIn, FieldProxy *fluxProxy, int iSurface)
@@ -3852,7 +3874,7 @@ void TurbSolverStr::CompVisFluxTwoEquation(Grid *gridIn, FieldProxy *fluxProxy, 
         }
     }
 
-    delete[]fvis;    fvis = NULL;
+    delete [] fvis;    fvis = NULL;
 }
 
 void TurbSolverStr::ZeroResidualOfSpecialCells(Grid *gridIn)
@@ -4000,13 +4022,13 @@ void TurbSolverStr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldPr
         }
     }
 
-    delete[]dqNeighbor;
-    delete[]prim;
-    delete[]rhs0;
-    delete[]dflux;
-    delete[]mat_abc;
-    delete[]dqOld;
-    delete[]Ux;
+    delete [] dqNeighbor;
+    delete [] prim;
+    delete [] rhs0;
+    delete [] dflux;
+    delete [] mat_abc;
+    delete [] dqOld;
+    delete [] Ux;
 }
 
 void TurbSolverStr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
@@ -4109,13 +4131,13 @@ void TurbSolverStr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldP
         }
     }
 
-    delete[]dqNeighbor;
-    delete[]dqOld;
-    delete[]prim;
-    delete[]rhs0;
-    delete[]dflux;
-    delete[]mat_abc;
-    delete[]Lx;
+    delete [] dqNeighbor;
+    delete [] dqOld;
+    delete [] prim;
+    delete [] rhs0;
+    delete [] dflux;
+    delete [] mat_abc;
+    delete [] Lx;
 }
 
 void TurbSolverStr::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy)
@@ -4330,6 +4352,8 @@ void TurbSolverStr::Viscosity(Grid *gridIn)
                     }
                 }
             }
+            GhostCell3D(SST_F2, ni, nj, nk);
+            FillCornerPoint3D(SST_F2, ni, nj, nk);
         }
     }
 
@@ -5117,7 +5141,7 @@ void TurbSolverStr::FarFieldBC(Grid *gridIn, StructBC *structBC)
             }
         }
     }
-    delete[] prims1;
+    delete [] prims1;
 }
 
 void TurbSolverStr::WallFunctionStandard(Grid *gridIn, StructBC *structBC, int is, int js, int ks, int it, int jt, int kt, int i, int j, int k)
@@ -5410,7 +5434,7 @@ void TurbSolverStr::CompressDQ(DataContainer *&dataContainer, FieldProxy *fieldP
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble4D &fieldSend = fieldProxy->GetField_STR();
 
@@ -5447,7 +5471,7 @@ void TurbSolverStr::DecompressDQ(DataContainer *&dataContainer, FieldProxy *fiel
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble4D &fieldRecv = fieldProxy->GetField_STR();
 

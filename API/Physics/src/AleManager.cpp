@@ -22,6 +22,7 @@
 #include "Task_ServerUpdateInterface.h"
 #include "Geo_UnstructGrid.h"
 #include "Glb_Dimension.h"
+#include "Pre_WalldistCompute.h"
 
 namespace PHSPACE
 {
@@ -58,7 +59,7 @@ void FreeAleManager()
     int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
     if (IsUnsteady  && isAle)
     {
-        if(aleManager)
+        if (aleManager)
         {
             delete aleManager;
             aleManager = NULL;
@@ -83,18 +84,20 @@ void SolveSingleInnerIterationStepForAleSolvers()
 
     //! backup the old meshes information (n time) first in the inner iterations.
     int innStep = GlobalDataBase::GetIntParaFromDB("innstep");
+    int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+    int numberOfMovingBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
+
     if (innStep == 1)
     {
         BackupAllZonesOldGrid();
-    }
-    if (innStep == 1)
-    {
+
         RDouble aleSimulationTime = GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
         RDouble aleTimeStep = GetAleTimeStep();
 
         aleSimulationTime += aleTimeStep;
         GlobalDataBase::UpdateData("aleSimulationTime", &aleSimulationTime, PHDOUBLE, 1);
     }
+
     //! if it is the first step of the inner step or implicit methods, update the mesh information.
     if (innStep == 1 || IsImplicitAleMethod())
     {
@@ -107,9 +110,14 @@ void SolveSingleInnerIterationStepForAleSolvers()
 
         aleManager->CommunicateCellCenterData();
 
+        /*if (viscousType > ALGEBRAIC && numberOfMovingBodies > 1)
+        {
+            ComputeWalldist();
+        }*/
+
         //! computing the faceNormalVelocityContainer. we do not compute the movement velocity for quasi steady questions.
         int methodOfDualTime = GlobalDataBase::GetIntParaFromDB("methodOfDualTime");
-        if(methodOfDualTime != 0)
+        if (methodOfDualTime != 0)
         {
             aleManager->ComputeGridFaceVelocity();
         }
@@ -173,13 +181,13 @@ void AleManager::Initialize()
     Allocate();
 
     int aleStartStrategy = GlobalDataBase::GetIntParaFromDB("aleStartStrategy");
-    if(aleStartStrategy ==  1)
+    if (aleStartStrategy == 1)
     {
         Restart();
     }
 
     aleStartStrategy = GlobalDataBase::GetIntParaFromDB("aleStartStrategy");
-    if(aleStartStrategy == -1)
+    if (aleStartStrategy == -1)
     {
         aleManager->Run();
 
@@ -206,7 +214,7 @@ void AleManager::ComputeMetrics()
     using namespace PHMPI;
 
     int nZones = GetNumberofGlobalZones();
-    ActionKey* actkey = new ActionKey();
+    ActionKey *actkey = new ActionKey();
     actkey->action = COMPUTEMETRICS;
 
     for (int iZone = 0; iZone < nZones; ++iZone)
@@ -219,7 +227,7 @@ void AleManager::ComputeMetrics()
         if (myid == send_proc)
         {
             //! If the ProcessorID of i-th zone equal to the running ProcessorID, compute grid metrics.
-            Grid* grid = GetGrid(iZone, 0);
+            Grid *grid = GetGrid(iZone, 0);
             grid->ComputeMetrics(actkey);
             if (grid->Type() == PHSPACE::STRUCTGRID)
             {
@@ -231,7 +239,7 @@ void AleManager::ComputeMetrics()
             }
         }
 
-        // collect all info out by ComputeMetrics function to cdata.
+        //! collect all info out by ComputeMetrics function to cdata.
         PH_Trade(actkey, send_proc, recv_proc, tag);
 
         if (myid == recv_proc)
@@ -240,7 +248,7 @@ void AleManager::ComputeMetrics()
             WriteScreen(actkey);
         }
     }
-    delete actkey;    actkey = NULL;
+    delete actkey;    actkey = nullptr;
 }
 
 void AleManager::CommunicateCellCenterData()
@@ -249,7 +257,7 @@ void AleManager::CommunicateCellCenterData()
     int nMGLevel = GlobalDataBase::GetIntParaFromDB("nMGLevel");
     for (int level = 0; level < nMGLevel; ++level)
     {
-        ActionKey* actkey = new ActionKey();
+        ActionKey *actkey = new ActionKey();
         actkey->action = COMMCELLCENTERDATA;
         actkey->kind = GRID_BASED;
         actkey->level = level;
@@ -263,7 +271,7 @@ void AleManager::CommunicateCellCenterData()
             MainTaskBlocking(actkey);
         }
 
-        delete actkey;
+        delete actkey;    actkey = nullptr;
     }
 }
 
@@ -274,7 +282,7 @@ void AleManager::ComputeGridFaceVelocity()
     int gridLevelIndex = 0;
     for (int iZone = 0; iZone < numberOfZones; ++iZone)
     {
-        Grid* grid = PHSPACE::GetGrid(iZone, gridLevelIndex);
+        Grid *grid = PHSPACE::GetGrid(iZone, gridLevelIndex);
         if (!grid) continue;
 
         grid->ComputeGridFaceVelocity();
@@ -285,18 +293,18 @@ void AleManager::Allocate()
 {
     InitializeAerodynamicForce();
 
-    aleForceManager         = new AleForceManager       ;
-    deformingManager        = new DeformingSolverManager;
-    sixDofSolverManager     = new SixDofSolverManager   ;
-    movingMeshManager       = new MovingMeshManager     ;
+    aleForceManager     = new AleForceManager       ;
+    deformingManager    = new DeformingSolverManager;
+    sixDofSolverManager = new SixDofSolverManager   ;
+    movingMeshManager   = new MovingMeshManager     ;
 
     RDouble aleSimulationTime = 0.0;
     GlobalDataBase::UpdateData("aleSimulationTime", &aleSimulationTime, PHDOUBLE, 1);
 
-    aleForceManager     ->Initialize();
-    deformingManager    ->Initialize();
-    sixDofSolverManager ->Initialize();
-    movingMeshManager   ->Initialize();
+    aleForceManager    ->Initialize();
+    deformingManager   ->Initialize();
+    sixDofSolverManager->Initialize();
+    movingMeshManager  ->Initialize();
 }
 
 void AleManager::Restart()
@@ -323,12 +331,12 @@ void AleManager::Restart()
     GlobalDataBase::UpdateData("aleSimulationTime", &aleSimulationTime, PHDOUBLE, 1);
 
     //! the mesh  need to transform to n time from 0 time, when restart the computing.
-    aleForceManager       ->Restart();
-    deformingManager      ->Restart();
-    sixDofSolverManager   ->Restart();
-    movingMeshManager     ->Run();
-    sixDofSolverManager   ->ResetMassCenter();
-    movingMeshManager     ->Restart();
+    aleForceManager    ->Restart();
+    deformingManager   ->Restart();
+    sixDofSolverManager->Restart();
+    movingMeshManager  ->Run();
+    sixDofSolverManager->ResetMassCenter();
+    movingMeshManager  ->Restart();
 
     //! the mesh moves, it needs to recompute the mesh information.
     aleManager->ComputeMetrics();
@@ -353,7 +361,7 @@ void AleManager::SychonizeAleTime()
     PHSPACE::GlobalDataBase::UpdateData("aleSimulationTime", &aleSimulationTime, PHDOUBLE, 1);
 
     int aleStartStrategy = GlobalDataBase::GetIntParaFromDB("aleStartStrategy");
-    if(aleStartStrategy == 0)
+    if (aleStartStrategy == 0)
     {
         int outIterStep = 0;
         PHSPACE::GlobalDataBase::UpdateData("outnstep", &outIterStep, PHINT, 1);
@@ -413,7 +421,7 @@ void AleManager::DumpRestart()
     int numberOfFieldSaveSteps = GlobalDataBase::GetIntParaFromDB("intervalStepFlow");
     int maxSimuStep = GlobalDataBase::GetIntParaFromDB("maxSimuStep");
 
-    if(outerStep % numberOfFieldSaveSteps == 0 || outerStep == maxSimuStep)
+    if (outerStep % numberOfFieldSaveSteps == 0 || outerStep == maxSimuStep)
     {
         string aleFileName = "./results/aleRestartFile.dat";
         ios_base::openmode openMode = ios_base::out;
@@ -439,7 +447,7 @@ void BackupAllZonesOldGrid()
     int gridLevelIndex = 0;
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        Grid* grid = GetGrid(iZone, gridLevelIndex);
+        Grid *grid = GetGrid(iZone, gridLevelIndex);
         if (! grid) continue;
         grid->BackUpOldGrid();
     }
@@ -454,7 +462,7 @@ void DeAllocateOversetStorage()
         int gridLevelIndex = 0;
         for (int iZone = 0; iZone < numberOfZones; ++iZone)
         {
-            Grid* grid = GetGrid(iZone, gridLevelIndex);
+            Grid *grid = GetGrid(iZone, gridLevelIndex);
             if (!grid) continue;
             PHSolver *solver = GlobalSolvers::GetSolver(iZone, iSolver);
             solver->DeAllocateOversetInterfaceVar(grid);
@@ -471,7 +479,7 @@ void AllocateOversetStorage()
         int gridLevelIndex = 0;
         for (int iZone = 0; iZone < numberOfZones; ++iZone)
         {
-            Grid* grid = GetGrid(iZone, gridLevelIndex);
+            Grid *grid = GetGrid(iZone, gridLevelIndex);
             if (!grid) continue;
             PHSolver *solver = GlobalSolvers::GetSolver(iZone, iSolver);
             solver->RegisterOversetField();
@@ -549,16 +557,16 @@ RDouble GetRDoubleParameterFromDataBaseIfExist(int bodyIndex, const string &para
     return value;
 }
 
-string GetStringParameterFromDataBase(int bodyIndex, const string& parameterName)
+string GetStringParameterFromDataBase(int bodyIndex, const string &parameterName)
 {
     ostringstream oss;
     oss << parameterName << "_" << bodyIndex;
     return PHSPACE::GlobalDataBase::GetStrParaFromDB(oss.str());
 }
 
-int* GetIntegerArrayFromDataBase(const string& nameOfIntegerArray, int numberOfElements)
+int * GetIntegerArrayFromDataBase(const string &nameOfIntegerArray, int numberOfElements)
 {
-    int* integerArray = new int[numberOfElements];
+    int *integerArray = new int[numberOfElements];
 
     GlobalDataBase::GetData(nameOfIntegerArray, integerArray, PHINT, numberOfElements);
 
@@ -574,11 +582,8 @@ void GetRDoubleVectorFromDataBase(vector< RDouble >& parameter, int bodyIndex, c
 
 RDouble GetAleTimeStep()
 {
-    RDouble physicalTimeStep         = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
-    RDouble dimensionalReferenceTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalReferenceTime");
-    RDouble gridScaleFactor          = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
-
-    RDouble aleTimeStep = physicalTimeStep * dimensionalReferenceTime * gridScaleFactor;
+    //!dimensional real physical time step.
+    RDouble aleTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStepDimensional");
 
     return aleTimeStep;
 }

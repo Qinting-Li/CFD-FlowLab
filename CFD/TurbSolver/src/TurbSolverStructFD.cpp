@@ -39,7 +39,7 @@ void TurbSolverStrFD::GetDependentVariablesforStructHighOrder(Grid *gridIn)
     ObtainBoundaryValue(gridIn);
     ObtainGradientCellCenter(gridIn);
 
-    if(viscousType == TWO_EQU)
+    if (viscousType == TWO_EQU)
     {
         ObtainCrossing(gridIn);
         ObtainBlending(gridIn);
@@ -364,7 +364,7 @@ void TurbSolverStrFD::ObtainBoundaryValue(Grid *gridIn)
             {
                 VisWall(grid, structBC);
             }
-            else if(wallFunctionType == WALLFUNCTION::STANDARD)
+            else if (wallFunctionType == WALLFUNCTION::STANDARD)
             { 
                 VisWallWithWallFunctionStandard(grid, structBC);
             }
@@ -541,6 +541,8 @@ void TurbSolverStrFD::ObtainViscosity(Grid *gridIn)
                     }
                 }
             }
+            FillCornerPoint3D(SST_F2, ni, nj, nk);
+            GhostCell3D(SST_F2, ni, nj, nk);
         }
     }
 
@@ -790,6 +792,7 @@ void TurbSolverStrFD::ObtainBlending(Grid *gridIn)
         }
     }
     GhostCell3D(blend, ni, nj, nk);
+    FillCornerPoint3D(blend, ni, nj, nk);
 }
 
 
@@ -960,9 +963,9 @@ void TurbSolverStrFD::VisWall(Grid *gridIn, StructBC *structBC)
     }
 }
 
-void TurbSolverStrFD::VisWallWithWallFunctionStandard(Grid* gridIn, StructBC *structBC)
+void TurbSolverStrFD::VisWallWithWallFunctionStandard(Grid *gridIn, StructBC *structBC)
 {
-    StructGrid* grid = StructGridCast(gridIn);
+    StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
@@ -970,16 +973,16 @@ void TurbSolverStrFD::VisWallWithWallFunctionStandard(Grid* gridIn, StructBC *st
     Param_TurbSolverStruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
 
-    RDouble4D& qLaminar = *reinterpret_cast<RDouble4D*> (grid->GetDataPtr("q"));
-    RDouble4D& qTurbulence = *reinterpret_cast<RDouble4D*> (grid->GetDataPtr("q_turb"));
-    RDouble3D& viscousLaminars = *reinterpret_cast<RDouble3D*> (grid->GetDataPtr("visl"));
-    RDouble3D& viscousTurbulence = *reinterpret_cast<RDouble3D*> (grid->GetDataPtr("vist"));
+    RDouble4D &qLaminar = *reinterpret_cast<RDouble4D*> (grid->GetDataPtr("q"));
+    RDouble4D &qTurbulence = *reinterpret_cast<RDouble4D*> (grid->GetDataPtr("q_turb"));
+    RDouble3D &viscousLaminars = *reinterpret_cast<RDouble3D*> (grid->GetDataPtr("visl"));
+    RDouble3D &viscousTurbulence = *reinterpret_cast<RDouble3D*> (grid->GetDataPtr("vist"));
 
-    RDouble4D& faceNormalX = *reinterpret_cast<RDouble4D*> (grid->GetFaceNormalX());
-    RDouble4D& faceNormalY = *reinterpret_cast<RDouble4D*> (grid->GetFaceNormalY());
-    RDouble4D& faceNormalZ = *reinterpret_cast<RDouble4D*> (grid->GetFaceNormalZ());
+    RDouble4D &faceNormalX = *reinterpret_cast<RDouble4D*> (grid->GetFaceNormalX());
+    RDouble4D &faceNormalY = *reinterpret_cast<RDouble4D*> (grid->GetFaceNormalY());
+    RDouble4D &faceNormalZ = *reinterpret_cast<RDouble4D*> (grid->GetFaceNormalZ());
 
-    RDouble3D& wallDistant = *StructGridCast(grid)->GetWallDist();
+    RDouble3D &wallDistant = *StructGridCast(grid)->GetWallDist();
 
     int ist, ied, jst, jed, kst, ked;
     structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
@@ -1080,9 +1083,9 @@ void TurbSolverStrFD::VisWallWithWallFunctionStandard(Grid* gridIn, StructBC *st
     }
 }
 
-void TurbSolverStrFD::VisWallWithWallFunctionPAB3D(Grid* gridIn, StructBC *structBC)
+void TurbSolverStrFD::VisWallWithWallFunctionPAB3D(Grid *gridIn, StructBC *structBC)
 {
-    StructGrid* grid = StructGridCast(gridIn);
+    StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
@@ -1097,16 +1100,16 @@ void TurbSolverStrFD::VisWallWithWallFunctionPAB3D(Grid* gridIn, StructBC *struc
     Param_TurbSolverStruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
 
-    RDouble4D& qLaminar = *reinterpret_cast<RDouble4D*> (grid->GetDataPtr("q"));
-    RDouble4D& qTurbulence = *reinterpret_cast<RDouble4D*> (grid->GetDataPtr("q_turb"));
-    RDouble3D& viscousLaminars = *reinterpret_cast<RDouble3D*> (grid->GetDataPtr("visl"));
-    RDouble3D& viscousTurbulence = *reinterpret_cast<RDouble3D*> (grid->GetDataPtr("vist"));
+    RDouble4D &qLaminar = *reinterpret_cast<RDouble4D*> (grid->GetDataPtr("q"));
+    RDouble4D &qTurbulence = *reinterpret_cast<RDouble4D*> (grid->GetDataPtr("q_turb"));
+    RDouble3D &viscousLaminars = *reinterpret_cast<RDouble3D*> (grid->GetDataPtr("visl"));
+    RDouble3D &viscousTurbulence = *reinterpret_cast<RDouble3D*> (grid->GetDataPtr("vist"));
 
-    RDouble4D& faceNormalX = *reinterpret_cast<RDouble4D*> (grid->GetFaceNormalX());
-    RDouble4D& faceNormalY = *reinterpret_cast<RDouble4D*> (grid->GetFaceNormalY());
-    RDouble4D& faceNormalZ = *reinterpret_cast<RDouble4D*> (grid->GetFaceNormalZ());
+    RDouble4D &faceNormalX = *reinterpret_cast<RDouble4D*> (grid->GetFaceNormalX());
+    RDouble4D &faceNormalY = *reinterpret_cast<RDouble4D*> (grid->GetFaceNormalY());
+    RDouble4D &faceNormalZ = *reinterpret_cast<RDouble4D*> (grid->GetFaceNormalZ());
 
-    RDouble3D& wallDistant = *StructGridCast(grid)->GetWallDist();
+    RDouble3D &wallDistant = *StructGridCast(grid)->GetWallDist();
 
     int ist, ied, jst, jed, kst, ked;
     structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
@@ -1413,7 +1416,7 @@ void TurbSolverStrFD::FarFieldBC(Grid *gridIn, StructBC *structBC)
             }
         }
     }
-    delete []prims1;
+    delete [] prims1;
 }
 
 void TurbSolverStrFD::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy)
@@ -1862,7 +1865,7 @@ void TurbSolverStrFD::CompressDQ(DataContainer *&dataContainer, FieldProxy *fiel
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble4D &fieldSend = fieldProxy->GetField_STR();
 
@@ -1899,7 +1902,7 @@ void TurbSolverStrFD::DecompressDQ(DataContainer *&dataContainer, FieldProxy *fi
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble4D &fieldRecv = fieldProxy->GetField_STR();
 
@@ -1993,10 +1996,10 @@ void TurbSolverStrFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Field
         }
     }
 
-    delete []dqNeighbor;
-    delete []df_total;
-    delete []df;
-    delete []mat_abc;
+    delete [] dqNeighbor;
+    delete [] df_total;
+    delete [] df;
+    delete [] mat_abc;
 }
 
 void TurbSolverStrFD::SolveLUSGSBackward(Grid *gridIn, FieldProxy * dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
@@ -2073,10 +2076,10 @@ void TurbSolverStrFD::SolveLUSGSBackward(Grid *gridIn, FieldProxy * dqProxy, Fie
         }
     }
 
-    delete []dqNeighbor;
-    delete []df_total;
-    delete []df;
-    delete []mat_abc;
+    delete [] dqNeighbor;
+    delete [] df_total;
+    delete [] df;
+    delete [] mat_abc;
 }
 
 }

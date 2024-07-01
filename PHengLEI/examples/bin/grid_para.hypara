@@ -23,10 +23,11 @@
 //             9 -- Gridgen type of structured grid, *.dat/*.grd. 
 
 int gridtype   = 0;
+int axisup     = 1;
+int from_gtype = 5;
 int nAxisRotateTimes      = 0;
 int axisRotateOrder[]     = [1, 2, 3];
 double axisRotateAngles[] = [0.0, 0.0, 0.0]; 
-int from_gtype = 2;
 
 #########################################################################
 #                           File path                                   #

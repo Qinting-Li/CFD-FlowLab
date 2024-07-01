@@ -9,6 +9,10 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! @file      Geo_GridManager.h
+//! @brief     Explain this file briefly.
+//! @author    xxx
+
 #pragma once
 #include "Precision.h"
 #include "TypeDefine.h"

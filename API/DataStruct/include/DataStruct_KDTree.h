@@ -13,7 +13,7 @@
 //! @brief     DataStruct_KDTree defines a k-dimension Tree data structure.
 //!            The tree starts from root node, and has a coordinates range limit.
 //!            The node's definition refers to DataStruct_KDNode.
-//! @author    hekun.
+//! @author    He Kun.
 
 #pragma once
 #include "DataStruct_KDNode.h"
@@ -105,7 +105,7 @@ public:
     int dim;
     KDNode *root;
     KDHyperRect *rect;
-    void (*destr)(void *);
+    void (*destr)(int);
 
 public:
     //! Construct an K-Dimension tree.
@@ -131,9 +131,9 @@ public:
 
     void Clear();
 
-    void ClearRec(KDNode *node, void(*destr)(void *));
+    void ClearRec(KDNode *node, void(*destr)(int));
 
-    void DestructorKDData(void(*destr)(void *));
+    void DestructorKDData(void(*destr)(int));
 
     void ExtendHyperRect(int dim, const RDouble *pos);
 
@@ -185,7 +185,7 @@ public:
         return riter != NULL;
     };
 
-    void * Item(RDouble *pos)
+    int Item(RDouble *pos)
     {
         if (riter)
         {
@@ -195,7 +195,7 @@ public:
             }
             return riter->item->data;
         }
-        return NULL;
+        return 0;
     };
 
     RDouble * Position()
@@ -210,7 +210,7 @@ public:
         return NULL;
     };
 
-    void * itemData()
+    int itemData()
     {
         return Item(0);
     };
@@ -229,7 +229,7 @@ void KDNearestI(KDNode *node, const RDouble *pos, const RDouble **result, RDoubl
 
 KDHyperRect * DuplicateHyperRect(const KDHyperRect *rect);
 
-int KDInsert(KDTree *kdTree, const RDouble *pos, void *data);
+int KDInsert(KDTree *kdTree, const RDouble *pos, int data);
 
 int InsertRList(KDResNode *list, KDNode *item, RDouble distsq);
 
@@ -237,7 +237,7 @@ void FreeKDRes(KDRes *rset);
 
 int FindNearest(KDNode *node, const RDouble *pos, RDouble range, KDResNode *list, int ordered, int dim);
 
-int InsertRec(KDNode **nptr, const RDouble *pos, void *data, int dir, int dim);
+int InsertRec(KDNode **nptr, const RDouble *pos, int data, int dir, int dim);
 
 KDHyperRect * CreatHyperRect(int dim, const RDouble *min, const RDouble *max);
 

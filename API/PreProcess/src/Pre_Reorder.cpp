@@ -156,7 +156,7 @@ namespace Reorder
             offsetCell2Face[cellLabelRight]++;
         }		
 
-        //reset offsetCell2Face
+        //Reset offsetCell2Face
         printf("Before reset offsetCell2Face[%d]=%d, nTotalCellFaces = %d\n", static_cast<int>(nTotalCell-1), offsetCell2Face[nTotalCell-1], nTotalCellFaces);
         offsetCell2Face[0] = 0;
         for (int iCell = 1; iCell < nTotalCell; ++ iCell)
@@ -261,7 +261,7 @@ namespace Reorder
 
         printf("nTotalDist = %d, nTotalCell = %d\n", nTotalDist, nTotalCell);
         */
-        delete []bandwidthOfEachCell;    bandwidthOfEachCell = NULL;		
+        delete [] bandwidthOfEachCell;    bandwidthOfEachCell = NULL;		
     }
     
     void CallReorderFaceLabel(Base_Grid_Conn *gconn)
@@ -310,7 +310,7 @@ namespace Reorder
         SetOffSetCell2Face(static_cast<int>(nTotalCell), nFaceOfEachCell, offsetCell2Face);
         //set cell2Face
         SetCell2Face(static_cast<int>(nTotalFace), static_cast<int>(nTotalCell), oldLeftCellOfFace, oldRightCellOfFace, offsetCell2Face, cell2Face);
-        //reset offsetCell2Face
+        //Reset offsetCell2Face
         printf("Before reset offsetCell2Face[%d]=%d, nTotalCellFaces = %d\n", static_cast<int>(nTotalCell-1), offsetCell2Face[nTotalCell-1], nTotalCellFaces);
         //offsetCell2Face is modified due to update of cell2Face
         //set offsetCell2Face again
@@ -747,7 +747,7 @@ namespace Reorder
         //set cell2Face
         SetCell2Face(static_cast<int>(nTotalFace), static_cast<int>(nTotalCell), oldLeftCellOfFace, oldRightCellOfFace, offsetCell2Face, cell2Face);
         
-        //reset offsetCell2Face
+        //Reset offsetCell2Face
         printf("Before reset offsetCell2Face[%d]=%d, nTotalCellFaces = %d\n", static_cast<int>(nTotalCell)-1, offsetCell2Face[nTotalCell-1], nTotalCellFaces);
         
         //offsetCell2Face is modified due to update of cell2Face
@@ -830,11 +830,11 @@ namespace Reorder
                 //get the minimum degree in cellIDSortCur, start the next iteration
                 rStart = FindMinCellIDSortCur(numSortCur, cellIDSortCur, nFaceOfEachCell);
                 //printf("rStart = %d in numSortCur %d\n", rStart, numSortCur);
-                //reset R by -1
+                //Reset R by -1
                 for (int iCell = 0; iCell < nTotalCell; ++ iCell) reorderCell[iCell] = -1;
-                //reset numSortCur by -1
+                //Reset numSortCur by -1
                 ResetCellSort(numSortCur, cellIDSortCur);
-                //reset numSortNext by -1
+                //Reset numSortNext by -1
                 ResetCellSort(numSortNext, cellIDSortNext);
 
                 reorderCell[rStart] = 1;
@@ -850,12 +850,12 @@ namespace Reorder
 
         printf("Reorder cell index ...\n");
         printf("Start from %d\n", rStart);
-        //reset reorderCell by -1
+        //Reset reorderCell by -1
         for (int iCell = 0; iCell < nTotalCell; ++ iCell) reorderCell[iCell] = -1;
-        //reset numSortCur by -1
+        //Reset numSortCur by -1
         ResetCellSort(numSortCur, cellIDSortCur);
 
-        //reset numSortNext by -1
+        //Reset numSortNext by -1
         ResetCellSort(numSortNext, cellIDSortNext);
     
         //set rStart as 0, and numVertex as 1
@@ -1236,7 +1236,7 @@ namespace Reorder
             if (numCells[iCell] != 1) printf("CheckNewCell, cellID %d in newCell breaks rule 2, has %d cells\n", iCell, numCells[iCell]);
         }	
 
-        delete []numCells;    numCells = NULL;
+        delete [] numCells;    numCells = NULL;
     }
     //! Compute nFaceOfEachCell and nTotalCellFaces
     //! It should be noted that boundary faces are not considered here.
@@ -1406,7 +1406,7 @@ namespace Reorder
         }
         printf("nTotalDist = %d, nTotalCell = %d\n", nTotalDist, nTotalCell);
         
-        delete []bandwidthOfEachCell;   bandwidthOfEachCell = NULL;		
+        delete [] bandwidthOfEachCell;   bandwidthOfEachCell = NULL;		
     }
 
     //! Update face_number_of_each_face by swap method
@@ -1596,7 +1596,7 @@ namespace Reorder
                 double percent = double(diffCount[i])/totalNum;
                 printf("i = %d, percent = %f\n", i, percent);
             }
-            delete []diffCount;   diffCount = NULL;
+            delete [] diffCount;   diffCount = NULL;
         
     }
     //!A caller for MetricLeftRightCellOfFace

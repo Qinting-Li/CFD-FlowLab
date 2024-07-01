@@ -144,7 +144,7 @@ void FantasyWriteToFluent(const string &gridFileName, Grid **grids)
     fstream outfile;
     OpenFile(outfile, gridFileName, ios::out);
 
-    string headerInformation = "Grid convert from fts file";
+    string headerInformation = "\"Grid convert from fts file\"";
     outfile << "(" << FLUENT_HEADER << " " << headerInformation << ")" << endl;
     outfile << endl;
 
@@ -165,7 +165,7 @@ void FantasyWriteToFluent(const string &gridFileName, Grid **grids)
     int nodeType = 0;
     outfile << "(" << FLUENT_COMMENT << " \"Number of Nodes : " << nTNode << "\")" << endl;
     outfile << "(" << FLUENT_NODES << " " << "(" << Dec2Hex(zoneID) << " " 
-            << Dec2Hex(firstIndexOfNode) << " " << Dec2Hex(lastIndexOfNode) << " " << Dec2Hex(nodeType) << " " << Dec2Hex(dimension) << ")" << ")"<< endl;
+            << Dec2Hex(firstIndexOfNode) << " " << Dec2Hex(lastIndexOfNode) << " " << Dec2Hex(nodeType) << " " << Dec2Hex(dimension) << ")" << ")" << endl;
     outfile << endl;
 
     //! Total faces information.
@@ -175,12 +175,12 @@ void FantasyWriteToFluent(const string &gridFileName, Grid **grids)
     int firstIndexOfFace = 1;
     int lastIndexOfFace  = nTFace - (1 - firstIndexOfFace);
 
-    int faceType = 0;
+    int faceType = 5;
     outfile << "(" << FLUENT_COMMENT << " \"Total Number of Faces : " << nTFace << "\")" << endl;
     outfile << "(" << FLUENT_COMMENT << " \"       Boundary Faces : " << nBFace << "\")" << endl;
     outfile << "(" << FLUENT_COMMENT << " \"       Interior Faces : " << numberOfInteriorFace << "\")" << endl;
     outfile << "(" << FLUENT_FACES << " " << "(" << Dec2Hex(zoneID) << " " 
-            << Dec2Hex(firstIndexOfFace) << " " << Dec2Hex(lastIndexOfFace) << " " << Dec2Hex(faceType) << ")" << ")"<< endl;
+            << Dec2Hex(firstIndexOfFace) << " " << Dec2Hex(lastIndexOfFace) << " " << Dec2Hex(faceType) << ")" << ")" << endl;
     outfile << endl;
 
 
@@ -192,7 +192,7 @@ void FantasyWriteToFluent(const string &gridFileName, Grid **grids)
     int elmentType = 0;
     outfile << "(" << FLUENT_COMMENT << " \"Total Number of Cells : " << nTCell << "\")" << endl;
     outfile << "(" << FLUENT_CELLS << " " << "(" << Dec2Hex(zoneID) << " " 
-            << Dec2Hex(firstIndexOfCell) << " " << Dec2Hex(lastIndexOfCell) << " " << Dec2Hex(elmentType) << ")" << ")"<< endl;
+            << Dec2Hex(firstIndexOfCell) << " " << Dec2Hex(lastIndexOfCell) << " " << Dec2Hex(elmentType) << ")" << ")" << endl;
     outfile << endl;
 
 
@@ -205,7 +205,7 @@ void FantasyWriteToFluent(const string &gridFileName, Grid **grids)
     nodeType = 1;
     outfile << "(" << FLUENT_COMMENT << " \"Zone " << zoneID << " Number of Nodes : " << nTNode << "\")" << endl;
     outfile << "(" << FLUENT_NODES << " " << "(" << Dec2Hex(zoneID) << " " 
-        << Dec2Hex(firstIndexOfNode) << " " << Dec2Hex(lastIndexOfNode) << " " << Dec2Hex(nodeType) << " " << Dec2Hex(dimension) << ")" << "("<< endl;
+            << Dec2Hex(firstIndexOfNode) << " " << Dec2Hex(lastIndexOfNode) << " " << Dec2Hex(nodeType) << " " << Dec2Hex(dimension) << ")" << "(" << endl;
     outfile.setf(ios::scientific);
     outfile.precision(15);
     for (int iNode = 0; iNode < nTNode; ++ iNode)
@@ -224,14 +224,14 @@ void FantasyWriteToFluent(const string &gridFileName, Grid **grids)
     // Body of Cells.
     ++ zoneID;
     int type   = 1;
-    elmentType = 1;
+    elmentType = 7;
     PrintToWindow("Warning: consider polyhedral here when elmentType !=0 \n");
     outfile << "(" << FLUENT_COMMENT << " \"Zone " << zoneID
             << " " << nTCell << " cells "
-            << firstIndexOfCell << ".." << lastIndexOfCell <<"\")" << endl;
+            << firstIndexOfCell << ".." << lastIndexOfCell << "\")" << endl;
 
     outfile << "(" << FLUENT_CELLS << " " << "(" << Dec2Hex(zoneID) << " " 
-            << Dec2Hex(firstIndexOfCell) << " " << Dec2Hex(lastIndexOfCell) << " " << Dec2Hex(type) << " " << Dec2Hex(elmentType) << ")" << ")"<< endl;
+            << Dec2Hex(firstIndexOfCell) << " " << Dec2Hex(lastIndexOfCell) << " " << Dec2Hex(type) << " " << Dec2Hex(elmentType) << ")" << ")" << endl;
     outfile << "(" << FLUENT_C45 << " " << "(" << zoneID << " fluid unspecified)())" << endl;
     outfile << endl;
 
@@ -264,20 +264,20 @@ void FantasyWriteToFluent(const string &gridFileName, Grid **grids)
     //! Interior face.
     ++ zoneID;
     outfile << "(" << FLUENT_COMMENT << " \"Zone " << zoneID 
-            <<" " << numberOfInteriorFace << " faces " 
+            << " " << numberOfInteriorFace << " faces " 
             << firstIndex << ".." << lastIndex << ", " << "Interior" << "\")" << endl;
 
     outfile << "(" << FLUENT_FACES << " " << "(" << Dec2Hex(zoneID) << " " 
-            << Dec2Hex(firstIndex) << " " << Dec2Hex(lastIndex) << " " << Dec2Hex(FLUENT_SPACE::INTERIOR) << " "<< Dec2Hex(faceType) << ")" << "("<< endl;
+            << Dec2Hex(firstIndex) << " " << Dec2Hex(lastIndex) << " " << Dec2Hex(FLUENT_SPACE::INTERIOR) << " " << Dec2Hex(faceType) << ")" << "(" << endl;
 
     for (int iFace = nBFace; iFace < nTFace; ++ iFace)
     {
         outfile << Dec2Hex(nodeNumOfEachFace[iFace]) << " ";
 
-        long long int firstNodePosi = nodePosi[iFace];
+        long long int firstNodePosi = nodePosi[iFace] + nodeNumOfEachFace[iFace] - 1;
         for (int iNode = 0; iNode < nodeNumOfEachFace[iFace]; ++ iNode)
         {
-            outfile << Dec2Hex(face2node[firstNodePosi++] + 1) << " ";
+            outfile << Dec2Hex(face2node[firstNodePosi --] + 1) << " ";
         }
 
         outfile << Dec2Hex(leftCellofFace[iFace] + 1) << " " << Dec2Hex(rightCellofFace[iFace] + 1) << endl;
@@ -304,11 +304,11 @@ void FantasyWriteToFluent(const string &gridFileName, Grid **grids)
 
         outfile << endl;
         outfile << "(" << FLUENT_COMMENT << " \"Zone " << zoneID 
-                <<" " << faceNum << " faces " 
+                << " " << faceNum << " faces " 
                 << firstIndex << ".." << lastIndex << ", " << bcName << "\")" << endl;
 
         outfile << "(" << FLUENT_FACES << " " << "(" << Dec2Hex(zoneID) << " " 
-            << Dec2Hex(firstIndex) << " " << Dec2Hex(lastIndex) << " " << Dec2Hex(bctypeMap[bcType]) << " "<< Dec2Hex(faceType) << ")" << "("<< endl;
+                << Dec2Hex(firstIndex) << " " << Dec2Hex(lastIndex) << " " << Dec2Hex(bctypeMap[bcType]) << " " << Dec2Hex(faceType) << ")" << "(" << endl;
 
         int rightCell = 0;
         for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
@@ -317,10 +317,10 @@ void FantasyWriteToFluent(const string &gridFileName, Grid **grids)
 
             outfile << Dec2Hex(nodeNumOfEachFace[faceIndex1]) << " ";
 
-            long long int firstNodePosi = nodePosi[faceIndex1];
+            long long int firstNodePosi = nodePosi[faceIndex1] + nodeNumOfEachFace[faceIndex1] - 1;
             for (int iNode = 0; iNode < nodeNumOfEachFace[faceIndex1]; ++ iNode)
             {
-                outfile << Dec2Hex(face2node[firstNodePosi++] + 1) << " ";
+                outfile << Dec2Hex(face2node[firstNodePosi --] + 1) << " ";
             }
 
             outfile << Dec2Hex(leftCellofFace[faceIndex1] + 1) << " " << rightCell << endl;
@@ -658,14 +658,14 @@ void Fantasy2Ustar2D()
     using namespace PHSPACE;
 
     int nBlocks;
-    file.read(reinterpret_cast<char*>(&nBlocks), sizeof(int));
+    file.read(reinterpret_cast<char *>(&nBlocks), sizeof(int));
 
     int *block_proc = new int [nBlocks];
     int *block_idx  = new int [nBlocks];
     int *block_type = new int [nBlocks];
-    file.read(reinterpret_cast<char*>(block_proc), nBlocks * sizeof(int));
-    file.read(reinterpret_cast<char*>(block_idx),  nBlocks * sizeof(int));
-    file.read(reinterpret_cast<char*>(block_type), nBlocks * sizeof(int));
+    file.read(reinterpret_cast<char *>(block_proc), nBlocks * sizeof(int));
+    file.read(reinterpret_cast<char *>(block_idx),  nBlocks * sizeof(int));
+    file.read(reinterpret_cast<char *>(block_type), nBlocks * sizeof(int));
     delete [] block_proc;
     delete [] block_idx;
     delete [] block_type;
@@ -681,9 +681,9 @@ void Fantasy2Ustar2D()
     int sizeint = sizeof(int);
     int sizeRealGeom = sizeof(RDouble);
 
-    file.read(reinterpret_cast<char*>(&nTotalNode), sizeint);
-    file.read(reinterpret_cast<char*>(&nTotalFace), sizeint);
-    file.read(reinterpret_cast<char*>(&nTotalCell), sizeint);
+    file.read(reinterpret_cast<char *>(&nTotalNode), sizeint);
+    file.read(reinterpret_cast<char *>(&nTotalFace), sizeint);
+    file.read(reinterpret_cast<char *>(&nTotalCell), sizeint);
 
     cout << "the total numbers of nodes     :" << nTotalNode;
     cout << "the total numbers of faces   :" << nTotalFace;
@@ -697,15 +697,15 @@ void Fantasy2Ustar2D()
     y = new RDouble[nTotalNode];
     z = new RDouble[nTotalNode];
 
-    file.read(reinterpret_cast<char*>(x), nTotalNode * sizeRealGeom);
-    file.read(reinterpret_cast<char*>(y), nTotalNode * sizeRealGeom);
-    file.read(reinterpret_cast<char*>(z), nTotalNode * sizeRealGeom);
+    file.read(reinterpret_cast<char *>(x), nTotalNode * sizeRealGeom);
+    file.read(reinterpret_cast<char *>(y), nTotalNode * sizeRealGeom);
+    file.read(reinterpret_cast<char *>(z), nTotalNode * sizeRealGeom);
 
     cout << "mesh nodes reading end.\n";
 
     int *node_number_of_each_face = new int[nTotalFace];
     //! Assign the value to node_number_of_each_face.
-    file.read(reinterpret_cast<char*>(node_number_of_each_face), nTotalFace * sizeint);
+    file.read(reinterpret_cast<char *>(node_number_of_each_face), nTotalFace * sizeint);
 
     int nsum = 0;
     for (int iFace = 0; iFace < nTotalFace; ++ iFace)
@@ -717,24 +717,24 @@ void Fantasy2Ustar2D()
     //! Face to Node connection relationship.
     int *face2node = new int [nsum];
 
-    file.read(reinterpret_cast<char*>(face2node), nsum * sizeint);
+    file.read(reinterpret_cast<char *>(face2node), nsum * sizeint);
 
     cout << "set the connection relationship of face to cell......\n";
 
     int *left_cell_of_face  = new int [nTotalFace];
     int *right_cell_of_face = new int [nTotalFace];
-    file.read(reinterpret_cast<char*>(left_cell_of_face), nTotalFace * sizeint);
-    file.read(reinterpret_cast<char*>(right_cell_of_face), nTotalFace * sizeint);
+    file.read(reinterpret_cast<char *>(left_cell_of_face), nTotalFace * sizeint);
+    file.read(reinterpret_cast<char *>(right_cell_of_face), nTotalFace * sizeint);
 
     cout << "set the boundary conditions......\n";
-    file.read(reinterpret_cast<char*>(&nBoundFace), sizeint);
+    file.read(reinterpret_cast<char *>(&nBoundFace), sizeint);
 
     //! Set the boundary conditions.
     int *bctype = new int [nBoundFace];
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         int tmp;
-        file.read(reinterpret_cast<char*>(&tmp), sizeint);
+        file.read(reinterpret_cast<char *>(&tmp), sizeint);
         bctype[iFace] = tmp;
     }
 
@@ -834,14 +834,14 @@ void Fantasy2Ustar3D()
     using namespace PHSPACE;
 
     int nBlocks;
-    file.read(reinterpret_cast<char*>(&nBlocks), sizeof(int));
+    file.read(reinterpret_cast<char *>(&nBlocks), sizeof(int));
 
     int *block_proc = new int [nBlocks];
     int *block_idx  = new int [nBlocks];
     int *block_type = new int [nBlocks];
-    file.read(reinterpret_cast<char*>(block_proc), nBlocks * sizeof(int));
-    file.read(reinterpret_cast<char*>(block_idx),  nBlocks * sizeof(int));
-    file.read(reinterpret_cast<char*>(block_type), nBlocks * sizeof(int));
+    file.read(reinterpret_cast<char *>(block_proc), nBlocks * sizeof(int));
+    file.read(reinterpret_cast<char *>(block_idx),  nBlocks * sizeof(int));
+    file.read(reinterpret_cast<char *>(block_type), nBlocks * sizeof(int));
     delete [] block_proc;
     delete [] block_idx;
     delete [] block_type;
@@ -857,12 +857,12 @@ void Fantasy2Ustar3D()
     int sizeint = sizeof(int);
     int sizeRealGeom = sizeof(RDouble);
 
-    file.read(reinterpret_cast<char*>(&nTotalNode), sizeint);
-    file.read(reinterpret_cast<char*>(&nTotalFace), sizeint);
-    file.read(reinterpret_cast<char*>(&nTotalCell), sizeint);
+    file.read(reinterpret_cast<char *>(&nTotalNode), sizeint);
+    file.read(reinterpret_cast<char *>(&nTotalFace), sizeint);
+    file.read(reinterpret_cast<char *>(&nTotalCell), sizeint);
 
     cout << "the total numbers of nodes     :" << nTotalNode;
-    cout << "the total numbers of faces   :" << nTotalFace;
+    cout << "the total numbers of faces     :" << nTotalFace;
     cout << "the total numbers of cells     :" << nTotalCell << "\n";
 
     RDouble *x, *y, *z;
@@ -873,15 +873,15 @@ void Fantasy2Ustar3D()
     y = new RDouble[nTotalNode];
     z = new RDouble[nTotalNode];
 
-    file.read(reinterpret_cast<char*>(x), nTotalNode * sizeRealGeom);
-    file.read(reinterpret_cast<char*>(y), nTotalNode * sizeRealGeom);
-    file.read(reinterpret_cast<char*>(z), nTotalNode * sizeRealGeom);
+    file.read(reinterpret_cast<char *>(x), nTotalNode * sizeRealGeom);
+    file.read(reinterpret_cast<char *>(y), nTotalNode * sizeRealGeom);
+    file.read(reinterpret_cast<char *>(z), nTotalNode * sizeRealGeom);
 
     cout << "mesh nodes reading end.\n";
 
     int *node_number_of_each_face = new int[nTotalFace];
     //! Assign the value to node_number_of_each_face.
-    file.read(reinterpret_cast<char*>(node_number_of_each_face), nTotalFace * sizeint);
+    file.read(reinterpret_cast<char *>(node_number_of_each_face), nTotalFace * sizeint);
 
     int nsum = 0;
     for (int iFace = 0; iFace < nTotalFace; ++ iFace)
@@ -893,24 +893,24 @@ void Fantasy2Ustar3D()
     //! Face to Node connection relationship.
     int *face2node = new int [nsum];
 
-    file.read(reinterpret_cast<char*>(face2node), nsum * sizeint);
+    file.read(reinterpret_cast<char *>(face2node), nsum * sizeint);
 
     cout << "set the connection relationship of face to cell ......\n";
 
     int *left_cell_of_face  = new int[nTotalFace];
     int *right_cell_of_face = new int[nTotalFace];
-    file.read(reinterpret_cast<char*>(left_cell_of_face), nTotalFace * sizeint);
-    file.read(reinterpret_cast<char*>(right_cell_of_face), nTotalFace * sizeint);
+    file.read(reinterpret_cast<char *>(left_cell_of_face), nTotalFace * sizeint);
+    file.read(reinterpret_cast<char *>(right_cell_of_face), nTotalFace * sizeint);
 
     cout << "set the boundary conditions......\n";
-    file.read(reinterpret_cast<char*>(&nBoundFace), sizeint);
+    file.read(reinterpret_cast<char *>(&nBoundFace), sizeint);
 
     //! Set the boundary conditions.
     int *bctype = new int [nBoundFace];
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         int tmp;
-        file.read(reinterpret_cast<char*>(&tmp), sizeint);
+        file.read(reinterpret_cast<char *>(&tmp), sizeint);
         bctype[iFace] = tmp;
     }
     file.close();

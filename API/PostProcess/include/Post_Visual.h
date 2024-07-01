@@ -73,6 +73,9 @@ public:
     //! @param[in] name              Source data's name.
     //! @param[in] cellCenterData    Pointer the Source cell center data.
     LIB_EXPORT void UpdateVisualNodeVarPtr(const string &name, Int3D &oversetcellCenterdata);
+
+    LIB_EXPORT void UpdateVisualNodeNotInterpolation(const string &name, int *cellCenterdata);
+
     //! Obtain data's pointer(address) from database by name.
     //! If the dataSet doesn't has a same name data, returns null.
     //! @param[in] name    Source data's name.
@@ -251,7 +254,7 @@ public:
     //! @param[in] variableNumber    variable's index.
     string GetVariableName(int variableNumber) const;
 
-    int* GetVisualVariablesType() const { return visualVariables; }
+    int * GetVisualVariablesType() const { return visualVariables; }
 
     int GetVisualVariablesType(int nIndex) const { return visualVariables[nIndex]; }
 

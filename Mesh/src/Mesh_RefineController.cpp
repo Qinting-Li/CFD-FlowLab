@@ -1303,7 +1303,7 @@ void Mesh_RefineController::GenerateComputationalUnstructuredGrid(UnstructGrid *
     grid->CreateUnstructBCSet(nBCRegionUnstruct);
 
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int* bcRegionIDofBCFace = new int[numberOfBoundaryFaces];
+    int *bcRegionIDofBCFace = new int[numberOfBoundaryFaces];
     set<string>::iterator iter;
     int count = 0;
 
@@ -1459,7 +1459,7 @@ void Mesh_RefineController::CompressRefineType(DataContainer *dataContainer, int
     int iNeighborZone                            = interfaceInformation->FindIthNeighbor(neighborZoneIndex);
     int interfaceNumberBetweenTwoNeighboringZone = interfaceInformation->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend          = interfaceInformation->GetFaceIndexForSend(iNeighborZone);
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     int *dataTemp = new int[interfaceNumberBetweenTwoNeighboringZone];
     for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
@@ -1483,7 +1483,7 @@ void Mesh_RefineController::DecompressRefineType(DataContainer *dataContainer, i
     int iNeighborZone                            = interfaceInformation->FindIthNeighbor(neighborZoneIndex);
     int interfaceNumberBetweenTwoNeighboringZone = interfaceInformation->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive       = interfaceInformation->GetFaceIndexForRecv(iNeighborZone);
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     int *dataTemp = new int[interfaceNumberBetweenTwoNeighboringZone];
     PHRead(dataContainer, dataTemp, interfaceNumberBetweenTwoNeighboringZone);

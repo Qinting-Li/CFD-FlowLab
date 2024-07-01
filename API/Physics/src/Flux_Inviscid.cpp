@@ -138,7 +138,7 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
     int nChemical = invSchemePara->GetNumberOfChemical();
     int nPrecondition = invSchemePara->GetIfPrecondition();
     int nIdealState = invSchemePara->GetIfIdealState();
-
+    int isUnsteady = invSchemePara->GetIfIsUnsteady();
     RDouble entrFixCoefLeft = invSchemePara->GetLeftEntropyFixCoefficient();
     RDouble entrFixCoefRight = invSchemePara->GetRightEntropyFixCoefficient();
     RDouble **qL = invSchemePara->GetLeftQ();
@@ -154,17 +154,20 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
     RDouble **flux = invSchemePara->GetFlux();
     RDouble **tl = invSchemePara->GetLeftTemperature();
     RDouble **tr = invSchemePara->GetRightTemperature();
-    
-    RDouble *timeCoeffL =NULL;
-    RDouble *timeCoeffR =NULL;
-    RDouble *preconCoeffL =NULL;
-    RDouble *preconCoeffR =NULL;
+
+    RDouble *timeCoeffL = nullptr;
+    RDouble *timeCoeffR = nullptr;
+    RDouble *preconCoeffL = nullptr;
+    RDouble *preconCoeffR = nullptr;
     if (nPrecondition == 1)
     {
-        timeCoeffL = face_proxy->GetTimeCoefficientL();
-        timeCoeffR = face_proxy->GetTimeCoefficientR();
         preconCoeffL = face_proxy->GetPreconCoefficientL();
         preconCoeffR = face_proxy->GetPreconCoefficientR();
+        if (isUnsteady)
+        {
+        timeCoeffL = face_proxy->GetTimeCoefficientL();
+        timeCoeffR = face_proxy->GetTimeCoefficientR();
+        }
     }
 
     using namespace IDX;
@@ -284,20 +287,20 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
         RDouble gamm1 = gama - one;
 
         RDouble vSquareRoeAverage = uRoeAverage * uRoeAverage + vRoeAverage * vRoeAverage + wRoeAverage * wRoeAverage;
-		RDouble absVel = sqrt(vSquareRoeAverage);
+        RDouble absVel = sqrt(vSquareRoeAverage);
         RDouble hRoeAverage = gama / gamm1 * pRoeAverage / rRoeAverage + half * vSquareRoeAverage;
 
         RDouble vn = xsn * uRoeAverage + ysn * vRoeAverage + zsn * wRoeAverage - vb;
         RDouble theta = vn + vb;
-                       
-        //! c2: square of sound speed.             
+
+        //! c2: square of sound speed.
         RDouble c2 = gamm1 * (hRoeAverage - half * vSquareRoeAverage);
 
         //! Sound speed: gama * pRoeAverage / rRoeAverage.
         RDouble cm = sqrt(ABS(c2));
 
-        RDouble cnew2 = 0, cnew = 0, vnew = 0, timeCoeff = 0, preconCoeff = 0, alpha = 0;
-        RDouble eigv1 = 0, eigv2 = 0, eigv3 = 0;
+        RDouble vntmp = 0.0, cnew2 = 0.0, cnew = 0.0, vnew = 0.0, timeCoeff = 0.0, preconCoeff = 0.0, alpha = 0.0;
+        RDouble eigv1 = 0.0, eigv2 = 0.0, eigv3 = 0.0;
         if (nPrecondition == 0)
         {
             eigv1 = ABS(vn);
@@ -306,13 +309,20 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
         }
         else
         {
-
-            timeCoeff = (timeCoeffL[iFace] + timeCoeffR[iFace] * ratio) * roeAverageCoef;
             preconCoeff = (preconCoeffL[iFace] + preconCoeffR[iFace] * ratio) * roeAverageCoef;
-            eigv1 = timeCoeff * ABS(vn);
-            vnew  = half * timeCoeff * vn * (one + preconCoeff);
-            cnew  = half * timeCoeff * sqrt(((preconCoeff - one) * vn) * ((preconCoeff - one) * vn) + four * preconCoeff * c2);
-            cnew2  = cnew * cnew;
+            vntmp = vn;
+            vnew  = half * vn * (one + preconCoeff);
+            cnew  = half * sqrt(((preconCoeff - one) * vn) * ((preconCoeff - one) * vn) + four * preconCoeff * c2);
+
+            if (isUnsteady)
+            {
+            timeCoeff = (timeCoeffL[iFace] + timeCoeffR[iFace] * ratio) * roeAverageCoef;
+                vntmp *= timeCoeff;
+                vnew  *= timeCoeff;
+                cnew  *= timeCoeff;
+            }
+
+            eigv1 = ABS(vntmp);
             eigv2 = ABS(vnew + cnew);
             eigv3 = ABS(vnew - cnew);
         }
@@ -354,7 +364,6 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
             Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, pressureCoeffL[iFace], pressureCoeffR[iFace], absVel, vnew, cnew, RoeEntropyFixMethod, entrFixCoefLeft, entrFixCoefRight);
         }
         
-
         RDouble xi1 = 0.0, xi2 = 0.0, xi3 = 0.0, xi4 = 0.0;
         if (nPrecondition == 0) 
         {
@@ -420,12 +429,12 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
 
     }
 
-    delete []prim;    prim = NULL;
-    delete []primL;    primL = NULL;
-    delete []primR;    primR = NULL;
-    delete []qConserveL;    qConserveL = NULL;
-    delete []qConserveR;    qConserveR = NULL;
-    delete []dq;    dq = NULL;
+    delete [] prim;    prim = nullptr;
+    delete [] primL;    primL = nullptr;
+    delete [] primR;    primR = nullptr;
+    delete [] qConserveL;    qConserveL = nullptr;
+    delete [] qConserveR;    qConserveR = nullptr;
+    delete [] dq;    dq = nullptr;
 }
 #ifdef USE_GMRESSOLVER
 //! GMRESCSR
@@ -13030,8 +13039,8 @@ void Vanleer_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePar
     using namespace IDX;
     using namespace GAS_SPACE;
 
-    RDouble *fluxL    = new RDouble[nEquation];
-    RDouble *fluxR    = new RDouble[nEquation];
+    RDouble *fluxL = new RDouble[nEquation];
+    RDouble *fluxR = new RDouble[nEquation];
     RDouble *primL = new RDouble[nEquation];
     RDouble *primR = new RDouble[nEquation];
     RDouble temperaturesL[3], temperaturesR[3];
@@ -13248,10 +13257,10 @@ void Vanleer_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePar
         }
     }
 
-    delete [] fluxL;
-    delete [] fluxR;
-    delete [] primL;
-    delete [] primR;
+    delete [] fluxL;    fluxL = nullptr;
+    delete [] fluxR;    fluxR = nullptr;
+    delete [] primL;    primL = nullptr;
+    delete [] primR;    primR = nullptr;
 }
 
 
@@ -14444,7 +14453,7 @@ void RoeAveragedVariables(RDouble rhoLeft, RDouble uLeft, RDouble vLeft, RDouble
                           RDouble &rhoRoe, RDouble &uRoe, RDouble &vRoe, RDouble &wRoe, RDouble &pRoe)
 {
     RDouble hLeft  = gamaLeft  / (gamaLeft  - 1.0) * pLeft / rhoLeft + half * (uLeft * uLeft + vLeft * vLeft + wLeft * wLeft);
-    RDouble hRight  = gamaRight / (gamaRight - 1.0) * pRight / rhoRight + half * (uRight * uRight + vRight * vRight + wRight * wRight);
+    RDouble hRight = gamaRight / (gamaRight - 1.0) * pRight / rhoRight + half * (uRight * uRight + vRight * vRight + wRight * wRight);
 
     RDouble tmp0 = sqrt(rhoRight / rhoLeft);
     RDouble tmp1 = 1.0 / (1.0 + tmp0);

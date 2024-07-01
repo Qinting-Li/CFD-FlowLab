@@ -69,7 +69,7 @@ opt(ERROR_DATA_DEBUG "Build error data debug or not" OFF)
 opt(OCC "Use OpenCasCade Library" OFF) #Use occ or not.
 opt(OMP "Use OpenMP or not" OFF) #Use OPenMP or not.
 opt(SMARTARRAY "Use smart array more efficenet than origial array" ON) #Use smart array or not.
-opt(TecplotLib "Use tecplot lib to dump binary flow file" OFF) #Use tecplotlib or not.
+opt(TecplotLib "Use tecplot lib to dump binary flow file" ON) #Use tecplotlib or not.
 opt_build(LBMSolverMPI "Build LBM-MPI module or not" OFF) #Build LBM-MPI or not.
 opt_build(LBMSolverOMP "Build LBM-OMP module or not" OFF) #Build LBM-OMP or not.
 opt(Windows_X64 "Compile PHengLEI X64 on Windows platform" ON) ###
@@ -334,6 +334,9 @@ else(WIN32)
 endif(WIN32)
 
 set(CFD_H_PATH ${PROJECT_SOURCE_DIR}/../CFD)
+# FIND_INCLUDE_DIR(NSSOLVER_H_PATH ${CFD_H_PATH}/NSSolver)
+# include_directories(${NSSOLVER_H_PATH})
+
 include_directories(${CFD_H_PATH}/NSSolver/include)
 include_directories(${CFD_H_PATH}/Solver/include)
 include_directories(${CFD_H_PATH}/TurbSolver/include)

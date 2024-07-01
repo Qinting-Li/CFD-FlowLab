@@ -1842,7 +1842,7 @@ void CGNSFactory::DumpSelfDefinePartInformation()
             set<string> :: iterator nameIter;
 
             nameIter = nameContainer.find(name);
-            //if(nameIter == nameContainer.end())
+            //if (nameIter == nameContainer.end())
             if (nameIter == nameContainer.end() && fantasyBCType >= PHENGLEI::StartNumberOfBodyOfHyperFLOW && fantasyBCType <= PHENGLEI::ENDNumberOfBodyOfHyperFLOW)
             {
                 boundaryName.push_back(name);
@@ -1992,7 +1992,7 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
 
     grid->CreateUnstructBCSet(nBCRegionUnstruct);
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int* bcRegionIDofBCFace = new int[nBoundFace];
+    int *bcRegionIDofBCFace = new int[nBoundFace];
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
         UnstructBC *unstructBC = new UnstructBC(iBCRegionUnstruct);
@@ -2039,7 +2039,7 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
     cout << "Number of Original Boundary Condition: " << cgnsBCList.size() << "\n";
     for (int iBC = 0; iBC < cgnsBCList.size(); ++ iBC)
     {
-        cout<< "  The "<< iBC + 1 << " CGNS BC Name is: " << BCTypeName[cgnsBCList[ iBC ]] << endl;
+        cout << "  The " << iBC + 1 << " CGNS BC Name is: " << BCTypeName[cgnsBCList[ iBC ]] << endl;
     }
 
     //map<int, string> Fantasybctype = CreatFantasybctype();

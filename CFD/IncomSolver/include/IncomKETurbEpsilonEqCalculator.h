@@ -28,29 +28,29 @@ public:
     IncomKETurbEpsilonEqCalculator();
     virtual ~IncomKETurbEpsilonEqCalculator();
 
-    void SetDiffusionCoeff(Grid* gridIn);
-    void InitFlowAsRestart(Grid* gridIn);
+    void SetDiffusionCoeff(Grid *gridIn);
+    void InitFlowAsRestart(Grid *gridIn);
     
-    void solveScalarEquation(Grid* grid, int iEquation);
+    void solveScalarEquation(Grid *grid, int iEquation);
     
-    void UpdateProperties(Grid* grid);
+    void UpdateProperties(Grid *grid);
     
-    void CalcOtherMatrixACoeff(Grid* grid);
-    void CalcOtherbCoeff(Grid* grid, int iEquation);
+    void CalcOtherMatrixACoeff(Grid *grid);
+    void CalcOtherbCoeff(Grid *grid, int iEquation);
     
-    void GetResidual(Grid *grid, vector<RDouble>& res);
-    void InitialUnsteadyVar(Grid* grid);
-    void UpdateUnsteadyVariable(Grid* grid);
-    void UpdateBCValue(Grid*  grid);
+    void GetResidual(Grid *grid, vector<RDouble> &res);
+    void InitialUnsteadyVar(Grid *grid);
+    void UpdateUnsteadyVariable(Grid *grid);
+    void UpdateBCValue(Grid *grid);
 
 public:
-    void calWallBC(Grid*  grid, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-        RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff);
+    void calWallBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff);
 
-    void WallModification(Grid*  grid);
+    void WallModification(Grid *grid);
     
-    void CalcGenTerm(Grid*  grid);
-    void UpdateWallGen(Grid*  grid);
+    void CalcGenTerm(Grid *grid);
+    void UpdateWallGen(Grid *grid);
 
 public:
 };

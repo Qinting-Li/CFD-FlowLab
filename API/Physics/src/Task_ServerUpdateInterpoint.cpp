@@ -64,7 +64,7 @@ void TaskServerUpdateInterpoint::MainTaskNonBlocking(ActionKey *actkey)
             int sendProcessor = GetZoneProcessorIDSepMode(iZone);
             int receiveProcessor = GetZoneProcessorIDSepMode(neighborZoneIndexForPoint);
 
-            if(currentProcessor != sendProcessor &&currentProcessor != receiveProcessor)
+            if (currentProcessor != sendProcessor &&currentProcessor != receiveProcessor)
             {
                 continue;
             }
@@ -72,12 +72,12 @@ void TaskServerUpdateInterpoint::MainTaskNonBlocking(ActionKey *actkey)
             //! Allocate the buffers for sending and receiving.
             DataContainer *receivedBuffer = 0;
             DataContainer *sendBuffer = 0;
-            if(currentProcessor == receiveProcessor)
+            if (currentProcessor == receiveProcessor)
             {
                 receivedBuffer = new DataContainer;
                 receivedDataBuffer[iZone].push_back(receivedBuffer);
             }
-            if(currentProcessor == sendProcessor)
+            if (currentProcessor == sendProcessor)
             {
                 sendBuffer = new DataContainer;
                 sendDataBuffer[iZone].push_back(sendBuffer);
@@ -89,7 +89,7 @@ void TaskServerUpdateInterpoint::MainTaskNonBlocking(ActionKey *actkey)
     }
 
     //! Step2: MPI waiting for Non-blocking communications.
-    if(PHMPI::GetNumberOfProcessor() > 1)
+    if (PHMPI::GetNumberOfProcessor() > 1)
     {
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }
@@ -156,15 +156,15 @@ void TaskServerUpdateInterpoint::InterpointNonBlocking(ActionKey *actkey, DataCo
 
     int tag = GetSendRecvTag(actkey, iZone);
 
-    // Compress the send information into the actkey.
+    //! Compress the send information into the actkey.
     if (currentProcessor == sendProcessor)
     {    
         DataContainer *originalData = actkey->GetData();
 
         DataContainer *compressData = sendBuffer;
-        if(sendProcessor == receiveProcessor) compressData = receivedBuffer;
+        if (sendProcessor == receiveProcessor) compressData = receivedBuffer;
 
-        // Fill the send buffer by actkey.
+        //! Fill the send buffer by actkey.
         actkey->SetData(compressData);
         actkey->ipos = jZone;
         GeneralAction(actkey, iZone);
@@ -178,20 +178,20 @@ void TaskServerUpdateInterpoint::InterpointNonBlocking(ActionKey *actkey, DataCo
         return;
     }
 
-    // Communication.
+    //! Communication.
     if (currentProcessor == sendProcessor)
     {
-        streamsize nlen = sendBuffer->size();
+        streamsize nlen = sendBuffer->Size();
 
-        // Send the data to neighbors.
+        //! Send the data to neighbors.
         send(sendBuffer, receiveProcessor, nlen, requestContainer, tag);
     }
     else if (currentProcessor == receiveProcessor)
     {
-        // Pre-calculating the data length of the received data.
+        //! Pre-calculating the data length of the received data.
         CharVecSizeType nlen = InterpointGetLength(actkey, iZone, jZone);
 
-        // Receive data from neighbors.
+        //! Receive data from neighbors.
         receive(receivedBuffer, sendProcessor, nlen, requestContainer, tag);
     }
 }
@@ -208,7 +208,7 @@ CharVecSizeType TaskServerUpdateInterpoint::InterpointGetLength(ActionKey *actke
     if (myID == sendProcessor)
     {
         DataContainer *cdata = actkey->GetData();
-        nlen = cdata->size();
+        nlen = cdata->Size();
     }
     if (myID == receiveProcessor)
     {

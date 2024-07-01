@@ -28,11 +28,11 @@ namespace PHSPACE
     {
 #ifdef USE_YhamgLib
     private:
-        Grid* grid;
-        ParOperator* A;
-        ParOperator** PrecondList;
-        vector<int>* ColVectors;
-        int* exter_colind2Face;
+        Grid *grid;
+        ParOperator *A;
+        ParOperator **PrecondList;
+        vector<int> *ColVectors;
+        int *exter_colind2Face;
 
         ParVector *b;
         ParVector *x;
@@ -45,12 +45,11 @@ namespace PHSPACE
         virtual ~yhamgCalculator();
 
     public:
-        void mathLibSolveInit(Grid* gridIn);
-        void mathLibSolve(Grid* gridIn, int iEquation, RDouble * x, RDouble * diagCoef, RDouble *b, RDouble * upACOFFace, RDouble * downACOFFace);
+        void mathLibSolveInit(Grid *gridIn);
+        void mathLibSolve(Grid *gridIn, int iEquation, RDouble *x, RDouble *diagCoef, RDouble *b, RDouble *upACOFFace, RDouble *downACOFFace);
         void mathLibSolveFinalize();
 
     };
-
 
 }
 

@@ -180,14 +180,14 @@ void OversetInfo::Encode()
 void OversetInfo::Decode(DataContainer *cdata)
 {
     int zoneIndexOfNeighbor = 0;
-    cdata->read(reinterpret_cast<char *>(&zoneIndexOfNeighbor), sizeof(int));
+    cdata->Read(reinterpret_cast<char *>(&zoneIndexOfNeighbor), sizeof(int));
     SetZoneIndexOfNeighbor(zoneIndexOfNeighbor);
 
     int numberOfCellForTransfer;
-    cdata->read(reinterpret_cast<char *>(&numberOfCellForTransfer), sizeof(int));
+    cdata->Read(reinterpret_cast<char *>(&numberOfCellForTransfer), sizeof(int));
 
     int * cellIndexForTransfer = new int [numberOfCellForTransfer];
-    cdata->read(reinterpret_cast<char *>(cellIndexForTransfer), numberOfCellForTransfer * sizeof(int));
+    cdata->Read(reinterpret_cast<char *>(cellIndexForTransfer), numberOfCellForTransfer * sizeof(int));
     SetCellIndexForTransfer(cellIndexForTransfer);
 }
 
@@ -203,10 +203,10 @@ CompositeOversetInfo::~CompositeOversetInfo()
 void CompositeOversetInfo::Encode(DataContainer *cdata)
 {
     int numberOfZone = this->GetNumberOfZone();
-    cdata->write(reinterpret_cast<char *>(&numberOfZone), sizeof(int));
+    cdata->Write(reinterpret_cast<char *>(&numberOfZone), sizeof(int));
 
     int numberOfCell = this->GetNumberOfCell();
-    cdata->write(reinterpret_cast<char *>(&numberOfCell), sizeof(int));
+    cdata->Write(reinterpret_cast<char *>(&numberOfCell), sizeof(int));
 
     for (int iZone = 0; iZone < numberOfZone; ++ iZone)
     {
@@ -218,12 +218,12 @@ void CompositeOversetInfo::Encode(DataContainer *cdata)
 void CompositeOversetInfo::Decode(DataContainer *cdata)
 {
     int numberOfZone;
-    cdata->read(reinterpret_cast<char *>(&numberOfZone), sizeof(int));
+    cdata->Read(reinterpret_cast<char *>(&numberOfZone), sizeof(int));
 
     SetNumberOfZone(numberOfZone);
 
     int numberOfCell;
-    cdata->read(reinterpret_cast<char *>(&numberOfCell), sizeof(int));
+    cdata->Read(reinterpret_cast<char *>(&numberOfCell), sizeof(int));
     SetNumberOfCell(numberOfCell);
 
     for (int iZone = 0; iZone < numberOfZone; ++ iZone)

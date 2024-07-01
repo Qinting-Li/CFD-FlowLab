@@ -40,7 +40,7 @@ HighOrderStandardElementBase::HighOrderStandardElementBase(unsigned short iVTK_T
           IntegrationPointsHexahedron();
           break;
       default:
-          cout<<"Wrong grid Type..../HighOrderStandardElementBase"<<endl;
+          cout << "Wrong grid Type..../HighOrderStandardElementBase" << endl;
           break;
     }
 }
@@ -61,9 +61,9 @@ void HighOrderStandardElementBase::IntegrationPointsQuadrilateral(void)
   wtIntegration.resize(nIntegrationPoint);
 
   unsigned int ii = 0;
-  for(unsigned short j=0; j<M; ++j)
+  for (unsigned short j=0; j<M; ++j)
   {
-    for(unsigned short i=0; i<M; ++i, ++ii)
+    for (unsigned short i=0; i<M; ++i, ++ii)
     {
       xiIntegration[ii] = GLPoints[i];
       etIntegration[ii] = GLPoints[j];
@@ -100,9 +100,9 @@ void HighOrderStandardElementBase::IntegrationPointsPrism(void)
   wtIntegration.resize(nIntegrationPoint);
 
   unsigned int ii = 0;
-  for(unsigned short k=0; k<M; ++k)
+  for (unsigned short k=0; k<M; ++k)
   {
-      for(unsigned short j=0; j<nIntTriangle; ++j, ++ii)
+      for (unsigned short j=0; j<nIntTriangle; ++j, ++ii)
       {
       xiIntegration[ii] = rTriangle[j];
       etIntegration[ii] = sTriangle[j];
@@ -131,9 +131,9 @@ void HighOrderStandardElementBase::IntegrationPointsHexahedron(void)
   wtIntegration.resize(nIntegrationPoint);
 
   unsigned int ii = 0;
-  for(unsigned short k=0; k<M; ++k) {
-    for(unsigned short j=0; j<M; ++j) {
-      for(unsigned short i=0; i<M; ++i, ++ii) {
+  for (unsigned short k=0; k<M; ++k) {
+    for (unsigned short j=0; j<M; ++j) {
+      for (unsigned short i=0; i<M; ++i, ++ii) {
         xiIntegration[ii] = GLPoints[i];
         etIntegration[ii] = GLPoints[j];
         ztIntegration[ii] = GLPoints[k];
@@ -944,7 +944,7 @@ void HighOrderStandardElementBase::IntegrationPointsTriangle(void)
     }
   }
 
-  for(int i = 0; i < nIntegrationPoint; ++i)
+  for (int i = 0; i < nIntegrationPoint; ++i)
   {
         r[i] = 0.5 * (r[i] + 1.0);
         s[i] = 0.5 * (s[i] + 1.0);
@@ -1304,7 +1304,7 @@ void HighOrderStandardElementBase::IntegrationPointsTetrahedron(void)
     }
   }
 
-  for(int i = 0; i < nIntegrationPoint; ++i)
+  for (int i = 0; i < nIntegrationPoint; ++i)
   {
       r[i] = 0.5 * (r[i] + 1.0);
       s[i] = 0.5 * (s[i] + 1.0);
@@ -1367,7 +1367,7 @@ void HighOrderStandardElementBase::IntegrationPointsPyramid(void)
       }
   }
 
-  for(unsigned short i=0; i<M; ++i)
+  for (unsigned short i=0; i<M; ++i)
   {
       GJWeights[i] *= 3;
   }
@@ -1381,9 +1381,9 @@ void HighOrderStandardElementBase::IntegrationPointsPyramid(void)
   wtIntegration.resize(nIntegrationPoint);
 
   unsigned int ii = 0;
-  for(unsigned short k=0; k<M; ++k) {
-    for(unsigned short j=0; j<M; ++j) {
-      for(unsigned short i=0; i<M; ++i, ++ii) {
+  for (unsigned short k=0; k<M; ++k) {
+    for (unsigned short j=0; j<M; ++j) {
+      for (unsigned short i=0; i<M; ++i, ++ii) {
         const RDouble xi   = GLPoints[i];
         const RDouble eta  = GLPoints[j];
         const RDouble zeta = GJPoints[k];
@@ -1486,7 +1486,7 @@ void HighOrderStandardElementBase::GaussLegendrePoints1D(vector<RDouble> & GLPoi
         GaussJacobi.GetQuadraturePoints(0.0, 0.0, 0.0, 1.0, GLPointsPas, GLWeightsPas);
 
         /* Copy the data back into GLPoints and GLWeights. */
-        for(unsigned long i=0; i<GLPoints.size(); ++i)
+        for (unsigned long i=0; i<GLPoints.size(); ++i)
         {
             GLPoints[i]  = GLPointsPas[i];
             GLWeights[i] = GLWeightsPas[i];
@@ -1606,7 +1606,7 @@ void TestOrthogoMatrix()
     const RDouble * wt = elem.GetWtIntegration();
 
     std::cout << "taylorBasisMassMatrix:" << std::endl;
-    for(int iIntegratPoint = 0; iIntegratPoint < elem.GetNumberOfIntegrationPoint(); ++iIntegratPoint)
+    for (int iIntegratPoint = 0; iIntegratPoint < elem.GetNumberOfIntegrationPoint(); ++iIntegratPoint)
     {
         RDouble refCoord[2];
         refCoord[0] = xi[iIntegratPoint];
@@ -1614,25 +1614,25 @@ void TestOrthogoMatrix()
 
         RDouble basis[10];
 
-        for(int idof = 0; idof < degreeOfFreedom; ++idof)
+        for (int idof = 0; idof < degreeOfFreedom; ++idof)
         {
             basis[idof] = MonomialBasis2d(refCoord, idof);
         }
         
-        for(int idof = 0; idof < degreeOfFreedom; ++idof)
+        for (int idof = 0; idof < degreeOfFreedom; ++idof)
         {
-            //for(int jdof = 0; jdof < degreeOfFreedom; ++jdof)
-            for(int jdof = 0; jdof <= idof; ++jdof)
+            //for (int jdof = 0; jdof < degreeOfFreedom; ++jdof)
+            for (int jdof = 0; jdof <= idof; ++jdof)
             {
                 taylorBasisMassMatrix(idof, jdof) += basis[idof] * basis[jdof] * wt[iIntegratPoint];
             }
         }
     }
     
-    for(int idof = 0; idof < degreeOfFreedom; ++idof)
+    for (int idof = 0; idof < degreeOfFreedom; ++idof)
     {
-        //for(int jdof = 0; jdof < degreeOfFreedom; ++jdof)
-        for(int jdof = idof+1; jdof < degreeOfFreedom; ++jdof)
+        //for (int jdof = 0; jdof < degreeOfFreedom; ++jdof)
+        for (int jdof = idof+1; jdof < degreeOfFreedom; ++jdof)
         {
             taylorBasisMassMatrix(idof, jdof) = taylorBasisMassMatrix(jdof, idof);
         }
@@ -1650,7 +1650,7 @@ void TestOrthogoMatrix()
 
     std::cout << "after orthogonalized BasisMassMatrix:" << std::endl;
     taylorBasisMassMatrix.setConstant(0.0);
-    for(int iIntegratPoint = 0; iIntegratPoint < elem.GetNumberOfIntegrationPoint(); ++iIntegratPoint)
+    for (int iIntegratPoint = 0; iIntegratPoint < elem.GetNumberOfIntegrationPoint(); ++iIntegratPoint)
     {
         RDouble refCoord[3];
         refCoord[0] = xi[iIntegratPoint];
@@ -1658,36 +1658,36 @@ void TestOrthogoMatrix()
 
         RDouble originalBasis[10];
 
-        for(int idof = 0; idof < degreeOfFreedom; ++idof)
+        for (int idof = 0; idof < degreeOfFreedom; ++idof)
         {
             originalBasis[idof] = MonomialBasis2d(refCoord, idof);
         }
 
         RDouble basis[10];
-        for(int idof = 0; idof < degreeOfFreedom; ++idof)
+        for (int idof = 0; idof < degreeOfFreedom; ++idof)
         {
             basis[idof] = 0.0;
 
-            for(int jdof = 0; jdof <= idof; ++jdof)
+            for (int jdof = 0; jdof <= idof; ++jdof)
             {
                 basis[idof] += orthogonalizationMatrix(idof, jdof) * originalBasis[jdof];
             }
         }
 
-        for(int idof = 0; idof < degreeOfFreedom; ++idof)
+        for (int idof = 0; idof < degreeOfFreedom; ++idof)
         {
-            //for(int jdof = 0; jdof < degreeOfFreedom; ++jdof)
-            for(int jdof = 0; jdof <= idof; ++jdof)
+            //for (int jdof = 0; jdof < degreeOfFreedom; ++jdof)
+            for (int jdof = 0; jdof <= idof; ++jdof)
             {
                 taylorBasisMassMatrix(idof, jdof) += basis[idof] * basis[jdof] * wt[iIntegratPoint];
             }
         }
     }
 
-    for(int idof = 0; idof < degreeOfFreedom; ++idof)
+    for (int idof = 0; idof < degreeOfFreedom; ++idof)
     {
-        //for(int jdof = 0; jdof < degreeOfFreedom; ++jdof)
-        for(int jdof = idof+1; jdof < degreeOfFreedom; ++jdof)
+        //for (int jdof = 0; jdof < degreeOfFreedom; ++jdof)
+        for (int jdof = idof+1; jdof < degreeOfFreedom; ++jdof)
         {
             taylorBasisMassMatrix(idof, jdof) = taylorBasisMassMatrix(jdof, idof);
         }
@@ -1708,9 +1708,9 @@ HighOrderStandardCell::HighOrderStandardCell(unsigned short VTK_Type, unsigned s
 bool HighOrderStandardCell::SameStandardElement(unsigned short val_VTK_Type, unsigned short val_nPoly, unsigned short valIntegrationOrder) 
 {
   
-    if(val_VTK_Type           != VTK_Type       )      return false;
-    if(val_nPoly              != nPoly         )      return false;
-    if(valIntegrationOrder    != integrationOrder)      return false;
+    if (val_VTK_Type        != VTK_Type        )    return false;
+    if (val_nPoly           != nPoly           )    return false;
+    if (valIntegrationOrder != integrationOrder)    return false;
     return true;
 }
 
@@ -1782,12 +1782,12 @@ void HighOrderStandardCell::DataStandardTetrahedron(void)
         { 0.0, 0.0, 0.5 }, { 0.5, 0.0, 0.5 }, { 0.0, 0.5, 0.5 }
     };
 
-    if(nNodes == 4)
+    if (nNodes == 4)
     {
         nPoly = 1;
         nNodes = 4;
     }
-    else // if(nNodes == 10) //
+    else // if (nNodes == 10) //
     {
         nPoly = 2;
         nNodes = 10;
@@ -1797,7 +1797,7 @@ void HighOrderStandardCell::DataStandardTetrahedron(void)
     vertexEt.resize(nNodes);
     vertexZt.resize(nNodes);
 
-    for(int iCornerPoint = 0; iCornerPoint < nNodes; ++ iCornerPoint)
+    for (int iCornerPoint = 0; iCornerPoint < nNodes; ++ iCornerPoint)
     {
         vertexXi[iCornerPoint] = refCoordOfTetrNodes2[iCornerPoint][0];
         vertexEt[iCornerPoint] = refCoordOfTetrNodes2[iCornerPoint][1];
@@ -1818,7 +1818,7 @@ void HighOrderStandardCell::DataStandardTetrahedron(void)
     {
     case 1:  //! @linear element
         //  shapeFunctionAtIntegration
-        for(int iGaussPoint = 0; iGaussPoint < nIntegrationPoint; ++ iGaussPoint)
+        for (int iGaussPoint = 0; iGaussPoint < nIntegrationPoint; ++ iGaussPoint)
         {
             shapeFunctionAtIntegration[iGaussPoint].resize(dofOfShapeFunction);
 
@@ -1832,7 +1832,7 @@ void HighOrderStandardCell::DataStandardTetrahedron(void)
 
             //! @get shape Function At Integration
             ShapeFunctionOfTetr(CoordIntegrationOfStand, ret);           
-            for(int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
+            for (int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
             {
                 shapeFunctionAtIntegration[iGaussPoint][iDofShapeFunction] = ret[iDofShapeFunction]; //the number of shape function equal to nNodes
             }
@@ -1840,7 +1840,7 @@ void HighOrderStandardCell::DataStandardTetrahedron(void)
             //! @get the grad of shape Function At Integration
             int curDofOfShape = 0;
             ShapeFunctionOfTetrGrad(dShapeFun);
-            for(int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
+            for (int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
             {
                 dXiShapeFunctionAtIntegration[iGaussPoint][iDofShapeFunction] = dShapeFun[curDofOfShape++];
                 dEtShapeFunctionAtIntegration[iGaussPoint][iDofShapeFunction] = dShapeFun[curDofOfShape++];
@@ -1868,12 +1868,12 @@ void HighOrderStandardCell::DataStandardPyramid(void)
         { 0.0, 0.0, 1.0 } // 1 corner points @ upper surface
     };
 
-    if(nNodes == 5)
+    if (nNodes == 5)
     {
         nPoly = 1;
         nNodes = 5;
     }
-    else //if(nNodes == 13)
+    else //if (nNodes == 13)
     {
         nPoly = 1;
         nNodes = 5;
@@ -1883,7 +1883,7 @@ void HighOrderStandardCell::DataStandardPyramid(void)
     vertexEt.resize(nNodes);
     vertexZt.resize(nNodes);
 
-    for(int iCornerPoint = 0; iCornerPoint < nNodes; ++ iCornerPoint)
+    for (int iCornerPoint = 0; iCornerPoint < nNodes; ++ iCornerPoint)
     {
         vertexXi[iCornerPoint] = refCoordOfPyraNodes[iCornerPoint][0];
         vertexEt[iCornerPoint] = refCoordOfPyraNodes[iCornerPoint][1];
@@ -1904,7 +1904,7 @@ void HighOrderStandardCell::DataStandardPyramid(void)
     {
     case 1:  //! @linear element
         //  shapeFunctionAtIntegration
-        for(int iGaussPoint = 0; iGaussPoint < nIntegrationPoint; ++ iGaussPoint)
+        for (int iGaussPoint = 0; iGaussPoint < nIntegrationPoint; ++ iGaussPoint)
         {
             shapeFunctionAtIntegration[iGaussPoint].resize(dofOfShapeFunction);
 
@@ -1918,7 +1918,7 @@ void HighOrderStandardCell::DataStandardPyramid(void)
 
             //! @get shape Function At Integration
             ShapeFunctionOfPyra(CoordIntegrationOfStand, ret);           
-            for(int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
+            for (int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
             {
                 shapeFunctionAtIntegration[iGaussPoint][iDofShapeFunction] = ret[iDofShapeFunction]; //the number of shape function equal to nNodes
             }
@@ -1926,7 +1926,7 @@ void HighOrderStandardCell::DataStandardPyramid(void)
             //! @get the grad of shape Function At Integration
             int curDofOfShape = 0;
             ShapeFunctionOfPyraGrad(CoordIntegrationOfStand, dShapeFun);
-            for(int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
+            for (int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
             {
                 dXiShapeFunctionAtIntegration[iGaussPoint][iDofShapeFunction] = dShapeFun[curDofOfShape++];
                 dEtShapeFunctionAtIntegration[iGaussPoint][iDofShapeFunction] = dShapeFun[curDofOfShape++];
@@ -1971,12 +1971,12 @@ void HighOrderStandardCell::DataStandardPrism(void)
         { 0.0, 0.5, 1.0 }
     };
 
-    if(nNodes == 6)
+    if (nNodes == 6)
     {
         nPoly = 1;
         nNodes = 6;
     }
-    else //if(nNodes == 15)
+    else //if (nNodes == 15)
     {
         nPoly = 2;
         nNodes = 15;
@@ -1986,7 +1986,7 @@ void HighOrderStandardCell::DataStandardPrism(void)
     vertexEt.resize(nNodes);
     vertexZt.resize(nNodes);
 
-    for(int iCornerPoint = 0; iCornerPoint < nNodes; ++iCornerPoint)
+    for (int iCornerPoint = 0; iCornerPoint < nNodes; ++iCornerPoint)
     {
         vertexXi[iCornerPoint] = refCoordOfPrismNodes2[iCornerPoint][0];
         vertexEt[iCornerPoint] = refCoordOfPrismNodes2[iCornerPoint][1];
@@ -2007,7 +2007,7 @@ void HighOrderStandardCell::DataStandardPrism(void)
     {
     case 1:  //! @linear element
         //  shapeFunctionAtIntegration
-        for(int iGaussPoint = 0; iGaussPoint < nIntegrationPoint; ++ iGaussPoint)
+        for (int iGaussPoint = 0; iGaussPoint < nIntegrationPoint; ++ iGaussPoint)
         {
             shapeFunctionAtIntegration[iGaussPoint].resize(dofOfShapeFunction);
 
@@ -2021,7 +2021,7 @@ void HighOrderStandardCell::DataStandardPrism(void)
 
             //! @get shape Function At Integration
             ShapeFunctionOfPrism(CoordIntegrationOfStand, ret);           
-            for(int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
+            for (int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
             {
                 shapeFunctionAtIntegration[iGaussPoint][iDofShapeFunction] = ret[iDofShapeFunction]; //the number of shape function equal to nNodes
             }
@@ -2029,7 +2029,7 @@ void HighOrderStandardCell::DataStandardPrism(void)
             //! @get the grad of shape Function At Integration
             int curDofOfShape = 0;
             ShapeFunctionOfPrismGrad(CoordIntegrationOfStand, dShapeFun);
-            for(int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
+            for (int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
             {
                 dXiShapeFunctionAtIntegration[iGaussPoint][iDofShapeFunction] = dShapeFun[curDofOfShape++];
                 dEtShapeFunctionAtIntegration[iGaussPoint][iDofShapeFunction] = dShapeFun[curDofOfShape++];
@@ -2073,12 +2073,12 @@ void HighOrderStandardCell::DataStandardHexahedron(void) {
         { 0.5, 0.5, 0.5 }                                                           // 1 cell mid-points
     };
 
-    if(nNodes == 8)
+    if (nNodes == 8)
     {
         nPoly = 1;
         nNodes = 8;
     }
-    else //if(nNodes == 20)
+    else //if (nNodes == 20)
     {
         nPoly = 2;
         nNodes = 27;
@@ -2088,7 +2088,7 @@ void HighOrderStandardCell::DataStandardHexahedron(void) {
     vertexEt.resize(nNodes);
     vertexZt.resize(nNodes);
 
-    for(int iCornerPoint = 0; iCornerPoint < nNodes; ++iCornerPoint)
+    for (int iCornerPoint = 0; iCornerPoint < nNodes; ++iCornerPoint)
     {
         vertexXi[iCornerPoint] = refCoordOfHexNodes2[iCornerPoint][0];
         vertexEt[iCornerPoint] = refCoordOfHexNodes2[iCornerPoint][1];
@@ -2109,7 +2109,7 @@ void HighOrderStandardCell::DataStandardHexahedron(void) {
     {
     case 1:  //! @linear element
         //  shapeFunctionAtIntegration
-        for(int iGaussPoint = 0; iGaussPoint < nIntegrationPoint; ++ iGaussPoint)
+        for (int iGaussPoint = 0; iGaussPoint < nIntegrationPoint; ++ iGaussPoint)
         {
             shapeFunctionAtIntegration[iGaussPoint].resize(dofOfShapeFunction);
 
@@ -2123,7 +2123,7 @@ void HighOrderStandardCell::DataStandardHexahedron(void) {
 
             //! @get shape Function At Integration
             ShapeFunctionOfHex(CoordIntegrationOfStand, ret);           
-            for(int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
+            for (int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
             {
                 shapeFunctionAtIntegration[iGaussPoint][iDofShapeFunction] = ret[iDofShapeFunction]; //the number of shape function equal to nNodes
             }
@@ -2131,7 +2131,7 @@ void HighOrderStandardCell::DataStandardHexahedron(void) {
             //! @get the grad of shape Function At Integration
             int curDofOfShape = 0;
             ShapeFunctionOfHexGrad(CoordIntegrationOfStand, dShapeFun);
-            for(int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
+            for (int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
             {
                 dXiShapeFunctionAtIntegration[iGaussPoint][iDofShapeFunction] = dShapeFun[curDofOfShape++];
                 dEtShapeFunctionAtIntegration[iGaussPoint][iDofShapeFunction] = dShapeFun[curDofOfShape++];
@@ -2152,9 +2152,9 @@ void HighOrderStandardCell::DataStandardHexahedron(void) {
 bool HighOrderStandardFace::SameStandardElement(unsigned short val_VTK_Type, unsigned short val_nPoly, unsigned short valIntegrationOrder) 
 {
   
-    if(val_VTK_Type           != VTK_Type       )      return false;
-    if(val_nPoly              != nPoly          )      return false;
-    if(valIntegrationOrder    != integrationOrder)      return false;
+    if (val_VTK_Type        != VTK_Type        )    return false;
+    if (val_nPoly           != nPoly           )    return false;
+    if (valIntegrationOrder != integrationOrder)    return false;
     return true;
 }
 
@@ -2213,12 +2213,12 @@ void HighOrderStandardFace::DataStandardTriangle(void)
         { 0.0, 0.5 }
     };
 
-    if(nNodes == 3)
+    if (nNodes == 3)
     {
         nPoly = 1;
         nNodes = 3;
     }
-    else //if(nNodes == 6)
+    else //if (nNodes == 6)
     {
         nPoly = 2;
         nNodes = 6;
@@ -2227,7 +2227,7 @@ void HighOrderStandardFace::DataStandardTriangle(void)
     vertexXiFace.resize(nNodes);
     vertexEtFace.resize(nNodes);
 
-    for(int iCornerPoint = 0; iCornerPoint < nNodes; ++iCornerPoint)
+    for (int iCornerPoint = 0; iCornerPoint < nNodes; ++iCornerPoint)
     {
         vertexXiFace[iCornerPoint] = refCoordOfTriNodes2[iCornerPoint][0];
         vertexEtFace[iCornerPoint] = refCoordOfTriNodes2[iCornerPoint][1];
@@ -2246,7 +2246,7 @@ void HighOrderStandardFace::DataStandardTriangle(void)
     {
     case 1:  //! @linear element
         //  shapeFunctionAtIntegration
-        for(int iGaussPoint = 0; iGaussPoint < nIntegrationPoint; ++ iGaussPoint)
+        for (int iGaussPoint = 0; iGaussPoint < nIntegrationPoint; ++ iGaussPoint)
         {
             shapeFuncAtFaceIntegration[iGaussPoint].resize(dofOfShapeFunction);
 
@@ -2258,7 +2258,7 @@ void HighOrderStandardFace::DataStandardTriangle(void)
 
             //! @get shape Function At Integration
             ShapeFunctionOfTri(CoordIntegrationOfStand, ret);
-            for(int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
+            for (int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
             {
                 shapeFuncAtFaceIntegration[iGaussPoint][iDofShapeFunction] = ret[iDofShapeFunction]; //the number of shape function equal to nNodes
             }
@@ -2266,7 +2266,7 @@ void HighOrderStandardFace::DataStandardTriangle(void)
             //! @get the grad of shape Function At Integration
             int curDofOfShape = 0;
             ShapeFunctionOfTriGrad(dShapeFun);
-            for(int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
+            for (int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
             {
                 dXiShapeFuncFaceIntegration[iGaussPoint][iDofShapeFunction] = dShapeFun[curDofOfShape++];
                 dEtShapeFuncFaceIntegration[iGaussPoint][iDofShapeFunction] = dShapeFun[curDofOfShape++];
@@ -2297,12 +2297,12 @@ void HighOrderStandardFace::DataStandardQuadrilateral(void)
         { 0.0, 0.5 }
     };
 
-    if(nNodes == 4)
+    if (nNodes == 4)
     {
         nPoly = 1;
         nNodes = 4;
     }
-    else //if(nNodes == 8)
+    else //if (nNodes == 8)
     {
         nPoly = 2;
         nNodes = 8;
@@ -2311,7 +2311,7 @@ void HighOrderStandardFace::DataStandardQuadrilateral(void)
     vertexXiFace.resize(nNodes);
     vertexEtFace.resize(nNodes);
 
-    for(int iCornerPoint = 0; iCornerPoint < nNodes; ++iCornerPoint)
+    for (int iCornerPoint = 0; iCornerPoint < nNodes; ++iCornerPoint)
     {
         vertexXiFace[iCornerPoint] = refCoordOfQuadNodes2[iCornerPoint][0];
         vertexEtFace[iCornerPoint] = refCoordOfQuadNodes2[iCornerPoint][1];
@@ -2330,7 +2330,7 @@ void HighOrderStandardFace::DataStandardQuadrilateral(void)
     {
     case 1:  //! @linear element
         //  shapeFunctionAtIntegration
-        for(int iGaussPoint = 0; iGaussPoint < nIntegrationPoint; ++ iGaussPoint)
+        for (int iGaussPoint = 0; iGaussPoint < nIntegrationPoint; ++ iGaussPoint)
         {
             shapeFuncAtFaceIntegration[iGaussPoint].resize(dofOfShapeFunction);
 
@@ -2342,7 +2342,7 @@ void HighOrderStandardFace::DataStandardQuadrilateral(void)
 
             //! @get shape Function At Integration
             ShapeFunctionOfQuad(CoordIntegrationOfStand, ret);           
-            for(int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
+            for (int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
             {
                 shapeFuncAtFaceIntegration[iGaussPoint][iDofShapeFunction] = ret[iDofShapeFunction]; //the number of shape function equal to nNodes
             }
@@ -2350,7 +2350,7 @@ void HighOrderStandardFace::DataStandardQuadrilateral(void)
             //! @get the grad of shape Function At Integration
             int curDofOfShape = 0;
             ShapeFunctionOfQuadGrad(CoordIntegrationOfStand, dShapeFun);
-            for(int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
+            for (int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
             {
                 dXiShapeFuncFaceIntegration[iGaussPoint][iDofShapeFunction] = dShapeFun[curDofOfShape++];
                 dEtShapeFuncFaceIntegration[iGaussPoint][iDofShapeFunction] = dShapeFun[curDofOfShape++];

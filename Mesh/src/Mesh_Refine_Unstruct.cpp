@@ -561,7 +561,7 @@ void Mesh_Refine_Unstruct::SwapInterfaceRefineType()
             {
                 if (sendProcessor != receiveProcessor)
                 {
-                    streamsize nlen = sendBuffer->size();
+                    streamsize nlen = sendBuffer->Size();
                     send(sendBuffer, receiveProcessor, nlen, requestContainer, tag);
                 }
             }
@@ -585,7 +585,7 @@ void Mesh_Refine_Unstruct::SwapInterfaceRefineType()
 
                 if (sendProcessor != receiveProcessor)
                 {
-                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->size();
+                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->Size();
                     receive(receivedBuffer, sendProcessor, nlen, requestContainer, tag);
                 }
                 else

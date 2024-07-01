@@ -9,7 +9,7 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file      Param_TransitionSolver.h
+//! @file      Transition.h
 //! @brief     Record paramters of TransitionSolver.
 //! @author    He Kun.
 

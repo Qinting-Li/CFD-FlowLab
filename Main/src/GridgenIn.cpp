@@ -188,7 +188,7 @@ int CheckCoorFileIfASCII(const string &coordinateFile)
     file.close();
     file.clear();
 
-    if(numberOfBlocks <= static_cast <int> (1e8))
+    if (numberOfBlocks <= static_cast <int> (1e8))
     {
         return 0;
     }
@@ -259,7 +259,7 @@ void ReadBoundaryFile(Grid **&structGrids, int &inputNumberOfBlocks, const strin
 {
     fstream file;
     file.open(BCFile.c_str(), ios_base::in);
-    if(!file)
+    if (!file)
     {
         TK_Exit::FileOpenErrorExit(BCFile);
     }

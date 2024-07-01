@@ -159,7 +159,7 @@ void PH_InterfaceNonBlocking(ActionKey *actkey, DataContainer *sendBuffer, DataC
         DataContainer *originalData = actkey->GetData();
 
         DataContainer *compressData = sendBuffer;
-        if(sendProcessor == receiveProcessor)
+        if (sendProcessor == receiveProcessor)
         {
             compressData = receivedBuffer;
         }
@@ -178,7 +178,7 @@ void PH_InterfaceNonBlocking(ActionKey *actkey, DataContainer *sendBuffer, DataC
     //! Communication.
     if (currentProcessor == sendProcessor)
     {
-        streamsize nlen = sendBuffer->size();
+        streamsize nlen = sendBuffer->Size();
         //! Send the data to neighbors.
         send(sendBuffer, receiveProcessor, nlen, requestContainer, tag);
     }
@@ -229,7 +229,7 @@ CharVecSizeType PH_Interface_GetLength(ActionKey *actkey, int iZone, int jZone)
     if (myid == send_proc)
     {
         DataContainer *cdata = actkey->GetData();
-        nlen = cdata->size();
+        nlen = cdata->Size();
     }
     if (myid == recv_proc)
     {

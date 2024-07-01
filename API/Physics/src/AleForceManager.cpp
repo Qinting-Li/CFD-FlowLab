@@ -77,7 +77,7 @@ void ComputeAerodynamicForceForALE()
 
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
-    actkeyComputeAirForceCoef->GetData()->moveto_begin();
+    actkeyComputeAirForceCoef->GetData()->MoveToBegin();
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int ZoneProcessorID = GetZoneProcessorID(iZone);
@@ -165,7 +165,7 @@ void WriteAerodynamicForceToActionKey(ActionKey *actionKey, BasicAerodynamicForc
     int numberOfAerodynamicForceBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
 
     DataContainer *dataContainer = actionKey->GetData();
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
@@ -178,7 +178,7 @@ void WriteAerodynamicForceToActionKey(ActionKey *actionKey, vector< BasicAerodyn
     int numberOfAerodynamicForceBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
 
     DataContainer *dataContainer = actionKey->GetData();
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
@@ -753,7 +753,7 @@ void AerodynamicForce::Add(DataContainer *dataContainer)
     const int numberOfForceVariables = 18;
     RDouble forceMomentContainer[numberOfForceVariables];
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     PHSPACE::PHRead(dataContainer, forceMomentContainer, numberOfForceVariables);
 
@@ -1096,7 +1096,7 @@ void AerodynamicForceManager::InitializeAerodynamicForceManager()
 void AerodynamicForceManager::ExtractForceDataFromActionKey(ActionKey *actionKey, vector< DataContainer * > *dataContainerArray)
 {
     DataContainer *dataContainer = actionKey->GetData();
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     const int numberOfData = 18;
     RDouble bufferForSwap[numberOfData];

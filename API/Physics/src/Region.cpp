@@ -97,7 +97,7 @@ LIB_EXPORT void Region::InitGridForOversetConfig()
 
     InitGeometry();
 
-    SwapGeommetry();
+    SwapGeometry();
 }
 
 void ResetAllZonesOversetGrid()
@@ -723,7 +723,7 @@ void Region::ReadSingleOversetGrid(fstream &file, int iZone)
         grid->Decode(cdata, 1);
     }
 
-    delete cdata;
+    delete cdata;    cdata = nullptr;
 }
 
 void Region::CreateZonesFromGridReader(IO_GridReader *gridReader)
@@ -936,7 +936,7 @@ void Region::RecoverGridFromFile(fstream &file, int iZone)
 
     InterpretDataToGrid(cdata, iZone);
 
-    delete cdata;
+    delete cdata;    cdata = nullptr;
 }
 
 LIB_EXPORT void Region::ReadSingleGrid(fstream &file, int iZone)
@@ -1273,7 +1273,7 @@ void Region::ServerCollectionNeighborInfor()
     }
 
     DataContainer *cdata = new DataContainer();
-    cdata->moveto_begin();
+    cdata->MoveToBegin();
 
     //! Write the number of zones in this processor.
     int nZonesInThisProc = 0;
@@ -1326,7 +1326,7 @@ void Region::ServerCollectionNeighborInfor()
             }
 
             int nZonesInProc;
-            cdata->moveto_begin();
+            cdata->MoveToBegin();
             PHRead(cdata, &nZonesInProc, 1);
             for (int iZone = 0; iZone < nZonesInProc; ++ iZone)
             {
@@ -1345,11 +1345,11 @@ void Region::ServerCollectionNeighborInfor()
                 PHRead(cdata, neighborZoneIndex, numberOfNeighbor);
             }
 
-            delete cdata;
+            delete cdata;    cdata = nullptr;
             cdata = new DataContainer();
         }
     }
-    delete cdata;
+    delete cdata;    cdata = nullptr;
 }
 
 void Region::ServerBcastNeighborInfor()
@@ -1367,7 +1367,7 @@ void Region::ServerBcastNeighborInfor()
 
     if (myid == serverTmp)
     {
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
 
         for (int iZone = 0; iZone < nZones; ++ iZone)
         {
@@ -1387,7 +1387,7 @@ void Region::ServerBcastNeighborInfor()
 
     if (myid != serverTmp)
     {
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
 
         for (int iZone = 0; iZone < nZones; ++ iZone)
         {
@@ -1404,7 +1404,7 @@ void Region::ServerBcastNeighborInfor()
         }
     }
 
-    delete cdata;
+    delete cdata;    cdata = nullptr;
 }
 
 void Region::CleanNeighborInfor()
@@ -1840,7 +1840,7 @@ void Region::SwapNeighborsSendContentNonblocking()
                 InterfaceInfo *interfaceInfo = GetInterfaceInfo(iZone, 0);
                 int nIFaceOfNeighbor = interfaceInfo->GetNIFaceOfNeighbor(iNeighbor);
                 int *faceIndexForSend = interfaceInfo->ComputeFaceIndexForSend(iNeighbor);
-                sendBuffer->moveto_begin();
+                sendBuffer->MoveToBegin();
                 PHWrite(sendBuffer, nIFaceOfNeighbor);
                 PHWrite(sendBuffer, faceIndexForSend, nIFaceOfNeighbor);
             }
@@ -1889,7 +1889,7 @@ void Region::SwapNeighborsSendContentNonblocking()
             {
                 if (sendProcessor != receiveProcessor)
                 {
-                    streamsize nlen = sendBuffer->size();
+                    streamsize nlen = sendBuffer->Size();
 
                     //! Send the data to neighbors.
                     send(sendBuffer, receiveProcessor, nlen, requestContainer, tag);
@@ -1917,7 +1917,7 @@ void Region::SwapNeighborsSendContentNonblocking()
                 if (sendProcessor != receiveProcessor)
                 {
                     //! The data length of the received data is same to the length that send to the neighbor.
-                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->size();
+                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->Size();
 
                     //! Receive data from neighbors.
                     receive(receivedBuffer, sendProcessor, nlen, requestContainer, tag);
@@ -1958,7 +1958,7 @@ void Region::SwapNeighborsSendContentNonblocking()
                 //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
 
                 //! Decompress the interface data from data-container.
-                receiveData->moveto_begin();
+                receiveData->MoveToBegin();
                 int nIFaceOfNeighbor;
                 PHRead(receiveData, nIFaceOfNeighbor);
                 int *faceIndexForSend = new int [nIFaceOfNeighbor];
@@ -2880,8 +2880,8 @@ void Region::buildGlobalCellsArrary(int level)
 
     GlobalDataBase::UpdateDataPtr("globalCellNoOfGlobalZones", globalCellNoOfGlobalZones);
 
-    delete[] cellNumbersOfEachZone;
-    delete[] cellNumbersOfEachZoneGlobal;
+    delete [] cellNumbersOfEachZone;    cellNumbersOfEachZone = nullptr;
+    delete [] cellNumbersOfEachZoneGlobal;    cellNumbersOfEachZoneGlobal = nullptr;
 }
 
 void Region::ComputeGlobalGridCellSize(int level)
@@ -3043,7 +3043,7 @@ LIB_EXPORT void Region::UpdateAllZonesPara()
     }
 }
 
-LIB_EXPORT void Region::SwapGeommetry()
+LIB_EXPORT void Region::SwapGeometry()
 {
     CommunicateCellCenterData();
 
@@ -3106,7 +3106,7 @@ void Region::CommunicateCellIBlank()
         }
 
         //delete task;
-        delete actkey;
+        delete actkey;    actkey = nullptr;
     }
 }
 
@@ -3120,7 +3120,7 @@ void Region::ComputeMetrics_BC()
     }
 
     bool Rwithghost = true;
-    
+
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
     int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
     int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
@@ -3340,7 +3340,7 @@ void Region::CommGridInfoOnlyforStructHighOrder(int mission)
                     if (gridtypeofiZone == UNSTRUCTGRID || gridtypeofneighborZone == UNSTRUCTGRID)
                     {
                         RDouble uploadData = 0.0;
-                        sendBuffer->moveto_begin();
+                        sendBuffer->MoveToBegin();
                         PHWrite(sendBuffer, uploadData);
                     }
                     else
@@ -3392,7 +3392,7 @@ void Region::CommGridInfoOnlyforStructHighOrder(int mission)
             {
                 if (sendProcessor != receiveProcessor)
                 {
-                    streamsize nlen = sendBuffer->size();
+                    streamsize nlen = sendBuffer->Size();
 
                     //! Send the data to neighbors.
                     send(sendBuffer, receiveProcessor, nlen, requestContainer, tag);
@@ -3420,7 +3420,7 @@ void Region::CommGridInfoOnlyforStructHighOrder(int mission)
                 if (sendProcessor != receiveProcessor)
                 {
                     //! The data length of the received data is same to the length that send to the neighbor.
-                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->size();
+                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->Size();
 
                     //! Receive data from neighbors.
                     receive(receivedBuffer, sendProcessor, nlen, requestContainer, tag);
@@ -3476,7 +3476,7 @@ void Region::CommGridInfoOnlyforStructHighOrder(int mission)
                     if (gridtypeofiZone == UNSTRUCTGRID || gridtypeofneighborZone == UNSTRUCTGRID)
                     {
                         RDouble downdData = 0.0;
-                        receiveData->moveto_begin();
+                        receiveData->MoveToBegin();
                         PHRead(receiveData, downdData);
                     }
                     else

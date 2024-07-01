@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      Post_Identify.h
 //! @brief     Identify the motive derivative
-//! @author    He kun.
+//! @author    He Kun.
 
 #pragma once
 #include "PHHeader.h"

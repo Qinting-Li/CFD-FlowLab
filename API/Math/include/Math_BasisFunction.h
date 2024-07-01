@@ -222,7 +222,7 @@ template<typename T>
 string toString(const T &t)
 { 
     ostringstream oss;
-    oss<<t;
+    oss << t;
     return oss.str();
 }
 

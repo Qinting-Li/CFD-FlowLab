@@ -84,7 +84,7 @@ public:
 
     //! Communicate the grid metrics on the interfaces.\n
     //! And calculate the coefficient matrix if LSQ method is used.
-    LIB_EXPORT void SwapGeommetry();
+    LIB_EXPORT void SwapGeometry();
     
     //! Dump out some informations after whole of the simulation.
     LIB_EXPORT void PostSimulation();

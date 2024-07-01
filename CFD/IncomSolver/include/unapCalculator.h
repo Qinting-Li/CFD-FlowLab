@@ -75,8 +75,8 @@ public:
     virtual ~unapCalculator();
 
 public:
-    void mathLibSolveInit(Grid* gridIn);
-    void mathLibSolve(Grid* gridIn, int iEquation, RDouble * x, RDouble * diagCoef, RDouble *b, RDouble * upACOFFace, RDouble * downACOFFace);
+    void mathLibSolveInit(Grid *gridIn);
+    void mathLibSolve(Grid *gridIn, int iEquation, RDouble *x, RDouble *diagCoef, RDouble *b, RDouble *upACOFFace, RDouble *downACOFFace);
     void mathLibSolveFinalize();
 };
 

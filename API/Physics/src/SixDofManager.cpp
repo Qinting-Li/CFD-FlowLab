@@ -261,11 +261,11 @@ void SixDofSolver::DeallocateAllVariables()
     for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
         delete sixDofParameterContainer[ iTimeLayer ];
-        sixDofParameterContainer[iTimeLayer] = NULL;
+        sixDofParameterContainer[iTimeLayer] = nullptr;
     }
 
     delete massCharacter;
-    massCharacter = NULL;
+    massCharacter = nullptr;
 }
 
 void SixDofSolver::AllocateSixDofParameter()
@@ -670,44 +670,50 @@ void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBodyByParameter(vecto
 
     this->GetMassCenterAndEulerAngleContainer(massCenterContainer, eulerAngleContainer, iTimeLayer);
 
-    vector< RDouble > dimensionalAerodynamicForce(3);
-    vector< RDouble > dimensionalAerodynamicMoment(3);
-    dimensionalAerodynamicForce[0] = 0.0;
-    dimensionalAerodynamicForce[1] = 0.0;
-    dimensionalAerodynamicForce[2] = 0.0;
-    dimensionalAerodynamicMoment[0] = 0.0;
-    dimensionalAerodynamicMoment[1] = 0.0;
-    dimensionalAerodynamicMoment[2] = 0.0;
+    vector< RDouble > dimensionalAdditionalForce(3);
+    vector< RDouble > dimensionalAdditionalMoment(3);
+
+    for (int iDim = 0; iDim < 3; ++ iDim)
+    {
+        dimensionalAdditionalForce[iDim] = zero;
+        dimensionalAdditionalMoment[iDim] = zero;
+    }
 
     RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
     RDouble  timeOfNstep = aleSimulationTime - GetAleTimeStep();
 
-    RDouble addedForceTime = GetRDoubleParameterFromDataBaseIfExist(bodyIndex, "addedForceTime", 0.0);
+    RDouble addedForceTime = GetRDoubleParameterFromDataBaseIfExist(bodyIndex, "addedForceTime", zero);
+    vector< RDouble > addedForcePosition(3);
+    GetRDoubleVectorFromDataBase(addedForcePosition, bodyIndex, "addedForcePosition", 3);
 
-    if (timeOfNstep < addedForceTime)
+    SixDofParameter *sixDofParameter = this->GetSixDofParameter(0);
+    RDouble MassCenterY = sixDofParameter->GetMassCenterY();
+
+    if (timeOfNstep < addedForceTime || MassCenterY > addedForcePosition[1])
     {
-        GetRDoubleVectorFromDataBase(dimensionalAerodynamicForce, bodyIndex, "addedForce", 3);
+        GetRDoubleVectorFromDataBase(dimensionalAdditionalForce, bodyIndex, "addedForce", 3);
 
-        GetRDoubleVectorFromDataBase(dimensionalAerodynamicMoment, bodyIndex, "addedMoment", 3);
+        GetRDoubleVectorFromDataBase(dimensionalAdditionalMoment, bodyIndex, "addedMoment", 3);
     }
 
     RDouble mass = GetRDoubleParameterFromDataBase(bodyIndex, "mass");
 
-    RDouble gravity = GetRDoubleParameterFromDataBaseIfExist(bodyIndex, "gravity", 0.0);
+    RDouble gravity = GetRDoubleParameterFromDataBaseIfExist(bodyIndex, "gravity", zero);
 
-    dimensionalAerodynamicForce[1] -= gravity * mass;
+    dimensionalAdditionalForce[1] -= gravity * mass;
 
-    vector< RDouble > dimensionalAerodynamicMomentInBodyFrame(3);
+    vector< RDouble > dimensionalAdditionalForceInBodyFrame(3);
+    vector< RDouble > dimensionalAdditionalMomentInBodyFrame(3);
 
+    PHSPACE::ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem(dimensionalAdditionalForce, eulerAngleContainer, dimensionalAdditionalForceInBodyFrame);
+    PHSPACE::ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem(dimensionalAdditionalMoment, eulerAngleContainer, dimensionalAdditionalMomentInBodyFrame);
 
-    PHSPACE::ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem(dimensionalAerodynamicMoment, eulerAngleContainer, dimensionalAerodynamicMomentInBodyFrame);
-
-    dimensionalGeneralForceContainer[ 0 ] += dimensionalAerodynamicForce[ 0 ];
-    dimensionalGeneralForceContainer[ 1 ] += dimensionalAerodynamicForce[ 1 ];
-    dimensionalGeneralForceContainer[ 2 ] += dimensionalAerodynamicForce[ 2 ];
-    dimensionalGeneralForceContainer[ 3 ] += dimensionalAerodynamicMomentInBodyFrame[ 0 ];
-    dimensionalGeneralForceContainer[ 4 ] += dimensionalAerodynamicMomentInBodyFrame[ 1 ];
-    dimensionalGeneralForceContainer[ 5 ] += dimensionalAerodynamicMomentInBodyFrame[ 2 ];
+    dimensionalGeneralForceContainer[ 0 ] += dimensionalAdditionalForceInBodyFrame[ 0 ];
+    dimensionalGeneralForceContainer[ 1 ] += dimensionalAdditionalForceInBodyFrame[ 1 ];
+    dimensionalGeneralForceContainer[ 2 ] += dimensionalAdditionalForceInBodyFrame[ 2 ];
+    dimensionalGeneralForceContainer[ 3 ] += dimensionalAdditionalMomentInBodyFrame[ 0 ];
+    dimensionalGeneralForceContainer[ 4 ] += dimensionalAdditionalMomentInBodyFrame[ 1 ];
+    dimensionalGeneralForceContainer[ 5 ] += dimensionalAdditionalMomentInBodyFrame[ 2 ];
 }
 
 void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBody(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer)
@@ -950,8 +956,6 @@ void SixDofSolver::RotationInXDirection()
     RDouble aleRotateFrequency = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "rotateFrequency");
 
     RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
-    RDouble dimensionalReferenceTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalReferenceTime");
-    aleSimulationTime /= dimensionalReferenceTime;
 
     RDouble deltGama =  2.0 * PI * aleRotateFrequency * aleDirection;
     RDouble gama = aleSimulationTime * deltGama;
@@ -1527,7 +1531,7 @@ void SixDofSolver::MovingByFile()
 
     PHSPACE::OpenFile(file, uDFSixDofFileName, openMode);
 
-    for(int iStep = 0; iStep < outIterationStep; ++ iStep)
+    for (int iStep = 0; iStep < outIterationStep; ++ iStep)
     {
         file >> tmp;
         file >> newMassCenterX;
@@ -1780,7 +1784,7 @@ void SixDofSolver::ComputeRightHandSideOfRigidBodyTranslationalMotionEquation(Si
     RDouble massCenterVelocityX,  massCenterVelocityY, massCenterVelocityZ;
     sixDofParameter->GetMassCenterVelocity(massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ);
 
-    //location
+    //! location
     generalSixDofFlux[ 0 ] = massCenterVelocityX;
     generalSixDofFlux[ 1 ] = massCenterVelocityY;
     generalSixDofFlux[ 2 ] = massCenterVelocityZ;
@@ -1794,7 +1798,7 @@ void SixDofSolver::ComputeRightHandSideOfRigidBodyTranslationalDynamicsEquation(
 
     RDouble mass = massCharacter->GetMass();
 
-    //velocity
+    //! velocity
     generalSixDofFlux[ 3 ] = forceX / mass;
     generalSixDofFlux[ 4 ] = forceY / mass;
     generalSixDofFlux[ 5 ] = forcez / mass;
@@ -1808,7 +1812,7 @@ void SixDofSolver::ComputeRightHandSideOfRigidBodyRotationalMotionEquation(SixDo
     sixDofParameter->GetEulerAngle(eulerAngleGama, eulerAngleBeta, eulerAngleAlpha);
     sixDofParameter->GetAngularVelocity(angularVelocityX, angularVelocityY, angularVelocityZ);
 
-    //attitude
+    //! attitude
     generalSixDofFlux[ 8 ] = angularVelocityY * sin(eulerAngleGama )                          + angularVelocityZ * cos(eulerAngleGama );
     generalSixDofFlux[ 7 ] = angularVelocityY * cos(eulerAngleGama ) / cos(eulerAngleAlpha) - angularVelocityZ * sin(eulerAngleGama ) / cos(eulerAngleAlpha);
     generalSixDofFlux[ 6 ] = angularVelocityX - generalSixDofFlux[ 7 ] * sin(eulerAngleAlpha);
@@ -1863,11 +1867,11 @@ SixDofSolverManager::~SixDofSolverManager()
         for (int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody)
         {
             delete sixDofSolverContainer[ iMovingBody ];
-            sixDofSolverContainer[iMovingBody] = NULL;
+            sixDofSolverContainer[iMovingBody] = nullptr;
         }
     }
     delete [] sixDofSolverContainer;
-    sixDofSolverContainer = NULL;
+    sixDofSolverContainer = nullptr;
 }
 
 void SixDofSolverManager::AllocateSixDofSolverContainer()
@@ -1938,7 +1942,7 @@ void SixDofSolverManager::Run()
     {
         SixDofParameter * sixDofParameter   = sixDofSolverContainer[ iMovingBody ]->GetSixDofParameter(0);
 
-        if(currentProcessor == serverProcessor)
+        if (currentProcessor == serverProcessor)
         {
             sixDofSolverContainer[ iMovingBody ]->Run();
             sixDofParameter->GetGeneralVariableContainer(sixDofVariableContainer);
@@ -1966,7 +1970,7 @@ void SixDofSolverManager::Dump()
     using namespace PHMPI;
     int currentProcessor = GetCurrentProcessorID();
     int serverProcessor = GetServerProcessorID();
-    if(currentProcessor != serverProcessor)
+    if (currentProcessor != serverProcessor)
     {
         return;
     }

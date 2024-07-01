@@ -14,7 +14,7 @@ namespace HOUnstruct
 //*****************************************************************************
 double tgamma(double x)
 {//x>0
-    if(x > 2 && x<= 3)
+    if (x > 2 && x <= 3)
     {
         const double c0 =  0.0000677106;
         const double c1 = -0.0003442342;
@@ -35,19 +35,19 @@ double tgamma(double x)
         temp = temp + c8*pow(x-2.0, 2.0) + c9*(x-2.0) + c10;
         return temp;
     }   
-    else if(x>0 && x<=1)
+    else if (x > 0 && x <= 1)
     {   
         return tgamma(x+2)/(x*(x+1));
     }
-    else if(x > 1 && x<=2)
+    else if (x > 1 && x <= 2)
     {   
         return tgamma(x+1)/x;
     }
-    else if(x > 3)
+    else if (x > 3)
     {
         int i = 1;
         double temp = 1;
-        while(((x-i)>2 && (x-i) <= 3) == false)
+        while (((x-i) > 2 && (x-i) <= 3) == false)
         {
             temp = (x-i) * temp;
             i++;
@@ -68,8 +68,8 @@ void CGaussJacobiQuadrature::GetQuadraturePoints(const RDouble   alpha,     cons
 
     /*--- Determine the number of integration points. Check if the number makes sense. ---*/
     unsigned int nIntPoints = (unsigned int)GJPoints.size();
-    if(nIntPoints < 1 || nIntPoints > 100)
-        cout<< "Error!!!,Invalid number of Gauss Jacobi integration points" <<endl;
+    if (nIntPoints < 1 || nIntPoints > 100)
+        cout << "Error!!!,Invalid number of Gauss Jacobi integration points" << endl;
 
     /*--- Call the function cgqf to do the actual work. ---*/
     int kind = 4;
@@ -1191,7 +1191,7 @@ void TestGaussLegendrePoints1D()
     vector<RDouble> GLPoints;
     vector<RDouble> GLWeights;
 
-    for(int i = 1; i <= 10; ++i)
+    for (int i = 1; i <= 10; ++i)
     {
         GLPoints.resize(i);
         GLWeights.resize(i);
@@ -1202,7 +1202,7 @@ void TestGaussLegendrePoints1D()
         GaussJacobi.GetQuadraturePoints(0.0, 0.0, 0, 1.0, GLPoints, GLWeights);
 
         /* Copy the data back into GLPoints and GLWeights. */
-        for(unsigned long j=0; j<GLPoints.size(); ++j)
+        for (unsigned long j=0; j<GLPoints.size(); ++j)
         {
             ///std::cout << GLPoints[j] << " " << GLWeights[j] << std::endl;
         }

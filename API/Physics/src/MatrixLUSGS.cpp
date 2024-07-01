@@ -228,12 +228,12 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
         }
     }
 
-    delete[] dqNeighbor;
-    delete[] prim;
-    delete[] qNeighbor;
-    delete[] rhs0;
-	delete[] priml;
-	delete[] primr;
+    delete [] dqNeighbor;
+    delete [] prim;
+    delete [] qNeighbor;
+    delete [] rhs0;
+	delete [] priml;
+	delete [] primr;
 
     delete [] df;
 	delete [] deltaQ;
@@ -242,12 +242,12 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
 	delete tempMatrix;
 	delete jacobianMatrix;
 
-    delete[] qPrecondition;
-    delete[] dqCell;
-    delete[] temperature;
+    delete [] qPrecondition;
+    delete [] dqCell;
+    delete [] temperature;
 
-    delete[] dqOld;
-    delete[] Ux;
+    delete [] dqOld;
+    delete [] Ux;
 }
 
 void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)

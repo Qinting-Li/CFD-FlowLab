@@ -20,24 +20,24 @@ namespace PHSPACE
         return equationIndex;
     }
 
-    void IncomCalculator::calculateLinearEquation(Grid* grid, int iEquation, RDouble * x, RDouble * diagCoef, RDouble *b, RDouble * upACOFFace, RDouble * downACOFFace)
+    void IncomCalculator::calculateLinearEquation(Grid *grid, int iEquation, RDouble *x, RDouble *diagCoef, RDouble *b, RDouble *upACOFFace, RDouble *downACOFFace)
     {
-        int *linearSolverID = reinterpret_cast <int *>(GlobalDataBase::GetDataPtr("linearSolverID"));
-        int *constVarNumToSolveVarNum = reinterpret_cast <int*> (grid->GetDataPtr("constVarNumToSolveVarNum"));
+        int *linearSolverID = reinterpret_cast<int *>(GlobalDataBase::GetDataPtr("linearSolverID"));
+        int *constVarNumToSolveVarNum = reinterpret_cast<int *>(grid->GetDataPtr("constVarNumToSolveVarNum"));
 
         AxEqualbCalculator->mathLibSolve(grid, iEquation, x, diagCoef, b, upACOFFace, downACOFFace);
         CalcRes(grid, iEquation, x, diagCoef, b, upACOFFace, downACOFFace);
     }
 
-    void IncomCalculator::SetAxEqualbCalculator(LinearEquationSystemCalculator* AxEqualbCalculatorIn)
+    void IncomCalculator::SetAxEqualbCalculator(LinearEquationSystemCalculator *AxEqualbCalculatorIn)
     {
         this->AxEqualbCalculator = AxEqualbCalculatorIn;
     }
 
-    void IncomCalculator::CalcRes(Grid* gridIn, int iEquation,
-        RDouble* x, RDouble* diagCoef, RDouble* b, RDouble* upACOFFace, RDouble* downACOFFace)
+    void IncomCalculator::CalcRes(Grid *gridIn, int iEquation,
+        RDouble *x, RDouble *diagCoef, RDouble *b, RDouble *upACOFFace, RDouble *downACOFFace)
     {
-        UnstructGrid * grid = UnstructGridCast(gridIn);
+        UnstructGrid *grid = UnstructGridCast(gridIn);
         int nTotalFace = grid->GetNTotalFace();
         int nTotalCell = grid->GetNTotalCell();
         int nBoundFace = grid->GetNBoundFace();
@@ -45,8 +45,8 @@ namespace PHSPACE
         int *rightCellOfFace = grid->GetRightCellOfFace();
         RDouble *vol = grid->GetCellVolume();
 
-        RDouble* residualError = new RDouble[nTotalCell];
-        string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
+        RDouble *residualError = new RDouble[nTotalCell];
+        string *varNameIncom = reinterpret_cast <string *>(GlobalDataBase::GetDataPtr("varNameIncom"));
         string varName = varNameIncom[iEquation];
 
         for (int iCell = 0; iCell < nTotalCell; iCell++ )
@@ -92,7 +92,7 @@ namespace PHSPACE
             ResType = GlobalDataBase::GetIntParaFromDB("ResType");
         }
 
-        if(ResType == L1Res)
+        if (ResType == L1Res)
         {
             for (int iCell = 0; iCell < nTotalCell; ++iCell)
             {
@@ -101,7 +101,7 @@ namespace PHSPACE
             RDouble temp1 = varTotalRes ;
             PH_AllreduceSepMode(&temp1, &varTotalRes, 1, MPI_DOUBLE, MPI_SUM);
         }
-        else if(ResType == L2Res)
+        else if (ResType == L2Res)
         {
             for (int iCell = 0; iCell < nTotalCell; ++iCell)
             {
@@ -110,7 +110,7 @@ namespace PHSPACE
             RDouble temp1 = varTotalRes;
             PH_AllreduceSepMode(&temp1, &varTotalRes, 1, MPI_DOUBLE, MPI_SUM);
         }
-        else if(ResType == LinfRes)
+        else if (ResType == LinfRes)
         {
             for (int iCell = 0; iCell < nTotalCell; ++iCell)
             {
@@ -128,15 +128,13 @@ namespace PHSPACE
         delete [] residualError;
     }
 
-
-
-    void IncomCalculator::SkewnessCorrection(Grid*  grid, RDouble* phi, RDouble* dphidx, RDouble* dphidy, RDouble* dphidz)
+    void IncomCalculator::SkewnessCorrection(Grid *grid, RDouble *phi, RDouble *dphidx, RDouble *dphidy, RDouble *dphidz)
     {
         int nInteriorFaces = grid->GetNTotalFace() - grid->GetNBoundFace() + grid->GetNIFace();
-        RDouble* dphidxf = new RDouble[nInteriorFaces];
-        RDouble* dphidyf = new RDouble[nInteriorFaces];
-        RDouble* dphidzf = new RDouble[nInteriorFaces];
-        RDouble* phif = new RDouble[nInteriorFaces];
+        RDouble *dphidxf = new RDouble[nInteriorFaces];
+        RDouble *dphidyf = new RDouble[nInteriorFaces];
+        RDouble *dphidzf = new RDouble[nInteriorFaces];
+        RDouble *phif = new RDouble[nInteriorFaces];
 
         for (int iter = 0; iter < 3; ++iter)
         {
@@ -145,26 +143,26 @@ namespace PHSPACE
             GradCorrection(grid, phif, phi, dphidx, dphidy, dphidz);
         }
 
-        delete[]dphidxf;
-        delete[]dphidyf;
-        delete[]dphidzf;
-        delete[]phif;
+        delete [] dphidxf;
+        delete [] dphidyf;
+        delete [] dphidzf;
+        delete [] phif;
     }
 
-    void IncomCalculator::FaceGradCorrection(Grid*  gridIn, RDouble* dphidxf, RDouble* dphidyf, RDouble* dphidzf, RDouble* phi, RDouble* dphidx, RDouble* dphidy, RDouble* dphidz)
+    void IncomCalculator::FaceGradCorrection(Grid *gridIn, RDouble *dphidxf, RDouble *dphidyf, RDouble *dphidzf, RDouble *phi, RDouble *dphidx, RDouble *dphidy, RDouble *dphidz)
     {
         UnstructGrid *grid = UnstructGridCast(gridIn);
 
         int nbfaces = grid->GetNBoundFace();
         int nIFaces = grid->GetNIFace();
         int nInteriorFaces = grid->GetNTotalFace() - nbfaces + nIFaces;
-        int* leftCellOfFace = grid->GetLeftCellOfFace();
-        int* rightCellOfFace = grid->GetRightCellOfFace();
-        RDouble* faceWeightOfLeftCell = reinterpret_cast<RDouble*>(grid->GetDataPtr("faceWeightOfLeftCell"));
+        int *leftCellOfFace = grid->GetLeftCellOfFace();
+        int *rightCellOfFace = grid->GetRightCellOfFace();
+        RDouble *faceWeightOfLeftCell = reinterpret_cast<RDouble *>(grid->GetDataPtr("faceWeightOfLeftCell"));
 
-        RDouble* xcc = grid->GetCellCenterX();
-        RDouble* ycc = grid->GetCellCenterY();
-        RDouble* zcc = grid->GetCellCenterZ();
+        RDouble *xcc = grid->GetCellCenterX();
+        RDouble *ycc = grid->GetCellCenterY();
+        RDouble *zcc = grid->GetCellCenterZ();
 
         for (int iface = nIFaces; iface < nInteriorFaces; ++iface)
         {
@@ -225,25 +223,25 @@ namespace PHSPACE
         }
     }
 
-    void IncomCalculator::FaceValueCorretion(Grid*  gridIn, RDouble* dphidxf, RDouble* dphidyf, RDouble* dphidzf, RDouble* phif, RDouble* phi)
+    void IncomCalculator::FaceValueCorretion(Grid *gridIn, RDouble *dphidxf, RDouble *dphidyf, RDouble *dphidzf, RDouble *phif, RDouble *phi)
     {
         UnstructGrid *grid = UnstructGridCast(gridIn);
         int nbfaces = grid->GetNBoundFace();
         int nIFaces = grid->GetNIFace();
         int nInteriorFaces = grid->GetNTotalFace() - nbfaces + nIFaces;
-        int* leftCellOfFace = grid->GetLeftCellOfFace();
-        int* rightCellOfFace = grid->GetRightCellOfFace();
-        RDouble* faceWeightOfLeftCell = reinterpret_cast<RDouble*>(grid->GetDataPtr("faceWeightOfLeftCell"));
-        RDouble* area = grid->GetFaceArea();
-        RDouble* xfn = grid->GetFaceNormalX();
-        RDouble* yfn = grid->GetFaceNormalY();
-        RDouble* zfn = grid->GetFaceNormalZ();
-        RDouble* xfc = grid->GetFaceCenterX();
-        RDouble* yfc = grid->GetFaceCenterY();
-        RDouble* zfc = grid->GetFaceCenterZ();
-        RDouble* xcc = grid->GetCellCenterX();
-        RDouble* ycc = grid->GetCellCenterY();
-        RDouble* zcc = grid->GetCellCenterZ();
+        int *leftCellOfFace = grid->GetLeftCellOfFace();
+        int *rightCellOfFace = grid->GetRightCellOfFace();
+        RDouble *faceWeightOfLeftCell = reinterpret_cast<RDouble *>(grid->GetDataPtr("faceWeightOfLeftCell"));
+        RDouble *area = grid->GetFaceArea();
+        RDouble *xfn = grid->GetFaceNormalX();
+        RDouble *yfn = grid->GetFaceNormalY();
+        RDouble *zfn = grid->GetFaceNormalZ();
+        RDouble *xfc = grid->GetFaceCenterX();
+        RDouble *yfc = grid->GetFaceCenterY();
+        RDouble *zfc = grid->GetFaceCenterZ();
+        RDouble *xcc = grid->GetCellCenterX();
+        RDouble *ycc = grid->GetCellCenterY();
+        RDouble *zcc = grid->GetCellCenterZ();
 
         for (int iface = 0; iface < nInteriorFaces; ++iface)
         {
@@ -285,18 +283,18 @@ namespace PHSPACE
         }
     }
 
-    void IncomCalculator::GradCorrection(Grid*  gridIn, RDouble* phif, RDouble* phi, RDouble* dphidx, RDouble* dphidy, RDouble* dphidz)
+    void IncomCalculator::GradCorrection(Grid *gridIn, RDouble *phif, RDouble *phi, RDouble *dphidx, RDouble *dphidy, RDouble *dphidz)
     {
         UnstructGrid *grid = UnstructGridCast(gridIn);
 
-        RDouble* xfn = grid->GetFaceNormalX();
-        RDouble* yfn = grid->GetFaceNormalY();
-        RDouble* zfn = grid->GetFaceNormalZ();
-        RDouble* area = grid->GetFaceArea();
-        RDouble* vol = grid->GetCellVolume();
+        RDouble *xfn = grid->GetFaceNormalX();
+        RDouble *yfn = grid->GetFaceNormalY();
+        RDouble *zfn = grid->GetFaceNormalZ();
+        RDouble *area = grid->GetFaceArea();
+        RDouble *vol = grid->GetCellVolume();
 
-        int* leftCellofFace = grid->GetLeftCellOfFace();
-        int* rightCellofFace = grid->GetRightCellOfFace();
+        int *leftCellofFace = grid->GetLeftCellOfFace();
+        int *rightCellofFace = grid->GetRightCellOfFace();
 
         int nTotalCell = grid->GetNTotalCell();
         int nTotalFace = grid->GetNTotalFace();
@@ -404,7 +402,7 @@ namespace PHSPACE
     void IncomCalculator::calcFaceWeight(Grid *gridIn)
     {
         UnstructGrid *grid = UnstructGridCast(gridIn);
-        RDouble* faceWeightOfLeftCell = reinterpret_cast<RDouble*>(grid->GetDataPtr("faceWeightOfLeftCell"));
+        RDouble *faceWeightOfLeftCell = reinterpret_cast<RDouble *>(grid->GetDataPtr("faceWeightOfLeftCell"));
         int nBoundFace = grid->GetNBoundFace();
         int nTotalFace = grid->GetNTotalFace();
         int *leftCellOfFace = grid->GetLeftCellOfFace();
@@ -441,7 +439,7 @@ namespace PHSPACE
         UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
         int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
-        for(int iFace = 0; iFace < nBoundFace; ++ iFace)
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
             UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
             int bcType = bcRegion->GetBCType();
@@ -452,7 +450,6 @@ namespace PHSPACE
             }
         }
     }
-
 
     void IncomCalculator::CompressAnInterfaceVar(RDouble *field)
     {
@@ -544,7 +541,7 @@ namespace PHSPACE
                 {
                     if (sendProcessor != receiveProcessor)
                     {
-                        streamsize nlen = sendBuffer->size();
+                        streamsize nlen = sendBuffer->Size();
 
                         // Send the data to neighbors.
                         send(sendBuffer, receiveProcessor, nlen, requestContainer, tag);
@@ -572,7 +569,7 @@ namespace PHSPACE
                     if (sendProcessor != receiveProcessor)
                     {
                         //! The data length of the received data is same to the length that send to the neighbor.
-                        CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->size();
+                        CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->Size();
 
                         //! Receive data from neighbors.
                         receive(receivedBuffer, sendProcessor, nlen, requestContainer, tag);
@@ -664,7 +661,7 @@ namespace PHSPACE
         int iNeighborZone                            = interfaceInformation->FindIthNeighbor(neighborZoneIndex);
         int interfaceNumberBetweenTwoNeighboringZone = interfaceInformation->GetNIFaceOfNeighbor(iNeighborZone);
         int * interfaceIndexContainerForSend         = interfaceInformation->GetFaceIndexForSend(iNeighborZone);
-        dataContainer->moveto_begin();
+        dataContainer->MoveToBegin();
 
         for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
         {
@@ -689,7 +686,7 @@ namespace PHSPACE
         int interfaceNumberBetweenTwoNeighboringZone = interfaceInformation->GetNIFaceOfNeighbor(iNeighborZone);
         int * interfaceIndexContainerForReceive      = interfaceInformation->GetFaceIndexForRecv(iNeighborZone);
 
-        dataContainer->moveto_begin();
+        dataContainer->MoveToBegin();
 
         for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
         {
@@ -704,7 +701,7 @@ namespace PHSPACE
         }
     }
 
-    void IncomCalculator::InitializeMatrixACoeff(Grid* gridIn)
+    void IncomCalculator::InitializeMatrixACoeff(Grid *gridIn)
     {
         UnstructGrid *grid = UnstructGridCast(gridIn); 
         int nTotalCell = grid->GetNTotalCell();
@@ -726,7 +723,7 @@ namespace PHSPACE
         }
     }
 
-    void IncomCalculator::InitializeBCoeff(Grid* gridIn)
+    void IncomCalculator::InitializeBCoeff(Grid *gridIn)
     {
         UnstructGrid *grid = UnstructGridCast(gridIn); 
         int nTotalCell = grid->GetNTotalCell();

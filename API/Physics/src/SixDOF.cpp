@@ -104,9 +104,9 @@ void PHRigidBodyMovement::UpdateCoordinate(Grid * gridIn)
     return;
 }
 
-void PHRigidBodyMovement::UpdateGridVelocity(Grid * gridIn)
+void PHRigidBodyMovement::UpdateGridVelocity(Grid *gridIn)
 {
-    StructGrid* grid = static_cast<StructGrid* >(gridIn);
+    StructGrid *grid = static_cast<StructGrid* >(gridIn);
 
     PHSuperMatrix velocityCellface(3);
 
@@ -513,10 +513,10 @@ void PHRigidBodyMovement::UpdateSingleZoneGridInformation(Grid * gridIn)
     this->UpdateGridVelocity(gridIn);
 }
 
-void PHRigidBodyMovement::UpdateCellArea(Grid* gridIn)
+void PHRigidBodyMovement::UpdateCellArea(Grid *gridIn)
 {
     //! update the mesh derivatives.
-    StructGrid* grid = static_cast<StructGrid*>(gridIn);
+    StructGrid *grid = static_cast<StructGrid*>(gridIn);
     int ni = grid->GetNI();
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
@@ -556,14 +556,14 @@ void PHRigidBodyMovement::UpdateCellArea(Grid* gridIn)
     return;
 }
 
-PHMatrix< RDouble > PHRigidBodyMovement::CalculateGridCellFaceVelocity(Grid* gridIn, int i, int j, int k, int nd)
+PHMatrix< RDouble > PHRigidBodyMovement::CalculateGridCellFaceVelocity(Grid *gridIn, int i, int j, int k, int nd)
 {
-    StructGrid* grid = static_cast<StructGrid*>(gridIn);
+    StructGrid *grid = static_cast<StructGrid*>(gridIn);
     //! Calculate grid cell face velocity.
     PHSuperMatrix xyzc = GetCellFaceCoordinate(grid, i, j, k, nd);
     PHSuperMatrix currentAngelRate(3);
 
-    PHSuperMatrix & eulerAngleRate = * this->eulerAngleRate;
+    PHSuperMatrix & eulerAngleRate = *this->eulerAngleRate;
 
     for (int ii = 1; ii <= 3; ++ii)
     {
@@ -573,12 +573,12 @@ PHMatrix< RDouble > PHRigidBodyMovement::CalculateGridCellFaceVelocity(Grid* gri
     return CrossProductVector(currentAngelRate, xyzc);
 }
 
-PHMatrix< RDouble > PHRigidBodyMovement::GetCellFaceCoordinate(Grid* gridIn, int i, int j, int k, int nd)
+PHMatrix< RDouble > PHRigidBodyMovement::GetCellFaceCoordinate(Grid *gridIn, int i, int j, int k, int nd)
 {
-    StructGrid* grid = static_cast<StructGrid*>(gridIn);
-    RDouble3D & structuredX  = *(grid->GetStructX());
-    RDouble3D & structuredY  = *(grid->GetStructY());
-    RDouble3D & structuredZ  = *(grid->GetStructZ());
+    StructGrid *grid = static_cast<StructGrid*>(gridIn);
+    RDouble3D &structuredX = *(grid->GetStructX());
+    RDouble3D &structuredY = *(grid->GetStructY());
+    RDouble3D &structuredZ = *(grid->GetStructZ());
 
     PHMatrix< RDouble > xyzc(3);
 
@@ -636,7 +636,7 @@ void PHRigidBodyMovement::MainCallOf6DOF()
     int gridLevelIndex = 0;
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Grid * grid = PHSPACE::GetGrid(iZone, gridLevelIndex);
+        Grid *grid = PHSPACE::GetGrid(iZone, gridLevelIndex);
         if (! grid) continue;
         this->UpdateSingleZoneGridInformation(grid);
     }

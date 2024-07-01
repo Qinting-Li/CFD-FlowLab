@@ -47,11 +47,11 @@ InterpointPatch::~InterpointPatch()
     delete dataStorageReceive;
     if (pointIndexForReceive)
     {
-        delete []pointIndexForReceive;
+        delete [] pointIndexForReceive;
     }
     if (pointIndexForSend)
     {
-        delete []pointIndexForSend;
+        delete [] pointIndexForSend;
     }
 }
 
@@ -165,14 +165,14 @@ InterpointInformation::InterpointInformation(int numberOfInterpoints, Grid *pare
 
 InterpointInformation::~InterpointInformation()
 {
-    delete []interPoint2ZoneID;
-    delete []interPoint2InterPointID;
-    delete []interPoint2GlobalPoint;
-    delete []cellNumberOfInterPoint;
-    delete []totalZonesOfInterPoint;
-    delete []labelOfInterPoint;
-    delete []dataForSend;
-    delete []dataForReceive;
+    delete [] interPoint2ZoneID;
+    delete [] interPoint2InterPointID;
+    delete [] interPoint2GlobalPoint;
+    delete [] cellNumberOfInterPoint;
+    delete [] totalZonesOfInterPoint;
+    delete [] labelOfInterPoint;
+    delete [] dataForSend;
+    delete [] dataForReceive;
 
     if (interPointPatch)
     {
@@ -180,10 +180,10 @@ InterpointInformation::~InterpointInformation()
         {
             delete interPointPatch[iNeighbor];
         }
-        delete []interPointPatch;
+        delete [] interPointPatch;
     }
 
-    delete []isNeighborInterpointFound;
+    delete [] isNeighborInterpointFound;
 }
 
 void InterpointInformation::AllocateNeighborInfo()
@@ -248,7 +248,7 @@ void InterpointInformation::FindNeighbors()
         }
     }
 
-    delete []zoneFlag;
+    delete [] zoneFlag;
 }
 
 void InterpointInformation::ComputePointIndexForReceive(int iNeighbor)
@@ -369,12 +369,12 @@ void InterpointInformation::ReSize(int numberOfNewInterpoints)
         return;
     }
 
-    delete []interPoint2ZoneID;
-    delete []interPoint2InterPointID;
-    delete []interPoint2GlobalPoint;
-    delete []cellNumberOfInterPoint;
-    delete []totalZonesOfInterPoint;
-    delete []labelOfInterPoint;
+    delete [] interPoint2ZoneID;
+    delete [] interPoint2InterPointID;
+    delete [] interPoint2GlobalPoint;
+    delete [] cellNumberOfInterPoint;
+    delete [] totalZonesOfInterPoint;
+    delete [] labelOfInterPoint;
 
     this->numberOfInterpoints = numberOfNewInterpoints;
 
@@ -492,7 +492,7 @@ void InterpointFields::FreeInterpointVariable(Data_ParamFieldSuite *dataStore)
     for (int iVar = 0; iVar < Size(); ++ iVar)
     {
         string variableName = variableNames[iVar];
-        void **q = reinterpret_cast<void **> (dataStore->GetDataPtr(variableName));
+        void **q = reinterpret_cast<void **>(dataStore->GetDataPtr(variableName));
         DelPointer2(q);
     }
 }
@@ -500,13 +500,13 @@ void InterpointFields::FreeInterpointVariable(Data_ParamFieldSuite *dataStore)
 template<typename T>
 T **InterpointFields::GetSendVariable(const string &name, const int IDOfGhostLayer)
 {
-     return reinterpret_cast<T **> (interpointInformation->GetSendDataStorage(IDOfGhostLayer)->GetDataPtr(name));
+     return reinterpret_cast<T **>(interpointInformation->GetSendDataStorage(IDOfGhostLayer)->GetDataPtr(name));
 }
 
 template<typename T>
 T **InterpointFields::GetReceiveVariable(const string &name, const int IDOfGhostLayer)
 {
-    return reinterpret_cast<T **> (interpointInformation->GetReceiveDataStorage(IDOfGhostLayer)->GetDataPtr(name));
+    return reinterpret_cast<T **>(interpointInformation->GetReceiveDataStorage(IDOfGhostLayer)->GetDataPtr(name));
 }
 
 InterpointDataProxy::InterpointDataProxy()

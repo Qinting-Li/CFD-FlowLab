@@ -238,7 +238,10 @@ void DynamicGrid::StationalData2DynamicData()
 
         boundaryCondition = bcr[iFace]->GetBoundaryCondition();
         int isSecondSegment = 0;
-        boundaryCondition->GetParamData("isSecondSegment", &isSecondSegment, PHINT, 1);
+        if (boundaryCondition->CheckParamData("isSecondSegment"))
+        {
+            boundaryCondition->GetParamData("isSecondSegment", &isSecondSegment, PHINT, 1);
+        }
 
         if (!isSecondSegment)
         {
