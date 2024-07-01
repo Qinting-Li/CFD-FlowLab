@@ -46,9 +46,9 @@ private:
     void WriteGeometryFileParallel();
 
     //! Write variable file.
-    void WriteFiedlData();
-    void WriteFiedlDataSerial();
-    void WriteFiedlDataParallel();
+    void WriteFieldData();
+    void WriteFieldDataSerial();
+    void WriteFieldDataParallel();
 
     //! Write and update Ensight case file
     void UpdateCaseFile();

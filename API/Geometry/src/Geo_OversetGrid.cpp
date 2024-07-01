@@ -62,7 +62,7 @@ void Geo_OversetGrid::DumpOversetGrid(fstream &file)
     grid->Encode(cdata, 1);
     WriteFile(file, cdata);
 
-    delete cdata;
+    delete cdata;    cdata = nullptr;
 }
 
 bool InBox(RDouble &xb, RDouble &yb, RDouble &zb, RDouble *pmin, RDouble *pmax)

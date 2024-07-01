@@ -143,12 +143,12 @@ void Zone::ShowCoarseGrids()
     {
         Grid *grid = geom->GetGrid(iLevel);
 
-        if(grid->Type() == PHSPACE::UNSTRUCTGRID)
+        if (grid->Type() == PHSPACE::UNSTRUCTGRID)
         {
             std::ostringstream oss;
             oss << "./results/grid" << this->GetIndex() << "_" << "level_" << iLevel << ".plt";
 
-            if(PHSPACE::GetDim() == TWO_D)
+            if (PHSPACE::GetDim() == TWO_D)
             {
                 VisualizationMesh2D(UnstructGridCast(grid), oss.str().c_str());
             }
@@ -271,7 +271,7 @@ void InitGlobalValuesSolver()
         if (compressible == INCOMPRESSIBLE)
         {
 #ifdef USE_INCOMSOLVER
-            gas = new IncomGas();            
+            gas = new IncomGas();
 #endif
         }
         else

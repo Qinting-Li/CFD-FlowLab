@@ -135,7 +135,7 @@ void TransitionSolver::DumpResultFile(Grid *grid, int level)
     }
 
     int nProtectData = 0;
-    if(GlobalDataBase::IsExist("nProtectData", PHINT, 1))
+    if (GlobalDataBase::IsExist("nProtectData", PHINT, 1))
     {
         nProtectData = GlobalDataBase::GetIntParaFromDB("nProtectData");
     }
@@ -143,7 +143,7 @@ void TransitionSolver::DumpResultFile(Grid *grid, int level)
     if (outnstep % intervalStepFlow == 0 && level == 0 && isSubIterationDump)
     {
 
-        if(nProtectData ==0)
+        if (nProtectData ==0)
         {
             //! To dump restart data for continual simulation.
             ActionKey *actkeyDumpRestartData = new ActionKey();
@@ -159,26 +159,26 @@ void TransitionSolver::DumpResultFile(Grid *grid, int level)
             DumpTransitionProtectData(actkeyDumpRestartData, RestartFile);
             delete actkeyDumpRestartData;
         
-            if(outnstep > 1)
+            if (outnstep > 1)
             {
-                if(RestartFile == 0)
+                if (RestartFile == 0)
                 {
                     string path = "./results/transition1.dat";
                     remove(path.c_str());
 
-                    if(PHMPI::IsParallelRun())
+                    if (PHMPI::IsParallelRun())
                     {
                         string path1 = "./results/transition1_0.dat";
                         remove(path1.c_str());
                     }
                 }
 
-                else if(RestartFile == 1)
+                else if (RestartFile == 1)
                 {
                     string path = "./results/transition0.dat";
                     remove(path.c_str());
 
-                    if(PHMPI::IsParallelRun())
+                    if (PHMPI::IsParallelRun())
                     {
                         string path2 = "./results/transition0_0.dat";
                         remove(path2.c_str());

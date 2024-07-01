@@ -317,7 +317,7 @@ void InterfaceInfo::FindNeighbors()
         }
     }
 
-    delete [] zoneflag;
+    delete [] zoneflag;    zoneflag = nullptr;
 }
 
 void InterfaceInfo::ComputeFaceIndexForRecv(int ineighbor)
@@ -587,7 +587,7 @@ void InterfaceFields::FreeInterfaceVar(Data_ParamFieldSuite *datastore)
     for (int iVar = 0; iVar < Size(); ++ iVar)
     {
         string varName = variableNames[iVar];
-        void **q = reinterpret_cast<void **> (datastore->GetDataPtr(varName));
+        void **q = reinterpret_cast<void **>(datastore->GetDataPtr(varName));
         if (q != NULL)
         {
             DelPointer2(q);
@@ -605,7 +605,7 @@ void InterfaceFields::RemoveInterfaceVar(const string &name)
         if (interfaceInfo->GetSendDataStorage(iGhost) != 0)
         {
             datastore = interfaceInfo->GetSendDataStorage(iGhost);
-            void **q = reinterpret_cast<void **> (datastore->GetDataPtr(name));
+            void **q = reinterpret_cast<void **>(datastore->GetDataPtr(name));
             if (q != NULL)
             {
                 DelPointer2(q);
@@ -616,7 +616,7 @@ void InterfaceFields::RemoveInterfaceVar(const string &name)
         if (interfaceInfo->GetRecvDataStorage(iGhost) != 0)
         {
             datastore = interfaceInfo->GetRecvDataStorage(iGhost);
-            void **q = reinterpret_cast<void **> (datastore->GetDataPtr(name));
+            void **q = reinterpret_cast<void **>(datastore->GetDataPtr(name));
             if (q != NULL)
             {
                 DelPointer2(q);
@@ -629,13 +629,13 @@ void InterfaceFields::RemoveInterfaceVar(const string &name)
 template< typename T >
 T ** InterfaceFields::GetSendVariable(const string &name, const int iGhost)
 {
-     return reinterpret_cast< T ** > (interfaceInfo->GetSendDataStorage(iGhost)->GetDataPtr(name));
+     return reinterpret_cast<T **>(interfaceInfo->GetSendDataStorage(iGhost)->GetDataPtr(name));
 }
 
 template< typename T >
 T ** InterfaceFields::GetRecvVariable(const string &name, const int iGhost)
 {
-    return reinterpret_cast< T ** > (interfaceInfo->GetRecvDataStorage(iGhost)->GetDataPtr(name));
+    return reinterpret_cast<T **>(interfaceInfo->GetRecvDataStorage(iGhost)->GetDataPtr(name));
 }
 
 InterfaceDataProxy::InterfaceDataProxy()

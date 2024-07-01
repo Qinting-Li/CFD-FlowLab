@@ -188,7 +188,7 @@ void NSSolverStructFD::AllocateGlobalVar(Grid *gridIn)
     }
     //! For conservation of flux.
     int systemgridtype = GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    if(MIXGRID == systemgridtype)
+    if (MIXGRID == systemgridtype)
     {
         RDouble4D *dqdx_cc_ruvwpt = new RDouble4D(I, J, K, Range(0,5), fortranArray);
         RDouble4D *dqdy_cc_ruvwpt = new RDouble4D(I, J, K, Range(0,5), fortranArray);
@@ -878,7 +878,7 @@ void NSSolverStructFD::ObtainGradientCellCenter(Grid *gridIn)
     GetUVWTproxy(gridIn);
 
     int nDim = GetDim();
-    for(int nsurf = 1; nsurf <= nDim; ++nsurf)
+    for (int nsurf = 1; nsurf <= nDim; ++nsurf)
     {
         GetUVWTfaceproxy(gridIn, nsurf);
         GetdqdkxietactaCellCenter(gridIn, nsurf);
@@ -1144,11 +1144,15 @@ void NSSolverStructFD::ObtainBoundaryValue(Grid *gridIn)
         {
             OutFlowBC3D(grid, structBC);
         }
+        else if (BCType == OVERSET)
+        {
+            OutFlowBC3D(grid, structBC);
+        }
         else
         {
             //! In order to avoid illegal BCtype ID.
             ostringstream oss;
-            oss<<"Error : Illegal BCtype ID "<<BCType<<endl;
+            oss << "Error : Illegal BCtype ID " << BCType << endl;
             TK_Exit::ExceptionExit(oss);
         }
     }
@@ -1570,8 +1574,8 @@ void NSSolverStructFD::FarFieldRiemannInvariants(Grid *gridIn, StructBC *structB
             }
         }
     }
-    delete []prims;
-    delete []primt;
+    delete [] prims;
+    delete [] primt;
 }
 
 void NSSolverStructFD::CornerPoint(Grid *gridIn)
@@ -1713,7 +1717,7 @@ void NSSolverStructFD::InitLocalMemory(Grid *gridIn)
     UVWTproxy = new FieldProxy();
     UVWTproxy->SetField_STR(new RDouble4D(I4, J4, K4, Range(0, 3), fortranArray), true);
     
-    if(solvername.substr(0, 4) == "HDCS")
+    if (solvername.substr(0, 4) == "HDCS")
     {
         CellfluxProxy = new FieldProxy();
         CellfluxProxy->SetField_STR(new RDouble4D(I4, J4, K4, Range(0, 4), fortranArray), true);
@@ -1733,7 +1737,7 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
 
     string InterpolationType = GlobalDataBase::GetStrParaFromDB("str_highorder_interpolation_type");
 
-    if(InterpolationType.substr(0, 4) == "test")
+    if (InterpolationType.substr(0, 4) == "test")
     {
         //! non-uniform interpolation
         RDouble3D &xcc = *grid->GetCellCenterX();
@@ -1741,7 +1745,7 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
         RDouble3D &zcc = *grid->GetCellCenterZ();
         
         int nDim = GetDim();
-        for(int nsurf = 1; nsurf <= nDim; ++ nsurf)
+        for (int nsurf = 1; nsurf <= nDim; ++ nsurf)
         {
             int il1, jl1, kl1;
             GetNsurfIndex(nsurf, il1, jl1, kl1);
@@ -1759,13 +1763,13 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
             }
             
             RDouble LengthPlate_L[4];
-            for(int k = kst; k <= ked; ++k)
+            for (int k = kst; k <= ked; ++k)
             {
-                for(int j = jst; j <= jed; ++j)
+                for (int j = jst; j <= jed; ++j)
                 {
-                    for(int i = ist; i <= ied; ++i)
+                    for (int i = ist; i <= ied; ++i)
                     {
-                        for(int ip = 0; ip <= 3; ++ ip)
+                        for (int ip = 0; ip <= 3; ++ ip)
                         {
                             int iL = i + (ip - 2) * il1;
                             int jL = j + (ip - 2) * jl1;
@@ -1876,13 +1880,13 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
             }
             
             RDouble LengthPlate_R[4];
-            for(int k = kst; k <= ked; ++k)
+            for (int k = kst; k <= ked; ++k)
             {
-                for(int j = jst; j <= jed; ++j)
+                for (int j = jst; j <= jed; ++j)
                 {
-                    for(int i = ist; i <= ied; ++i)
+                    for (int i = ist; i <= ied; ++i)
                     {
-                        for(int ip = 0; ip <= 3; ++ ip)
+                        for (int ip = 0; ip <= 3; ++ ip)
                         { 
                             int iR = i + (ip - 1) * il1;
                             int jR = j + (ip - 1) * jl1;
@@ -2039,7 +2043,7 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
         Coef[29] =   1.0;
         
         int nDim = GetDim();
-        for(int nsurf = 1; nsurf <= nDim; ++ nsurf)
+        for (int nsurf = 1; nsurf <= nDim; ++ nsurf)
         {
             int il1, jl1, kl1;
             GetNsurfIndex(nsurf, il1, jl1, kl1);
@@ -2056,13 +2060,13 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
                 kst = 1;
                 ked = 1;
             }
-            for(int k = kst; k <= ked; ++k)
+            for (int k = kst; k <= ked; ++k)
             {
-                for(int j = jst; j <= jed; ++j)
+                for (int j = jst; j <= jed; ++j)
                 {
-                    for(int i = ist; i <= ied; ++i)
+                    for (int i = ist; i <= ied; ++i)
                     {
-                        for(int coefid = 0; coefid <= 29; ++coefid)
+                        for (int coefid = 0; coefid <= 29; ++coefid)
                         {
                             (*WeightedInterpolationCoef)(i, j, k, nsurf, 0,  coefid) = Coef[coefid];
                             (*WeightedInterpolationCoef)(i, j, k, nsurf, 1,  coefid) = Coef[coefid];
@@ -2114,7 +2118,7 @@ void NSSolverStructFD::InviscidFlux(Grid *gridIn)
 
     /*if (total_negative > 0)
     {
-        std::cout<<"warning:    "<<total_negative<<std::endl;
+        std::cout << "warning:    " << total_negative << std::endl;
     }*/
 
     delete qlProxy;
@@ -2130,11 +2134,11 @@ void NSSolverStructFD::GetFaceVariable_WCNS(Grid *gridIn, FieldProxy *qlProxy, F
     RDouble4D & qr = qrProxy->GetField_STR();
 
     Int1D *DiffOrder;
-    if(nsurf == 1)
+    if (nsurf == 1)
     {
         DiffOrder = grid->DiscretePrecisionKXI;
     }
-    else if(nsurf == 2)
+    else if (nsurf == 2)
     {
         DiffOrder = grid->DiscretePrecisionETA;
     }
@@ -2196,14 +2200,14 @@ void NSSolverStructFD::GetFaceVariable_WCNS(Grid *gridIn, FieldProxy *qlProxy, F
 
                 int localcellID = i * il1 + j * jl1 + k * kl1;
                 
-                if((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
+                if ((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
                 {
                     InterpolationRUVWP3rd(PrimPlate_L, PrimHalf_L);
                     InterpolationRUVWP3rd(PrimPlate_R, PrimHalf_R);
                 }
                 else
                 {
-                    for(int ic = 0; ic <= 29; ++ic)
+                    for (int ic = 0; ic <= 29; ++ic)
                     {
                         Coef_L[ic] = (*WeightedInterpolationCoef)(i, j, k, nsurf, 0, ic);
                         Coef_R[ic] = (*WeightedInterpolationCoef)(i, j, k, nsurf, 1, ic);
@@ -2429,7 +2433,7 @@ RDouble NSSolverStructFD::BasicInterpolation3rd(RDouble Qp[5], int m)
     RDouble dql = Qp[2] - Qp[1];
     RDouble dqr = Qp[3] - Qp[2];
 
-    if(m == 0 || m == 4)
+    if (m == 0 || m == 4)
     {
         dql = Qp[2] * (dql / (Qp[2] - 0.5 * dql));
         dqr = Qp[2] * (dqr / (Qp[2] + 0.5 * dqr));
@@ -2463,7 +2467,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_firstlayerExplicit(Grid *gridIn, Fie
     RDouble PrimPlateL[5];
     RDouble PrimPlateR[5];
 
-    if(nsurf == 1)
+    if (nsurf == 1)
     {
         int ist = 1;
         int jst = 1;
@@ -2487,7 +2491,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_firstlayerExplicit(Grid *gridIn, Fie
             {
                 for (int j = jst; j <= jed; ++ j)
                 {
-                    for(int bcindex = 0; bcindex <= 1; ++ bcindex)
+                    for (int bcindex = 0; bcindex <= 1; ++ bcindex)
                     {
                         int i = ibc[bcindex];
                         
@@ -2510,11 +2514,11 @@ void NSSolverStructFD::GetFaceVariable_HDCS_firstlayerExplicit(Grid *gridIn, Fie
         {
             for (int j = jst; j <= jed; ++ j)
             {
-                for(int bcindex = 0; bcindex <= 1; ++ bcindex)
+                for (int bcindex = 0; bcindex <= 1; ++ bcindex)
                 {
                     int i = ibc[bcindex];
                     
-                    if(ql(i - 1, j, k, 0) < SMALL || ql(i - 1, j, k, 4) < SMALL)
+                    if (ql(i - 1, j, k, 0) < SMALL || ql(i - 1, j, k, 4) < SMALL)
                     {
                         total_negative += 1;
                         ql(i - 1, j, k, 0) = q(i - 1, j, k, 0);
@@ -2524,7 +2528,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_firstlayerExplicit(Grid *gridIn, Fie
                         ql(i - 1, j, k, 4) = q(i - 1, j, k, 4);
                     }
                     
-                    if(qr(i, j, k, 0) < SMALL || qr(i, j, k, 4) < SMALL)
+                    if (qr(i, j, k, 0) < SMALL || qr(i, j, k, 4) < SMALL)
                     {
                         total_negative += 1;
                         qr(i, j, k, 0) = q(i, j, k, 0);
@@ -2537,7 +2541,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_firstlayerExplicit(Grid *gridIn, Fie
             }
         }
     }
-    else if(nsurf == 2)
+    else if (nsurf == 2)
     {
         int ist = 1;
         int jst = 1;
@@ -2561,7 +2565,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_firstlayerExplicit(Grid *gridIn, Fie
             {
                 for (int i = ist; i <= ied; ++ i)
                 {
-                    for(int bcindex = 0; bcindex <= 1; ++ bcindex)
+                    for (int bcindex = 0; bcindex <= 1; ++ bcindex)
                     {
                         int j = jbc[bcindex];
                         
@@ -2584,11 +2588,11 @@ void NSSolverStructFD::GetFaceVariable_HDCS_firstlayerExplicit(Grid *gridIn, Fie
         {
             for (int i = ist; i <= ied; ++ i)
             {
-                for(int bcindex = 0; bcindex <= 1; ++ bcindex)
+                for (int bcindex = 0; bcindex <= 1; ++ bcindex)
                 {
                     int j = jbc[bcindex];
                     
-                    if(ql(i, j - 1, k, 0) < SMALL || ql(i, j - 1, k, 4) < SMALL)
+                    if (ql(i, j - 1, k, 0) < SMALL || ql(i, j - 1, k, 4) < SMALL)
                     {
                         total_negative += 1;
                         ql(i, j - 1, k, 0) = q(i, j - 1, k, 0);
@@ -2598,7 +2602,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_firstlayerExplicit(Grid *gridIn, Fie
                         ql(i, j - 1, k, 4) = q(i, j - 1, k, 4);
                     }
                     
-                    if(qr(i, j, k, 0) < SMALL || qr(i, j, k, 4) < SMALL)
+                    if (qr(i, j, k, 0) < SMALL || qr(i, j, k, 4) < SMALL)
                     {
                         total_negative += 1;
                         qr(i, j, k, 0) = q(i, j, k, 0);
@@ -2630,7 +2634,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_firstlayerExplicit(Grid *gridIn, Fie
             {
                 for (int i = ist; i <= ied; ++ i)
                 {
-                    for(int bcindex = 0; bcindex <= 1; ++ bcindex)
+                    for (int bcindex = 0; bcindex <= 1; ++ bcindex)
                     {
                         int k = kbc[bcindex];
                         
@@ -2653,11 +2657,11 @@ void NSSolverStructFD::GetFaceVariable_HDCS_firstlayerExplicit(Grid *gridIn, Fie
         {
             for (int i = ist; i <= ied; ++ i)
             {
-                for(int bcindex = 0; bcindex <= 1; ++ bcindex)
+                for (int bcindex = 0; bcindex <= 1; ++ bcindex)
                 {
                     int k = kbc[bcindex];
                     
-                    if(ql(i, j, k - 1, 0) < SMALL || ql(i, j, k - 1, 4) < SMALL)
+                    if (ql(i, j, k - 1, 0) < SMALL || ql(i, j, k - 1, 4) < SMALL)
                     {
                         total_negative += 1;
                         ql(i, j, k - 1, 0) = q(i, j, k - 1, 0);
@@ -2667,7 +2671,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_firstlayerExplicit(Grid *gridIn, Fie
                         ql(i, j, k - 1, 4) = q(i, j, k - 1, 4);
                     }
                     
-                    if(qr(i, j, k, 0) < SMALL || qr(i, j, k, 4) < SMALL)
+                    if (qr(i, j, k, 0) < SMALL || qr(i, j, k, 4) < SMALL)
                     {
                         total_negative += 1;
                         qr(i, j, k, 0) = q(i, j, k, 0);
@@ -2686,11 +2690,11 @@ void NSSolverStructFD::GetFaceVariable_HDCS_firstlayerExplicit(Grid *gridIn, Fie
 
 void NSSolverStructFD::GetFaceVariable_HDCS_otherlayerImplicit(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, int nsurf)
 {
-    if(nsurf == 1)
+    if (nsurf == 1)
     {
         GetFaceVariable_HDCS_otherlayerImplicit_nsurf1(gridIn, qlProxy, qrProxy);
     }
-    else if(nsurf == 2)
+    else if (nsurf == 2)
     {
         GetFaceVariable_HDCS_otherlayerImplicit_nsurf2(gridIn, qlProxy, qrProxy);
     }
@@ -2742,7 +2746,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_otherlayerImplicit_nsurf1(Grid *grid
         {
             for (int j = jst; j <= jed; ++ j)
             {
-                for(int bcindex = 0; bcindex <= 1; ++ bcindex)
+                for (int bcindex = 0; bcindex <= 1; ++ bcindex)
                 {
                     int i = ibc[bcindex];
                     
@@ -2781,7 +2785,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_otherlayerImplicit_nsurf1(Grid *grid
         {
             for (int i = ist + 1; i <= ied - 1; ++ i)
             {
-                if(ql(i - 1, j, k, 0) < SMALL || ql(i - 1, j, k, 4) < SMALL)
+                if (ql(i - 1, j, k, 0) < SMALL || ql(i - 1, j, k, 4) < SMALL)
                 {
                     total_negative += 1;
                     ql(i - 1, j, k, 0) = q(i - 1, j, k, 0);
@@ -2791,7 +2795,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_otherlayerImplicit_nsurf1(Grid *grid
                     ql(i - 1, j, k, 4) = q(i - 1, j, k, 4);
                 }
 
-                if(qr(i, j, k, 0) < SMALL || qr(i, j, k, 4) < SMALL)
+                if (qr(i, j, k, 0) < SMALL || qr(i, j, k, 4) < SMALL)
                 {
                     total_negative += 1;
                     qr(i, j, k, 0) = q(i, j, k, 0);
@@ -2803,8 +2807,8 @@ void NSSolverStructFD::GetFaceVariable_HDCS_otherlayerImplicit_nsurf1(Grid *grid
             }
         }
     }
-    delete []EquivalentPrimhalfL;
-    delete []EquivalentPrimhalfR;
+    delete [] EquivalentPrimhalfL;
+    delete [] EquivalentPrimhalfR;
 }
 
 void NSSolverStructFD::GetFaceVariable_HDCS_otherlayerImplicit_nsurf2(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy)
@@ -2849,7 +2853,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_otherlayerImplicit_nsurf2(Grid *grid
         {
             for (int i = ist; i <= ied; ++ i)
             {
-                for(int bcindex = 0; bcindex <= 1; ++ bcindex)
+                for (int bcindex = 0; bcindex <= 1; ++ bcindex)
                 {
                     int j = jbc[bcindex];
 
@@ -2888,7 +2892,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_otherlayerImplicit_nsurf2(Grid *grid
         {
             for (int i = ist; i <= ied; ++ i)
             {
-                if(ql(i, j - 1, k, 0) < SMALL || ql(i, j - 1, k, 4) < SMALL)
+                if (ql(i, j - 1, k, 0) < SMALL || ql(i, j - 1, k, 4) < SMALL)
                 {
                     total_negative += 1;
                     ql(i, j - 1, k, 0) = q(i, j - 1, k, 0);
@@ -2898,7 +2902,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_otherlayerImplicit_nsurf2(Grid *grid
                     ql(i, j - 1, k, 4) = q(i, j - 1, k, 4);
                 }
 
-                if(qr(i, j, k, 0) < SMALL || qr(i, j, k, 4) < SMALL)
+                if (qr(i, j, k, 0) < SMALL || qr(i, j, k, 4) < SMALL)
                 {
                     total_negative += 1;
                     qr(i, j, k, 0) = q(i, j, k, 0);
@@ -2910,8 +2914,8 @@ void NSSolverStructFD::GetFaceVariable_HDCS_otherlayerImplicit_nsurf2(Grid *grid
             }
         }
     }
-    delete []EquivalentPrimhalfL;
-    delete []EquivalentPrimhalfR;
+    delete [] EquivalentPrimhalfL;
+    delete [] EquivalentPrimhalfR;
 }
 
 void NSSolverStructFD::GetFaceVariable_HDCS_otherlayerImplicit_nsurf3(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy)
@@ -2951,7 +2955,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_otherlayerImplicit_nsurf3(Grid *grid
         {
             for (int i = ist; i <= ied; ++ i)
             {
-                for(int bcindex = 0; bcindex <= 1; ++ bcindex)
+                for (int bcindex = 0; bcindex <= 1; ++ bcindex)
                 {
                     int k = kbc[bcindex];
 
@@ -2990,7 +2994,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_otherlayerImplicit_nsurf3(Grid *grid
         {
             for (int i = ist; i <= ied; ++ i)
             {
-                if(ql(i, j, k - 1, 0) < SMALL || ql(i, j, k - 1, 4) < SMALL)
+                if (ql(i, j, k - 1, 0) < SMALL || ql(i, j, k - 1, 4) < SMALL)
                 {
                     total_negative += 1;
                     ql(i, j, k - 1, 0) = q(i, j, k - 1, 0);
@@ -3000,7 +3004,7 @@ void NSSolverStructFD::GetFaceVariable_HDCS_otherlayerImplicit_nsurf3(Grid *grid
                     ql(i, j, k - 1, 4) = q(i, j, k - 1, 4);
                 }
 
-                if(qr(i, j, k, 0) < SMALL || qr(i, j, k, 4) < SMALL)
+                if (qr(i, j, k, 0) < SMALL || qr(i, j, k, 4) < SMALL)
                 {
                     total_negative += 1;
                     qr(i, j, k, 0) = q(i, j, k, 0);
@@ -3012,8 +3016,8 @@ void NSSolverStructFD::GetFaceVariable_HDCS_otherlayerImplicit_nsurf3(Grid *grid
             }
         }
     }
-    delete []EquivalentPrimhalfL;
-    delete []EquivalentPrimhalfR;
+    delete [] EquivalentPrimhalfL;
+    delete [] EquivalentPrimhalfR;
 }
 
 RDouble NSSolverStructFD::LinearExplicitInterpolation5th(RDouble prim[5])
@@ -3043,18 +3047,18 @@ void NSSolverStructFD::SolveTridiagonalEquations(int Nod, RDouble BL, RDouble BR
     C[2] = BR;
     F[2] = F[2] - BL * F[1];
 
-    for(int k = 3; k <= Nod - 1; ++ k)
+    for (int k = 3; k <= Nod - 1; ++ k)
     {
         RDouble Inv = 1.0 / (1.0 - BL * C[k-1]);
         C[k] = Inv * BR;
         F[k] = Inv * (F[k] - BL * F[k-1]);
     }
 
-    for(int k = Nod - 1; k >= 2; -- k)
+    for (int k = Nod - 1; k >= 2; -- k)
     {
         F[k] = F[k] - C[k] * F[k+1];
     }
-    delete []C;
+    delete [] C;
 }
 
 void NSSolverStructFD::GetFaceInviscidFlux(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, FieldProxy *fluxProxy, int nsurf)
@@ -3096,7 +3100,7 @@ void NSSolverStructFD::FluxSteger(Grid *gridIn, FieldProxy *qlProxy, FieldProxy 
     int ist = 0, jst = 0, kst = 0;
     int ied = 0, jed = 0, ked = 0;
 
-    if(solvername.substr(0, 4) == "WCNS")
+    if (solvername.substr(0, 4) == "WCNS")
     {
         ist = 1 - il1;
         jst = 1 - jl1;
@@ -3110,7 +3114,7 @@ void NSSolverStructFD::FluxSteger(Grid *gridIn, FieldProxy *qlProxy, FieldProxy 
             ked = 1;
         }
     }
-    else if(solvername.substr(0, 4) == "HDCS")
+    else if (solvername.substr(0, 4) == "HDCS")
     {
         ist = 1;
         jst = 1;
@@ -3245,7 +3249,7 @@ void NSSolverStructFD::FluxRoe(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qr
     int ist = 0, jst = 0, kst = 0;
     int ied = 0, jed = 0, ked = 0;
 
-    if(solvername.substr(0, 4) == "WCNS")
+    if (solvername.substr(0, 4) == "WCNS")
     {
         ist = 1 - il1;
         jst = 1 - jl1;
@@ -3259,7 +3263,7 @@ void NSSolverStructFD::FluxRoe(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qr
             ked = 1;
         }
     }
-    else if(solvername.substr(0, 4) == "HDCS")
+    else if (solvername.substr(0, 4) == "HDCS")
     {
         ist = 1;
         jst = 1;
@@ -3428,7 +3432,7 @@ void NSSolverStructFD::FluxDifference(Grid *gridIn, FieldProxy *fluxProxy, int n
     {
         FluxDifference_WCNS(gridIn, fluxProxy, nsurf);
     }
-    else if(solvername.substr(0, 4) == "HDCS")
+    else if (solvername.substr(0, 4) == "HDCS")
     {
         FluxDifference_HDCS(gridIn, fluxProxy, nsurf);
     }
@@ -3466,11 +3470,11 @@ void NSSolverStructFD::FluxDifference_WCNS(Grid *gridIn, FieldProxy *fluxProxy, 
     } 
 
     Int1D *DiffOrder;
-    if(nsurf == 1)
+    if (nsurf == 1)
     {
         DiffOrder = grid->DiscretePrecisionKXI;
     }
-    else if(nsurf == 2)
+    else if (nsurf == 2)
     {
         DiffOrder = grid->DiscretePrecisionETA;
     }
@@ -3494,7 +3498,7 @@ void NSSolverStructFD::FluxDifference_WCNS(Grid *gridIn, FieldProxy *fluxProxy, 
 
                     int localcellID = i * il1 + j * jl1 + k * kl1;
 
-                    if((*DiffOrder)(localcellID) == 2)
+                    if ((*DiffOrder)(localcellID) == 2)
                     {
                         res(i, j, k, m) -= (f2 - f1);
                     }
@@ -3567,7 +3571,7 @@ void NSSolverStructFD::FluxDifference_HDCS(Grid *gridIn, FieldProxy *fluxProxy, 
 
 void NSSolverStructFD::GetCellInviscidFlux(Grid *gridIn, int nsurf)
 {
-    if(solvername.substr(0, 4) != "HDCS")
+    if (solvername.substr(0, 4) != "HDCS")
     {
         return;
     }
@@ -3633,7 +3637,7 @@ void NSSolverStructFD::GetCellInviscidFlux(Grid *gridIn, int nsurf)
 
 void NSSolverStructFD::GetCellViscousFlux(Grid *gridIn, int iSurface)
 {
-    if(solvername.substr(0, 4) != "HDCS")
+    if (solvername.substr(0, 4) != "HDCS")
     {
         return;
     }
@@ -3786,7 +3790,7 @@ void NSSolverStructFD::GetUVWTproxy(Grid *gridIn)
 
 void NSSolverStructFD::GetUVWTfaceproxy(Grid *gridIn, int nsurf)
 {
-    if(solvername.substr(0, 4) == "HDCS")
+    if (solvername.substr(0, 4) == "HDCS")
     {
         GetUVWTfaceproxy_HDCS(gridIn, nsurf);
         return;
@@ -3839,7 +3843,7 @@ void NSSolverStructFD::GetUVWTfaceproxy(Grid *gridIn, int nsurf)
             {
                 int localcellID = i * il1 + j * jl1 + k * kl1;
                 
-                if((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
+                if ((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
                 {
                     for (int m = 0; m <= 3; ++m)
                     {                    
@@ -3933,7 +3937,7 @@ void NSSolverStructFD::GetUVWTfaceproxy_HDCS(Grid *gridIn, int nsurf)
 
 void NSSolverStructFD::GetdqdkxietactaCellCenter(Grid *gridIn, int nsurf)
 {
-    if(solvername.substr(0, 4) == "HDCS")
+    if (solvername.substr(0, 4) == "HDCS")
     {
         GetdqdkxietactaCellCenter_HDCS(gridIn, nsurf);
         return;
@@ -3988,7 +3992,7 @@ void NSSolverStructFD::GetdqdkxietactaCellCenter(Grid *gridIn, int nsurf)
             {
                 int localcellID = i * il1 + j * jl1 + k * kl1;
                 
-                if((*DiffOrder)(localcellID) == 2)
+                if ((*DiffOrder)(localcellID) == 2)
                 {
                     for (int m = 0; m <= 3; ++ m)
                     {
@@ -4150,7 +4154,7 @@ void NSSolverStructFD::GetGradientAtFace(Grid *gridIn, int nSurface)
 
 void NSSolverStructFD::GetGradientAtFaceconservation(Grid *gridIn, int nSurface)
 {
-    if(solvername.substr(0, 4) == "HDCS")
+    if (solvername.substr(0, 4) == "HDCS")
     {
         GetGradientAtFaceconservation_HDCS(gridIn, nSurface);
         return;
@@ -4215,7 +4219,7 @@ void NSSolverStructFD::GetGradientAtFaceconservation(Grid *gridIn, int nSurface)
             {
                 int localcellID = i * il1 + j * jl1 + k * kl1;
                 
-                if((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
+                if ((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
                 {
                     RDouble dx = xcc(i, j, k) - xcc(i - il1, j - jl1, k - kl1);
                     RDouble dy = ycc(i, j, k) - ycc(i - il1, j - jl1, k - kl1);
@@ -4375,7 +4379,7 @@ void NSSolverStructFD::GetGradientAtFaceconservation_HDCS(Grid *gridIn, int nSur
 
 void NSSolverStructFD::GetGradientAtFacechainrule(Grid *gridIn, int nSurface)
 {
-    if(solvername.substr(0, 4) == "HDCS")
+    if (solvername.substr(0, 4) == "HDCS")
     {
         GetGradientAtFaceconservation_HDCS(gridIn, nSurface);
         return;
@@ -4402,7 +4406,7 @@ void NSSolverStructFD::GetGradientAtFacechainrule(Grid *gridIn, int nSurface)
 
         DiffOrder = grid->DiscretePrecisionKXI;
     }
-    else if(nSurface == 2)
+    else if (nSurface == 2)
     {
         dqdxnomaindirection = &(*reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdxnoeta")));
         dqdynomaindirection = &(*reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdynoeta")));
@@ -4461,7 +4465,7 @@ void NSSolverStructFD::GetGradientAtFacechainrule(Grid *gridIn, int nSurface)
                 nz /= Volume;
 
                 int localcellID = i * il1 + j * jl1 + k * kl1;
-                if((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
+                if ((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
                 {
                     for (int m = 0; m <= 3; ++ m)
                     {
@@ -4675,7 +4679,7 @@ void NSSolverStructFD::GetFaceViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, i
     int ist = 0, jst = 0, kst = 0;
     int ied = 0, jed = 0, ked = 0;
 
-    if(solvername.substr(0, 4) == "WCNS")
+    if (solvername.substr(0, 4) == "WCNS")
     {
         ist = 1 - il1;
         jst = 1 - jl1;
@@ -4689,7 +4693,7 @@ void NSSolverStructFD::GetFaceViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, i
             ked = 1;
         }
     }
-    else if(solvername.substr(0, 4) == "HDCS")
+    else if (solvername.substr(0, 4) == "HDCS")
     {
         ist = 1;
         jst = 1;
@@ -4819,7 +4823,7 @@ void NSSolverStructFD::GetFaceViscousFluxLES(Grid *gridIn, FieldProxy *fluxProxy
     int ist = 0, jst = 0, kst = 0;
     int ied = 0, jed = 0, ked = 0;
 
-    if(solvername.substr(0, 4) == "WCNS")
+    if (solvername.substr(0, 4) == "WCNS")
     {
         ist = 1 - il1;
         jst = 1 - jl1;
@@ -4833,7 +4837,7 @@ void NSSolverStructFD::GetFaceViscousFluxLES(Grid *gridIn, FieldProxy *fluxProxy
             ked = 1;
         }
     }
-    else if(solvername.substr(0, 4) == "HDCS")
+    else if (solvername.substr(0, 4) == "HDCS")
     {
         ist = 1;
         jst = 1;
@@ -5257,7 +5261,7 @@ void NSSolverStructFD::Diagonal(Grid *gridIn)
 void NSSolverStructFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
-    if(tscheme == JACOBIAN_ITERATION)
+    if (tscheme == JACOBIAN_ITERATION)
     {
         SolveLUSGSbyJacobiIteration(gridIn, dqProxy, LUplusDQ, sweepNormal);
         return;
@@ -5278,6 +5282,8 @@ void NSSolverStructFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Fiel
     RDouble4D &xfv = *(grid->GetFaceVectorX());
     RDouble4D &yfv = *(grid->GetFaceVectorY());
     RDouble4D &zfv = *(grid->GetFaceVectorZ());
+
+    int *iBlank = grid->GetCellTypeContainer();
 
     Param_NSSolverStruct *parameters = GetControlParameters();
     bool isViscous = parameters->IsViscous();
@@ -5301,13 +5307,24 @@ void NSSolverStructFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Fiel
     }    
 
     int nDim = GetDim();
-
+    int cellIndex = 0;
     for (int k = kst; k <= ked; ++ k)
     {
         for (int j = jst; j <= jed; ++ j)
         {
             for (int i = ist; i <= ied; ++ i)
             {
+                EncodeIJK(cellIndex, i, j, k, ni-1, nj-1);
+                
+                if (iBlank[cellIndex] != ACTIVE)
+                {
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        dq(i, j, k, m) = 0.0;
+                    }
+                    continue;
+                }
+
                 for (int m = 0; m < nEquation; ++ m)
                 {
                     df_total[m] = 0.0;     
@@ -5372,7 +5389,7 @@ void NSSolverStructFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Fiel
 void NSSolverStructFD::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
-    if(tscheme == JACOBIAN_ITERATION)
+    if (tscheme == JACOBIAN_ITERATION)
     {
         return;
     }
@@ -5392,6 +5409,8 @@ void NSSolverStructFD::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, Fie
     RDouble4D &xfv  = *(grid->GetFaceVectorX());
     RDouble4D &yfv  = *(grid->GetFaceVectorY());
     RDouble4D &zfv  = *(grid->GetFaceVectorZ());
+
+    int *iBlank = grid->GetCellTypeContainer();
 
     Param_NSSolverStruct *parameters = GetControlParameters();
     bool isViscous = parameters->IsViscous();
@@ -5415,12 +5434,24 @@ void NSSolverStructFD::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, Fie
     }    
 
     int nDim = GetDim();
+    int cellIndex = 0;
     for (int k = ked; k >= kst; -- k)
     {
         for (int j = jed; j >= jst; -- j)
         {
             for (int i = ied; i >= ist; -- i)
             {
+                EncodeIJK(cellIndex, i, j, k, ni-1, nj-1);
+
+                if (iBlank[cellIndex] != ACTIVE)
+                {
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        dq(i, j, k, m) = 0.0;
+                    }
+                    continue;
+                }
+
                 for (int m = 0; m < nEquation; ++ m)
                 {
                     df_total[m] = 0.0;
@@ -5888,7 +5919,7 @@ void NSSolverStructFD::UpdateQlQrOnlyforMixGrid(Grid *gridIn)
 
     /*if (total_negative > 0)
     {
-        std::cout<<"warning:    "<<total_negative<<std::endl;
+        std::cout << "warning:    " << total_negative << std::endl;
     }*/
 
     delete qlProxy;

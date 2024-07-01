@@ -1,6 +1,6 @@
 <div align=left><img src="PHengLEI\Documents/PHengLEI-LOGO.png" style="zoom: 15%;"/><br>
 
-# 风雷软件（PHengLEI2312.v975）
+# 风雷软件（PHengLEI2406.v1217）
 
 备注：主分支为master分支，更稳定，更多新功能请切换到ActiveBranch分支。
 
@@ -27,15 +27,15 @@
 
 ## 2.软件功能
 
-&ensp;&ensp;&ensp;&ensp;风雷软件是一款结构/非结构通用CFD软件，计算范围覆盖低速、亚跨声速和高超声速。软件采用有限体积法求解定常/非定常的雷诺平均NS方程（RANS方程），集成了典型湍流模型，如SA、SST模型等；无粘项采用Roe、Vanleer、AUSM、Steger-Warming等格式；粘性项采用中心格式，时间推进采用LU-SGS或Block LU-SGS隐式方法求解；非定常计算时，采用双时间步方法。针对大规模问题，软件支持分区并行计算，并且使用多重网格技术加速收敛。同时，风雷软件也提供常用前/后置接口，如Gridgen、ICEM-CFD、FieldView、Tecplot等。
+&ensp;&ensp;&ensp;&ensp;风雷软件是一款结构/非结构通用CFD软件，计算范围覆盖低速、亚跨声速和高超声速。软件采用有限体积法求解定常/非定常的雷诺平均NS方程（RANS方程），集成了典型湍流模型，如SA、SST模型等；无粘项采用Roe、Vanleer、AUSM、Steger-Warming等格式；粘性项采用中心格式，时间推进采用LU-SGS或Block LU-SGS隐式方法求解；非定常计算时，采用双时间步方法。针对大规模问题，软件支持分区并行计算，并且使用多重网格技术加速收敛。同时，风雷软件也提供常用前/后置接口，如Gridgen、ICEM-CFD、FieldView、Tecplot、Ensight、ParaView等。
 
 
 ## 3.代码获取
 
 1. 环境准备，安装git，官网地址：https://git-scm.com/;
-2. 点击右上角Fork按钮；
-3. Fork完成后，将生成并跳转到新的仓库，复制新仓库版本库地址，如https://git.osredm.com/PHengLEI/PHengLEI.git;
-4. 在本地选择一个目录，右键打开git bash，输入命令进行代码克隆，如git clone https://git.osredm.com/PHengLEI/PHengLEI.git;
+2. 进入风雷代码库，点击右上角Fork按钮；
+3. Fork完成后，会生成并跳转到新的仓库，复制新仓库地址，如https://www.osredm.com/p68217053/PHengLEI;
+4. 在本地选择一个目录，右键打开git bash，输入命令进行代码克隆，如git clone https://www.osredm.com/p68217053/PHengLEI;
 5. 输入用户名和密码，其中用户名是指上面命令中p开头的用户名，比如p68217053；
 6. 项目克隆完成后，进入项目目录，默认分支为master分支，可通过命令切换到ActiveBranch分支，如git checkout ActiveBranch;
 7. 切换到开发分支后，可输入git log查看日志，确认当前版本。

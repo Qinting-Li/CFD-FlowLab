@@ -353,30 +353,30 @@ void PerfectGas::ComputeEnthalpyByPrimitive(RDouble *primitiveVariables, RDouble
 
 void PerfectGas::ComputeTotalEnthalpyAndDH(RDouble *primitiveVariables, RDouble &gama, RDouble *deltaQ, RDouble &totalEnthalpy, RDouble &deltaEnthalpy)
 {
-    // This function is used for perfect gas and single temperature model.
-    // To compute the total enthalpy and the variable dh in the function MXDQ_STD(). dh=b2, b2 denotes the coefficient \n
-    // of the vector M*dQ which can be referred to the forumla (A.7) and (A.8) in the appendix A of the PHengLEI Theory manual.
+    //! This function is used for perfect gas and single temperature model.
+    //! To compute the total enthalpy and the variable dh in the function MXDQ_STD(). dh=b2, b2 denotes the coefficient \n
+    //! of the vector M*dQ which can be referred to the forumla (A.7) and (A.8) in the appendix A of the PHengLEI Theory manual.
     using namespace IDX;
 
-    // Obtain the primitive variables.
+    //! Obtain the primitive variables.
     RDouble &um = primitiveVariables[IU];
     RDouble &vm = primitiveVariables[IV];
     RDouble &wm = primitiveVariables[IW];
     RDouble &density = primitiveVariables[IR];
     RDouble &pressure = primitiveVariables[IP];
 
-    // c1 is product coefficient of the variable dq[IR], gama1 = gama-1.
+    //! c1 is product coefficient of the variable dq[IR]£¬gama1 = gama-1¡£
     RDouble squareVelocity, c1, gama1;
     squareVelocity = um * um + vm * vm + wm * wm;
     gama1 = gama - 1.0;
     c1 = half * gama1 * squareVelocity;
     deltaEnthalpy = -gama1 * (um * deltaQ[IRU] + vm * deltaQ[IRV] + wm * deltaQ[IRW] - deltaQ[IRE]);
 
-    // enthalpy is static enthalpy.
+    //! enthalpy is static enthalpy.
     RDouble enthalpy = (gama / gama1)* (pressure / density);
 
     deltaEnthalpy += c1 * deltaQ[IR];
-    // h0 = h+v*v/2, total enthalpy equals to static enthalpy plus half of the squared velocity.
+    //! h0 = h+v*v/2, total enthalpy equals to static enthalpy plus half of the squared velocity.
     totalEnthalpy = enthalpy + half * squareVelocity;
 }
 
@@ -386,7 +386,7 @@ void PerfectGas::ComputeDHAndTotalEnthalpy(RDouble *primitiveVariables, RDouble 
 
     RDouble squareVelocity, ae, af;
     RDouble enthalpy;
-    // Obtain the primitive variables.
+    //! Obtain the primitive variables.
     RDouble &um = primitiveVariables[IU];
     RDouble &vm = primitiveVariables[IV];
     RDouble &wm = primitiveVariables[IW];
@@ -413,13 +413,13 @@ RDouble PerfectGas::GetMixedGasEnthalpy(RDouble *primitiveVars, RDouble transRot
 
 void PerfectGas::ComputeViscosityByPrimitive(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &electronTemperature, RDouble &suthTemperature, RDouble &viscosity)
 {
-    if (this->nGasModel > 1) //The one molecule of the gas.
+    if (this->nGasModel > 1)    //! The one molecule of the gas.
     {
-        //Referred to the "2008-Lofthouse-Nonequilibrium Hypersonic Aerothermodynamics Using the Direct Simulation Monte Carlo And Navier-Stokes Models".
+        //! Referred to the "2008-Lofthouse-Nonequilibrium Hypersonic Aerothermodynamics Using the Direct Simulation Monte Carlo And Navier-Stokes Models".
         RDouble T = transRotationTemperature * referenceParameterDimensional.GetTemperature();
-        //The default is the Argon.
+        //! The default is the Argon.
         RDouble Omega = 0.734, Tref = 1000.0, Dref = 3.595e-10;
-        if (this->nGasModel == 3) //The pure gas of Nitrogen.
+        if (this->nGasModel == 3)    //! The pure gas of Nitrogen.
         {
             Omega = 0.7;
             Tref = 290.0;
@@ -536,6 +536,9 @@ void PerfectGas::InitOtherParameter()
 
     int innstep = 0;
     GlobalDataBase::UpdateData("innstep", &innstep, PHINT, 1);
+
+    int subTotalIterStep = 0;
+    GlobalDataBase::UpdateData("subTotalIterStep", &subTotalIterStep, PHINT, 1);
 
     RDouble physicalTime = 0.0;
     GlobalDataBase::UpdateData("physicalTime", &physicalTime, PHDOUBLE, 1);
@@ -1249,6 +1252,8 @@ void PerfectGas::ComputeReferenceParameter()
     ComputeReferenceGasInformation();
 
     ComputeReferencePrimitive();
+
+    ComputePTotal();
 }
 
 void PerfectGas::ComputeReferencePrimitive()
@@ -1372,7 +1377,7 @@ void PerfectGas::ComputeCoefficientOfStateEquation()
     RDouble gama0 = referenceParameterDimensional.GetAverageSpecificHeatRatio();
     RDouble refMachNumber = referenceParameterDimensional.GetMachNumber();
 
-    //! The variable is the non-dimensional value of 8.314/Mï¿½ï¿½M denotes the non-dimensioanl molecular weight of the mixture gas.
+    //! The variable is the non-dimensional value of 8.314/M??M denotes the non-dimensioanl molecular weight of the mixture gas.
     coefficientOfStateEquation = 1.0 / (gama0 * refMachNumber * refMachNumber);    //! universal gas constant.
     GlobalDataBase::UpdateData("coefficientOfStateEquation", &coefficientOfStateEquation, PHDOUBLE, 1);
 }
@@ -1577,6 +1582,41 @@ RDouble PerfectGas::ComputeReferenceTotalEnthalpy()
     RDouble velocity = referenceParameterDimensional.GetVelocity();
     totalEnthalpy = gamma / (gamma - 1.0) * (pressure / density) + 0.5 * velocity * velocity;
     return totalEnthalpy;
+}
+
+void PerfectGas::ComputePTotal()
+{
+    RDouble gama = GlobalDataBase::GetDoubleParaFromDB("refGama");
+    RDouble refMachNumber = referenceParameterDimensional.GetMachNumber();
+    RDouble referenceSoundVelocity, referencePressure;
+
+    RDouble massooRef = 1.0;
+
+    RDouble referenceDensity = 1.0;
+    RDouble referenceTemperature = 1.0;
+
+    RDouble pTotal;
+
+    referenceSoundVelocity = 1.0 / refMachNumber;
+
+    referencePressure = coefficientOfStateEquation * referenceDensity * referenceTemperature / massooRef;
+    RDouble m12 = refMachNumber * refMachNumber;
+    RDouble gamp1 = gama + one;
+    RDouble gamm1 = gama - one;
+    RDouble c1 = two / gamm1 + m12;
+    RDouble c2 = two * gama / gamm1 * m12 - one;
+
+    RDouble cc = gama / (gama - one);
+    RDouble t0t = one + half * gamm1 * c1 / c2;
+
+    if (refMachNumber > one)
+    {
+        referencePressure *= (two * gama / gamp1 * m12 - gamm1 / gamp1);
+    }
+
+    pTotal = referencePressure * pow(t0t, cc);
+
+    GlobalDataBase::UpdateData("pTotal", &pTotal, PHDOUBLE, 1);
 }
 
 }

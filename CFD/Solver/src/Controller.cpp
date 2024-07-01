@@ -75,7 +75,7 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
     int nProtectData = 0;
-    if(GlobalDataBase::IsExist("nProtectData", PHINT, 1))
+    if (GlobalDataBase::IsExist("nProtectData", PHINT, 1))
     {
         nProtectData = GlobalDataBase::GetIntParaFromDB("nProtectData");
     }
@@ -274,7 +274,7 @@ void Controller::CommunicationNodeBCType()
                 InterpointInformation *interpointInformation = grid->GetInterpointInfo();
                 int *nodeBCType = reinterpret_cast <int *> (grid->GetDataPtr("nodeBCType"));
 
-                cdata->moveto_begin();
+                cdata->MoveToBegin();
 
                 int iNeighbor = interpointInformation->FindIthNeighbor(neighborZoneIndex);
                 int numberOfInterpointsForNeighbor = interpointInformation->GetNumberOfInterpointsForNeighbor(iNeighbor);
@@ -284,14 +284,17 @@ void Controller::CommunicationNodeBCType()
                 int iPoint;
                 int globalPoint;
                 int BCType;
+                int *qtmp = new int [numberOfInterpointsForNeighbor];
                 for (int ipointLocal = 0; ipointLocal < numberOfInterpointsForNeighbor; ++ ipointLocal)
                 {
                     iPoint = pointIndexForSend[ipointLocal];
                     globalPoint = interPoint2GlobalPoint[iPoint];
                     BCType = nodeBCType[globalPoint];
 
-                    cdata->write(&BCType, sizeof(int));
+                    qtmp[ipointLocal] = BCType;
                 }
+                cdata->Write(qtmp, numberOfInterpointsForNeighbor * sizeof(int));
+                delete [] qtmp;    qtmp = nullptr;
             }
 
             PH_Trade(cdata, sendProc, recv_proc, tag);
@@ -302,7 +305,7 @@ void Controller::CommunicationNodeBCType()
                 InterpointInformation *interpointInformationNeighbor = gridNeighbor->GetInterpointInfo();
                 int *nodeBCType = reinterpret_cast<int *>(gridNeighbor->GetDataPtr("nodeBCType"));
 
-                cdata->moveto_begin();
+                cdata->MoveToBegin();
 
                 int iNeighbor = interpointInformationNeighbor->FindIthNeighbor(iZone);
                 int numberOfInterpointsForNeighbor = interpointInformationNeighbor->GetNumberOfInterpointsForNeighbor(iNeighbor);
@@ -316,7 +319,7 @@ void Controller::CommunicationNodeBCType()
                 {
                     iPoint = pointIndexForReceive[ipointLocal];
                     globalPoint = interPoint2GlobalPoint[iPoint];
-                    cdata->read(&recvBCType, sizeof(int));
+                    cdata->Read(&recvBCType, sizeof(int));
 
                     int localBCIndex = bcTypeMap[nodeBCType[globalPoint]];
                     int recvBCIndex  = bcTypeMap[recvBCType];
@@ -404,7 +407,7 @@ void Controller::MultiGrid(int iSolver, int level)
     CreateRHSProxy(iSolver, level);
     StoreRhsByResidual(iSolver, level);
     int outerIteration = GlobalDataBase::GetIntParaFromDB("outnstep");
-    int MGPreIteration    = GlobalDataBase::GetIntParaFromDB("MGPreIteration");
+    int MGPreIteration = GlobalDataBase::GetIntParaFromDB("MGPreIteration");
     bool computeOnFinestGrid = (outerIteration % MGPreIteration != 0);
 
     //! If grid is in the coarsest level.
@@ -537,10 +540,13 @@ void Controller::Relaxation(int iSolver, int level)
     }
 
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
- 
+    int ifLowSpeedPrecon = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
+
     if (tscheme == LU_SGS || level != 0)
     {
         //! LU-SGS implicit time integration method.
+        if (!ifLowSpeedPrecon)
+        {
         LoadResiduals(iSolver, level);
 
         UpdateResiduals(iSolver, level);
@@ -557,6 +563,31 @@ void Controller::Relaxation(int iSolver, int level)
         {
             LUSGS(iSolver, level);
         }
+        }
+        else
+        {
+            SpectrumRadius(iSolver, level);
+
+            TimeStep(iSolver, level);
+
+            LoadResiduals(iSolver, level);
+
+            UpdateResiduals(iSolver, level);
+
+            if (isUseLocalCFL == 1)
+            {
+                DualTimeStepsLUSGS(iSolver, level);
+            }
+            else
+            {
+                LUSGS(iSolver, level);
+            }
+        }
+    }
+    else if (tscheme == MULTI_STAGE)
+    {
+        //! Explicit multi-stage time marching method.
+        SetBoundaryValueOfField(iSolver, level);
         
     }
     else if (tscheme == GMRES)
@@ -572,7 +603,7 @@ void Controller::Relaxation(int iSolver, int level)
 
 #ifdef USE_GMRESSOLVER
         GMRESSolver(iSolver, level);
-#endif       
+#endif
 
     }
     else if (tscheme == MULTI_STAGE)
@@ -589,7 +620,7 @@ void Controller::Relaxation(int iSolver, int level)
 
         RungeKutta(iSolver, level);
     }
-	else if (tscheme == Matrix_LU_SGS)
+    else if (tscheme == Matrix_LU_SGS)
     {
         LoadResiduals(iSolver, level);
 
@@ -605,13 +636,13 @@ void Controller::Relaxation(int iSolver, int level)
     {
         //! default
         LoadResiduals(iSolver, level);
-        
+
         UpdateResiduals(iSolver, level);
-        
+
         SpectrumRadius(iSolver, level);
-        
+
         TimeStep(iSolver, level);
-        
+
         if (isUseLocalCFL == 1)
         {
             DualTimeStepsLUSGS(iSolver, level);
@@ -948,7 +979,7 @@ void Controller::MixingPlaneBoundary(int iSolver,int level)
                 solver->SetMixingPlaneData(grid);
             }
         }
-    } 
+    }
 }
 
 
@@ -958,7 +989,7 @@ void Controller::UpdateResiduals(int iSolver, int level)
     int isFVMOrFDM = GlobalDataBase::GetIntParaFromDB("isFVMOrFDM");
     string highordersolvername = GlobalDataBase::GetStrParaFromDB("str_highorder_solver");
 
-    if((systemGridType == MIXGRID && iSolver == NS_SOLVER && isFVMOrFDM == FV_METHOD) || (iSolver == NS_SOLVER && isFVMOrFDM == FD_METHOD && highordersolvername.substr(0, 4) == "HDCS"))
+    if ((systemGridType == MIXGRID && iSolver == NS_SOLVER && isFVMOrFDM == FV_METHOD) || (iSolver == NS_SOLVER && isFVMOrFDM == FD_METHOD && highordersolvername.substr(0, 4) == "HDCS"))
     {
         //! ugly codes, modify later.
         //! for mixgrid, more variables need communication for conservation.
@@ -968,7 +999,7 @@ void Controller::UpdateResiduals(int iSolver, int level)
     }
 
     using namespace PHMPI;
-   
+
 #ifdef USE_GMRESSOLVER
     // GMRESCoupled
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
@@ -981,7 +1012,7 @@ void Controller::UpdateResiduals(int iSolver, int level)
         UpdateIndependentField(TURB_SOLVER, level);
 
         SetBoundaryValueOfField(TURB_SOLVER, level);
-        
+
     }
     else if ( viscousType == INVISCID || viscousType == LAMINAR || viscousType == TWO_EQU )
     {
@@ -992,10 +1023,10 @@ void Controller::UpdateResiduals(int iSolver, int level)
 
 #else 
     SetBoundaryValueOfField(iSolver, level);
-     
+
     UpdateIndependentField(iSolver, level);
 #endif
-    
+
     int nLocalZones = GetNumberofLocalZones();
 
 #ifdef USE_OMP
@@ -1210,9 +1241,9 @@ void Controller::ComputeGradient(int iSolver, int level)
             {
                 solver->ComputeGradientCellCenterOfruvwptOnlyForMixGrid(grid);
             }
-         }
-         else if(gridTypeofLocalZone == UNSTRUCTGRID)
-         {
+        }
+        else if (gridTypeofLocalZone == UNSTRUCTGRID)
+        {
             solver->ComputeGradient(grid);
             if (MIXGRID == systemGridType && isFVMOrFDM == FV_METHOD)
             {
@@ -1350,6 +1381,56 @@ void Controller::ComputeBlendFunctionSST(int iSolver, int level)
     CommunicateSpecificArray(level, "blend", 0);
 }
 
+//! Compute the precondition coefficient of low mach flow.
+void Controller::ComputePreconditionCoefficient(int iSolver, int level)
+{
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+    int isFVMOrFDM = GlobalDataBase::GetIntParaFromDB("isFVMOrFDM");
+    int ifLowSpeedPrecon =  GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
+    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
+    if (iSolver != NS_SOLVER  || 0 != level || isFVMOrFDM == FD_METHOD || ifLowSpeedPrecon != 1)
+    {
+        return;
+    }
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(zoneID, level);
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        if (isUnsteady == 0)
+        {
+            solver->ComputePreconditionCoefficient(grid);
+        }
+        else
+        {
+            solver->ComputePreconditionCoefficientUnsteady(grid);
+        }
+
+        //solve M * T-, when sign = -1;
+        solver->ConservativePreconMatrix(grid, -1);
+    }
+
+    CommunicateSpecificArray(level, "preconCoefficient", 0);
+
+    if (isUnsteady)
+    {
+        CommunicateSpecificArray(level, "timeCoefficient", 0);
+        CommunicateSpecificArray(level, "timeCoefficientInverse", 0);
+    }
+}
+
 void Controller::SetBoundaryValueOfField(int iSolver, int level)
 {
     using namespace PHMPI;
@@ -1388,13 +1469,13 @@ void Controller::PreSolveforStructHighOrder(int iSolver, int level)
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
 
-    if(iSolver == NS_SOLVER)
+    if (iSolver == NS_SOLVER)
     {
         GetIndependentVariablesforStructHighOrder(iSolver, level);
         this->region->CommGridInfoOnlyforStructHighOrder(5);
 
         GetDependentVariablesforStructHighOrder(iSolver, level);
-        if(viscousType == INVISCID)
+        if (viscousType == INVISCID)
         {
             //! Euler, no gradient communicated.
             this->region->CommGridInfoOnlyforStructHighOrder(6);
@@ -1412,18 +1493,18 @@ void Controller::PreSolveforStructHighOrder(int iSolver, int level)
             }
         }
     }
-    else if(iSolver == TURB_SOLVER)
+    else if (iSolver == TURB_SOLVER)
     {
         GetDependentVariablesforStructHighOrder(iSolver, level);
-        if(viscousType == ONE_EQU)
+        if (viscousType == ONE_EQU)
         {
             this->region->CommGridInfoOnlyforStructHighOrder(9);
         }
-        else if(viscousType == TWO_EQU)
+        else if (viscousType == TWO_EQU)
         {
             this->region->CommGridInfoOnlyforStructHighOrder(10);
         }
-        if(iLES == LES_SOLVER)
+        if (iLES == LES_SOLVER)
         {
             this->region->CommGridInfoOnlyforStructHighOrder(8);
 
@@ -1501,7 +1582,7 @@ void Controller::RungeKuttaThirdTVD(int iSolver, int level)
     {
         delete q0Proxy[iZone];
     }
-    delete []q0Proxy;
+    delete [] q0Proxy;
 }
 
 void Controller::CreatqProxyfor3rdRK(int iSolver, int level, FieldProxy **q0Proxy)
@@ -1611,6 +1692,8 @@ void Controller::UpdateIndependentField(int iSolver, int level)
     this->ComputeLimiter(iSolver, level);
 
     this->ComputeBlendFunctionSST(iSolver, level);
+
+    this->ComputePreconditionCoefficient(iSolver, level);
 }
 
 void Controller::LUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ)
@@ -1638,7 +1721,7 @@ void Controller::LUSGSInitialization(int iSolver, int level, int nSweep, FieldPr
         //! Memory allocating.
         dqProxy[iZone] = solver->CreateFieldProxy(grid);
         LUplusDQ[iZone]= solver->CreateFieldProxy(grid);
-        
+
         int gridtype = grid->Type();
         if (isFVMOrFDM == FD_METHOD && gridtype == STRUCTGRID)
         {
@@ -1648,11 +1731,11 @@ void Controller::LUSGSInitialization(int iSolver, int level, int nSweep, FieldPr
         {
             //! The delta Flux is initialized by zero, which will be used in the forward sweep.
             solver->FillField(grid, LUplusDQ[iZone], zero);
-            
+
             //! Warning: it is important to research the effect of the initialization in future!
             //! e.g., using rhs to init when nsweep > 1.
             //! Initialization.
-            if(nSweep == 1)
+            if (nSweep == 1)
             {
                 //! Single sweep, init by res.
                 FieldProxy *rhsProxy = solver->GetFieldProxy(grid, solver->CastName("res")); 
@@ -1698,7 +1781,7 @@ void Controller::BLUSGSInitialization(int iSolver, int level, int nSweep, FieldP
         //! Warning: it is important to research the effect of the initialization in future!
         //! e.g., using rhs to init when nsweep > 1.
         //! Initialization.
-        if(nSweep == 1)
+        if (nSweep == 1)
         {
             //! Single sweep, init by res.
             FieldProxy *rhsProxy = solver->GetFieldProxy(grid, solver->CastName("res")); 
@@ -1743,7 +1826,7 @@ void Controller::MatrixLUSGSInitialization(int iSolver, int level, int nSweep, F
         //! Warning: it is important to research the effect of the initialization in future!
         //! e.g., using rhs to init when nsweep > 1.
         //! Initialization.
-        if(nSweep == 1)
+        if (nSweep == 1)
         {
             //! Single sweep, init by res.
             FieldProxy *rhsProxy = solver->GetFieldProxy(grid, solver->CastName("res")); 
@@ -1817,7 +1900,7 @@ void Controller::LUSGS(int iSolver, int level)
         //! Check the convergence.
         //! This criterion will lead to at least 2 sweep.
         //! It may be more considered, such as using the maximum normal of dq/dqOld.
-        if(iSweep == 0)
+        if (iSweep == 0)
         {
             sweepNormalInit = sweepNormal;
         }
@@ -1907,7 +1990,7 @@ void Controller::DualTimeStepsLUSGS(int iSolver, int level)
         //! Check the convergence.
         //! This criterion will lead to at least 2 sweep.
         //! It may be more considered, such as using the maximum normal of dq/dqOld.
-        if(iSweep == 0)
+        if (iSweep == 0)
         {
             sweepNormalInit = sweepNormal;
         }
@@ -1958,7 +2041,7 @@ void Controller::DualTimeStepsLUSGS(int iSolver, int level)
         //! Check the convergence.
         //! This criterion will lead to at least 2 sweep.
         //! It may be more considered, such as using the maximum normal of dq/dqOld.
-        if(iSweep == 0)
+        if (iSweep == 0)
         {
             sweepNormalInit = sweepNormal;
         }
@@ -1981,15 +2064,15 @@ void Controller::DualTimeStepsLUSGS(int iSolver, int level)
 
     for (int iLocalZone = 0; iLocalZone < nLocalZones; ++ iLocalZone)
     {
-        delete dqProxy[iLocalZone];
-        delete LUplusDQ[iLocalZone];
-        delete dqProxy1[iLocalZone];
-        delete LUplusDQ1[iLocalZone];
+        delete dqProxy[iLocalZone];    dqProxy[iLocalZone] = nullptr;
+        delete LUplusDQ[iLocalZone];    LUplusDQ[iLocalZone] = nullptr;
+        delete dqProxy1[iLocalZone];    dqProxy1[iLocalZone] = nullptr;
+        delete LUplusDQ1[iLocalZone];    LUplusDQ1[iLocalZone] = nullptr;
     }
-    delete []dqProxy;
-    delete []LUplusDQ;
-    delete []dqProxy1;
-    delete []LUplusDQ1;
+    delete [] dqProxy;    dqProxy = nullptr;
+    delete [] LUplusDQ;    LUplusDQ = nullptr;
+    delete [] dqProxy1;    dqProxy1 = nullptr;
+    delete [] LUplusDQ1;    LUplusDQ1 = nullptr;
 }
 
 void Controller::ForwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
@@ -2012,7 +2095,7 @@ void Controller::ForwardSweep(int iSolver, int level, FieldProxy **dqProxy, Fiel
         }
 
         Grid *grid = GetGrid(zoneID,level);
-        CFDSolver *solver = GetCFDSolver(zoneID,iSolver);       
+        CFDSolver *solver = GetCFDSolver(zoneID,iSolver);
 
         zoneNormal[iZone] = 0.0;
         solver->SolveLUSGSForward(grid, dqProxy[iZone], LUplusDQ[iZone], zoneNormal[iZone], iAdvanceStep);
@@ -2220,7 +2303,7 @@ void Controller::CommunicateGradientandLimitOnlyForMixGrid()
             {
                 if (sendProcessor != receiveProcessor)
                 {
-                    streamsize nlen = sendBuffer->size();
+                    streamsize nlen = sendBuffer->Size();
 
                     //! Send the data to neighbors.
                     send(sendBuffer, receiveProcessor, nlen, requestContainer, tag);
@@ -2248,7 +2331,7 @@ void Controller::CommunicateGradientandLimitOnlyForMixGrid()
                 if (sendProcessor != receiveProcessor)
                 {
                     //! The data length of the received data is same to the length that send to the neighbor.
-                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->size();
+                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->Size();
 
                     //! Receive data from neighbors.
                     receive(receivedBuffer, sendProcessor, nlen, requestContainer, tag);
@@ -2323,7 +2406,7 @@ void Controller::CommunicateGradientandLimitOnlyForMixGrid()
 void Controller::CommunicateQlQrOnlyforMixGrid()
 {
     int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    if(systemGridType != MIXGRID)
+    if (systemGridType != MIXGRID)
     {
         return;
     }
@@ -2380,10 +2463,10 @@ void Controller::CommunicateQlQrOnlyforMixGrid()
                 }
                 else
                 {
-                    if(gridtypeofiZone == gridtypeofneighborZone)
+                    if (gridtypeofiZone == gridtypeofneighborZone)
                     {
                         RDouble uploadData = 0.0;
-                        sendBuffer->moveto_begin();
+                        sendBuffer->MoveToBegin();
                         PHWrite(sendBuffer, uploadData);
                     }
                     else
@@ -2439,7 +2522,7 @@ void Controller::CommunicateQlQrOnlyforMixGrid()
             {
                 if (sendProcessor != receiveProcessor)
                 {
-                    streamsize nlen = sendBuffer->size();
+                    streamsize nlen = sendBuffer->Size();
 
                     //! Send the data to neighbors.
                     send(sendBuffer, receiveProcessor, nlen, requestContainer, tag);
@@ -2467,7 +2550,7 @@ void Controller::CommunicateQlQrOnlyforMixGrid()
                 if (sendProcessor != receiveProcessor)
                 {
                     //! The data length of the received data is same to the length that send to the neighbor.
-                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->size();
+                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->Size();
 
                     //! Receive data from neighbors.
                     receive(receivedBuffer, sendProcessor, nlen, requestContainer, tag);
@@ -2523,10 +2606,10 @@ void Controller::CommunicateQlQrOnlyforMixGrid()
                 }
                 else
                 {
-                    if(gridtypeofiZone == gridtypeofneighborZone)
+                    if (gridtypeofiZone == gridtypeofneighborZone)
                     {
                         RDouble downdData = 0.0;
-                        receiveData->moveto_begin();
+                        receiveData->MoveToBegin();
                         PHRead(receiveData, downdData);
                     }
                     else
@@ -2563,7 +2646,7 @@ void Controller::CommunicateQlQrOnlyforMixGrid()
 void Controller::CommunicateFacefluxOnlyforMixGrid()
 {
     int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    if(systemGridType != MIXGRID)
+    if (systemGridType != MIXGRID)
     {
         return;
     }
@@ -2655,7 +2738,7 @@ void Controller::CommunicateFacefluxOnlyforMixGrid()
             {
                 if (sendProcessor != receiveProcessor)
                 {
-                    streamsize nlen = sendBuffer->size();
+                    streamsize nlen = sendBuffer->Size();
 
                     //! Send the data to neighbors.
                     send(sendBuffer, receiveProcessor, nlen, requestContainer, tag);
@@ -2683,7 +2766,7 @@ void Controller::CommunicateFacefluxOnlyforMixGrid()
                 if (sendProcessor != receiveProcessor)
                 {
                     //! The data length of the received data is same to the length that send to the neighbor.
-                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->size();
+                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->Size();
 
                     //! Receive data from neighbors.
                     receive(receivedBuffer, sendProcessor, nlen, requestContainer, tag);
@@ -2860,7 +2943,7 @@ void Controller::CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy)
             {
                 if (sendProcessor != receiveProcessor)
                 {
-                    streamsize nlen = sendBuffer->size();
+                    streamsize nlen = sendBuffer->Size();
 
                     //! Send the data to neighbors.
                     send(sendBuffer, receiveProcessor, nlen, requestContainer, tag);
@@ -2888,7 +2971,7 @@ void Controller::CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy)
                 if (sendProcessor != receiveProcessor)
                 {
                     //! The data length of the received data is same to the length that send to the neighbor.
-                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->size();
+                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->Size();
 
                     //! Receive data from neighbors.
                     receive(receivedBuffer, sendProcessor, nlen, requestContainer, tag);
@@ -3022,7 +3105,7 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
                 CommunicateSpecificArray(level, "dcdy", nSpeciesNumber);
                 CommunicateSpecificArray(level, "dcdz", nSpeciesNumber);
             }
-            if(periodicType == ROTATIONAL_PERIODICITY)
+            if (periodicType == ROTATIONAL_PERIODICITY)
             {
                 for (int iZone = 0; iZone < nZones; ++ iZone)
                 {
@@ -3053,7 +3136,7 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             CommunicateSpecificArray(level, "gradTurbulenceCellCenterX", nEquation);
             CommunicateSpecificArray(level, "gradTurbulenceCellCenterY", nEquation);
             CommunicateSpecificArray(level, "gradTurbulenceCellCenterZ", nEquation);
-            if(periodicType == ROTATIONAL_PERIODICITY)
+            if (periodicType == ROTATIONAL_PERIODICITY)
             {
                 for (int iZone = 0; iZone < nZones; ++ iZone)
                 {
@@ -3084,7 +3167,7 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             CommunicateSpecificArray(level, "gradTransitionCellCenterX", nEquation);
             CommunicateSpecificArray(level, "gradTransitionCellCenterY", nEquation);
             CommunicateSpecificArray(level, "gradTransitionCellCenterZ", nEquation);
-            if(periodicType == ROTATIONAL_PERIODICITY)
+            if (periodicType == ROTATIONAL_PERIODICITY)
             {
                 for (int iZone = 0; iZone < nZones; ++ iZone)
                 {
@@ -3109,7 +3192,7 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
                 }
             }
         }
-        else if(iSolver == TURB_SOLVER && iLES == LES_SOLVER)
+        else if (iSolver == TURB_SOLVER && iLES == LES_SOLVER)
         {
             //! For LES, Gradient Communication should be done another time after NSSolver ends.
             int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
@@ -3119,7 +3202,7 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             CommunicateSpecificArray(level, "gradUVWTCellCenterY", nTotalVariable);
             CommunicateSpecificArray(level, "gradUVWTCellCenterZ", nTotalVariable);
 
-            if(periodicType == ROTATIONAL_PERIODICITY)
+            if (periodicType == ROTATIONAL_PERIODICITY)
             {
                 for (int iZone = 0; iZone < nZones; ++ iZone)
                 {
@@ -3168,7 +3251,7 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             CommunicateSpecificArray(level, "gradPrimtiveVarX", nNSEquation);
             CommunicateSpecificArray(level, "gradPrimtiveVarY", nNSEquation);
             CommunicateSpecificArray(level, "gradPrimtiveVarZ", nNSEquation);
-    
+
             CommunicateSpecificArray(level, "gradTemperatureX", nTemperatureModel);
             CommunicateSpecificArray(level, "gradTemperatureY", nTemperatureModel);
             CommunicateSpecificArray(level, "gradTemperatureZ", nTemperatureModel);
@@ -3266,7 +3349,6 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
                     }
                 }
             }
-
         }
     }
 }
@@ -3353,7 +3435,7 @@ void Controller::BLUSGS(int iSolver, int level)
         //! Check the convergence.
         //! This criterion will lead to at least 2 sweep.
         //! It may be more considered, such as using the maximum normal of dq/dqOld.
-        if(iSweep == 0)
+        if (iSweep == 0)
         {
             sweepNormalInit = sweepNormal;
         }else
@@ -3372,11 +3454,11 @@ void Controller::BLUSGS(int iSolver, int level)
 
     for (int iLocalZone = 0; iLocalZone < nLocalZones; ++ iLocalZone)
     {
-        delete dqProxy[iLocalZone];
-        delete LUplusDQ[iLocalZone];
+        delete dqProxy[iLocalZone];    dqProxy[iLocalZone] = nullptr;
+        delete LUplusDQ[iLocalZone];    LUplusDQ[iLocalZone] = nullptr;
     }
-    delete []dqProxy;
-    delete []LUplusDQ;
+    delete [] dqProxy;    dqProxy = nullptr;
+    delete [] LUplusDQ;    LUplusDQ = nullptr;
 }
 
 void Controller::ForwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal , int &iSweep)
@@ -3415,7 +3497,7 @@ void Controller::ForwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy
     {
         sweepNormal += zoneNormal[iZone];
     }
-    delete []zoneNormal;    zoneNormal = NULL;
+    delete [] zoneNormal;    zoneNormal = NULL;
 }
 
 void Controller::BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal)
@@ -3447,7 +3529,7 @@ void Controller::BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProx
     {
         sweepNormal += zoneNormal[iZone];
     }
-    delete []zoneNormal;    zoneNormal = NULL;
+    delete [] zoneNormal;    zoneNormal = NULL;
 }
 
 void Controller::MatrixLUSGS(int iSolver, int level)
@@ -3493,7 +3575,7 @@ void Controller::MatrixLUSGS(int iSolver, int level)
         //! Check the convergence.
         //! This criterion will lead to at least 2 sweep.
         //! It may be more considered, such as using the maximum normal of dq/dqOld.
-        if(iSweep == 0)
+        if (iSweep == 0)
         {
             sweepNormalInit = sweepNormal;
         }else
@@ -3512,11 +3594,11 @@ void Controller::MatrixLUSGS(int iSolver, int level)
 
     for (int iLocalZone = 0; iLocalZone < nLocalZones; ++ iLocalZone)
     {
-        delete dqProxy[iLocalZone];
-        delete LUplusDQ[iLocalZone];
+        delete dqProxy[iLocalZone];    dqProxy[iLocalZone] = nullptr;
+        delete LUplusDQ[iLocalZone];    LUplusDQ[iLocalZone] = nullptr;
     }
-    delete []dqProxy;
-    delete []LUplusDQ;
+    delete [] dqProxy;    dqProxy = nullptr;
+    delete [] LUplusDQ;    LUplusDQ = nullptr;
 }
 
 void Controller::ForwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal , int &iSweep)
@@ -3555,7 +3637,7 @@ void Controller::ForwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **dq
     {
         sweepNormal += zoneNormal[iZone];
     }
-    delete []zoneNormal;
+    delete [] zoneNormal;
 }
 
 void Controller::BackwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal)
@@ -3587,7 +3669,7 @@ void Controller::BackwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **d
     {
         sweepNormal += zoneNormal[iZone];
     }
-    delete []zoneNormal;
+    delete [] zoneNormal;
 }
 
 void Controller::LineLUSGS(int iSolver, int level)
@@ -3652,11 +3734,11 @@ void Controller::LineLUSGS(int iSolver, int level)
 
     for (int iLocalZone = 0; iLocalZone < nLocalZones; ++iLocalZone)
     {
-        delete dqProxy[iLocalZone];
-        delete LUplusDQ[iLocalZone];
+        delete dqProxy[iLocalZone];    dqProxy[iLocalZone] = nullptr;
+        delete LUplusDQ[iLocalZone];    LUplusDQ[iLocalZone] = nullptr;
     }
-    delete [] dqProxy; 
-    delete [] LUplusDQ;
+    delete [] dqProxy;    dqProxy = nullptr;
+    delete [] LUplusDQ;    LUplusDQ = nullptr;
 }
 
 void Controller::LineLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy** dqProxy, FieldProxy** LUplusDQ)
@@ -3740,7 +3822,7 @@ void Controller::ForwardSweepLineLUSGS(int iSolver, int level, FieldProxy** dqPr
     {
         sweepNormal += zoneNormal[iZone];
     }
-    delete [] zoneNormal;    zoneNormal = NULL;
+    delete [] zoneNormal;    zoneNormal = nullptr;
 }
 
 void Controller::BackwardSweepLineLUSGS(int iSolver, int level, FieldProxy** dqProxy, FieldProxy** LUplusDQ, RDouble& sweepNormal)
@@ -3772,7 +3854,7 @@ void Controller::BackwardSweepLineLUSGS(int iSolver, int level, FieldProxy** dqP
     {
         sweepNormal += zoneNormal[iZone];
     }
-    delete [] zoneNormal;    zoneNormal = NULL;
+    delete [] zoneNormal;    zoneNormal = nullptr;
 }
 
 void Controller::RestrictAllQ(int iSolver, int level)
@@ -4912,10 +4994,10 @@ RDouble Controller::ComputeSubIterationNorm(int iSolver, int level)
             continue;
         }
 
-        Grid *grid    = GetGrid(iZone, level);
-        CFDSolver *solver  = GetCFDSolver(iZone, iSolver);
+        Grid *grid = GetGrid(iZone, level);
+        CFDSolver *solver = GetCFDSolver(iZone, iSolver);
 
-        subIterationNorm    = solver->UnsteadyConvergence(grid);
+        subIterationNorm = solver->UnsteadyConvergence(grid);
 
         maxSubIterationNorm = MAX(maxSubIterationNorm, subIterationNorm);
     }
@@ -5478,7 +5560,7 @@ ZoneFieldProxy::~ZoneFieldProxy()
     {
         delete field_proxy[level];
     }
-    delete []field_proxy;
+    delete [] field_proxy;
 }
 
 FieldProxy **ZoneFieldProxy::GetFieldProxy(int level)

@@ -205,10 +205,10 @@ public:
     //! faceNormalVector container the three units of the face normal directions. 
     Vector3D *faceNormalVector;
 
-    int* localCell2GlobalMap;
+    int *localCell2GlobalMap;
 
-    int* localCell2LocalMap;
-    int* cell2ZoneIDMap;
+    int *localCell2LocalMap;
+    int *cell2ZoneIDMap;
 
 #endif
 
@@ -353,7 +353,7 @@ public:
     LIB_EXPORT void CreateUnstructBCSet(int nBCRegion);
 
     //! Return composite boundary condition region pointer (structBCSet).
-    UnstructBCSet * GetUnstructBCSet() const;
+    UnstructBCSet * GetUnstructBCSet();
    
     RDouble * GetNormalDistanceOfC2C() const;
 
@@ -407,6 +407,9 @@ public:
     //! Return the cell volume pointer.
     RDouble * GetCellVolume()  const;
 
+    //! Return the cell skewness pointer.
+    RDouble * GetCellSkewness()  const;
+
     //! Return the X velocity pointer of face center.
     RDouble * GetFaceVelocityX() const;
 
@@ -415,6 +418,15 @@ public:
 
     //! Return the Z velocity pointer of face center.
     RDouble * GetFaceVelocityZ() const;
+
+    //! Return the X velocity pointer of cell center.
+    RDouble * GetCellVelocityX() const;
+
+    //! Return the Y velocity pointer of cell center.
+    RDouble * GetCellVelocityY() const;
+
+    //! Return the Z velocity pointer of cell center.
+    RDouble * GetCellVelocityZ() const;
 
     //! Return the face normal velocity pointer.
     RDouble * GetFaceNormalVelocity() const;
@@ -463,16 +475,16 @@ public:
     int GetLI_nLine() const;
 
     //! get the number of cells in all lines.
-    int* GetLI_nCellsInLine() const;
+    int * GetLI_nCellsInLine() const;
 
     //! get the cell No. of all lines.
-    int** GetLI_CellOfLine() const;
+    int ** GetLI_CellOfLine() const;
 
     //! get the face No. of all lines.
-    int** GetLI_FaceOfLine() const;
+    int ** GetLI_FaceOfLine() const;
 
     //! get the line No. of all cells.
-    int* GetLI_LineOfCell() const;
+    int * GetLI_LineOfCell() const;
 
     //! Get the cell to node: node index of each cell.
     LIB_EXPORT bool IsCell2NodeExist();
@@ -604,7 +616,7 @@ public:
     RDouble * GetNearestWallFaceNormalZ() const;
 
     //! Return the wall distance: the nearest distance of a node to the wall.
-    RDouble* GetWallDistNode() const;
+    RDouble * GetWallDistNode() const;
 
     //! Return the wall cell label for the first layer of wall boundary. 
     int * GetWallCellLabel();
@@ -790,6 +802,8 @@ public:
 
     int  CompNIFace();
 
+    void CreateUnstructBCSetInfo();
+
 private:
     bool ComputeCellNodeTopo();
     void ComputeCell2NodeArray();
@@ -809,9 +823,9 @@ private:
 
     void DumpWalldist(ActionKey *actkey);
     void ReadWalldist(RDouble *wallDistIn);
-    void ReadNearestwallfacenormalx(RDouble* nearestwallfaceNormalxIn);
-    void ReadNearestwallfacenormaly(RDouble* nearestwallfaceNormalyIn);
-    void ReadNearestwallfacenormalz(RDouble* nearestwallfaceNormalzIn);
+    void ReadNearestwallfacenormalx(RDouble *nearestwallfaceNormalxIn);
+    void ReadNearestwallfacenormaly(RDouble *nearestwallfaceNormalyIn);
+    void ReadNearestwallfacenormalz(RDouble *nearestwallfaceNormalzIn);
 
     void GetCellCenter(ActionKey *actkey);
     void TranslateCellCenter(ActionKey *actkey);
@@ -909,13 +923,13 @@ public:
     Vector3D * GetCellCenterVector() const;
     Vector3D * GetFaceNormalVector() const;
     void SetCellCenterVector(Vector3D *cellC);
-    void SetFaceNormalVector(Vector3D* faceN);
-    void SetLocalCell2GlobalMap(int* localCell2GlobalMap);
-    void SetLocalCell2LocalMap(int* localCell2LocalMap);
+    void SetFaceNormalVector(Vector3D *faceN);
+    void SetLocalCell2GlobalMap(int *localCell2GlobalMap);
+    void SetLocalCell2LocalMap(int *localCell2LocalMap);
     void SetCell2ZoneIDMap(int *cell2ZoneIDMap);
-    int *GetLocalCell2GlobalMap() const;
-    int *GetLocalCell2LocalMap() const;
-    int *GetCell2ZoneIDMap() const; 
+    int * GetLocalCell2GlobalMap() const;
+    int * GetLocalCell2LocalMap() const;
+    int * GetCell2ZoneIDMap() const; 
    
 #endif
 };
@@ -933,11 +947,12 @@ void SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nl);
 
 void CompNodeVarWeight(UnstructGrid *grid, RDouble *q_n, RDouble *q);
 void CompNodeVar(UnstructGrid *grid, RDouble *q_n, RDouble *q, bool isVelocityForPostVisual = false);
+void CompNodeVar(UnstructGrid *grid, RDouble *q_n, const string &variableName, RDouble *q, bool isVelocityForPostVisual = false);
 void CompNodeVar_new(UnstructGrid *grid, RDouble *q_n, RDouble *q);
 void CompNodeVarForVisual(UnstructGrid *grid, RDouble *q_n, RDouble *q);
 void CompNodeVarForVelocity(UnstructGrid *grid, RDouble *qNode, RDouble *q);
 void ComputeNodeVariable(UnstructGrid *grid, RDouble **q_n, RDouble **q, int nEquation);
-void FixBCNodeVar(UnstructGrid* grid, RDouble* q, RDouble* q_n, int* n_count, int bctype_in, bool twoside);
+void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, int *n_count, int bctype_in, bool twoside);
 void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, RDouble *n_count, int bctype_in, bool twoside);
 void CompNodeVarLimit(UnstructGrid *grid, RDouble *q_n, RDouble *q);
 

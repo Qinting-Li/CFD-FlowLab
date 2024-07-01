@@ -11,7 +11,7 @@ LIB_EXPORT Param_TransitionSolver::~Param_TransitionSolver()
 {
     if (freeStreamTransitionVar != NULL)
     {
-        delete[]freeStreamTransitionVar;
+        delete [] freeStreamTransitionVar;
         freeStreamTransitionVar = NULL;
     }
 }
@@ -29,7 +29,7 @@ LIB_EXPORT void Param_TransitionSolver::Init()
     freeStreamViscosity = GlobalDataBase::GetDoubleParaFromDB("freeStreamViscosity");
 
     using namespace IDX;
-    RDouble* prim_inf = reinterpret_cast<RDouble*>(GlobalDataBase::GetDataPtr("prim_inf"));
+    RDouble *prim_inf = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("prim_inf"));
     RDouble reference_density_farfield = prim_inf[IR];
 
     string viscousName;

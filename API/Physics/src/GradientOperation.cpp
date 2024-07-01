@@ -812,7 +812,7 @@ void DXDYDZ_I(RDouble4D & f,Geometry3D * g,int i,int j,int k,int ndim,int npos,R
         kp = k + 1;
         km = k - 1;
     }
-    else if(ndim == TWO_D)
+    else if (ndim == TWO_D)
     {
         kp = k;
         km = k;
@@ -847,7 +847,7 @@ void DXDYDZ_J(RDouble4D & f,Geometry3D * g,int i,int j,int k,int ndim,int npos,R
         kp = k + 1;
         km = k - 1;
     }
-    else if(ndim == TWO_D)
+    else if (ndim == TWO_D)
     {
         kp = k;
         km = k;

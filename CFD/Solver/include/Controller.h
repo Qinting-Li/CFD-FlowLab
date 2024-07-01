@@ -153,6 +153,9 @@ public:
     //! Compute the cross and blending function F1 and F2 term of turbulence flow.
     void ComputeBlendFunctionSST(int iSolver, int level);
 
+    //! Compute the precondition coefficient of low mach flow.
+    void ComputePreconditionCoefficient(int iSolver, int level);
+
     //! Compute gradient for viscous flux computation.
     void ComputeGradient(int iSolver, int level);
 
@@ -235,7 +238,7 @@ private:
     //! @param[in ]: level denotes the serial number of the layer where the variables are compute in the multigrid method.
     //void BLUSGS(int iSolver, int level);
 
-    //! Block Lower-Upper Symmetric Gauss�CSeidel Scheme for unstruct grid.
+    //! Block Lower-Upper Symmetric Gauss-Seidel Scheme for unstruct grid.
     void BLUSGS(int iSolver, int level);
 
     //! Forward sweep in BLUSGS methods.
@@ -244,7 +247,7 @@ private:
     //! Backward sweep in BLUSGS methods.
     void BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
 
-    //! Matix Lower-Upper Symmetric Gauss�CSeidel Scheme for struct grid.
+    //! Matix Lower-Upper Symmetric Gauss-Seidel Scheme for struct grid.
     void MatrixLUSGS(int iSolver, int level);
 
     //! Forward sweep in MatrixLUSGS methods.
@@ -253,16 +256,16 @@ private:
     //! Backward sweep in MatrixLUSGS methods.
     void BackwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
 
-    //! Line implicit Lower-Upper Symmetric Gauss�CSeidel Scheme for unstruct grid.
+    //! Line implicit Lower-Upper Symmetric Gauss-Seidel Scheme for unstruct grid.
     void LineLUSGS(int iSolver, int level);
 
     void LineLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
 
     //! Forward sweep in line BLUSGS methods.
-    void ForwardSweepLineLUSGS(int iSolver, int level, FieldProxy** dqProxy, FieldProxy** LUplusDQ, RDouble& sweepNormal, int& iSweep);
+    void ForwardSweepLineLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal, int &iSweep);
 
     //! Backward sweep in line LUSGS methods.
-    void BackwardSweepLineLUSGS(int iSolver, int level, FieldProxy** dqProxy, FieldProxy** LUplusDQ, RDouble& sweepNormal);
+    void BackwardSweepLineLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
 
 
     //! To execute the forward sweep of the block LU-SGS method.

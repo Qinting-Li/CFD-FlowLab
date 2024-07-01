@@ -32,9 +32,9 @@ DYCell::DYCell()
 }
 DYCell::~DYCell()
 {
-    delete []cell2face;
-    delete []cell2node;
-    delete []cell2cell;
+    delete [] cell2face;
+    delete [] cell2node;
+    delete [] cell2cell;
 }
 
 }

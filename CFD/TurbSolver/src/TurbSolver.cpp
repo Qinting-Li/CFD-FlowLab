@@ -130,7 +130,7 @@ void TurbSolver::DumpResultFile(Grid *grid, int level)
     int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
     int intervalStepFlow = GlobalDataBase::GetIntParaFromDB("intervalStepFlow");
 
-    bool isSubIterationDump = true; //! It is true default in steady simulations.
+    bool isSubIterationDump = true;    //! It is true default in steady simulations.
 
     Param_TurbSolver *parameters = GetControlParameters();
     int isUnsteady = parameters->GetIsUnsteady();
@@ -140,7 +140,7 @@ void TurbSolver::DumpResultFile(Grid *grid, int level)
     }
 
     int nProtectData = 0;
-    if(GlobalDataBase::IsExist("nProtectData", PHINT, 1))
+    if (GlobalDataBase::IsExist("nProtectData", PHINT, 1))
     {
         nProtectData = GlobalDataBase::GetIntParaFromDB("nProtectData");
     }
@@ -148,7 +148,7 @@ void TurbSolver::DumpResultFile(Grid *grid, int level)
     if (outnstep % intervalStepFlow == 0 && level == 0 && isSubIterationDump)
     {
 
-        if(nProtectData ==0)
+        if (nProtectData ==0)
         {
             //! To dump restart data for continual simulation.
             ActionKey *actkeyDumpRestartData = new ActionKey();
@@ -163,27 +163,27 @@ void TurbSolver::DumpResultFile(Grid *grid, int level)
             FillActionKey(actkeyDumpRestartData, DUMP_RESTART, level);
             DumpTurbProtectData(actkeyDumpRestartData, RestartFile);
             delete actkeyDumpRestartData;
-        
-            if(outnstep > 1)
+
+            if (outnstep > 1)
             {
-                if(RestartFile == 0)
+                if (RestartFile == 0)
                 {
                     string path = "./results/turb1.dat";
                     remove(path.c_str());
 
-                    if(PHMPI::IsParallelRun())
+                    if (PHMPI::IsParallelRun())
                     {
                         string path1 = "./results/turb1_0.dat";
                         remove(path1.c_str());
                     }
                 }
 
-                else if(RestartFile == 1)
+                else if (RestartFile == 1)
                 {
                     string path = "./results/turb0.dat";
                     remove(path.c_str());
 
-                    if(PHMPI::IsParallelRun())
+                    if (PHMPI::IsParallelRun())
                     {
                         string path2 = "./results/turb0_0.dat";
                         remove(path2.c_str());
@@ -197,10 +197,10 @@ void TurbSolver::DumpResultFile(Grid *grid, int level)
     if (outnstep == 1 || outnstep % intervalStepRes == 0 && (!isUnsteady || !isSubIterationDump))
     {
         //! To dump residual data.
-        ActionKey * actkeyDumpResidual = new ActionKey();
+        ActionKey *actkeyDumpResidual = new ActionKey();
         FillActionKey(actkeyDumpResidual, DUMP_RESIDUAL, level);
         DumpResidual(actkeyDumpResidual);
-        delete actkeyDumpResidual;
+        delete actkeyDumpResidual;    actkeyDumpResidual = nullptr;
     }
 }
 
@@ -292,7 +292,7 @@ void TurbSolver::UpdateResiduals(Grid *grid)
 
     DualTimeSource(grid);
 
-    ZeroResidualOfSpecialCells(grid);       //! Added By Guo Yongheng 20160825.
+    ZeroResidualOfSpecialCells(grid);    //! Added By Guo Yongheng 20160825.
 
     ModifyResiduals(grid);
 

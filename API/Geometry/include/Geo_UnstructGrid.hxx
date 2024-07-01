@@ -158,6 +158,11 @@ inline RDouble * UnstructGrid::GetCellVolume() const
     return cellMetrics->GetCellVolume();
 }
 
+inline RDouble * UnstructGrid::GetCellSkewness() const
+{
+    return cellMetrics->GetCellSkewness();
+}
+
 inline RDouble * UnstructGrid::GetFaceVelocityX() const
 {
     return dynamicGridMetrics->GetFaceVelocityX();
@@ -168,9 +173,24 @@ inline RDouble *UnstructGrid::GetFaceVelocityY() const
     return dynamicGridMetrics->GetFaceVelocityY();
 }
 
-inline RDouble *UnstructGrid::GetFaceVelocityZ() const
+inline RDouble * UnstructGrid::GetFaceVelocityZ() const
 {
     return dynamicGridMetrics->GetFaceVelocityZ();
+}
+
+inline RDouble * UnstructGrid::GetCellVelocityX() const
+{
+    return dynamicGridMetrics->GetCellVelocityX();
+}
+
+inline RDouble * UnstructGrid::GetCellVelocityY() const
+{
+    return dynamicGridMetrics->GetCellVelocityY();
+}
+
+inline RDouble * UnstructGrid::GetCellVelocityZ() const
+{
+    return dynamicGridMetrics->GetCellVelocityZ();
 }
 
 inline RDouble * UnstructGrid::GetFaceNormalVelocity() const
@@ -281,11 +301,6 @@ inline int *UnstructGrid::Getfc2cR(void) const
 inline UnstructBCSet ** UnstructGrid::GetBCRecord(void) const
 {
     return bcr;
-}
-
-inline UnstructBCSet * UnstructGrid::GetUnstructBCSet(void) const
-{
-    return unstructBCSet;
 }
 
 inline void UnstructGrid::CreateUnstructBCSet(int nBCRegion)

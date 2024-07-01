@@ -26,7 +26,7 @@
 namespace PHSPACE
 {
 
-GridManager::GridManager(UnstructGrid* unstructGridIn)
+GridManager::GridManager(UnstructGrid *unstructGridIn)
 {
     oldFaceNormalX = NULL;
     oldFaceNormalY = NULL;
@@ -76,7 +76,6 @@ GridManager::GridManager(UnstructGrid* unstructGridIn)
     faceVelocityZ = unstructGrid->GetFaceVelocityZ();
 
     blankIndex = unstructGrid->GetBlankIndex();
-
 }
 
 GridManager::~GridManager()
@@ -243,9 +242,9 @@ void GridManager::DeAllocateALEMetrics()
     }
 }
 
-void GridManager::ComputeMetrics(ActionKey* actkey)
+void GridManager::ComputeMetrics(ActionKey *actkey)
 {
-    ActionKey* actionKey = PHSPACE::GetCurrentActionKey();
+    ActionKey *actionKey = PHSPACE::GetCurrentActionKey();
     this->unstructGrid->AllocateMetrics(actionKey);
 
     if (PHSPACE::GetDim() == ONE_D)
@@ -264,10 +263,10 @@ void GridManager::ComputeMetrics(ActionKey* actkey)
         this->ComputeCellCenterVol3D(actkey);
     }
 
-    RDouble* faceNormalX = unstructGrid->GetFaceNormalX();
-    RDouble* faceNormalY = unstructGrid->GetFaceNormalY();
-    RDouble* faceNormalZ = unstructGrid->GetFaceNormalZ();
-    RDouble* faceArea    = unstructGrid->GetFaceArea();
+    RDouble *faceNormalX = unstructGrid->GetFaceNormalX();
+    RDouble *faceNormalY = unstructGrid->GetFaceNormalY();
+    RDouble *faceNormalZ = unstructGrid->GetFaceNormalZ();
+    RDouble *faceArea    = unstructGrid->GetFaceArea();
 
     this->ClosureCheck(faceNormalX, faceArea);
     this->ClosureCheck(faceNormalY, faceArea);
@@ -279,10 +278,10 @@ void GridManager::ClosureCheck(RDouble *faceNormalX, RDouble *faceArea)
     int numberOfCells = unstructGrid->GetNTotalCell();
     int numberOfFaces = unstructGrid->GetNTotalFace();
 
-    int* leftCellIndexContainer = unstructGrid->GetLeftCellOfFace();
-    int* rightCellIndexContainer = unstructGrid->GetRightCellOfFace();
+    int *leftCellIndexContainer = unstructGrid->GetLeftCellOfFace();
+    int *rightCellIndexContainer = unstructGrid->GetRightCellOfFace();
 
-    RDouble* geometricSummation = new RDouble[numberOfCells];
+    RDouble *geometricSummation = new RDouble[numberOfCells];
 
     PHSPACE::ZeroField(geometricSummation, numberOfCells);
 
@@ -293,8 +292,7 @@ void GridManager::ClosureCheck(RDouble *faceNormalX, RDouble *faceArea)
 
         geometricSummation[leftCellIndex] += faceNormalX[iFace] * faceArea[iFace];
 
-        if (rightCellIndex < 0 ||
-            rightCellIndex >= numberOfCells)
+        if (rightCellIndex < 0 || rightCellIndex >= numberOfCells)
         {
             continue;
         }
@@ -316,20 +314,20 @@ void GridManager::ClosureCheck(RDouble *faceNormalX, RDouble *faceArea)
 
 void GridManager::ComputeFaceNormal2D()
 {
-    RDouble* x = unstructGrid->GetX();
-    RDouble* y = unstructGrid->GetY();
+    RDouble *x = unstructGrid->GetX();
+    RDouble *y = unstructGrid->GetY();
 
     int numberOfFaces = unstructGrid->GetNTotalFace();
 
-    RDouble* faceNormalX = unstructGrid->GetFaceNormalX();
-    RDouble* faceNormalY = unstructGrid->GetFaceNormalY();
-    RDouble* faceNormalZ = unstructGrid->GetFaceNormalZ();
-    RDouble* oldFaceNormalX = this->GetOldFaceNormalX();
-    RDouble* oldFaceNormalY = this->GetOldFaceNormalY();
-    RDouble* oldFaceNormalZ = this->GetOldFaceNormalZ();
-    RDouble* faceArea = unstructGrid->GetFaceArea();
+    RDouble *faceNormalX = unstructGrid->GetFaceNormalX();
+    RDouble *faceNormalY = unstructGrid->GetFaceNormalY();
+    RDouble *faceNormalZ = unstructGrid->GetFaceNormalZ();
+    RDouble *oldFaceNormalX = this->GetOldFaceNormalX();
+    RDouble *oldFaceNormalY = this->GetOldFaceNormalY();
+    RDouble *oldFaceNormalZ = this->GetOldFaceNormalZ();
+    RDouble *faceArea = unstructGrid->GetFaceArea();
 
-    int* faceNodeIndexContainer = unstructGrid->GetFace2Node();
+    int *faceNodeIndexContainer = unstructGrid->GetFace2Node();
 
     for (int iFace = 0; iFace < numberOfFaces; ++iFace)
     {
@@ -354,17 +352,17 @@ void GridManager::ComputeFaceNormal2D()
 
 void GridManager::ComputeFaceCenter2D()
 {
-    RDouble* x = unstructGrid->GetX();
-    RDouble* y = unstructGrid->GetY();
-    RDouble* z = unstructGrid->GetZ();
+    RDouble *x = unstructGrid->GetX();
+    RDouble *y = unstructGrid->GetY();
+    RDouble *z = unstructGrid->GetZ();
 
-    int* faceNodeIndexContainer = unstructGrid->GetFace2Node();
+    int *faceNodeIndexContainer = unstructGrid->GetFace2Node();
 
     int numberOfFaces = unstructGrid->GetNTotalFace();
 
-    RDouble* faceCenterX = unstructGrid->GetFaceCenterX();
-    RDouble* faceCenterY = unstructGrid->GetFaceCenterY();
-    RDouble* faceCenterZ = unstructGrid->GetFaceCenterZ();
+    RDouble *faceCenterX = unstructGrid->GetFaceCenterX();
+    RDouble *faceCenterY = unstructGrid->GetFaceCenterY();
+    RDouble *faceCenterZ = unstructGrid->GetFaceCenterZ();
 
     for (int iFace = 0; iFace < numberOfFaces; ++iFace)
     {
@@ -376,29 +374,29 @@ void GridManager::ComputeFaceCenter2D()
     }
 }
 
-void GridManager::ComputeCellCenterVol2D(ActionKey* actkey)
+void GridManager::ComputeCellCenterVol2D(ActionKey *actkey)
 {
     int numberOfCells = this->unstructGrid->GetNTotalCell();
     int numberOfBoundaryFaces = this->unstructGrid->GetNBoundFace();
     int numberOfFaces = this->unstructGrid->GetNTotalFace();
     int numberOfTotalCells = numberOfCells + numberOfBoundaryFaces;
 
-    int* leftCellIndexContainer = unstructGrid->GetLeftCellOfFace();
-    int* rightCellIndexContainer = unstructGrid->GetRightCellOfFace();
+    int *leftCellIndexContainer = unstructGrid->GetLeftCellOfFace();
+    int *rightCellIndexContainer = unstructGrid->GetRightCellOfFace();
 
-    RDouble* cellCenterX = unstructGrid->GetCellCenterX();
-    RDouble* cellCenterY = unstructGrid->GetCellCenterY();
-    RDouble* cellCenterZ = unstructGrid->GetCellCenterZ();
+    RDouble *cellCenterX = unstructGrid->GetCellCenterX();
+    RDouble *cellCenterY = unstructGrid->GetCellCenterY();
+    RDouble *cellCenterZ = unstructGrid->GetCellCenterZ();
 
-    RDouble* faceCenterX = unstructGrid->GetFaceCenterX();
-    RDouble* faceCenterY = unstructGrid->GetFaceCenterY();
-    RDouble* faceCenterZ = unstructGrid->GetFaceCenterZ();
+    RDouble *faceCenterX = unstructGrid->GetFaceCenterX();
+    RDouble *faceCenterY = unstructGrid->GetFaceCenterY();
+    RDouble *faceCenterZ = unstructGrid->GetFaceCenterZ();
 
-    RDouble* faceNormalX = unstructGrid->GetFaceNormalX();
-    RDouble* faceNormalY = unstructGrid->GetFaceNormalY();
-    RDouble* faceNormalZ = unstructGrid->GetFaceNormalZ();
-    RDouble* faceArea = unstructGrid->GetFaceArea();
-    RDouble* cellVolume = unstructGrid->GetCellVolume();
+    RDouble *faceNormalX = unstructGrid->GetFaceNormalX();
+    RDouble *faceNormalY = unstructGrid->GetFaceNormalY();
+    RDouble *faceNormalZ = unstructGrid->GetFaceNormalZ();
+    RDouble *faceArea = unstructGrid->GetFaceArea();
+    RDouble *cellVolume = unstructGrid->GetCellVolume();
 
     PHSPACE::ZeroField(cellCenterX, numberOfTotalCells);
     PHSPACE::ZeroField(cellCenterY, numberOfTotalCells);
@@ -412,8 +410,8 @@ void GridManager::ComputeCellCenterVol2D(ActionKey* actkey)
     {
         int leftCellIndex = leftCellIndexContainer[iFace];
         RDouble dot = (faceCenterX[iFace] * faceNormalX[iFace] +
-            faceCenterY[iFace] * faceNormalY[iFace] +
-            faceCenterZ[iFace] * faceNormalZ[iFace]) * faceArea[iFace];
+                       faceCenterY[iFace] * faceNormalY[iFace] +
+                       faceCenterZ[iFace] * faceNormalZ[iFace]) * faceArea[iFace];
         cellCenterX[leftCellIndex] += faceCenterX[iFace] * dot;
         cellCenterY[leftCellIndex] += faceCenterY[iFace] * dot;
         cellCenterZ[leftCellIndex] += faceCenterZ[iFace] * dot;
@@ -426,8 +424,8 @@ void GridManager::ComputeCellCenterVol2D(ActionKey* actkey)
         int leftCellIndex = leftCellIndexContainer[iFace];
         int rightCellIndex = rightCellIndexContainer[iFace];
         RDouble dot = (faceCenterX[iFace] * faceNormalX[iFace] +
-            faceCenterY[iFace] * faceNormalY[iFace] +
-            faceCenterZ[iFace] * faceNormalZ[iFace]) * faceArea[iFace];
+                       faceCenterY[iFace] * faceNormalY[iFace] +
+                       faceCenterZ[iFace] * faceNormalZ[iFace]) * faceArea[iFace];
         cellCenterX[leftCellIndex] += faceCenterX[iFace] * dot;
         cellCenterY[leftCellIndex] += faceCenterY[iFace] * dot;
         cellCenterZ[leftCellIndex] += faceCenterZ[iFace] * dot;
@@ -481,8 +479,8 @@ void GridManager::ComputeCellCenterVol2D(ActionKey* actkey)
         if (faceArea[iFace] > SMALL)
         {
             RDouble tmp = 2.0 * ((cellCenterX[leftCellIndex] - faceCenterX[iFace]) * faceNormalX[iFace]
-                + (cellCenterY[leftCellIndex] - faceCenterY[iFace]) * faceNormalY[iFace]
-                + (cellCenterZ[leftCellIndex] - faceCenterZ[iFace]) * faceNormalZ[iFace]);
+                               + (cellCenterY[leftCellIndex] - faceCenterY[iFace]) * faceNormalY[iFace]
+                               + (cellCenterZ[leftCellIndex] - faceCenterZ[iFace]) * faceNormalZ[iFace]);
             cellCenterX[iFace + numberOfCells] = cellCenterX[leftCellIndex] - faceNormalX[iFace] * tmp;
             cellCenterY[iFace + numberOfCells] = cellCenterY[leftCellIndex] - faceNormalY[iFace] * tmp;
             cellCenterZ[iFace + numberOfCells] = cellCenterZ[leftCellIndex] - faceNormalZ[iFace] * tmp;
@@ -502,22 +500,22 @@ void GridManager::ComputeCellCenterVol2D(ActionKey* actkey)
 
 void GridManager::ComputeFaceNormal3D()
 {
-    RDouble* x = unstructGrid->GetX();
-    RDouble* y = unstructGrid->GetY();
-    RDouble* z = unstructGrid->GetZ();
+    RDouble *x = unstructGrid->GetX();
+    RDouble *y = unstructGrid->GetY();
+    RDouble *z = unstructGrid->GetZ();
 
     int numberOfFaces = this->unstructGrid->GetNTotalFace();
 
-    RDouble* faceNormalX = unstructGrid->GetFaceNormalX();
-    RDouble* faceNormalY = unstructGrid->GetFaceNormalY();
-    RDouble* faceNormalZ = unstructGrid->GetFaceNormalZ();
-    RDouble* oldFaceNormalX = this->GetOldFaceNormalX();
-    RDouble* oldFaceNormalY = this->GetOldFaceNormalY();
-    RDouble* oldFaceNormalZ = this->GetOldFaceNormalZ();
-    RDouble* faceArea = unstructGrid->GetFaceArea();
+    RDouble *faceNormalX = unstructGrid->GetFaceNormalX();
+    RDouble *faceNormalY = unstructGrid->GetFaceNormalY();
+    RDouble *faceNormalZ = unstructGrid->GetFaceNormalZ();
+    RDouble *oldFaceNormalX = this->GetOldFaceNormalX();
+    RDouble *oldFaceNormalY = this->GetOldFaceNormalY();
+    RDouble *oldFaceNormalZ = this->GetOldFaceNormalZ();
+    RDouble *faceArea = unstructGrid->GetFaceArea();
 
-    int* faceNodeIndexContainer = unstructGrid->GetFace2Node();
-    int* faceNodeNumberContainer = unstructGrid->GetNodeNumberOfEachFace();
+    int *faceNodeIndexContainer = unstructGrid->GetFace2Node();
+    int *faceNodeNumberContainer = unstructGrid->GetNodeNumberOfEachFace();
 
     int nodePosition = 0;
 
@@ -566,22 +564,22 @@ void GridManager::ComputeFaceNormal3D()
 
 void GridManager::ComputeFaceCenter3D()
 {
-    RDouble* x = unstructGrid->GetX();
-    RDouble* y = unstructGrid->GetY();
-    RDouble* z = unstructGrid->GetZ();
+    RDouble *x = unstructGrid->GetX();
+    RDouble *y = unstructGrid->GetY();
+    RDouble *z = unstructGrid->GetZ();
 
-    int* faceNodeIndexContainer = unstructGrid->GetFace2Node();
-    int* faceNodeNumberContainer = unstructGrid->GetNodeNumberOfEachFace();
+    int *faceNodeIndexContainer = unstructGrid->GetFace2Node();
+    int *faceNodeNumberContainer = unstructGrid->GetNodeNumberOfEachFace();
 
     int numberOfFaces = this->unstructGrid->GetNTotalFace();
 
-    RDouble* faceCenterX = unstructGrid->GetFaceCenterX();
-    RDouble* faceCenterY = unstructGrid->GetFaceCenterY();
-    RDouble* faceCenterZ = unstructGrid->GetFaceCenterZ();
+    RDouble *faceCenterX = unstructGrid->GetFaceCenterX();
+    RDouble *faceCenterY = unstructGrid->GetFaceCenterY();
+    RDouble *faceCenterZ = unstructGrid->GetFaceCenterZ();
 
-    RDouble* faceNormalX = unstructGrid->GetFaceNormalX();
-    RDouble* faceNormalY = unstructGrid->GetFaceNormalY();
-    RDouble* faceNormalZ = unstructGrid->GetFaceNormalZ();
+    RDouble *faceNormalX = unstructGrid->GetFaceNormalX();
+    RDouble *faceNormalY = unstructGrid->GetFaceNormalY();
+    RDouble *faceNormalZ = unstructGrid->GetFaceNormalZ();
 
     int nodePosition = 0;
     for (int iFace = 0; iFace < numberOfFaces; ++iFace)
@@ -654,42 +652,42 @@ void GridManager::ComputeFaceCenter3D()
     }
 }
 
-void GridManager::ComputeCellCenterVol3D(ActionKey* actkey)
+void GridManager::ComputeCellCenterVol3D(ActionKey *actkey)
 {
     int numberOfCells = this->unstructGrid->GetNTotalCell();
     int numberOfBoundaryFaces = this->unstructGrid->GetNBoundFace();
     int numberOfFaces = this->unstructGrid->GetNTotalFace();
     int numberOfTotalCells = numberOfCells + numberOfBoundaryFaces;
 
-    int* leftCellIndexContainer = unstructGrid->GetLeftCellOfFace();
-    int* rightCellIndexContainer = unstructGrid->GetRightCellOfFace();
+    int *leftCellIndexContainer = unstructGrid->GetLeftCellOfFace();
+    int *rightCellIndexContainer = unstructGrid->GetRightCellOfFace();
 
-    int* faceNodeIndexContainer = unstructGrid->GetFace2Node();
-    int* faceNodeNumberContainer = unstructGrid->GetNodeNumberOfEachFace();
+    int *faceNodeIndexContainer = unstructGrid->GetFace2Node();
+    int *faceNodeNumberContainer = unstructGrid->GetNodeNumberOfEachFace();
 
-    RDouble* x = unstructGrid->GetX();
-    RDouble* y = unstructGrid->GetY();
-    RDouble* z = unstructGrid->GetZ();
+    RDouble *x = unstructGrid->GetX();
+    RDouble *y = unstructGrid->GetY();
+    RDouble *z = unstructGrid->GetZ();
 
-    RDouble* cellCenterX = unstructGrid->GetCellCenterX();
-    RDouble* cellCenterY = unstructGrid->GetCellCenterY();
-    RDouble* cellCenterZ = unstructGrid->GetCellCenterZ();
+    RDouble *cellCenterX = unstructGrid->GetCellCenterX();
+    RDouble *cellCenterY = unstructGrid->GetCellCenterY();
+    RDouble *cellCenterZ = unstructGrid->GetCellCenterZ();
 
-    RDouble* faceCenterX = unstructGrid->GetFaceCenterX();
-    RDouble* faceCenterY = unstructGrid->GetFaceCenterY();
-    RDouble* faceCenterZ = unstructGrid->GetFaceCenterZ();
+    RDouble *faceCenterX = unstructGrid->GetFaceCenterX();
+    RDouble *faceCenterY = unstructGrid->GetFaceCenterY();
+    RDouble *faceCenterZ = unstructGrid->GetFaceCenterZ();
 
-    RDouble* faceNormalX = unstructGrid->GetFaceNormalX();
-    RDouble* faceNormalY = unstructGrid->GetFaceNormalY();
-    RDouble* faceNormalZ = unstructGrid->GetFaceNormalZ();
+    RDouble *faceNormalX = unstructGrid->GetFaceNormalX();
+    RDouble *faceNormalY = unstructGrid->GetFaceNormalY();
+    RDouble *faceNormalZ = unstructGrid->GetFaceNormalZ();
 
-    RDouble* faceArea = unstructGrid->GetFaceArea();
-    RDouble* cellVolume = unstructGrid->GetCellVolume();
+    RDouble *faceArea = unstructGrid->GetFaceArea();
+    RDouble *cellVolume = unstructGrid->GetCellVolume();
 
     PHSPACE::ZeroField(cellCenterX, numberOfTotalCells);
     PHSPACE::ZeroField(cellCenterY, numberOfTotalCells);
     PHSPACE::ZeroField(cellCenterZ, numberOfTotalCells);
-    PHSPACE::ZeroField(cellVolume, numberOfTotalCells);
+    PHSPACE::ZeroField(cellVolume,  numberOfTotalCells);
 
     int nodePosition = 0;
 
@@ -807,19 +805,19 @@ void GridManager::ComputeCellCenterVol3D(ActionKey* actkey)
 
 void GridManager::ComputeFaceNormal3DNew()
 {
-    RDouble* x = unstructGrid->GetX();
-    RDouble* y = unstructGrid->GetY();
-    RDouble* z = unstructGrid->GetZ();
+    RDouble *x = unstructGrid->GetX();
+    RDouble *y = unstructGrid->GetY();
+    RDouble *z = unstructGrid->GetZ();
 
     int numberOfFaces = this->unstructGrid->GetNTotalFace();
 
-    RDouble* faceNormalX = this->GetFaceNormalX();
-    RDouble* faceNormalY = this->GetFaceNormalY();
-    RDouble* faceNormalZ = this->GetFaceNormalZ();
-    RDouble* faceArea = this->GetFaceArea();
+    RDouble *faceNormalX = this->GetFaceNormalX();
+    RDouble *faceNormalY = this->GetFaceNormalY();
+    RDouble *faceNormalZ = this->GetFaceNormalZ();
+    RDouble *faceArea = this->GetFaceArea();
 
-    int* faceNodeIndexContainer = unstructGrid->GetFace2Node();
-    int* faceNodeNumberContainer = unstructGrid->GetNodeNumberOfEachFace();
+    int *faceNodeIndexContainer = unstructGrid->GetFace2Node();
+    int *faceNodeNumberContainer = unstructGrid->GetNodeNumberOfEachFace();
 
     int nodePosition = 0;
     for (int iFace = 0; iFace < numberOfFaces; ++iFace)
@@ -881,22 +879,22 @@ void GridManager::ComputeFaceNormal3DNew()
 
 void GridManager::ComputeFaceCenter3DNew()
 {
-    RDouble* x = unstructGrid->GetX();
-    RDouble* y = unstructGrid->GetY();
-    RDouble* z = unstructGrid->GetZ();
+    RDouble *x = unstructGrid->GetX();
+    RDouble *y = unstructGrid->GetY();
+    RDouble *z = unstructGrid->GetZ();
 
     int numberOfFaces = unstructGrid->GetNTotalFace();
 
-    RDouble* faceCenterX = this->GetFaceCenterX();
-    RDouble* faceCenterY = this->GetFaceCenterY();
-    RDouble* faceCenterZ = this->GetFaceCenterZ();
+    RDouble *faceCenterX = this->GetFaceCenterX();
+    RDouble *faceCenterY = this->GetFaceCenterY();
+    RDouble *faceCenterZ = this->GetFaceCenterZ();
 
-    RDouble* faceNormalX = this->GetFaceNormalX();
-    RDouble* faceNormalY = this->GetFaceNormalY();
-    RDouble* faceNormalZ = this->GetFaceNormalZ();
+    RDouble *faceNormalX = this->GetFaceNormalX();
+    RDouble *faceNormalY = this->GetFaceNormalY();
+    RDouble *faceNormalZ = this->GetFaceNormalZ();
 
-    int* faceNodeIndexContainer = unstructGrid->GetFace2Node();
-    int* faceNodeNumberContainer = unstructGrid->GetNodeNumberOfEachFace();
+    int *faceNodeIndexContainer  = unstructGrid->GetFace2Node();
+    int *faceNodeNumberContainer = unstructGrid->GetNodeNumberOfEachFace();
 
     int nodePosition = 0;
     for (int iFace = 0; iFace < numberOfFaces; ++iFace)
@@ -975,36 +973,36 @@ void GridManager::ComputeCellCenterVol3DNew()
     int numberOfFaces = this->unstructGrid->GetNTotalFace();
     int numberOfTotalCells = numberOfCells + numberOfBoundaryFaces;
 
-    int* leftCellIndexContainer = unstructGrid->GetLeftCellOfFace();
-    int* rightCellIndexContainer = unstructGrid->GetRightCellOfFace();
+    int *leftCellIndexContainer = unstructGrid->GetLeftCellOfFace();
+    int *rightCellIndexContainer = unstructGrid->GetRightCellOfFace();
 
-    int* faceNodeIndexContainer = unstructGrid->GetFace2Node();
-    int* faceNodeNumberContainer = unstructGrid->GetNodeNumberOfEachFace();
+    int *faceNodeIndexContainer = unstructGrid->GetFace2Node();
+    int *faceNodeNumberContainer = unstructGrid->GetNodeNumberOfEachFace();
 
-    RDouble* x = unstructGrid->GetX();
-    RDouble* y = unstructGrid->GetY();
-    RDouble* z = unstructGrid->GetZ();
+    RDouble *x = unstructGrid->GetX();
+    RDouble *y = unstructGrid->GetY();
+    RDouble *z = unstructGrid->GetZ();
 
-    RDouble* cellCenterX = this->GetCellCenterX();
-    RDouble* cellCenterY = this->GetCellCenterY();
-    RDouble* cellCenterZ = this->GetCellCenterZ();
+    RDouble *cellCenterX = this->GetCellCenterX();
+    RDouble *cellCenterY = this->GetCellCenterY();
+    RDouble *cellCenterZ = this->GetCellCenterZ();
 
-    RDouble* faceCenterX = this->GetFaceCenterX();
-    RDouble* faceCenterY = this->GetFaceCenterY();
-    RDouble* faceCenterZ = this->GetFaceCenterZ();
+    RDouble *faceCenterX = this->GetFaceCenterX();
+    RDouble *faceCenterY = this->GetFaceCenterY();
+    RDouble *faceCenterZ = this->GetFaceCenterZ();
 
-    RDouble* faceNormalX = this->GetFaceNormalX();
-    RDouble* faceNormalY = this->GetFaceNormalY();
-    RDouble* faceNormalZ = this->GetFaceNormalZ();
-    RDouble* faceArea = this->GetFaceArea();
-    RDouble* cellVolume = this->GetCellVolume();
+    RDouble *faceNormalX = this->GetFaceNormalX();
+    RDouble *faceNormalY = this->GetFaceNormalY();
+    RDouble *faceNormalZ = this->GetFaceNormalZ();
+    RDouble *faceArea = this->GetFaceArea();
+    RDouble *cellVolume = this->GetCellVolume();
 
     RDouble c34 = 3.0 / 4.0;
 
     PHSPACE::ZeroField(cellCenterX, numberOfTotalCells);
     PHSPACE::ZeroField(cellCenterY, numberOfTotalCells);
     PHSPACE::ZeroField(cellCenterZ, numberOfTotalCells);
-    PHSPACE::ZeroField(cellVolume, numberOfTotalCells);
+    PHSPACE::ZeroField(cellVolume,  numberOfTotalCells);
 
     for (int iFace = 0; iFace < numberOfFaces; ++iFace)
     {
@@ -1040,9 +1038,9 @@ void GridManager::ComputeCellCenterVol3DNew()
         cellCenterZ[iCell] *= tmp;
     }
 
-    RDouble* txc = new RDouble[numberOfTotalCells];
-    RDouble* tyc = new RDouble[numberOfTotalCells];
-    RDouble* tzc = new RDouble[numberOfTotalCells];
+    RDouble *txc = new RDouble[numberOfTotalCells];
+    RDouble *tyc = new RDouble[numberOfTotalCells];
+    RDouble *tzc = new RDouble[numberOfTotalCells];
 
     PHSPACE::SetField(txc, cellCenterX, numberOfCells);
     PHSPACE::SetField(tyc, cellCenterY, numberOfCells);
@@ -1180,23 +1178,23 @@ void GridManager::ComputeCellCenterVol3DNew()
         cellVolume[rightCellIndex] = cellVolume[leftCellIndex];
     }
 
-    delete [] txc;    txc  = NULL;
-    delete [] tyc;    tyc  = NULL;
-    delete [] tzc;    tzc  = NULL;
+    delete [] txc;    txc = NULL;
+    delete [] tyc;    tyc = NULL;
+    delete [] tzc;    tzc = NULL;
 
-    ActionKey* actionKey = PHSPACE::GetCurrentActionKey();
+    ActionKey *actionKey = PHSPACE::GetCurrentActionKey();
     PHSPACE::StreamToActionKey(actionKey, oss);
 }
 
 void GridManager::BackUpOldGrid()
 {
-    SimpleGrid * oldGrid = this->unstructGrid->GetOldGrid();
+    SimpleGrid *oldGrid = this->unstructGrid->GetOldGrid();
     if (! oldGrid)
     {
         oldGrid = new SimpleGrid();
         this->unstructGrid->SetOldGrid(oldGrid);
     }
-    * oldGrid = * this->unstructGrid;
+    *oldGrid = * this->unstructGrid;
 
     int numberOfFaces         = this->unstructGrid->GetNTotalFace();
     int numberOfCells         = this->unstructGrid->GetNTotalCell();
@@ -1206,7 +1204,7 @@ void GridManager::BackUpOldGrid()
     if (IsNotAllocated(oldFaceCenterX)) oldFaceCenterX = new RDouble[numberOfFaces]();
     if (IsNotAllocated(oldFaceCenterY)) oldFaceCenterY = new RDouble[numberOfFaces]();
     if (IsNotAllocated(oldFaceCenterZ)) oldFaceCenterZ = new RDouble [numberOfFaces]();
-    if (IsNotAllocated(oldFaceArea)) oldFaceArea = new RDouble[numberOfFaces]();
+    if (IsNotAllocated(oldFaceArea))  oldFaceArea  = new RDouble[numberOfFaces]();
     if (IsNotAllocated(cellVolumeN1)) cellVolumeN1 = new RDouble[numberOfTotalCells]();
     if (IsNotAllocated(cellVolumeN2)) cellVolumeN2 = new RDouble [numberOfTotalCells]();
 
@@ -1227,13 +1225,13 @@ void GridManager::BackUpOldGrid()
 void GridManager::ComputeMassCharacterOfObject()
 {
     //0- prepare the data.
-    int numberOfCells         = unstructGrid->GetNTotalCell();
-    RDouble *cellVolume  = unstructGrid->GetCellVolume();
+    int numberOfCells   = unstructGrid->GetNTotalCell();
+    RDouble *cellVolume = unstructGrid->GetCellVolume();
 
     //0.1- compute the mass of every cell.
     RDouble totalMass   = 10000.0;
     RDouble totalVolume = 0.0;
-    RDouble* cellMass = new RDouble [numberOfCells];
+    RDouble *cellMass = new RDouble [numberOfCells];
     
     for (int iCell = 0; iCell < numberOfCells; ++ iCell)
     {
@@ -1314,9 +1312,9 @@ void GridManager::DumpCellCenterFile()
     int numberOfBoundaryFaces = unstructGrid->GetNBoundFace();
     int numberOfCells = unstructGrid->GetNTotalCell();
     int numberOfTotalCells = numberOfCells + numberOfBoundaryFaces;
-    RDouble* cellCenterX  = unstructGrid->GetCellCenterX();
-    RDouble* cellCenterY  = unstructGrid->GetCellCenterY();
-    RDouble* cellCenterZ  = unstructGrid->GetCellCenterZ();
+    RDouble *cellCenterX = unstructGrid->GetCellCenterX();
+    RDouble *cellCenterY = unstructGrid->GetCellCenterY();
+    RDouble *cellCenterZ = unstructGrid->GetCellCenterZ();
 
     cellCenterFile << numberOfTotalCells << endl;
 
@@ -1355,52 +1353,52 @@ void GridManager::ComputeGridFaceVelocity()
 
 void GridManager::ComputeGridFaceVelocityDirectly()
 {
-    RDouble * newFaceCenterX = unstructGrid->GetFaceCenterX();
-    RDouble * newFaceCenterY = unstructGrid->GetFaceCenterY();
-    RDouble * newFaceCenterZ = unstructGrid->GetFaceCenterZ();
+    RDouble *newFaceCenterX = unstructGrid->GetFaceCenterX();
+    RDouble *newFaceCenterY = unstructGrid->GetFaceCenterY();
+    RDouble *newFaceCenterZ = unstructGrid->GetFaceCenterZ();
 
-    RDouble * oldFaceCenterX = this->GetOldFaceCenterX();
-    RDouble * oldFaceCenterY = this->GetOldFaceCenterY();
-    RDouble * oldFaceCenterZ = this->GetOldFaceCenterZ();
+    RDouble *oldFaceCenterX = this->GetOldFaceCenterX();
+    RDouble *oldFaceCenterY = this->GetOldFaceCenterY();
+    RDouble *oldFaceCenterZ = this->GetOldFaceCenterZ();
 
-    int numberOfFaces         = unstructGrid->GetNTotalFace();
+    int numberOfFaces = unstructGrid->GetNTotalFace();
 
-    RDouble * newFaceNormalVelocity = this->GetNewFaceNormalVelocity();
-    RDouble * newFaceVelocityX      = this->GetNewFaceVelocityX();
-    RDouble * newFaceVelocityY      = this->GetNewFaceVelocityY();
-    RDouble * newFaceVelocityZ      = this->GetNewFaceVelocityZ();
+    RDouble *newFaceNormalVelocity = this->GetNewFaceNormalVelocity();
+    RDouble *newFaceVelocityX      = this->GetNewFaceVelocityX();
+    RDouble *newFaceVelocityY      = this->GetNewFaceVelocityY();
+    RDouble *newFaceVelocityZ      = this->GetNewFaceVelocityZ();
 
-    RDouble * faceNormalVelocity = unstructGrid->GetFaceNormalVelocity();
-    RDouble * faceVelocityX      = unstructGrid->GetFaceVelocityX();
-    RDouble * faceVelocityY      = unstructGrid->GetFaceVelocityY();
-    RDouble * faceVelocityZ      = unstructGrid->GetFaceVelocityZ();
+    RDouble *faceNormalVelocity = unstructGrid->GetFaceNormalVelocity();
+    RDouble *faceVelocityX      = unstructGrid->GetFaceVelocityX();
+    RDouble *faceVelocityY      = unstructGrid->GetFaceVelocityY();
+    RDouble *faceVelocityZ      = unstructGrid->GetFaceVelocityZ();
 
-    RDouble * oldFaceVelocityX      = this->GetOldFaceVelocityX();
-    RDouble * oldFaceVelocityY      = this->GetOldFaceVelocityY();
-    RDouble * oldFaceVelocityZ      = this->GetOldFaceVelocityZ();
+    RDouble *oldFaceVelocityX = this->GetOldFaceVelocityX();
+    RDouble *oldFaceVelocityY = this->GetOldFaceVelocityY();
+    RDouble *oldFaceVelocityZ = this->GetOldFaceVelocityZ();
 
-    RDouble * newFaceNormalX        = unstructGrid->GetFaceNormalX();
-    RDouble * newFaceNormalY        = unstructGrid->GetFaceNormalY();
-    RDouble * newFaceNormalZ        = unstructGrid->GetFaceNormalZ();
+    RDouble *newFaceNormalX = unstructGrid->GetFaceNormalX();
+    RDouble *newFaceNormalY = unstructGrid->GetFaceNormalY();
+    RDouble *newFaceNormalZ = unstructGrid->GetFaceNormalZ();
 
     RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
 
     for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
-        RDouble newFcX = newFaceCenterX[ iFace ];
-        RDouble newFcY = newFaceCenterY[ iFace ];
-        RDouble newFcZ = newFaceCenterZ[ iFace ];
-        RDouble oldFcX = oldFaceCenterX[ iFace ];
-        RDouble oldFcY = oldFaceCenterY[ iFace ];
-        RDouble oldFcZ = oldFaceCenterZ[ iFace ];
+        RDouble newFcX = newFaceCenterX[iFace];
+        RDouble newFcY = newFaceCenterY[iFace];
+        RDouble newFcZ = newFaceCenterZ[iFace];
+        RDouble oldFcX = oldFaceCenterX[iFace];
+        RDouble oldFcY = oldFaceCenterY[iFace];
+        RDouble oldFcZ = oldFaceCenterZ[iFace];
     
-        newFaceVelocityX[ iFace ] = (newFcX - oldFcX) / physicalTimeStep;
-        newFaceVelocityY[ iFace ] = (newFcY - oldFcY) / physicalTimeStep;
-        newFaceVelocityZ[ iFace ] = (newFcZ - oldFcZ) / physicalTimeStep;
+        newFaceVelocityX[iFace] = (newFcX - oldFcX) / physicalTimeStep;
+        newFaceVelocityY[iFace] = (newFcY - oldFcY) / physicalTimeStep;
+        newFaceVelocityZ[iFace] = (newFcZ - oldFcZ) / physicalTimeStep;
 
-        newFaceNormalVelocity[ iFace ] = newFaceVelocityX[ iFace ] * newFaceNormalX[ iFace ]
-                                                + newFaceVelocityY[ iFace ] * newFaceNormalY[ iFace ]
-                                                + newFaceVelocityZ[ iFace ] * newFaceNormalZ[ iFace ];
+        newFaceNormalVelocity[iFace] = newFaceVelocityX[iFace] * newFaceNormalX[iFace]
+                                     + newFaceVelocityY[iFace] * newFaceNormalY[iFace]
+                                     + newFaceVelocityZ[iFace] * newFaceNormalZ[iFace];
     }
 
     RFloat a = 1.0;
@@ -1421,8 +1419,8 @@ void GridManager::ComputeGridFaceVelocityDirectly()
         faceVelocityZ[ iFace ] = a * newFaceVelocityZ[ iFace ] - b * oldFaceVelocityZ[ iFace ];
 
         faceNormalVelocity[ iFace ] = faceVelocityX[ iFace ] * newFaceNormalX[ iFace ]
-                                             + faceVelocityY[ iFace ] * newFaceNormalY[ iFace ]
-                                             + faceVelocityZ[ iFace ] * newFaceNormalZ[ iFace ];
+                                    + faceVelocityY[ iFace ] * newFaceNormalY[ iFace ]
+                                    + faceVelocityZ[ iFace ] * newFaceNormalZ[ iFace ];
     }
 }
 
@@ -1444,44 +1442,44 @@ void GridManager::ComputeGridFaceVelocitySatisfyingGCL()
 // the direction shoule be the same as others when computing the volume rate of change.
 void GridManager::ComputeGridFaceVelocity2DSatisfyingGCL()
 {
-    SimpleGrid * oldGrid = unstructGrid->GetOldGrid();
+    SimpleGrid *oldGrid = unstructGrid->GetOldGrid();
 
-    RDouble * x = unstructGrid->GetX();
-    RDouble * y = unstructGrid->GetY();
-    RDouble * z = unstructGrid->GetZ();
+    RDouble *x = unstructGrid->GetX();
+    RDouble *y = unstructGrid->GetY();
+    RDouble *z = unstructGrid->GetZ();
 
-    RDouble * oldX = oldGrid->GetX();
-    RDouble * oldY = oldGrid->GetY();
-    RDouble * oldZ = oldGrid->GetZ();
+    RDouble *oldX = oldGrid->GetX();
+    RDouble *oldY = oldGrid->GetY();
+    RDouble *oldZ = oldGrid->GetZ();
 
-    RDouble * faceCenterX = unstructGrid->GetFaceCenterX();
-    RDouble * faceCenterY = unstructGrid->GetFaceCenterY();
-    RDouble * faceCenterZ = unstructGrid->GetFaceCenterZ();
+    RDouble *faceCenterX = unstructGrid->GetFaceCenterX();
+    RDouble *faceCenterY = unstructGrid->GetFaceCenterY();
+    RDouble *faceCenterZ = unstructGrid->GetFaceCenterZ();
 
-    RDouble * oldFaceCenterX = this->GetOldFaceCenterX();
-    RDouble * oldFaceCenterY = this->GetOldFaceCenterY();
-    RDouble * oldFaceCenterZ = this->GetOldFaceCenterZ();
+    RDouble *oldFaceCenterX = this->GetOldFaceCenterX();
+    RDouble *oldFaceCenterY = this->GetOldFaceCenterY();
+    RDouble *oldFaceCenterZ = this->GetOldFaceCenterZ();
 
-    RDouble * faceArea    = unstructGrid->GetFaceArea();
-    RDouble * oldFaceArea = this->GetOldFaceArea();
+    RDouble *faceArea    = unstructGrid->GetFaceArea();
+    RDouble *oldFaceArea = this->GetOldFaceArea();
 
-    int *faceNodeIndex  = unstructGrid->GetFace2Node();
-    int numberOfFaces         = unstructGrid->GetNTotalFace();
+    int *faceNodeIndex = unstructGrid->GetFace2Node();
+    int numberOfFaces  = unstructGrid->GetNTotalFace();
 
-    RDouble * newFaceNormalVelocity = this->GetNewFaceNormalVelocity();
-    RDouble * newFaceVelocityX      = this->GetNewFaceVelocityX();
-    RDouble * newFaceVelocityY      = this->GetNewFaceVelocityY();
-    RDouble * newFaceVelocityZ      = this->GetNewFaceVelocityZ();
+    RDouble *newFaceNormalVelocity = this->GetNewFaceNormalVelocity();
+    RDouble *newFaceVelocityX      = this->GetNewFaceVelocityX();
+    RDouble *newFaceVelocityY      = this->GetNewFaceVelocityY();
+    RDouble *newFaceVelocityZ      = this->GetNewFaceVelocityZ();
 
-    RDouble * faceNormalVelocity = unstructGrid->GetFaceNormalVelocity();
-    RDouble * faceVelocityX      = unstructGrid->GetFaceVelocityX();
-    RDouble * faceVelocityY      = unstructGrid->GetFaceVelocityY();
-    RDouble * faceVelocityZ      = unstructGrid->GetFaceVelocityZ();
+    RDouble *faceNormalVelocity = unstructGrid->GetFaceNormalVelocity();
+    RDouble *faceVelocityX      = unstructGrid->GetFaceVelocityX();
+    RDouble *faceVelocityY      = unstructGrid->GetFaceVelocityY();
+    RDouble *faceVelocityZ      = unstructGrid->GetFaceVelocityZ();
 
-    RDouble * oldFaceNormalVelocity = this->GetOldFaceNormalVelocity();
-    RDouble * oldFaceVelocityX      = this->GetOldFaceVelocityX();
-    RDouble * oldFaceVelocityY      = this->GetOldFaceVelocityY();
-    RDouble * oldFaceVelocityZ      = this->GetOldFaceVelocityZ();
+    RDouble *oldFaceNormalVelocity = this->GetOldFaceNormalVelocity();
+    RDouble *oldFaceVelocityX      = this->GetOldFaceVelocityX();
+    RDouble *oldFaceVelocityY      = this->GetOldFaceVelocityY();
+    RDouble *oldFaceVelocityZ      = this->GetOldFaceVelocityZ();
 
     RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
 
@@ -1537,17 +1535,17 @@ void GridManager::ComputeGridFaceVelocity2DSatisfyingGCL()
 
     int linearTwoStepMethods = PHSPACE::GlobalDataBase::GetIntParaFromDB("linearTwoStepMethods");
 
-    if      (linearTwoStepMethods == 1)
+    if (linearTwoStepMethods == 1)
     {
         //linearTwoStepMethods == 1
-        //Backward Euler                          : Order 1
+        //Backward Euler: Order 1
         a = 1.0;
         b = 0.0;
     }
     else if (linearTwoStepMethods == 3)
     {
         //linearTwoStepMethods == 3
-        //Backward differentiation                : Order 2
+        //Backward differentiation: Order 2
         a = 1.5;
         b = 0.5;
     }
@@ -1560,49 +1558,95 @@ void GridManager::ComputeGridFaceVelocity2DSatisfyingGCL()
         faceVelocityY     [ iFace ] = a * newFaceVelocityY     [ iFace ] - b * oldFaceVelocityY     [ iFace ];
         faceVelocityZ     [ iFace ] = a * newFaceVelocityZ     [ iFace ] - b * oldFaceVelocityZ     [ iFace ];
     }
+
+    int ifLowSpeedPrecon = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
+
+    if (ifLowSpeedPrecon == 1)
+    {
+        int numberOfNodes      = unstructGrid->GetNTotalNode();
+        int numberOfCells      = unstructGrid->GetNTotalCell();
+        RDouble *nodeVelocityX = new RDouble[numberOfNodes];
+        RDouble *nodeVelocityY = new RDouble[numberOfNodes];
+        RDouble *nodeVelocityZ = new RDouble[numberOfNodes];
+
+        RDouble *cellVelocityX = unstructGrid->GetCellVelocityX();
+        RDouble *cellVelocityY = unstructGrid->GetCellVelocityY();
+        RDouble *cellVelocityZ = unstructGrid->GetCellVelocityZ();
+
+        int *cell2node         = unstructGrid->GetCell2Node();
+        int **cell2NodeArray   = unstructGrid->GetCell2NodeArray();
+        int *nodeNumberOfEachCell = unstructGrid->GetNodeNumberOfEachCell();
+        for (int iNode = 0; iNode < numberOfNodes; ++iNode)
+        {
+            nodeVelocityX[iNode] = (x[iNode] - oldX[iNode]) / physicalTimeStep;
+            nodeVelocityY[iNode] = (y[iNode] - oldY[iNode]) / physicalTimeStep;
+            nodeVelocityZ[iNode] = (z[iNode] - oldZ[iNode]) / physicalTimeStep;
+        }
+
+        for (int iCell = 0; iCell < numberOfCells; iCell++)
+        {
+            for (int jNode = 0; jNode < nodeNumberOfEachCell[iCell]; jNode++)
+            {
+                int nodeIndex = cell2NodeArray[iCell][jNode];
+
+                cellVelocityX[iCell] += nodeVelocityX[nodeIndex];
+                cellVelocityY[iCell] += nodeVelocityY[nodeIndex];
+                cellVelocityZ[iCell] += nodeVelocityZ[nodeIndex];
+
+            }
+
+            cellVelocityX[iCell] /= nodeNumberOfEachCell[iCell];
+            cellVelocityY[iCell] /= nodeNumberOfEachCell[iCell];
+            cellVelocityZ[iCell] /= nodeNumberOfEachCell[iCell];
+        }
+
+        DelPointer(nodeVelocityX);
+        DelPointer(nodeVelocityY);
+        DelPointer(nodeVelocityZ);
+    }
 }
 
 void GridManager::ComputeGridFaceVelocity3DSatisfyingGCL()
 {
-    SimpleGrid * oldGrid = unstructGrid->GetOldGrid();
+    SimpleGrid *oldGrid = unstructGrid->GetOldGrid();
 
-    RDouble * x = unstructGrid->GetX();
-    RDouble * y = unstructGrid->GetY();
-    RDouble * z = unstructGrid->GetZ();
+    RDouble *x = unstructGrid->GetX();
+    RDouble *y = unstructGrid->GetY();
+    RDouble *z = unstructGrid->GetZ();
 
-    RDouble * oldX = oldGrid->GetX();
-    RDouble * oldY = oldGrid->GetY();
-    RDouble * oldZ = oldGrid->GetZ();
+    RDouble *oldX = oldGrid->GetX();
+    RDouble *oldY = oldGrid->GetY();
+    RDouble *oldZ = oldGrid->GetZ();
 
-    RDouble * faceCenterX = unstructGrid->GetFaceCenterX();
-    RDouble * faceCenterY = unstructGrid->GetFaceCenterY();
-    RDouble * faceCenterZ = unstructGrid->GetFaceCenterZ();
+    RDouble *faceCenterX = unstructGrid->GetFaceCenterX();
+    RDouble *faceCenterY = unstructGrid->GetFaceCenterY();
+    RDouble *faceCenterZ = unstructGrid->GetFaceCenterZ();
 
-    RDouble * oldFaceCenterX = this->GetOldFaceCenterX();
-    RDouble * oldFaceCenterY = this->GetOldFaceCenterY();
-    RDouble * oldFaceCenterZ = this->GetOldFaceCenterZ();
+    RDouble *oldFaceCenterX = this->GetOldFaceCenterX();
+    RDouble *oldFaceCenterY = this->GetOldFaceCenterY();
+    RDouble *oldFaceCenterZ = this->GetOldFaceCenterZ();
 
-    RDouble * faceArea    = unstructGrid->GetFaceArea();
-    RDouble * oldFaceArea = this->GetOldFaceArea();
+    RDouble *faceArea    = unstructGrid->GetFaceArea();
+    RDouble *oldFaceArea = this->GetOldFaceArea();
 
     int *faceNodeIndex  = unstructGrid->GetFace2Node();
     int *faceNodeNumber = unstructGrid->GetNodeNumberOfEachFace();
 
-    int numberOfFaces         = unstructGrid->GetNTotalFace();
-    RDouble * newFaceNormalVelocity = this->GetNewFaceNormalVelocity();
-    RDouble * newFaceVelocityX      = this->GetNewFaceVelocityX();
-    RDouble * newFaceVelocityY      = this->GetNewFaceVelocityY();
-    RDouble * newFaceVelocityZ      = this->GetNewFaceVelocityZ();
+    int numberOfFaces = unstructGrid->GetNTotalFace();
+    RDouble *newFaceNormalVelocity = this->GetNewFaceNormalVelocity();
+    RDouble *newFaceVelocityX      = this->GetNewFaceVelocityX();
+    RDouble *newFaceVelocityY      = this->GetNewFaceVelocityY();
+    RDouble *newFaceVelocityZ      = this->GetNewFaceVelocityZ();
 
-    RDouble * faceNormalVelocity = unstructGrid->GetFaceNormalVelocity();
-    RDouble * faceVelocityX      = unstructGrid->GetFaceVelocityX();
-    RDouble * faceVelocityY      = unstructGrid->GetFaceVelocityY();
-    RDouble * faceVelocityZ      = unstructGrid->GetFaceVelocityZ();
+    RDouble *faceNormalVelocity = unstructGrid->GetFaceNormalVelocity();
+    RDouble *faceVelocityX      = unstructGrid->GetFaceVelocityX();
+    RDouble *faceVelocityY      = unstructGrid->GetFaceVelocityY();
+    RDouble *faceVelocityZ      = unstructGrid->GetFaceVelocityZ();
 
-    RDouble * oldFaceNormalVelocity = this->GetOldFaceNormalVelocity();
-    RDouble * oldFaceVelocityX      = this->GetOldFaceVelocityX();
-    RDouble * oldFaceVelocityY      = this->GetOldFaceVelocityY();
-    RDouble * oldFaceVelocityZ      = this->GetOldFaceVelocityZ();
+    RDouble *oldFaceNormalVelocity = this->GetOldFaceNormalVelocity();
+    RDouble *oldFaceVelocityX      = this->GetOldFaceVelocityX();
+    RDouble *oldFaceVelocityY      = this->GetOldFaceVelocityY();
+    RDouble *oldFaceVelocityZ      = this->GetOldFaceVelocityZ();
 
     RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
 
@@ -1610,8 +1654,8 @@ void GridManager::ComputeGridFaceVelocity3DSatisfyingGCL()
 
     for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
-        RDouble dvol  = 0.0;
-        int p0  = faceNodeIndex[ nodePosition ];
+        RDouble dvol = 0.0;
+        int p0 = faceNodeIndex[ nodePosition ];
         int nodeNumberEachFace = faceNodeNumber[iFace];
 
         RDouble newFcX = faceCenterX[ iFace ];
@@ -1673,14 +1717,14 @@ void GridManager::ComputeGridFaceVelocity3DSatisfyingGCL()
     if (linearTwoStepMethods == 1)
     {
         //linearTwoStepMethods == 1
-        //Backward Euler                          : Order 1
+        //Backward Euler: Order 1
         a = 1.0;
         b = 0.0;
     }
     else if (linearTwoStepMethods == 3)
     {
         //linearTwoStepMethods == 3
-        //Backward differentiation                : Order 2
+        //Backward differentiation: Order 2
         a = 1.5;
         b = 0.5;
     }
@@ -1692,6 +1736,52 @@ void GridManager::ComputeGridFaceVelocity3DSatisfyingGCL()
         faceVelocityX     [ iFace ] = a * newFaceVelocityX     [ iFace ] - b * oldFaceVelocityX     [ iFace ];
         faceVelocityY     [ iFace ] = a * newFaceVelocityY     [ iFace ] - b * oldFaceVelocityY     [ iFace ];
         faceVelocityZ     [ iFace ] = a * newFaceVelocityZ     [ iFace ] - b * oldFaceVelocityZ     [ iFace ];
+    }
+
+    int ifLowSpeedPrecon =  GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
+
+    if (ifLowSpeedPrecon == 1)
+    {
+        int numberOfNodes         = unstructGrid->GetNTotalNode();
+        int numberOfCells         = unstructGrid->GetNTotalCell();
+        RDouble *nodeVelocityX = new RDouble[numberOfNodes];
+        RDouble *nodeVelocityY = new RDouble[numberOfNodes];
+        RDouble *nodeVelocityZ = new RDouble[numberOfNodes];
+
+        RDouble *cellVelocityX = unstructGrid->GetCellVelocityX();
+        RDouble *cellVelocityY = unstructGrid->GetCellVelocityY();
+        RDouble *cellVelocityZ = unstructGrid->GetCellVelocityZ();
+
+        int *cell2node = unstructGrid->GetCell2Node();
+        int **cell2NodeArray      = unstructGrid->GetCell2NodeArray();
+        int *nodeNumberOfEachCell = unstructGrid->GetNodeNumberOfEachCell();
+        for (int iNode = 0; iNode < numberOfNodes; ++iNode)
+        {
+            nodeVelocityX[iNode] = (x[iNode] - oldX[iNode]) / physicalTimeStep;
+            nodeVelocityY[iNode] = (y[iNode] - oldY[iNode]) / physicalTimeStep;
+            nodeVelocityZ[iNode] = (z[iNode] - oldZ[iNode]) / physicalTimeStep;
+        }
+
+        for (int iCell = 0; iCell < numberOfCells; iCell++)
+        {
+            for (int jNode = 0; jNode < nodeNumberOfEachCell[iCell]; jNode++)
+            {
+                int nodeIndex = cell2NodeArray[iCell][jNode];
+
+                cellVelocityX[iCell] += nodeVelocityX[nodeIndex];
+                cellVelocityY[iCell] += nodeVelocityY[nodeIndex];
+                cellVelocityZ[iCell] += nodeVelocityZ[nodeIndex];
+
+            }
+
+            cellVelocityX[iCell] /= nodeNumberOfEachCell[iCell];
+            cellVelocityY[iCell] /= nodeNumberOfEachCell[iCell];
+            cellVelocityZ[iCell] /= nodeNumberOfEachCell[iCell];
+        }
+
+        DelPointer(nodeVelocityX);
+        DelPointer(nodeVelocityY);
+        DelPointer(nodeVelocityZ);
     }
 }
 
@@ -1751,8 +1841,8 @@ void GridManager::ComputeLocalToGlobalNodeIndexMappingByReadingLayoutFile(int ta
     PHSPACE::PHRead(infile, numberOfCellsRead);
 
     if ((numberOfNodesRead != numberOfNodes) ||
-         (numberOfFacesRead != numberOfFaces) ||
-         (numberOfCellsRead != numberOfCells))
+        (numberOfFacesRead != numberOfFaces) ||
+        (numberOfCellsRead != numberOfCells))
     {
         TK_Exit::ExceptionExit("The number of nodes/faces/cells is not patch! \n");
     }
@@ -1799,15 +1889,15 @@ void GridManager::ReadNewCoordinate()
 
 void GridManager::UpdateGridNode()
 {
-    SimpleGrid * oldGrid = this->unstructGrid->GetOldGrid();
+    SimpleGrid *oldGrid = this->unstructGrid->GetOldGrid();
 
-    RDouble * newX = this->unstructGrid->GetX();
-    RDouble * newY = this->unstructGrid->GetY();
-    RDouble * newZ = this->unstructGrid->GetZ();
+    RDouble *newX = this->unstructGrid->GetX();
+    RDouble *newY = this->unstructGrid->GetY();
+    RDouble *newZ = this->unstructGrid->GetZ();
 
-    RDouble * oldX = oldGrid->GetX();
-    RDouble * oldY = oldGrid->GetY();
-    RDouble * oldZ = oldGrid->GetZ();
+    RDouble *oldX = oldGrid->GetX();
+    RDouble *oldY = oldGrid->GetY();
+    RDouble *oldZ = oldGrid->GetZ();
 
     int numberOfNodes = this->unstructGrid->GetNTotalNode();
     int *localToGlobalNodeIndexMapping = this->GetLocalToGlobalNodeIndexMapping();
@@ -1860,10 +1950,10 @@ void GridManager::InitializeOldFaceNormalVelocity()
 {
     int numberOfFaces = this->unstructGrid->GetNTotalFace();
 
-    GridManager * gridManager = this->unstructGrid->GetGridManager();
+    GridManager *gridManager = this->unstructGrid->GetGridManager();
 
-    RDouble * faceNormalVelocity    = gridManager-> GetFaceNormalVelocity();
-    RDouble * oldFaceNormalVelocity = gridManager-> GetOldFaceNormalVelocity();
+    RDouble *faceNormalVelocity    = gridManager-> GetFaceNormalVelocity();
+    RDouble *oldFaceNormalVelocity = gridManager-> GetOldFaceNormalVelocity();
 
     PHSPACE::SetField(oldFaceNormalVelocity, faceNormalVelocity, numberOfFaces);
 }
@@ -1888,11 +1978,11 @@ void GridManager::ReadMovingGrid()
 {
     string fileName = PHSPACE::AggregateGeneralString("moveGrid", this->unstructGrid->GetZoneID(), ".dat");
 
-    RDouble * x    = this->unstructGrid->GetX();
-    RDouble * y    = this->unstructGrid->GetY();
-    RDouble * z    = this->unstructGrid->GetZ();
+    RDouble *x = this->unstructGrid->GetX();
+    RDouble *y = this->unstructGrid->GetY();
+    RDouble *z = this->unstructGrid->GetZ();
 
-    RDouble * oldCellVolumeN1Container = this->GetOldCellVolume();
+    RDouble *oldCellVolumeN1Container = this->GetOldCellVolume();
 
     int numberOfNodes = unstructGrid->GetNTotalNode();
     int numberOfCells = this->unstructGrid->GetNTotalCell();
@@ -1901,9 +1991,9 @@ void GridManager::ReadMovingGrid()
     fstream file;
     OpenFile(file, fileName, ios_base::in|ios_base::binary);
 
-    PHMPI::PH_Read(file, & x[ 0 ], numberOfNodes     );
-    PHMPI::PH_Read(file, & y[ 0 ], numberOfNodes     );
-    PHMPI::PH_Read(file, & z[ 0 ], numberOfNodes     );
+    PHMPI::PH_Read(file, & x[ 0 ], numberOfNodes);
+    PHMPI::PH_Read(file, & y[ 0 ], numberOfNodes);
+    PHMPI::PH_Read(file, & z[ 0 ], numberOfNodes);
     PHMPI::PH_Read(file, oldCellVolumeN1Container, numberOfTotalCells);
 
     CloseFile(file);
@@ -1915,22 +2005,22 @@ void GridManager::UpdateOldCellVolume()
     int numberOfBoundaryFaces = this->unstructGrid->GetNBoundFace();
     int numberOfTotalCells = numberOfCells + numberOfBoundaryFaces;
 
-    GridManager * gridManager = this->unstructGrid->GetGridManager();
+    GridManager *gridManager = this->unstructGrid->GetGridManager();
 
-    RDouble* cellVolume = gridManager->GetCellVolume();
-    RDouble* cellVolumeN1 = gridManager->GetCellVolume(1);
-    RDouble* cellVolumeN2 = gridManager->GetCellVolume(2);
+    RDouble *cellVolume = gridManager->GetCellVolume();
+    RDouble *cellVolumeN1 = gridManager->GetCellVolume(1);
+    RDouble *cellVolumeN2 = gridManager->GetCellVolume(2);
 
     PHSPACE::SetField(cellVolumeN2, cellVolumeN1, numberOfTotalCells);
     PHSPACE::SetField(cellVolumeN1, cellVolume  , numberOfTotalCells);
 }
 
-void GridManager::ConvergenceNorm(FieldProxy * q1Proxy, FieldProxy * q0Proxy, int numberOfEquations, RFloat & norm)
+void GridManager::ConvergenceNorm(FieldProxy *q1Proxy, FieldProxy *q0Proxy, int numberOfEquations, RFloat &norm)
 {
-    int numberOfCells         = this->unstructGrid->GetNTotalCell();
+    int numberOfCells = this->unstructGrid->GetNTotalCell();
 
-    RDouble** q1 = q1Proxy->GetField_UNS();
-    RDouble** q0 = q0Proxy->GetField_UNS();
+    RDouble **q1 = q1Proxy->GetField_UNS();
+    RDouble **q0 = q0Proxy->GetField_UNS();
 
     norm = zero;
     for (int iEquation = 0; iEquation < numberOfEquations; ++ iEquation)
@@ -1965,7 +2055,7 @@ RDouble ComputeVolume4P(RDouble x1, RDouble y1, RDouble z1, RDouble x2, RDouble 
     return vol;
 }
 
-bool IsNotAllocated(void* pointer)
+bool IsNotAllocated(void *pointer)
 {
     if (pointer) return false;
     return true;

@@ -38,10 +38,10 @@ public:
     ~AleManager();
 
 private:
-    AleForceManager     *aleForceManager;
-    SixDofSolverManager* sixDofSolverManager;
-    DeformingSolverManager* deformingManager;
-    MovingMeshManager   *movingMeshManager;
+    AleForceManager *aleForceManager;
+    SixDofSolverManager *sixDofSolverManager;
+    DeformingSolverManager *deformingManager;
+    MovingMeshManager *movingMeshManager;
 
 public:
     void Initialize();
@@ -56,10 +56,10 @@ public:
 protected:
     void SychonizeAleTime();
     void InitializeDimensionalReferenceTime();
-    fstream* currentAleFile;
+    fstream *currentAleFile;
 
 public:
-    fstream & GetCurrentAleFile() { return * currentAleFile; };
+    fstream & GetCurrentAleFile() { return *currentAleFile; };
     AleForceManager        * GetAleForceManager()        { return aleForceManager;        };
     SixDofSolverManager    * GetSixDofSolverManager()    { return sixDofSolverManager;    };
     DeformingSolverManager* GetDeformingSolverManager()  { return deformingManager; };

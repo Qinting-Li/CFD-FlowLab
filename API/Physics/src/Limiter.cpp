@@ -67,7 +67,7 @@ LIB_EXPORT void Limiter::Calculation(Grid *gridIn)
     RDouble *limit = 0;
     if (limiterTypeID == ILMT_BARTH)
     {
-        if(limitVector == SCALAR_LIMITER)
+        if (limitVector == SCALAR_LIMITER)
         {
             //! Each variables has the same limiter value.
             limit = this->GetLimiter(0);
@@ -84,7 +84,7 @@ LIB_EXPORT void Limiter::Calculation(Grid *gridIn)
                 }
             }
         }
-        else if(limitVector == VECTOR_LIMITER)
+        else if (limitVector == VECTOR_LIMITER)
         {
             //! Limiter value of each variable is computed by itself.
             for (int iVariable = 0; iVariable < nLimiterVariables; ++ iVariable)
@@ -112,8 +112,8 @@ LIB_EXPORT void Limiter::Calculation(Grid *gridIn)
                     VencatLimiter(limit, q[m], dqdx[m], dqdy[m], dqdz[m], m);
                 }
             }
-        } 
-        else if(limitVector == VECTOR_LIMITER)
+        }
+        else if (limitVector == VECTOR_LIMITER)
         {
             //! The limiter values of each variable are different.
             for (int m = 0; m < nLimiterVariables; ++ m)
@@ -121,7 +121,7 @@ LIB_EXPORT void Limiter::Calculation(Grid *gridIn)
                 limit = this->GetLimiter(m);
                 VencatLimiter(limit, q[m], dqdx[m], dqdy[m], dqdz[m], m);
             }
-        }        
+        }
     }
     else
     {
@@ -134,7 +134,7 @@ LIB_EXPORT void Limiter::Calculation(Grid *gridIn)
         limit = this->GetLimiter(0);
         SetLimitBoundary(gridUnstruct, limit);
     }
-    else if(limitVector == VECTOR_LIMITER)
+    else if (limitVector == VECTOR_LIMITER)
     {
         for (int m = 0; m < nLimiterVariables; ++ m)
         {
@@ -571,7 +571,7 @@ void Limiter::VencatLimiter2(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     RDouble n = 3.0;
     RDouble eps;
     eps = pow((venkatCoeff * pow((1.0 / globalTotalCells), (1.0 / dimension))), n);
-    if(iVariable == IDX::IP)
+    if (iVariable == IDX::IP)
     {
         RDouble * primInflow = reinterpret_cast< RDouble * >(GlobalDataBase::GetDataPtr("prim_inf"));
         eps *= primInflow[IDX::IP] * primInflow[IDX::IP];
@@ -696,7 +696,7 @@ void Limiter::VencatLimiter3(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         eps[iCell] = pow(venkatCoeff * pow(volume[iCell] / globalTotalVolume, dim1), n);
-        if(iVariable == IDX::IP)
+        if (iVariable == IDX::IP)
         {
             eps[iCell]  *= squareOfReferenceVariable;
         }
@@ -1042,11 +1042,11 @@ void Limiter::VencatLimiter6(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     RDouble *qmin = new RDouble[nTotalNode];
 
     int count = 0;
-    for(iNode = 0; iNode < nTotalNode; ++ iNode)
+    for (iNode = 0; iNode < nTotalNode; ++ iNode)
     {
         qmax[iNode] = -1;
         qmin[iNode] = 100000;
-        for(j = 0; j < nCPN[ iNode ]; ++ j)
+        for (j = 0; j < nCPN[ iNode ]; ++ j)
         {
             qmax[iNode] = max(qmax[iNode], q[n2c[count]]);
             qmin[iNode] = min(qmin[iNode], q[n2c[count]]);

@@ -27,18 +27,18 @@ public:
     ~IncomSpeciesEqCalculator();
 
 public:
-    void InitFlowAsRestart(Grid* gridIn);
-    void IncompressibleInitial(Grid* grid);
+    void InitFlowAsRestart(Grid *gridIn);
+    void IncompressibleInitial(Grid *grid);
 
-    virtual void UpdateProperties(Grid* grid);
-    void UpdateAfterIterloop(Grid* grid);
-    void UpdateSpBoundary(Grid* grid);
+    virtual void UpdateProperties(Grid *grid);
+    void UpdateAfterIterloop(Grid *grid);
+    void UpdateSpBoundary(Grid *grid);
 
-    void GetResidual(Grid *grid, vector<RDouble>& res);
-    void InitialUnsteadyVar(Grid* grid);
-    void UpdateUnsteadyVariable(Grid* grid);
-    void UpdateBCValue(Grid*  grid);
-    void SetDiffusionCoeff(Grid* gridIn);
+    void GetResidual(Grid *grid, vector<RDouble> &res);
+    void InitialUnsteadyVar(Grid *grid);
+    void UpdateUnsteadyVariable(Grid *grid);
+    void UpdateBCValue(Grid *grid);
+    void SetDiffusionCoeff(Grid *gridIn);
 };
 
 }

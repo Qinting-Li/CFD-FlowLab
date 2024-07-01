@@ -35,8 +35,9 @@ void Mesh_Deformation::SetDeformParameter(DeformParameter *deformParameterIn)
 void Mesh_Deformation::Run()
 {
     TransformGrid();
-    MatchControlPoints();
+    MatchDynamicPoints();
     Deforming();
+    ModifyOriginalGrid();
 }
 
 void Mesh_Deformation::SetNodeAttribute(DynamicGrid *grid)
@@ -73,6 +74,66 @@ void Mesh_Deformation::SetSymmetryToZero()
     {
         DynamicGrid *grid = deformedGrid[iZone];
         grid->SetSymmetryToZero();
+    }
+}
+
+void Mesh_Deformation::MatchDynamicPoints()
+{
+    bool imputNodeDisplacement = deformParameter->IsImputNodeDisplacement();
+    if (!imputNodeDisplacement)
+    {
+        MatchControlPoints();
+        return;
+    }
+    vector < vector < RDouble > > nodeDisplacement = deformParameter->GetNodeDisplacement();
+
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    {
+        DynamicGrid *grid      = deformedGrid[iZone];
+        DYFace      *faceArray = grid->GetFaceArray();
+        DYNode      *nodeArray = grid->GetNodeArray();
+
+        int nBoundFace = grid->GetNBoundFace();
+        int nTotalNode = grid->GetNTotalNode();
+
+        int *nodeMark = new int[nTotalNode];
+        SetField(nodeMark, 0, nTotalNode);
+
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+        {
+            int bctype = faceArray[iFace].bcType;
+            if (bctype != PHENGLEI::SOLID_SURFACE)
+            {
+                continue;
+            }
+
+            for (int iNode = 0; iNode < faceArray[iFace].nodeNumber; ++ iNode)
+            {
+                int nodeIndex = faceArray[iFace].face2node[iNode];
+                if (nodeMark[nodeIndex] == 1)
+                {
+                    continue;
+                }
+
+                for (int iControlPoint = 0; iControlPoint < nodeDisplacement.size(); ++ iControlPoint)
+                {
+                    RDouble disX = nodeArray[nodeIndex].x - nodeDisplacement[iControlPoint][0];
+                    RDouble disY = nodeArray[nodeIndex].y - nodeDisplacement[iControlPoint][1];
+                    RDouble disZ = nodeArray[nodeIndex].z - nodeDisplacement[iControlPoint][2];
+
+                    RDouble dis = DISTANCE(disX, disY, disZ);
+                    if (dis < EPSILON)
+                    {
+                        nodeMark [nodeIndex]          = 1;
+                        nodeArray[nodeIndex].moveType = DYNAMIC_POINT_WALL;
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        delete [] nodeMark; nodeMark = nullptr;
     }
 }
 
@@ -345,6 +406,45 @@ void Mesh_Deformation::PostVisual(string visualFileName, int iStep)
     CloseFile(visualFile);
 }
 
+void Mesh_Deformation::ModifyOriginalGrid()
+{
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    {
+        DynamicGrid *grid      = deformedGrid[iZone];
+        DYNode      *nodeArray = grid->GetNodeArray();
+
+        Grid    *originalGrid = stationalGrid[iZone];
+        RDouble *x            = originalGrid->GetX();
+        RDouble *y            = originalGrid->GetY();
+        RDouble *z            = originalGrid->GetZ();
+
+        int nTotalNode = grid->GetNTotalNode();
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
+        {
+            if (nodeArray[iNode].moveType == STATIC_POINT)
+            {
+                continue;
+            }
+
+            x[iNode] = nodeArray[iNode].x;
+            y[iNode] = nodeArray[iNode].y;
+            z[iNode] = nodeArray[iNode].z;
+        }
+    }
+}
+
+
+DeformParameter::DeformParameter()
+{
+    imputNodeDisplacement = false;
+    nodeDisplacement.resize(0);
+}
+
+DeformParameter::~DeformParameter()
+{
+
+}
+
 void DeformParameter::SetNDeformStep(int nDeformStepIn)
 {
     this->nDeformStep = nDeformStepIn;
@@ -414,6 +514,23 @@ RDouble DeformParameter::GetSlicePosition()
 {
     return this->slicePosition;
 }
+
+void DeformParameter::SetNodeDisplacement(vector < vector < RDouble > > nodeDisplacementIn)
+{
+    this->nodeDisplacement      = nodeDisplacementIn;
+    this->imputNodeDisplacement = true;
+}
+
+vector < vector < RDouble > > DeformParameter::GetNodeDisplacement()
+{
+    return this->nodeDisplacement;
+}
+
+bool DeformParameter::IsImputNodeDisplacement()
+{
+    return this->imputNodeDisplacement;
+}
+
 
 void DeformGrid()
 {

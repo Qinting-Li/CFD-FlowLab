@@ -148,7 +148,7 @@ LIB_EXPORT void ReadFile(fstream &file, DataContainer *cdata)
 {
     //! The real meaning of the function with DataContainer is to read the file contents into cdata.
     //! For cdata, this is the process of writing.
-    cdata->readfile(file);
+    cdata->ReadFile(file);
 }
 
 LIB_EXPORT void ReadFile(ActionKey *actkey)
@@ -159,7 +159,7 @@ LIB_EXPORT void ReadFile(ActionKey *actkey)
 
 LIB_EXPORT void WriteFile(fstream &file, DataContainer *cdata)
 {
-    cdata->writefile(file);
+    cdata->WriteFile(file);
 }
 
 LIB_EXPORT void WriteFile(ActionKey *actkey)
@@ -212,7 +212,7 @@ LIB_EXPORT void WriteBinaryFile(ActionKey *actkey)
 {
     /*DumpToTecio dumptotecio(actkey);
     dumptotecio.Run();
-    if(!actkey->file) return;
+    if (!actkey->file) return;
     fstream &file = *(actkey->file);
     WriteASCIIFile(file, actkey->GetData());*/
 }
@@ -387,7 +387,7 @@ LIB_EXPORT void BroadcastInfo()
         PHSPACE::GlobalDataBase::DecompressData(cdata);
     }
 
-    delete cdata;
+    delete cdata;    cdata = nullptr;
 }
 
 LIB_EXPORT void CompleteParamInfo()
@@ -523,13 +523,13 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
 
         if (metabolicWallTemperature == 0)
         {
-            for(int i = 0; i < WallT.size(); ++i)
+            for (int i = 0; i < WallT.size(); ++i)
             {
                 if (WallT[i] < 0.0)
                 {
                     PrintToWindow("  Temperature of Wall",WallNumber[i],"   :    ",  "Adiabatic Wall", "\n");
                 }
-                else if(WallT[i] == 0.0)
+                else if (WallT[i] == 0.0)
                 {
                     PrintToWindow("  Temperature of Wall",WallNumber[i],"   :    ", "Radiation balance Wall", "\n");
                 }
@@ -556,7 +556,7 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
 
 LIB_EXPORT void ModifyWindowTemperature(RDouble &wallTemperature, vector< RDouble > &WallT, vector< int > &WallNumber)
 {
-    /*if(wallTemperature >= 0.0 )
+    /*if (wallTemperature >= 0.0)
     {
         return;
     }*/
@@ -572,7 +572,7 @@ LIB_EXPORT void ModifyWindowTemperature(RDouble &wallTemperature, vector< RDoubl
         {
             continue;
         }
-        else if(bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::ABLATION_SURFACE)
+        else if (bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::ABLATION_SURFACE)
         {
             if (!bcParamDB->IsExist("wallTemperature", PHDOUBLE, 1))
             {

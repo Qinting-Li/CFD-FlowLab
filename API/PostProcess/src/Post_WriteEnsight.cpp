@@ -110,7 +110,7 @@ void Post_WriteEnsight::WriteFile()
 
     WriteGeometryFile();
 
-    WriteFiedlData();
+    WriteFieldData();
 
     UpdateCaseFile();
 }
@@ -158,7 +158,7 @@ void Post_WriteEnsight::WriteGeometryFileSerial()
         int  oriGridIndex = grid->GetZoneID();
 
         ostringstream ossBlockName;
-        ossBlockName<<"Zone"<<oriGridIndex<<"_"<<boundaryName[iBoundary];
+        ossBlockName << "Zone" << oriGridIndex << "_" << boundaryName[iBoundary];
         string blockName = ossBlockName.str();
 
         if (grid->Type() == UNSTRUCTGRID)
@@ -336,7 +336,7 @@ void Post_WriteEnsight::WriteGeometryFileSerial()
 
         int gridIndex = grid->GetZoneID();
         ostringstream ossBlockName;
-        ossBlockName<<"Zone"<<gridIndex<<"_"<<"BLK";
+        ossBlockName << "Zone" << gridIndex << "_" << "BLK";
         string blockName = ossBlockName.str();
 
         if (grid->Type() == UNSTRUCTGRID)
@@ -357,7 +357,7 @@ void Post_WriteEnsight::WriteGeometryFileSerial()
                 vector <int> cell_type_count(2, 0);
                 for (int iCell = 0; iCell < numberOfCells; ++iCell)
                 {
-                    if (keyActiveOfCells[iCell] == 1)
+                    if (keyActiveOfCells[iCell] == ACTIVE)
                     {
                         if (cellNodeNumberContainer[iCell] == 3)
                             cell_type_count[0] += 1;
@@ -375,7 +375,7 @@ void Post_WriteEnsight::WriteGeometryFileSerial()
 
                 for (int iCell = 0; iCell < numberOfCells; ++iCell)
                 {
-                    if (keyActiveOfCells[iCell] == 1)
+                    if (keyActiveOfCells[iCell] == ACTIVE)
                     {
                         if (cellNodeNumberContainer[iCell] == 3)
                         {
@@ -489,7 +489,7 @@ void Post_WriteEnsight::WriteGeometryFileSerial()
                 vector<int> cell_type_count(4, 0);
                 for (int iCell = 0; iCell < numberOfCells; ++ iCell)
                 {
-                    if (keyActiveOfCells[iCell] == 1)
+                    if (keyActiveOfCells[iCell] == ACTIVE)
                     {
                         if (cellNodeNumberContainer[iCell] == 4)
                             cell_type_count[0] += 1;
@@ -513,7 +513,7 @@ void Post_WriteEnsight::WriteGeometryFileSerial()
 
                 for (int iCell = 0; iCell < numberOfCells; ++ iCell)
                 {
-                    if (keyActiveOfCells[iCell] == 1)
+                    if (keyActiveOfCells[iCell] == ACTIVE)
                     {
                         if (cellNodeNumberContainer[iCell] == 4)
                         {
@@ -761,7 +761,7 @@ void Post_WriteEnsight::WriteGeometryFileParallel()
                 std::vector<int> cell_type_count(2, 0);
                 for (int iCell = 0; iCell < numberOfCells; ++iCell)
                 {
-                    if (keyActiveOfCells[iCell] == 1)
+                    if (keyActiveOfCells[iCell] == ACTIVE)
                     {
                         if (cellNodeNumberContainer[iCell] == 3)
                             cell_type_count[0] += 1;
@@ -782,7 +782,7 @@ void Post_WriteEnsight::WriteGeometryFileParallel()
                 std::vector<int> cell_type_count(4, 0);
                 for (int iCell = 0; iCell < numberOfCells; ++iCell)
                 {
-                    if (keyActiveOfCells[iCell] == 1)
+                    if (keyActiveOfCells[iCell] == ACTIVE)
                     {
                         if (cellNodeNumberContainer[iCell] == 4)
                             cell_type_count[0] += 1;
@@ -835,7 +835,7 @@ void Post_WriteEnsight::WriteGeometryFileParallel()
         int  oriGridIndex = grid->GetZoneID();
 
         ostringstream ossBlockName;
-        ossBlockName<<"Zone"<<oriGridIndex<<"_"<<boundaryName[iBoundary];
+        ossBlockName << "Zone" << oriGridIndex << "_" << boundaryName[iBoundary];
         string blockName = ossBlockName.str();
 
         if (grid->Type() == UNSTRUCTGRID)
@@ -979,7 +979,7 @@ void Post_WriteEnsight::WriteGeometryFileParallel()
 
         int gridIndex = grid->GetZoneID();
         ostringstream ossBlockName;
-        ossBlockName<<"Zone"<<gridIndex<<"_"<<"BLK";
+        ossBlockName << "Zone" << gridIndex << "_" << "BLK";
         string blockName = ossBlockName.str();
 
         if (grid->Type() == UNSTRUCTGRID)
@@ -1000,7 +1000,7 @@ void Post_WriteEnsight::WriteGeometryFileParallel()
                 vector <int> cell_type_count(2, 0);
                 for (int iCell = 0; iCell < numberOfCells; ++iCell)
                 {
-                    if (keyActiveOfCells[iCell] == 1)
+                    if (keyActiveOfCells[iCell] == ACTIVE)
                     {
                         if (cellNodeNumberContainer[iCell] == 3)
                             cell_type_count[0] += 1;
@@ -1018,7 +1018,7 @@ void Post_WriteEnsight::WriteGeometryFileParallel()
 
                 for (int iCell = 0; iCell < numberOfCells; ++iCell)
                 {
-                    if (keyActiveOfCells[iCell] == 1)
+                    if (keyActiveOfCells[iCell] == ACTIVE)
                     {
                         if (cellNodeNumberContainer[iCell] == 3)
                         {
@@ -1103,7 +1103,7 @@ void Post_WriteEnsight::WriteGeometryFileParallel()
                 vector<int> cell_type_count(4, 0);
                 for (int iCell = 0; iCell < numberOfCells; ++ iCell)
                 {
-                    if (keyActiveOfCells[iCell] == 1)
+                    if (keyActiveOfCells[iCell] == ACTIVE)
                     {
                         if (cellNodeNumberContainer[iCell] == 4)
                             cell_type_count[0] += 1;
@@ -1127,7 +1127,7 @@ void Post_WriteEnsight::WriteGeometryFileParallel()
 
                 for (int iCell = 0; iCell < numberOfCells; ++ iCell)
                 {
-                    if (keyActiveOfCells[iCell] == 1)
+                    if (keyActiveOfCells[iCell] == ACTIVE)
                     {
                         if (cellNodeNumberContainer[iCell] == 4)
                         {
@@ -1274,19 +1274,19 @@ void Post_WriteEnsight::WriteGeometryFileParallel()
     }
 }
 
-void Post_WriteEnsight::WriteFiedlData()
+void Post_WriteEnsight::WriteFieldData()
 {
     if (fileMethod > STDIO_SERIAL)
     {
-        WriteFiedlDataParallel();
+        WriteFieldDataParallel();
     }
     else
     {
-        WriteFiedlDataSerial();
+        WriteFieldDataSerial();
     }
 }
 
-void Post_WriteEnsight::WriteFiedlDataSerial()
+void Post_WriteEnsight::WriteFieldDataSerial()
 {
     set<int> visualVariables = flowFieldDataOnNode[0]->GetVisualVariables();
     for (set<int>::iterator varIter = visualVariables.begin(); varIter != visualVariables.end(); ++ varIter)
@@ -1507,7 +1507,7 @@ void Post_WriteEnsight::WriteFiedlDataSerial()
     }
 }
 
-void Post_WriteEnsight::WriteFiedlDataParallel()
+void Post_WriteEnsight::WriteFieldDataParallel()
 {
     //! Colloect data length.
     int nZones = static_cast<int>(flowFieldDataOnNode.size());

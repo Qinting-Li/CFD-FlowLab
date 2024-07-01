@@ -279,11 +279,11 @@ public:
     
     //! Upload interface value for variables in turbulence model. 
     void UploadInterfaceValue(ActionKey *actkey);
-    void UploadInterfaceData(ActionKey *actkey);    // Bell 20120910 add
+    void UploadInterfaceData(ActionKey *actkey);    //! Bell 20120910 add
     
     //! Download interface value for variables in turbulence model. 
     void DownloadInterfaceValue(ActionKey *actkey);
-    void DownloadInterfaceData(ActionKey *actkey);    // Bell 20120910 add
+    void DownloadInterfaceData(ActionKey *actkey);    //! Bell 20120910 add
 
     //! Upload the interpoint variables for send.
     //! @param[in] actkey         the actkey store the information of the interpoint.

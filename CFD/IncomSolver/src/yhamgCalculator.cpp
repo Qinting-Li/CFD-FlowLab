@@ -18,19 +18,19 @@ namespace PHSPACE
         mathLibSolveFinalize();
     }
 
-    void yhamgCalculator::mathLibSolveInit(Grid* gridIn)
+    void yhamgCalculator::mathLibSolveInit(Grid *gridIn)
     {
 #ifdef USE_YhamgLib
-        UnstructGrid* grid = UnstructGridCast(gridIn);
+        UnstructGrid *grid = UnstructGridCast(gridIn);
         int nTotalCell = grid->GetNTotalCell();
         int nBoundFace = grid->GetNBoundFace();
         int nTotalFace = grid->GetNTotalFace();
-        int* leftCellOfFace = grid->GetLeftCellOfFace();
-        int* rightCellOfFace = grid->GetRightCellOfFace();
+        int *leftCellOfFace = grid->GetLeftCellOfFace();
+        int *rightCellOfFace = grid->GetRightCellOfFace();
         int zoneID = grid->GetZoneID();
-        int* localCell2LocalMap = grid->GetLocalCell2LocalMap();
-        int* globalCellNoOfGlobalZones = reinterpret_cast<int*> (GlobalDataBase::GetDataPtr("globalCellNoOfGlobalZones"));
-        int *precondID = reinterpret_cast <int *>(GlobalDataBase::GetDataPtr("precondMethodOfLinEqSystem"));
+        int *localCell2LocalMap = grid->GetLocalCell2LocalMap();
+        int *globalCellNoOfGlobalZones = reinterpret_cast<int *>(GlobalDataBase::GetDataPtr("globalCellNoOfGlobalZones"));
+        int *precondID = reinterpret_cast<int *>(GlobalDataBase::GetDataPtr("precondMethodOfLinEqSystem"));
 
         int linearSolverSize = 50;
         A = new ParCSRMatrix;
@@ -38,7 +38,7 @@ namespace PHSPACE
         for (int iSolver = 0 ; iSolver < linearSolverSize; iSolver++)
         {
             int precondType = precondID[iSolver];
-            ParOperator* precond = PrecondList[iSolver];
+            ParOperator *precond = PrecondList[iSolver];
             if (precondType == iNone)
             {
                 precond = nullptr;
@@ -159,7 +159,7 @@ namespace PHSPACE
             }
         }
 
-        RDouble* local_values = new RDouble[nonZeroNum];
+        RDouble *local_values = new RDouble[nonZeroNum];
 
         b = new ParVector(MPI_COMM_WORLD);
         b->Resize(nTotalCell);
@@ -177,8 +177,8 @@ namespace PHSPACE
         CSRMatrixA->local.values = local_values;
 
         int nnb = 0;
-        int* nbrank;
-        int* recvptr;
+        int *nbrank;
+        int *recvptr;
 
         InterfaceInfo * interfaceInfo= grid->GetInterfaceInfo();
         if (interfaceInfo != NULL) 
@@ -216,7 +216,7 @@ namespace PHSPACE
 
         int * exter_colind = new int[faceCount];
         exter_colind2Face = new int[faceCount];
-        RDouble* exter_values = new RDouble[faceCount];
+        RDouble *exter_values = new RDouble[faceCount];
         int * recvind = new int[faceCount];
         vector<int>* exterMatrixInfo = new vector<int>[nTotalCell];
         vector<int>* exterMatrixInfo2Face = new vector<int>[nTotalCell];
@@ -234,7 +234,7 @@ namespace PHSPACE
 
                 for (int iPatchFace = 0; iPatchFace < nPatchFace; iPatchFace++)
                 {
-                    int* faceIndexForSend = interfacePatch[iNeighbor]->GetFaceIndexForSend();
+                    int *faceIndexForSend = interfacePatch[iNeighbor]->GetFaceIndexForSend();
                     int sendFaceIndex = faceIndexForSend[iPatchFace];
                     int faceIndex = interFace2BoundaryFace[sendFaceIndex];
                     int le = leftCellOfFace[faceIndex];
@@ -250,7 +250,7 @@ namespace PHSPACE
             }
         }
 
-        int* exter_rowptr = new int[nTotalCell + 1];
+        int *exter_rowptr = new int[nTotalCell + 1];
         exter_rowptr[0] = 0;
         for (int iCell = 0; iCell < nTotalCell; iCell++)
         {
@@ -268,8 +268,8 @@ namespace PHSPACE
             }
         }
 
-        delete[] exterMatrixInfo;
-        delete[] exterMatrixInfo2Face;
+        delete [] exterMatrixInfo;
+        delete [] exterMatrixInfo2Face;
 
         CSRMatrixA->exter.size[0] = nTotalCell;
         CSRMatrixA->exter.size[1] = recvptr[nnb];
@@ -284,22 +284,22 @@ namespace PHSPACE
     }
 
 
-    void yhamgCalculator::mathLibSolve(Grid* gridIn, int iEquation, RDouble * fi, RDouble * diagCoef, RDouble *bold, RDouble * upNeighCoef, RDouble * dnNeighCoef)
+    void yhamgCalculator::mathLibSolve(Grid *gridIn, int iEquation, RDouble *fi, RDouble *diagCoef, RDouble *bold, RDouble *upNeighCoef, RDouble *dnNeighCoef)
     {
 #ifdef USE_YhamgLib
-        UnstructGrid* grid = UnstructGridCast(gridIn);
+        UnstructGrid *grid = UnstructGridCast(gridIn);
         int nTotalCell = grid->GetNTotalCell();
         int nBoundFace = grid->GetNBoundFace();
         int nTotalFace = grid->GetNTotalFace();
-        int* leftCellOfFace = grid->GetLeftCellOfFace();
-        int* rightCellOfFace = grid->GetRightCellOfFace();
+        int *leftCellOfFace = grid->GetLeftCellOfFace();
+        int *rightCellOfFace = grid->GetRightCellOfFace();
 
-        int* localCell2GlobalMap = grid->GetLocalCell2GlobalMap();
+        int *localCell2GlobalMap = grid->GetLocalCell2GlobalMap();
         RDouble GlobalTotalCells = GlobalDataBase::GetDoubleParaFromDB("GlobalTotalCells");
-        int *linearSolverID = reinterpret_cast <int *>(GlobalDataBase::GetDataPtr("solMethodOfLinEqSystem"));
-        int *precondID = reinterpret_cast <int *>(GlobalDataBase::GetDataPtr("precondMethodOfLinEqSystem"));
-        int* maxIterOfEachEq = reinterpret_cast<int*> (GlobalDataBase::GetDataPtr("maxIterOfEachEq"));
-        RDouble* iterTolOfEachEq = reinterpret_cast<RDouble*> (GlobalDataBase::GetDataPtr("iterTolOfEachEq"));
+        int *linearSolverID = reinterpret_cast<int *>(GlobalDataBase::GetDataPtr("solMethodOfLinEqSystem"));
+        int *precondID = reinterpret_cast<int *>(GlobalDataBase::GetDataPtr("precondMethodOfLinEqSystem"));
+        int *maxIterOfEachEq = reinterpret_cast<int *>(GlobalDataBase::GetDataPtr("maxIterOfEachEq"));
+        RDouble *iterTolOfEachEq = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("iterTolOfEachEq"));
 
         int maxIterStep = maxIterOfEachEq[iEquation];
         RDouble iterTol = iterTolOfEachEq[iEquation];
@@ -318,7 +318,7 @@ namespace PHSPACE
         ParCSRMatrix* CSRMatrixA = reinterpret_cast <ParCSRMatrix*>(A);
         UnstructBCSet **bcr = grid->GetBCRecord();
         vector<RDouble>* ValuesVector = new vector<RDouble>[nTotalCell];
-        RDouble* local_values = CSRMatrixA->local.values;
+        RDouble *local_values = CSRMatrixA->local.values;
 
         for (int iCell = 0; iCell < nTotalCell; iCell++)
         {
@@ -346,8 +346,8 @@ namespace PHSPACE
         }
 
         cellCount = 0;
-        int* exter_rowptr = CSRMatrixA->exter.rowptr;
-        RDouble* exter_values = CSRMatrixA->exter.values;
+        int *exter_rowptr = CSRMatrixA->exter.rowptr;
+        RDouble *exter_values = CSRMatrixA->exter.values;
         for (int iCell = 0; iCell < nTotalCell; iCell++)
         {
             for (int jCell = exter_rowptr[iCell]; jCell < exter_rowptr[iCell + 1]; jCell++)
@@ -471,12 +471,12 @@ namespace PHSPACE
         if (A)
         {
             CSRMatrixA->Free();
-            delete[] CSRMatrixA->local.rowptr;
-            delete[] CSRMatrixA->local.colind;
-            delete[] CSRMatrixA->local.values;
-            delete[] CSRMatrixA->exter.rowptr;
-            delete[] CSRMatrixA->exter.colind;
-            delete[] CSRMatrixA->exter.values;
+            delete [] CSRMatrixA->local.rowptr;
+            delete [] CSRMatrixA->local.colind;
+            delete [] CSRMatrixA->local.values;
+            delete [] CSRMatrixA->exter.rowptr;
+            delete [] CSRMatrixA->exter.colind;
+            delete [] CSRMatrixA->exter.values;
             delete A;
         }
         int linearSolverSize = GlobalDataBase::GetIntParaFromDB("linearSolverSize");
@@ -490,7 +490,7 @@ namespace PHSPACE
             }
         }
 
-        delete[] PrecondList;
+        delete [] PrecondList;
 #endif
     }
 

@@ -67,7 +67,7 @@ void Post_WriteTecplot::StoreVisualizationData()
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         DataContainer *cdata = new DataContainer();
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
 
         int send_proc = GetZoneProcessorID(iZone);
         int recv_proc = GetZoneFileID(iZone);
@@ -85,7 +85,7 @@ void Post_WriteTecplot::StoreVisualizationData()
         }
         else
         {
-            delete cdata;
+            delete cdata;    cdata = nullptr;
         }
     }
 }
@@ -162,7 +162,7 @@ void Post_WriteTecplot::StoreStrBoundaryVisualData(int zoneIndex, DataContainer 
 
         PHWrite(cdata, TecioMission);
         PHWrite(cdata, bctype);
-        cdata->write_string(bcName);
+        cdata->WriteString(bcName);
 
         int ni = StructGridCast(boundaryGrid[iBoundary])->GetNI();
         int nj = StructGridCast(boundaryGrid[iBoundary])->GetNJ();
@@ -196,11 +196,11 @@ void Post_WriteTecplot::StoreStrBoundaryVisualData(int zoneIndex, DataContainer 
             }
 
             PHWrite(cdata, qBoundary, nTotalNode);
-            delete []qBoundary;
+            delete [] qBoundary;
         }
     }
 
-    delete []qn;
+    delete [] qn;
 }
 
 void Post_WriteTecplot::StoreStrFieldVisualData(int zoneIndex, DataContainer *cdata)
@@ -259,9 +259,9 @@ void Post_WriteTecplot::StoreStrFieldVisualData(int zoneIndex, DataContainer *cd
     PHWrite(cdata, y, nTotalNode);
     PHWrite(cdata, z, nTotalNode);
 
-    delete []x;
-    delete []y;
-    delete []z;
+    delete [] x;
+    delete [] y;
+    delete [] z;
 
     count = 0;
     for (int m = 0; m < nVisualVariables; ++ m)
@@ -279,11 +279,11 @@ void Post_WriteTecplot::StoreStrFieldVisualData(int zoneIndex, DataContainer *cd
             }
         }
         PHWrite(cdata, qq, nTotalNode);
-        delete []qq;
+        delete [] qq;
         count = 0;
     }
 
-    delete []qn;
+    delete [] qn;
 }
 
 void Post_WriteTecplot::StoreUnsBoundaryVisualData(int zoneIndex, DataContainer *cdata)
@@ -337,7 +337,7 @@ void Post_WriteTecplot::StoreUnsBoundaryVisualData(int zoneIndex, DataContainer 
 
         PHWrite(cdata, TecioMission);
         PHWrite(cdata, bctype);
-        cdata->write_string(bcName);
+        cdata->WriteString(bcName);
 
         int nTotalNode = boundaryGrid[iBoundary]->GetNTotalNode();
         int nTotalFace = boundaryGrid[iBoundary]->GetNTotalFace();
@@ -379,14 +379,14 @@ void Post_WriteTecplot::StoreUnsBoundaryVisualData(int zoneIndex, DataContainer 
             }
 
             PHWrite(cdata, qBoundary, nTotalNode);
-            delete []qBoundary;
+            delete [] qBoundary;    qBoundary = nullptr;
         }
 
         int *cell2node = UnstructGridCast(boundaryGrid[iBoundary])->GetCell2Node();
         PHWrite(cdata, cell2node, TotalNumFaceNodes_Rect);
     }
 
-    delete []qn;
+    delete [] qn;    qn = nullptr;
     DelPointer2(qFaceCenter);
 }
 
@@ -407,11 +407,11 @@ void Post_WriteTecplot::StoreUnsFieldVisualData(int zoneIndex, DataContainer *cd
     int numberOfCells = grid->GetNTotalCell();
     int numberOfFaces = grid->GetNTotalFace();
 
-    int *faceNodeNumberContainer  = grid->GetNodeNumberOfEachFace();
-    int *faceNodeIndexContainer   = grid->GetFace2Node();
+    int *faceNodeNumberContainer = grid->GetNodeNumberOfEachFace();
+    int *faceNodeIndexContainer  = grid->GetFace2Node();
 
-    int *leftCellIndexContainer   = grid->GetLeftCellOfFace();
-    int *rightCellIndexContainer  = grid->GetRightCellOfFace();
+    int *leftCellIndexContainer  = grid->GetLeftCellOfFace();
+    int *rightCellIndexContainer = grid->GetRightCellOfFace();
 
     int totalNumFaceNodes = 0;
     for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
@@ -447,7 +447,7 @@ void Post_WriteTecplot::StoreUnsFieldVisualData(int zoneIndex, DataContainer *cd
     PHWrite(cdata, leftCellIndexContainer , numberOfFaces);
     PHWrite(cdata, rightCellIndexContainer, numberOfFaces);
 
-    delete []qn;
+    delete [] qn;    qn = nullptr;
 }
 
 void Post_WriteTecplot::WriteFile()

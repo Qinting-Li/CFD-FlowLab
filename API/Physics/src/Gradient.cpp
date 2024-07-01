@@ -125,7 +125,7 @@ LIB_EXPORT void Gradient::StoreBoundGrad(string boundGradNameX, string boundGrad
 void Gradient::Allocate()
 {
     FreeMemory();
-    if(gridType == UNSTRUCTGRID)
+    if (gridType == UNSTRUCTGRID)
     {
         UnstructGrid *gridUnstruct = UnstructGridCast(grid);
         int nTotalCell = gridUnstruct->GetNTotalCell();
@@ -140,7 +140,7 @@ void Gradient::Allocate()
         dqdz = new FieldProxy();
         dqdz->SetField_UNS(NewPointer2<RDouble>(nTotalVariable, nTotal), true);
     }
-    else if(gridType == STRUCTGRID)
+    else if (gridType == STRUCTGRID)
     {
         StructGrid *grid_str = StructGridCast(grid);
         int ni = grid_str->GetNI();
@@ -201,7 +201,7 @@ LIB_EXPORT GradientCellCenter::~GradientCellCenter()
 void GradientCellCenter::Allocate()
 {
     FreeMemory();
-    if(gridType == STRUCTGRID)
+    if (gridType == STRUCTGRID)
     {
         StructGrid *grid_str = StructGridCast(grid);
         int ni = grid_str->GetNI();
@@ -235,11 +235,11 @@ void GradientCellCenter::FreeMemory()
 
 LIB_EXPORT void GradientCellCenter::Calculate()
 {
-    if(dqdx == NULL || dqdy == NULL || dqdz == NULL)
+    if (dqdx == NULL || dqdy == NULL || dqdz == NULL)
     {
         TK_Exit::ExceptionExit("Memory for gradient have not been allocated!");
     }
-    if(gridType == STRUCTGRID)
+    if (gridType == STRUCTGRID)
     {
         GradCenter();
     }

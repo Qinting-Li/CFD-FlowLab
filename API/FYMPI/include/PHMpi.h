@@ -424,7 +424,7 @@ void FillGobalDataCollectBcast(T *localData, int *localSize, T **&globalData)
 
     if (myid == serverTmp)
     {
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
         for (int iProc = 0; iProc < nTProcessor; ++ iProc)
         {
             T *temp = globalData[iProc];
@@ -436,7 +436,7 @@ void FillGobalDataCollectBcast(T *localData, int *localSize, T **&globalData)
 
     if (myid != serverTmp)
     {
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
         for (int iProc = 0; iProc < nTProcessor; ++ iProc)
         {
             globalData[iProc] = new T [localSize[iProc]];
@@ -444,7 +444,7 @@ void FillGobalDataCollectBcast(T *localData, int *localSize, T **&globalData)
         }
     }
 
-    delete cdata;
+    delete cdata;    cdata = nullptr;
 }
 
 //! Broad cast a data with size of nData to every other processor.
@@ -535,43 +535,43 @@ bool IsNeedNonBlockingCommunication(const ActionKey *actkey);
 template < typename T >
 void PHRead(DataContainer *dataContainer, T *field, int numberOfElements)
 {
-    dataContainer->read(field, numberOfElements * sizeof(T));
+    dataContainer->Read(field, numberOfElements * sizeof(T));
 }
 
 template < typename T >
 void PHRead(DataContainer *dataContainer, T *field, uint_t numberOfElements)
 {
-    dataContainer->read(field, numberOfElements * sizeof(T));
+    dataContainer->Read(field, numberOfElements * sizeof(T));
 }
 
 template < typename T >
 void PHRead(DataContainer *dataContainer, vector<T> &field, int numberOfElements)
 {
-    dataContainer->read(&field[0], numberOfElements * sizeof(T));
+    dataContainer->Read(&field[0], numberOfElements * sizeof(T));
 }
 
 template < typename T >
 void PHRead(DataContainer *dataContainer, T &value)
 {
-    dataContainer->read(&value, sizeof(T));
+    dataContainer->Read(&value, sizeof(T));
 }
 
 template < typename T >
 void PHWrite(DataContainer *dataContainer, T &value)
 {
-    dataContainer->write(&value, sizeof(T));
+    dataContainer->Write(&value, sizeof(T));
 }
 
 template < typename T >
 void PHWrite(DataContainer *dataContainer, T *field, int numberOfElements)
 {
-    dataContainer->write(field, numberOfElements * sizeof(T));
+    dataContainer->Write(field, numberOfElements * sizeof(T));
 }
 
 template < typename T >
 void PHWrite(DataContainer *dataContainer, T *field, uint_t numberOfElements)
 {
-    dataContainer->write(field, numberOfElements * sizeof(T));
+    dataContainer->Write(field, numberOfElements * sizeof(T));
 }
 
 template < typename T >
@@ -583,7 +583,7 @@ void PHWrite(DataContainer *dataContainer, vector<T> &field, int numberOfElement
 template < typename T >
 void PHRead(DataContainer *dataContainer, PHVector1D <T> &field, int numberOfElements)
 {
-    dataContainer->read(&field[0], numberOfElements * sizeof(T));
+    dataContainer->Read(&field[0], numberOfElements * sizeof(T));
 }
 
 template < typename T >

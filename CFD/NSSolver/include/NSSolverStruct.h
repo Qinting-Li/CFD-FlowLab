@@ -91,7 +91,7 @@ private:
     void SpectrumRadius(Grid *grid);
     void SpectrumRadiusInviscid(Grid *gridIn);
     void SpectrumRadiusViscous(Grid *gridIn);
-    void ConservativePreconMatrix(Grid *gridIn);
+    void ConservativePreconMatrix(Grid *gridIn, int sign);
 
     void Diagonal(Grid *gridIn);    //! Source linear.
     //Compute the local time scale.
@@ -130,8 +130,9 @@ private:
     void ComputeViscousCoeff(Grid *gridIn);
     void ComputeViscousCoefficientWithoutChemical(Grid *gridIn);
     void ComputePreconditionCoefficient(Grid *gridIn);
+    void ComputePreconditionCoefficientUnsteady(Grid *gridIn);
 
-    void ComputeGamaAndTemperature(Grid *gridIn);                 //Gama ¡¢Temperature
+    void ComputeGamaAndTemperature(Grid *gridIn);                 //Gama, Temperature
     void RungeKuttaResidual(Grid *gridIn, FieldProxy *dqProxy, RDouble coef);
     
     void SolutionFix(Grid *gridIn, RDouble *prim, int i, int j, int k);

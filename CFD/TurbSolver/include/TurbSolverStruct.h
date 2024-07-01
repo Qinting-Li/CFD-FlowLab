@@ -290,8 +290,8 @@ private:
     //! @param[in ]: structBC denotes the current boundary condition region which need to be set.
     void VisWall(Grid *gridIn, StructBC *structBC);
 
-    void VisWallWithWallFunctionStandard(Grid* gridIn, StructBC *structBC);
-    void VisWallWithWallFunctionPAB3D(Grid* gridIn, StructBC *structBC);
+    void VisWallWithWallFunctionStandard(Grid *gridIn, StructBC *structBC);
+    void VisWallWithWallFunctionPAB3D(Grid *gridIn, StructBC *structBC);
 
     //! To set the farfield boundary condition according to riemann method.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.

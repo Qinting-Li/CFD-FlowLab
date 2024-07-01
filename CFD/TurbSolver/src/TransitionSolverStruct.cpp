@@ -952,12 +952,12 @@ RDouble TransitionSolverStr::UnsteadyConvergence(Grid *gridIn)
         }
     }
 
-    delete[] qTransition0;    qTransition0 = NULL;
-    delete[] qTransition1;    qTransition1 = NULL;
-    delete[] qTransition2;    qTransition2 = NULL;
-    delete[] qTransitionConserve0;    qTransitionConserve0 = NULL;
-    delete[] qTransitionConserve1;    qTransitionConserve1 = NULL;
-    delete[] qTransitionConserve2;    qTransitionConserve2 = NULL;
+    delete [] qTransition0;    qTransition0 = NULL;
+    delete [] qTransition1;    qTransition1 = NULL;
+    delete [] qTransition2;    qTransition2 = NULL;
+    delete [] qTransitionConserve0;    qTransitionConserve0 = NULL;
+    delete [] qTransitionConserve1;    qTransitionConserve1 = NULL;
+    delete [] qTransitionConserve2;    qTransitionConserve2 = NULL;
 
     RDouble unsteadyConvergence = sqrt(ABS(summedPrimitive / (summedConserve + SMALL)));
     return unsteadyConvergence;
@@ -1151,12 +1151,12 @@ void TransitionSolverStr::DualTimeSource(Grid *gridIn)
         }
     }
 
-    delete[]qTransitionPrimtive0;
-    delete[]qTransitionPrimtive1;
-    delete[]qTransitionPrimtive2;
-    delete[]qTransitionConserve0;
-    delete[]qTransitionConserve1;
-    delete[]qTransitionConserve2;
+    delete [] qTransitionPrimtive0;
+    delete [] qTransitionPrimtive1;
+    delete [] qTransitionPrimtive2;
+    delete [] qTransitionConserve0;
+    delete [] qTransitionConserve1;
+    delete [] qTransitionConserve2;
 }
 
 
@@ -1977,8 +1977,8 @@ void TransitionSolverStr::NNDFlux(Grid *gridIn, FieldProxy *qLeftProxy, FieldPro
             }
         }
     }
-    delete[]priml;
-    delete[]primr;
+    delete [] priml;
+    delete [] primr;
 }
 
 void TransitionSolverStr::LoadFlux(Grid *gridIn, FieldProxy *fluxProxy, int iSurface)
@@ -2153,8 +2153,8 @@ void TransitionSolverStr::RotateVectorFromInterface(Grid *gridIn, const int &nei
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    double rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
-    rotationAngle = rotationAngle * PI / 180;
+    RDouble rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
+    rotationAngle = rotationAngle * PI / 180.0;
     if (nEquation > 0)
     {
         RDouble4D &fieldRecvTransitionY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradTransitionCellCenterY"));
@@ -2514,7 +2514,7 @@ void TransitionSolverStr::CompVisFlux(Grid *gridIn, FieldProxy *fluxProxy, int i
         }
     }
 
-    delete[]fvis;    fvis = NULL;
+    delete [] fvis;    fvis = NULL;
 }
 
 void TransitionSolverStr::ZeroResidualOfSpecialCells(Grid *gridIn)
@@ -2662,13 +2662,13 @@ void TransitionSolverStr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, F
         }
     }
 
-    delete[]dqNeighbor;
-    delete[]prim;
-    delete[]rhs0;
-    delete[]dflux;
-    delete[]mat_abc;
-    delete[]dqOld;
-    delete[]Ux;
+    delete [] dqNeighbor;
+    delete [] prim;
+    delete [] rhs0;
+    delete [] dflux;
+    delete [] mat_abc;
+    delete [] dqOld;
+    delete [] Ux;
 }
 
 void TransitionSolverStr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
@@ -2771,13 +2771,13 @@ void TransitionSolverStr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, 
         }
     }
 
-    delete[]dqNeighbor;
-    delete[]dqOld;
-    delete[]prim;
-    delete[]rhs0;
-    delete[]dflux;
-    delete[]mat_abc;
-    delete[]Lx;
+    delete [] dqNeighbor;
+    delete [] dqOld;
+    delete [] prim;
+    delete [] rhs0;
+    delete [] dflux;
+    delete [] mat_abc;
+    delete [] Lx;
 }
 
 void TransitionSolverStr::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy)
@@ -3204,7 +3204,7 @@ void TransitionSolverStr::FarFieldBC(Grid *gridIn, StructBC *structBC)
             }
         }
     }
-    delete[] prims1;
+    delete [] prims1;
 }
 
 void TransitionSolverStr::UploadInterfaceData(ActionKey *actkey)
@@ -3279,7 +3279,7 @@ void TransitionSolverStr::CompressDQ(DataContainer *&dataContainer, FieldProxy *
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForSend = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble4D &fieldSend = fieldProxy->GetField_STR();
 
@@ -3316,7 +3316,7 @@ void TransitionSolverStr::DecompressDQ(DataContainer *&dataContainer, FieldProxy
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
 
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     RDouble4D &fieldRecv = fieldProxy->GetField_STR();
 

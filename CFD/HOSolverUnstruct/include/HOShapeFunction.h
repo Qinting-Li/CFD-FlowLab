@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      HOShapeFunction.h
 //! @brief     shape function of all element types supported (such as tri trip2, quad etc.).
-//! @author    liming, gxq, Wan yunbo, Xu gang.
+//! @author    Li Ming, Gong Xiaoquan, Wan Yunbo, Xu Gang.
 //! @date      2019-10-15
 //! @version   A001
 

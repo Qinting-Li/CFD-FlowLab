@@ -187,7 +187,7 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
 
         if (myid == iProc)
         {
-            eachProc2Server->moveto_begin();
+            eachProc2Server->MoveToBegin();
 
             int bcNameSetSize = static_cast<int>(bcNameSet.size());
             PHWrite(eachProc2Server, bcNameSetSize);
@@ -198,7 +198,7 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
                 string bcName = (*bcNameSetIter).first;
                 int bcType = (*bcNameSetIter).second;
 
-                eachProc2Server->write_string(bcName);
+                eachProc2Server->WriteString(bcName);
                 PHWrite(eachProc2Server, bcType);
             }
         }
@@ -210,14 +210,14 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
             dataList.push_back(eachProc2Server);
             eachProc2Server = new DataContainer();
         }
-        delete eachProc2Server;
+        delete eachProc2Server;    eachProc2Server = nullptr;
     }
 
     bcNameSet.clear();
     for (int iData = 0; iData < dataList.size(); ++ iData)
     {
         DataContainer *iBcNameData = dataList[iData];
-        iBcNameData->moveto_begin();
+        iBcNameData->MoveToBegin();
 
         int bcNameSetSize = 0;
         PHRead(iBcNameData, bcNameSetSize);
@@ -227,7 +227,7 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
             string bcName;
             int bcType;
 
-            iBcNameData->read_string(bcName);
+            iBcNameData->ReadString(bcName);
             PHRead(iBcNameData, bcType);
 
             pair<string,int> bcNamePair(bcName ,bcType);
@@ -243,7 +243,7 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
     DataContainer *server2EachProc = new DataContainer();
     if (myid == serverTmp)
     {
-        server2EachProc->moveto_begin();
+        server2EachProc->MoveToBegin();
 
         int bcNameSetSize = static_cast<int>(bcNameSet.size());
         PHWrite(server2EachProc, bcNameSetSize);
@@ -254,7 +254,7 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
             string bcName = (*bcNameSetIter).first;
             int bcType = (*bcNameSetIter).second;
 
-            server2EachProc->write_string(bcName);
+            server2EachProc->WriteString(bcName);
             PHWrite(server2EachProc, bcType);
         }
 
@@ -270,7 +270,7 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
     else
     {
         receive(server2EachProc, serverTmp, myid);
-        server2EachProc->moveto_begin();
+        server2EachProc->MoveToBegin();
 
         int bcNameSetSize = 0;
         PHRead(server2EachProc, bcNameSetSize);
@@ -280,14 +280,14 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
             string bcName;
             int bcType;
 
-            server2EachProc->read_string(bcName);
+            server2EachProc->ReadString(bcName);
             PHRead(server2EachProc, bcType);
 
             pair<string,int> bcNamePair(bcName ,bcType);
             bcNameSet.insert(bcNamePair);
         }
     }
-    delete server2EachProc;
+    delete server2EachProc;    server2EachProc = nullptr;
 
     set < pair<string, int> >::iterator bcNameSetIter;
     for (bcNameSetIter = bcNameSet.begin(); bcNameSetIter != bcNameSet.end(); ++ bcNameSetIter)
@@ -359,13 +359,13 @@ void GlobalBoundaryCondition::BuildBodyMap()
     set < pair<int, string> > bodyNameSet;
     if (bodyList)
     {
-        delete bodyList;
+        delete bodyList;    bodyList = nullptr;
     }
     bodyList = new set< string >;
 
     if (bodyMap)
     {
-        delete bodyMap;
+        delete bodyMap;    bodyMap = nullptr;
     }
     bodyMap = new map < int, int >;
 
@@ -374,20 +374,20 @@ void GlobalBoundaryCondition::BuildBodyMap()
         SimpleBC *boundaryCondition = (*globalBCList)[iBC];
         int bcType = boundaryCondition->GetBCType();
 
-        if (bcType != PHENGLEI::SOLID_SURFACE && bcType != PHENGLEI::ABLATION_SURFACE)
+        /*if (bcType != PHENGLEI::SOLID_SURFACE && bcType != PHENGLEI::ABLATION_SURFACE)
         {
             continue;
-        }
+        }*/
 
         bool isSetBodyName = boundaryCondition->CheckParamData("bodyName");
         string bodyName = "body";
         if (isSetBodyName)
         {
             boundaryCondition->GetBCParamDataBase()->GetData("bodyName", &bodyName, PHSTRING, 1);
+            pair<int, string> bodyNamePair(iBC, bodyName);
+            bodyNameSet.insert(bodyNamePair);
+            bodyList->insert(bodyName);
         }
-        pair<int,string> bodyNamePair(iBC ,bodyName);
-        bodyNameSet.insert(bodyNamePair);
-        bodyList->insert(bodyName);
     }
 
     set < pair<int, string> >::iterator bodyNameSetIter;
@@ -573,7 +573,7 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
                 }
                 else if (inflowParaType == TRAJECTORY)
                 {
-                    RDouble *primitiveVarFarfield = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
+                    RDouble *primitiveVarFarfield = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("prim_inf"));
                     for (int s = 0; s < nEquation; ++ s)
                     {
                         prim_inf[s] = primitiveVarFarfield[s];
@@ -588,7 +588,7 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
             }
             else
             {
-                RDouble *primitiveVarFarfield = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
+                RDouble *primitiveVarFarfield = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("prim_inf"));
                 for (int s = 0; s < nEquation; ++ s)
                 {
                     prim_inf[s] = primitiveVarFarfield[s];
@@ -597,7 +597,7 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
                 boundaryCondition->UpdateParamData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
 
             }
-            delete [] prim_inf;
+            delete [] prim_inf;    prim_inf = nullptr;
         }
         else if (bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::ABLATION_SURFACE)
         {
@@ -630,14 +630,14 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
         }
         else if (bcType == PHENGLEI::PRESSURE_INLET)
         {
-            //RDouble *primitiveVarFarfield = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
+            //RDouble *primitiveVarFarfield = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("prim_inf"));
             //bcParamDB->UpdateData("primitiveVarFarfield", primitiveVarFarfield, PHDOUBLE, nEquation);
             //SetMaximumSpeciesForBC(bcParamDB);
 
              RDouble *prim_inf = new RDouble [nEquation];
              SetBCInitialValuesByTotalPressure(bcParamDB, prim_inf);
              boundaryCondition->UpdateParamData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
-             delete [] prim_inf;
+             delete [] prim_inf;    prim_inf = nullptr;
         }
     }
 
@@ -2096,7 +2096,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByPrimitive(Data_Param *bcParamD
 
     if (bFlag)
     {
-        RDouble *primitiveVarFarfield = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
+        RDouble *primitiveVarFarfield = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("prim_inf"));
         for (int s = 0; s < nEquation; ++ s)
         {
             primitiveVar[s] = primitiveVarFarfield[s];
@@ -2220,7 +2220,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByMolecularWeightGama(Data_Param
         }
 
         int ntmodel = gas->GetTemperatureModel();
-        if (ntmodel > 1)       //! multi-temperature model.
+        if (ntmodel > 1)    //! multi-temperature model.
         {
             RDouble nonDimTv = localVibrationTemperature / refDimensionalTemperature;
             RDouble vibrationEnergy = gas->GetMixedGasDimensionalVibrationEnergy(nonDimTv, initMassFraction);
@@ -2425,7 +2425,7 @@ void GlobalBoundaryCondition::ChangeBCTypeByGlobalBC()
 void GlobalBoundaryCondition::ParseBCFromFile(fstream &file)
 {
     string line, keyword, name, word;
-    string *value=NULL;
+    string *value = nullptr;
     //string separator  = " =\t\r\n#$,;\"";
     //! \t is tab key.
     string separator = " =\r\n\t#$,;\"";
@@ -2501,13 +2501,13 @@ void GlobalBoundaryCondition::ParseBCFromFile(fstream &file)
             }
 
             nBoundaryConditions = data[0];
-            delete [] data;
+            delete [] data;    data = nullptr;
 
             if (nBoundaryConditions == 0)
             {
                 //! To compatible the old version.
                 SetDefaultSolidBoundaryCondition();
-                delete [] value;
+                delete [] value;    value = nullptr;
                 break;
             }
             else
@@ -2625,7 +2625,7 @@ void GlobalBoundaryCondition::ParseBCFromFile(fstream &file)
             globalBCList->push_back(boundaryCondition);
         }
 
-        delete [] value;
+        delete[] value;    value = nullptr;
     }
 }
 

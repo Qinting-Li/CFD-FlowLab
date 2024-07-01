@@ -33,7 +33,7 @@ public:
     ~GridGroup();
 private:
     int nzones;
-    int * block_proc_dump;    //! Bell 20131124 add
+    int *block_proc_dump;    //! Bell 20131124 add
     int * block_proc;
     int * block_proc_grid;
     int * block_type;

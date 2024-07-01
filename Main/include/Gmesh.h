@@ -145,6 +145,10 @@ private:
     void ReadMeshFormat(fstream &file);
     void ReadNodes(fstream &file, CGNSFactory *factory_cgns);
     void ReadElements(fstream &file, CGNSFactory *factory_cgns);
+    void ReadBoundary(fstream &file, vector <int> &PhysicalDim, vector <int> &PhysicalId, vector <string> &PhysicalName);
+    void ConvertCGNS(CGNSFactory *factory_cgns, vector<int> &type_container, vector < vector<int> > &elem_nodes_container, 
+                     vector <int> &start_container, vector <int> &end_container, vector<int> &physId_container, 
+                     int *e_nvertex, vector <int> &PhysicalDim, vector <int> &PhysicalId, vector <string> &PhysicalName);
 public:
     int NofValidElementTypesGmsh;
     int *TypeGmsh2CGNS;
@@ -153,6 +157,7 @@ public:
     void InitGmshNVertex();
     void InitCGNSNVertex();
     void InitGmsh2CGNSMap();
+
 private:
     int *elem_pt;
     //version-number is a real number equal to 2.2

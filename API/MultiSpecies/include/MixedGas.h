@@ -287,9 +287,9 @@ public:
 private:
     FluidParameter referenceParameterDimensional;    //! Ref
     ThermodynamicManager  *thermodynamicManager;     //! Ppolynomial fitting for Species Energy
-    ReactionRate *reactionRate;                      //! kb¡¢kf
+    ReactionRate *reactionRate;                      //! kb,kf
     StoichiometricEquation *stoichiometricEquation;  //! Equation coef for matrix
-    CurveFitsMethod *CurveFits;                      //! Curve fitting for viscosity¡¢collision section
+    CurveFitsMethod *CurveFits;                      //! Curve fitting for viscosity,collision section
     MolecularProperty *molecularProperty;            //! Species characteristic parameter
 private:
     int nm, nl, numberOfSpecies, numberOfReaction, nchem, ntmodel, nEquation;
@@ -1213,7 +1213,7 @@ public:
     //! @param[out]: alpha is the partial derivative of pressure to total energy.
     //! @param[out]: beta is the partial derivative of pressure to total density.
     //! @param[out]: gama is the partial derivative of electron pressure to vibration-electron enegy.
-    //! @param[out]: speciesBeta¡¢speciesGama are the partial derivatives of pressure and electron pressure to species density.
+    //! @param[out]: speciesBeta,speciesGama are the partial derivatives of pressure and electron pressure to species density.
     void GetMultiTemperatureModelPartialDerivatives(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble electronTemperature,
                                                     RDouble &alpha, RDouble &beta, RDouble &gama, RDouble *speciesBeta, RDouble *speciesGama);
     void GetMultiTemperatureModelPartialDerivativesR(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble electronTemperature,

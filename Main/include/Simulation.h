@@ -76,7 +76,7 @@ private:
     void InitGeometry();
 
     //! Communicate the grid metrics on the interfaces.
-    void SwapGeommetry();
+    void SwapGeometry();
 
     //! Initialize overset grid.
     void InitOversetGrid();

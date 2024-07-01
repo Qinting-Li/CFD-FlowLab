@@ -31,7 +31,7 @@ struct Data_Util
         target = new T[size];
         for (int i = 0; i < size; ++ i)
         {
-            reinterpret_cast <T *> (target)[i] = reinterpret_cast <T *> (source)[i];
+            reinterpret_cast<T *>(target)[i] = reinterpret_cast<T *>(source)[i];
         }
     }
 
@@ -40,7 +40,7 @@ struct Data_Util
     template < typename T >
     static void delete_void(void *data)
     {
-        delete [] reinterpret_cast<T *> (data);
+        delete [] reinterpret_cast<T *>(data);
     }
 
     //! Function template, copy T type data from source to target with same type and size.
@@ -52,7 +52,7 @@ struct Data_Util
     {
         for (int i = 0; i < size; ++ i)
         {
-            reinterpret_cast<T *> (target)[i] = reinterpret_cast<T *> (source)[i];
+            reinterpret_cast<T *>(target)[i] = reinterpret_cast<T *>(source)[i];
         }
     }
 

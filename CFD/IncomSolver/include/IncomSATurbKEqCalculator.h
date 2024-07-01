@@ -28,35 +28,31 @@ public:
     IncomSATurbKEqCalculator();
     virtual ~IncomSATurbKEqCalculator();
 
-    void InitFlowAsRestart(Grid* gridIn);
+    void InitFlowAsRestart(Grid *gridIn);
     void AllocateGlobalVar(Grid *gridIn);
-    void IncompressibleInitial(Grid* grid);
-    void SetDiffusionCoeff(Grid* gridIn);
-    void UpdateAfterIterloop(Grid* grid);//! Updates the viscosity of the momentum equation
+    void IncompressibleInitial(Grid *grid);
+    void SetDiffusionCoeff(Grid *gridIn);
+    void UpdateAfterIterloop(Grid *grid);    //! Updates the viscosity of the momentum equation.
 
-    void calWallBC(Grid*  grid, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-        RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff);
+    void calWallBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff);
 
-    void calVelocityInletBC(Grid*  grid, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-        RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff);
+    void calVelocityInletBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff);
 
-    void calPressureOutletBC(Grid*  grid, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-        RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff);
+    void calPressureOutletBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff);
 
-
-    void CalcOtherMatrixACoeff(Grid* grid);
-    void CalcOtherbCoeff(Grid* grid, int iEquation);
+    void CalcOtherMatrixACoeff(Grid *grid);
+    void CalcOtherbCoeff(Grid *grid, int iEquation);
     
-    void GetResidual(Grid *grid, vector<RDouble>& res);
+    void GetResidual(Grid *grid, vector<RDouble> &res);
 
-    void InitialUnsteadyVar(Grid* grid);
-    void UpdateUnsteadyVariable(Grid* grid);
-    void UpdateBCValue(Grid*  grid);
+    void InitialUnsteadyVar(Grid *grid);
+    void UpdateUnsteadyVariable(Grid *grid);
+    void UpdateBCValue(Grid *grid);
 
-    void CalcGrad(Grid*  grid);
-
-
-
+    void CalcGrad(Grid *grid);
 };
 
 }

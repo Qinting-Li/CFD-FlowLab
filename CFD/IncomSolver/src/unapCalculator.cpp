@@ -18,15 +18,15 @@ unapCalculator::~unapCalculator()
     mathLibSolveFinalize();
 }
 
-void unapCalculator::mathLibSolveInit(Grid* gridIn)
+void unapCalculator::mathLibSolveInit(Grid *gridIn)
 {
 #ifdef USE_UnapLib
-    UnstructGrid* grid = UnstructGridCast(gridIn);
+    UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
     int nTotalFace = grid->GetNTotalFace();
-    int* leftCellOfFace = grid->GetLeftCellOfFace();
-    int* rightCellOfFace = grid->GetRightCellOfFace();
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
     
     int nInternalFaces = nTotalFace - nBoundFace;
     
@@ -63,7 +63,7 @@ void unapCalculator::mathLibSolveInit(Grid* gridIn)
     
     lduA->setMatrixTopology(nTotalCell, *upperAddr, *lowerAddr, false);
 
-    int* localCell2GlobalMap = grid->GetLocalCell2GlobalMap();
+    int *localCell2GlobalMap = grid->GetLocalCell2GlobalMap();
     InterfaceInfo * interfaceInfo= grid->GetInterfaceInfo();
     if (interfaceInfo != NULL) 
     {
@@ -92,7 +92,7 @@ void unapCalculator::mathLibSolveInit(Grid* gridIn)
 
             for (int iPatchFace = 0; iPatchFace < nPatchFace; iPatchFace++)
             {
-                int* faceIndexForSend = interfacePatch[iNeighbor]->GetFaceIndexForSend();
+                int *faceIndexForSend = interfacePatch[iNeighbor]->GetFaceIndexForSend();
                 int sendFaceIndex = faceIndexForSend[iPatchFace];
                 int faceIndex = interFace2BoundaryFace[sendFaceIndex];
                 int le = leftCellOfFace[faceIndex];
@@ -110,28 +110,28 @@ void unapCalculator::mathLibSolveInit(Grid* gridIn)
 #endif
 }
 
-void unapCalculator::mathLibSolve(Grid* gridIn, int iEquation, RDouble * fi, RDouble * diagCoef, RDouble *binput, RDouble * upNeighCoef, RDouble * dnNeighCoef)
+void unapCalculator::mathLibSolve(Grid *gridIn, int iEquation, RDouble *fi, RDouble *diagCoef, RDouble *binput, RDouble *upNeighCoef, RDouble *dnNeighCoef)
 {
 #ifdef USE_UnapLib
     UnstructGrid * grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
     int nTotalFace = grid->GetNTotalFace();
-    int* leftCellOfFace = grid->GetLeftCellOfFace();
-    int* rightCellOfFace = grid->GetRightCellOfFace();
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
     int nInternalFaces = nTotalFace - nBoundFace;
     RDouble *area = grid->GetFaceArea();
-    int* localCell2GlobalMap = grid->GetLocalCell2GlobalMap();
+    int *localCell2GlobalMap = grid->GetLocalCell2GlobalMap();
 
     Communicator *comm = &COMM::getGlobalComm();
     label nProcs = comm->getMySize();
     label myId = comm->getMyId();
     RDouble tol = 0.0;
     int minIter = 1;
-    int *linearSolverID = reinterpret_cast <int *>(GlobalDataBase::GetDataPtr("solMethodOfLinEqSystem"));
-    int *precondID = reinterpret_cast <int *>(GlobalDataBase::GetDataPtr("precondMethodOfLinEqSystem"));
-    int* maxIterOfEachEq = reinterpret_cast<int*> (GlobalDataBase::GetDataPtr("maxIterOfEachEq"));
-    RDouble* iterTolOfEachEq = reinterpret_cast<RDouble*> (GlobalDataBase::GetDataPtr("iterTolOfEachEq"));
+    int *linearSolverID = reinterpret_cast<int *>(GlobalDataBase::GetDataPtr("solMethodOfLinEqSystem"));
+    int *precondID = reinterpret_cast<int *>(GlobalDataBase::GetDataPtr("precondMethodOfLinEqSystem"));
+    int *maxIterOfEachEq = reinterpret_cast<int *>(GlobalDataBase::GetDataPtr("maxIterOfEachEq"));
+    RDouble *iterTolOfEachEq = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("iterTolOfEachEq"));
 
     int maxIterStep = maxIterOfEachEq[iEquation];
     RDouble iterTol = iterTolOfEachEq[iEquation];
@@ -171,7 +171,7 @@ void unapCalculator::mathLibSolve(Grid* gridIn, int iEquation, RDouble * fi, RDo
             label nPatchFace = interfacePatch[iNeighbor]->GetNumberOfFace();
             for (int iPatchFace = 0; iPatchFace < nPatchFace; iPatchFace++)
             {
-                int* faceIndexForSend = interfacePatch[iNeighbor]->GetFaceIndexForSend();
+                int *faceIndexForSend = interfacePatch[iNeighbor]->GetFaceIndexForSend();
                 int sendFaceIndex = faceIndexForSend[iPatchFace];
                 int faceIndex = interFace2BoundaryFace[sendFaceIndex];
 

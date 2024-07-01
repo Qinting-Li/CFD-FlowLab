@@ -21,7 +21,7 @@ void Pre_CGNSToPHengLEI_Struct::Conversion()
 {
     ResetGridScaleAndTranslate();
 
-    grids = new Grid*[nBlocks];
+    grids = new Grid* [nBlocks];
 
     for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {

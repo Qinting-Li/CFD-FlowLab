@@ -108,7 +108,7 @@ LIB_EXPORT void Pre_WalldistCompute::Run()
         }
 
         ComputeWallDistance();
-        
+
         if (walldistComputeMethod != FAST_METHOD) break;
 
         ++ this->rotateAxis;
@@ -198,7 +198,7 @@ void Pre_WalldistCompute::FillWallStructure()
 
         DeCompressWallStructure(cdata, true);
 
-        delete cdata;
+        delete cdata;    cdata = nullptr;
     }
 
     WriteLogFile("  End filling wall structure ...");
@@ -1879,7 +1879,7 @@ void Pre_WalldistCompute::ComputeWallDistanceKDTree(StructGrid *grid)
             }
         }
     }
-    delete[] xyzCellCenter;    xyzCellCenter = NULL;
+    delete [] xyzCellCenter;    xyzCellCenter = nullptr;
 }
 
 //! New method: communicate with each processor, after compress all zones of each processor.
@@ -1894,7 +1894,7 @@ void Pre_WalldistCompute::ServerCollection()
     int numberOfGridprocessor = GetNumberOfGridProcessor();
 
     DataContainer *cdata = new DataContainer();
-    cdata->moveto_begin();
+    cdata->MoveToBegin();
 
     //! Write the number of zones in this processor.
     int nZonesInThisProc = 0;
@@ -1952,7 +1952,7 @@ void Pre_WalldistCompute::ServerCollection()
             }
 
             int nZonesInProc;
-            cdata->moveto_begin();
+            cdata->MoveToBegin();
             PHRead(cdata, &nZonesInProc, 1);
             for (int iZone = 0; iZone < nZonesInProc; ++ iZone)
             {
@@ -1978,7 +1978,7 @@ void Pre_WalldistCompute::ServerBcast()
 
     if (myid == serverTmp)
     {
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
 
         uint_t nWall = wallstructureList->size();
         PHWrite(cdata, &nWall, 1);
@@ -1993,7 +1993,7 @@ void Pre_WalldistCompute::ServerBcast()
 
     if (myid != serverTmp)
     {
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
 
         uint_t nWall;
         PHRead(cdata, &nWall, 1);
@@ -2009,7 +2009,7 @@ void Pre_WalldistCompute::ServerBcast()
         }
     }
 
-    delete cdata;
+    delete cdata;    cdata = nullptr;
 }
 
 void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, Grid *grid)
@@ -2047,14 +2047,14 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
         }
     }
 
-    cdata->write(&nSolidFace, sizeof(int));
+    cdata->Write(&nSolidFace, sizeof(int));
     if (!nSolidFace)
     {
         return;
     }
 
     int iBlock = grid->GetIBlock();
-    cdata->write(&iBlock, sizeof(int));
+    cdata->Write(&iBlock, sizeof(int));
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
@@ -2069,6 +2069,11 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
             int nsurf = bcregion->GetFaceDirection() + 1;
 
             int in = 0, jn = 0, kn = 0;
+
+            int nm = 3;
+            int nlen = nm * (ked - kst + 1) * (jed - jst + 1) * (ied - ist + 1);
+            RDouble *qtmp = new RDouble [nlen];
+            int countTmp = 0;            
             for (int k = kst; k <= ked; ++ k)
             {
                 for (int j = jst; j <= jed; ++ j)
@@ -2079,12 +2084,15 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
 
                         RDouble xc, yc, zc;
                         grid->FaceCoor(in, jn, kn, nsurf, xc, yc, zc);
-                        cdata->write(&xc, sizeof(RDouble));
-                        cdata->write(&yc, sizeof(RDouble));
-                        cdata->write(&zc, sizeof(RDouble));
+
+                        qtmp[countTmp++] = xc;
+                        qtmp[countTmp++] = yc;
+                        qtmp[countTmp++] = zc;
                     }
                 }
             }
+            cdata->Write(qtmp, nlen * sizeof(RDouble));
+            delete [] qtmp;     qtmp = nullptr;
         }
     }
 
@@ -2127,7 +2135,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
             nWallPoints += ni * nj * nk;
         }
     }
-    cdata->write(&nWallPoints, sizeof(int));
+    cdata->Write(&nWallPoints, sizeof(int));
 
     vector<Int3D *> structNode2UnstrNodeID;
     structNode2UnstrNodeID.resize(nBCRegion);
@@ -2181,18 +2189,19 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
             structNode2UnstrNodeID[iBCRegion] = new Int3D(I, J, K, fortranArray);
             Int3D &nodeMap = *(structNode2UnstrNodeID[iBCRegion]);
 
+            int nm = 3;
+            int nlen = nm * (s_ed[2] - s_st[2] + 1) * (s_ed[1] - s_st[1] + 1) * (s_ed[0] - s_st[0] + 1);
+            RDouble *qtmp = new RDouble [nlen];
+            int countTmp = 0;  
             for (int k = s_st[2]; k <= s_ed[2]; ++ k)
             {
                 for (int j = s_st[1]; j <= s_ed[1]; ++ j)
                 {
                     for (int i = s_st[0]; i <= s_ed[0]; ++ i)
                     {
-                        RDouble x0 = xx(i, j, k);
-                        RDouble y0 = yy(i, j, k);
-                        RDouble z0 = zz(i, j, k);
-                        cdata->write(&x0, sizeof(RDouble));
-                        cdata->write(&y0, sizeof(RDouble));
-                        cdata->write(&z0, sizeof(RDouble));
+                        qtmp[countTmp++] = xx(i, j, k);
+                        qtmp[countTmp++] = yy(i, j, k);
+                        qtmp[countTmp++] = zz(i, j, k);
 
                         int iLocal = i - s_st[0] + 1;
                         int jLocal = j - s_st[1] + 1;
@@ -2202,6 +2211,8 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
                     }
                 }
             }
+            cdata->Write(qtmp, nlen * sizeof(RDouble));
+            delete [] qtmp;     qtmp = nullptr;
         }
     }
 
@@ -2226,11 +2237,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
         }
     }
 
-    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
-    {
-        int nNPF = nPointsPerWallFace[iFace];
-        cdata->write(&nNPF, sizeof(int));
-    }
+    cdata->Write(nPointsPerWallFace, nSolidFace * sizeof(int));
 
     //! Wall face to node.
     int *wallface2node = new int [count]();
@@ -2351,7 +2358,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
         for (int j = 0; j < nNPF; ++ j)
         {
             int nodeIndex = wallface2node[count ++];
-            cdata->write(&nodeIndex, sizeof(int));
+            cdata->Write(&nodeIndex, sizeof(int));
         }
     }
 
@@ -2372,6 +2379,10 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
             int ist = 0, ied = 0, jst = 0, jed = 0, kst = 0, ked = 0;
             bcregion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
+            int nm = 3;
+            int nlen = nm * (ked - kst + 1) * (jed - jst + 1) * (ied - ist + 1);
+            RDouble *qtmp = new RDouble [nlen];
+            int countTmp = 0;  
             for (int k = kst; k <= ked; ++ k)
             {
                 for (int j = jst; j <= jed; ++ j)
@@ -2381,16 +2392,14 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
                         int iFace, jFace, kFace;
                         bcregion->GetBoundaryFaceIndex(i, j, k, iFace, jFace, kFace);
 
-                        RDouble nxs = xfn(iFace, jFace, kFace, nsurf);
-                        RDouble nys = yfn(iFace, jFace, kFace, nsurf);
-                        RDouble nzs = zfn(iFace, jFace, kFace, nsurf);
-
-                        cdata->write(&nxs, sizeof(RDouble));
-                        cdata->write(&nys, sizeof(RDouble));
-                        cdata->write(&nzs, sizeof(RDouble));
+                        qtmp[countTmp++] = xfn(iFace, jFace, kFace, nsurf);
+                        qtmp[countTmp++] = yfn(iFace, jFace, kFace, nsurf);
+                        qtmp[countTmp++] = zfn(iFace, jFace, kFace, nsurf);
                     }
                 }
             }
+            cdata->Write(qtmp, nlen * sizeof(RDouble));
+            delete [] qtmp;     qtmp = nullptr;
         }
     }
 
@@ -2429,7 +2438,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
 
     grid->FindOutWallFaces(isWallFace, nSolidFace);
 
-    cdata->write(&nSolidFace, sizeof(int));
+    cdata->Write(&nSolidFace, sizeof(int));
 
     if (!nSolidFace)
     {
@@ -2440,7 +2449,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
 
     //! Write the block information into wallstruc.
     int iBlock = grid->GetIBlock();
-    cdata->write(&iBlock, sizeof(int));
+    cdata->Write(&iBlock, sizeof(int));
 
     int *localWallFace2Global = new int [nSolidFace]();
     SetField(localWallFace2Global, -1, nSolidFace);
@@ -2509,39 +2518,40 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
 
     //! Write the wall face data structure into the data-container.
     //! First: wall face center.
+    int nm = 3;
+    int nlen = nm * nSolidFace;
+    RDouble *qtmp = new RDouble[nlen];
+    int countTmp = 0;
     for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
         int faceIndex = localWallFace2Global[iFace];
 
-        RDouble xc = 0, yc = 0, zc = 0;
-        xc = xfc[faceIndex];
-        yc = yfc[faceIndex];
-        zc = zfc[faceIndex];
-
-        cdata->write(&xc, sizeof(RDouble));
-        cdata->write(&yc, sizeof(RDouble));
-        cdata->write(&zc, sizeof(RDouble));
+        qtmp[countTmp++] = xfc[faceIndex];
+        qtmp[countTmp++] = yfc[faceIndex];
+        qtmp[countTmp++] = zfc[faceIndex];
     }
+    cdata->Write(qtmp, nlen * sizeof(RDouble));
+    delete [] qtmp;     qtmp = nullptr;
+    countTmp = 0;
 
     //! Second: points coordinates.
-    cdata->write(&nWallPoints, sizeof(int));
+    cdata->Write(&nWallPoints, sizeof(int));
 
+    nm = 3;
+    nlen = nm * nWallPoints;
+    qtmp = new RDouble[nlen];    
     for (int iNode = 0; iNode < nWallPoints; ++ iNode)
     {
-        RDouble x0 = xWall[iNode];
-        RDouble y0 = yWall[iNode];
-        RDouble z0 = zWall[iNode];
-        cdata->write(&x0, sizeof(RDouble));
-        cdata->write(&y0, sizeof(RDouble));
-        cdata->write(&z0, sizeof(RDouble));
+        qtmp[countTmp++] = xWall[iNode];
+        qtmp[countTmp++] = yWall[iNode];
+        qtmp[countTmp++] = zWall[iNode];
     }
+    cdata->Write(qtmp, nlen * sizeof(RDouble));
+    delete [] qtmp;     qtmp = nullptr;
+    countTmp = 0;
 
     //! Third: face to node connection.
-    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
-    {
-        int nNPF = nPointsPerWallFace[iFace];
-        cdata->write(&nNPF, sizeof(int));
-    }
+    cdata->Write(nPointsPerWallFace, nSolidFace * sizeof(int));
 
     count = 0;
     for (int iFace = 0; iFace < nSolidFace; ++ iFace)
@@ -2550,23 +2560,24 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
         for (int j = 0; j < nNPF; ++ j)
         {
             int nodeIndex = wallface2node[count ++];
-            cdata->write(&nodeIndex, sizeof(int));
+            cdata->Write(&nodeIndex, sizeof(int));
         }
     }
 
     //! Forth: wall face normal.
+    nm = 3;
+    nlen = nm * nSolidFace;
+    qtmp = new RDouble[nlen];  
     for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
         int faceIndex = localWallFace2Global[iFace];
 
-        RDouble xfn0 = xfn[faceIndex];
-        RDouble yfn0 = yfn[faceIndex];
-        RDouble zfn0 = zfn[faceIndex];
-
-        cdata->write(&xfn0, sizeof(RDouble));
-        cdata->write(&yfn0, sizeof(RDouble));
-        cdata->write(&zfn0, sizeof(RDouble));
+        qtmp[countTmp++] = xfn[faceIndex];
+        qtmp[countTmp++] = yfn[faceIndex];
+        qtmp[countTmp++] = zfn[faceIndex];
     }
+    cdata->Write(qtmp, nlen * sizeof(RDouble));
+    delete [] qtmp;     qtmp = nullptr;
 
     delete [] isWallPoint;    isWallPoint = nullptr;
     delete [] globalPoint2Wall;    globalPoint2Wall = nullptr;
@@ -3037,11 +3048,11 @@ void Pre_WalldistCompute::DeCompressWallStructure(DataContainer *&cdata, const b
 {
     if (ifMoveToBegin)
     {
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
     }
 
     int nSolidFace;
-    cdata->read(&nSolidFace, sizeof(int));
+    cdata->Read(&nSolidFace, sizeof(int));
 
     if (nSolidFace == 0)
     {
@@ -3056,7 +3067,7 @@ void Pre_WalldistCompute::DeCompressWallStructure(DataContainer *&cdata, const b
 
     //! Set iBlock to wallStructure.
     int iBlock;
-    cdata->read(&iBlock, sizeof(int));
+    cdata->Read(&iBlock, sizeof(int));
     wallStructure->SetIBlock(iBlock);
 
     //! Face center.
@@ -3069,9 +3080,9 @@ void Pre_WalldistCompute::DeCompressWallStructure(DataContainer *&cdata, const b
     for (int i = 0; i < nSolidFace; ++ i)
     {
         RDouble xc, yc, zc;
-        cdata->read(&xc, sizeof(RDouble));
-        cdata->read(&yc, sizeof(RDouble));
-        cdata->read(&zc, sizeof(RDouble));
+        cdata->Read(&xc, sizeof(RDouble));
+        cdata->Read(&yc, sizeof(RDouble));
+        cdata->Read(&zc, sizeof(RDouble));
 
         xfc.push_back(xc);
         yfc.push_back(yc);
@@ -3080,7 +3091,7 @@ void Pre_WalldistCompute::DeCompressWallStructure(DataContainer *&cdata, const b
 
     //! Wall points coordinates.
     int nWallPoints;
-    cdata->read(&nWallPoints, sizeof(int));
+    cdata->Read(&nWallPoints, sizeof(int));
     if (nWallPoints == 0)
     {
         //! If the wall points are not including, return.
@@ -3096,9 +3107,9 @@ void Pre_WalldistCompute::DeCompressWallStructure(DataContainer *&cdata, const b
     for (int i = 0; i < nWallPoints; ++ i)
     {
         RDouble x0, y0, z0;
-        cdata->read(&x0, sizeof(RDouble));
-        cdata->read(&y0, sizeof(RDouble));
-        cdata->read(&z0, sizeof(RDouble));
+        cdata->Read(&x0, sizeof(RDouble));
+        cdata->Read(&y0, sizeof(RDouble));
+        cdata->Read(&z0, sizeof(RDouble));
 
         x.push_back(x0);
         y.push_back(y0);
@@ -3111,7 +3122,7 @@ void Pre_WalldistCompute::DeCompressWallStructure(DataContainer *&cdata, const b
     for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
         int nPoint;
-        cdata->read(&nPoint, sizeof(int));
+        cdata->Read(&nPoint, sizeof(int));
         nPointPerFace[iFace] = nPoint;
         count += nPoint;
     }
@@ -3123,7 +3134,7 @@ void Pre_WalldistCompute::DeCompressWallStructure(DataContainer *&cdata, const b
         for (int j = 0; j < nPointPerFace[iFace]; ++ j)
         {
             int nodeIndex;
-            cdata->read(&nodeIndex, sizeof(int));
+            cdata->Read(&nodeIndex, sizeof(int));
             wallFace2Node[count ++] = nodeIndex;
         }
     }
@@ -3149,9 +3160,9 @@ void Pre_WalldistCompute::DeCompressWallStructure(DataContainer *&cdata, const b
     for (int i = 0; i < nSolidFace; ++ i)
     {
         RDouble xfn0, yfn0, zfn0;
-        cdata->read(&xfn0, sizeof(RDouble));
-        cdata->read(&yfn0, sizeof(RDouble));
-        cdata->read(&zfn0, sizeof(RDouble));
+        cdata->Read(&xfn0, sizeof(RDouble));
+        cdata->Read(&yfn0, sizeof(RDouble));
+        cdata->Read(&zfn0, sizeof(RDouble));
 
         xfn.push_back(xfn0);
         yfn.push_back(yfn0);
@@ -3844,7 +3855,7 @@ void Pre_WalldistCompute::PostWallDistanceByNodeMethod(UnstructGrid *grid)
         }
     }
 
-    delete[] nodeOnWall;    nodeOnWall = nullptr;
+    delete [] nodeOnWall;    nodeOnWall = nullptr;
 }
 
 void Pre_WalldistCompute::PostWallDistance(UnstructGrid *grid)
@@ -3997,7 +4008,7 @@ void WallStructure::Encode(DataContainer *&cdata, const bool &ifMoveToBegin)
 {
     if (ifMoveToBegin)
     {
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
     }
 
     uint_t nSolidFace = GetNumberOfWallFaces();
@@ -4013,18 +4024,19 @@ void WallStructure::Encode(DataContainer *&cdata, const bool &ifMoveToBegin)
 
     //! Write the wall face data structure into the data-container.
     //! First: wall face center.
+    uint_t nm = 3;
+    uint_t nlen = nm * nSolidFace;
+    RDouble *qtmp = new RDouble[nlen];
+    uint_t countTmp = 0;
     for (uint_t iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        RDouble xc, yc, zc;
-
-        xc = xfc[iFace];
-        yc = yfc[iFace];
-        zc = zfc[iFace];
-        
-        cdata->write(&xc, sizeof(RDouble));
-        cdata->write(&yc, sizeof(RDouble));
-        cdata->write(&zc, sizeof(RDouble));
+        qtmp[countTmp++] = xfc[iFace];
+        qtmp[countTmp++] = yfc[iFace];
+        qtmp[countTmp++] = zfc[iFace];
     }
+    cdata->Write(qtmp, nlen * sizeof(RDouble));
+    delete [] qtmp;     qtmp = nullptr;
+    countTmp = 0;
 
     //! Second: points coordinates.
     uint_t nWallPoints = GetNumberOfWallPoints();
@@ -4034,16 +4046,18 @@ void WallStructure::Encode(DataContainer *&cdata, const bool &ifMoveToBegin)
         return;
     }
 
+    nm = 3;
+    nlen = nm * nWallPoints;
+    qtmp = new RDouble[nlen];
     for (uint_t iNode = 0; iNode < nWallPoints; ++ iNode)
     {
-        RDouble x0 = x[iNode];
-        RDouble y0 = y[iNode];
-        RDouble z0 = z[iNode];
-        cdata->write(&x0, sizeof(RDouble));
-        cdata->write(&y0, sizeof(RDouble));
-        cdata->write(&z0, sizeof(RDouble));
+        qtmp[countTmp++] = x[iNode];
+        qtmp[countTmp++] = y[iNode];
+        qtmp[countTmp++] = z[iNode];
     }
-
+    cdata->Write(qtmp, nlen * sizeof(RDouble));
+    delete [] qtmp;     qtmp = nullptr;
+    countTmp = 0;
     //! Third: face to node connection.
     PHWrite(cdata, nPointPerFace, nSolidFace);
 
@@ -4055,23 +4069,24 @@ void WallStructure::Encode(DataContainer *&cdata, const bool &ifMoveToBegin)
     PHWrite(cdata, wallFace2Node, count);
 
     //! Forth: wall face normal.
+    nm = 3;
+    nlen = nm * nSolidFace;
+    qtmp = new RDouble[nlen];
     for (uint_t iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        RDouble xfn0 = xfn[iFace];
-        RDouble yfn0 = yfn[iFace];
-        RDouble zfn0 = zfn[iFace];
-
-        cdata->write(&xfn0, sizeof(RDouble));
-        cdata->write(&yfn0, sizeof(RDouble));
-        cdata->write(&zfn0, sizeof(RDouble));
+        qtmp[countTmp++] = xfn[iFace];
+        qtmp[countTmp++] = yfn[iFace];
+        qtmp[countTmp++] = zfn[iFace];
     }
+    cdata->Write(qtmp, nlen * sizeof(RDouble));
+    delete [] qtmp;     qtmp = nullptr;
 }
 
 void WallStructure::Decode(DataContainer *&cdata, const bool &ifMoveToBegin)
 {
     if (ifMoveToBegin)
     {
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
     }
 
     uint_t nSolidFace;
@@ -4092,9 +4107,9 @@ void WallStructure::Decode(DataContainer *&cdata, const bool &ifMoveToBegin)
     for (uint_t i = 0; i < nSolidFace; ++ i)
     {
         RDouble xc, yc, zc;
-        cdata->read(&xc, sizeof(RDouble));
-        cdata->read(&yc, sizeof(RDouble));
-        cdata->read(&zc, sizeof(RDouble));
+        cdata->Read(&xc, sizeof(RDouble));
+        cdata->Read(&yc, sizeof(RDouble));
+        cdata->Read(&zc, sizeof(RDouble));
 
         xfc[i] = xc;
         yfc[i] = yc;
@@ -4116,9 +4131,9 @@ void WallStructure::Decode(DataContainer *&cdata, const bool &ifMoveToBegin)
     for (uint_t iNode = 0; iNode < nWallPoints; ++ iNode)
     {
         RDouble x0, y0, z0;
-        cdata->read(&x0, sizeof(RDouble));
-        cdata->read(&y0, sizeof(RDouble));
-        cdata->read(&z0, sizeof(RDouble));
+        cdata->Read(&x0, sizeof(RDouble));
+        cdata->Read(&y0, sizeof(RDouble));
+        cdata->Read(&z0, sizeof(RDouble));
 
         x[iNode] = x0;
         y[iNode] = y0;
@@ -4155,9 +4170,9 @@ void WallStructure::Decode(DataContainer *&cdata, const bool &ifMoveToBegin)
     for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
         RDouble xfn0, yfn0, zfn0;
-        cdata->read(&xfn0, sizeof(RDouble));
-        cdata->read(&yfn0, sizeof(RDouble));
-        cdata->read(&zfn0, sizeof(RDouble));
+        cdata->Read(&xfn0, sizeof(RDouble));
+        cdata->Read(&yfn0, sizeof(RDouble));
+        cdata->Read(&zfn0, sizeof(RDouble));
 
         xfn[iFace] = xfn0;
         yfn[iFace] = yfn0;
@@ -5228,7 +5243,7 @@ vector<WallStructure *> * Pre_WalldistCompute::GetWallstructureList()
 void GenerateWalldist()
 {
     if (GetTaskCode() == HO_SOLVER) return;
-    
+
     if (PHMPI::CurrentProcessorIsGridProcessor())
     {
         return;
@@ -5240,7 +5255,7 @@ void GenerateWalldist()
     int nIsComputeWallDist = GlobalDataBase::GetIntParaFromDB("nIsComputeWallDist");    //! just for laminar or Euler flow.  by dms
 
     int sysGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    if(viscousType > 1 || sysGridType != STRUCTGRID)    //! turbulence flow  or not STRUCTGRID
+    if (viscousType > 1 || sysGridType != STRUCTGRID)    //! turbulence flow or not STRUCTGRID
     {
         nIsComputeWallDist = 0;
     }
@@ -5541,7 +5556,7 @@ void VisualWalldist()
         ostringstream oss;
 
         //Zonetitle = Zone + zonenum;
-        oss << "Zone"<< GridID;
+        oss << "Zone" << GridID;
     
         //const char * ZoneTitle = Zonetitle.c_str();
         string Zonetitle = oss.str();
@@ -5654,19 +5669,19 @@ void WriteWalldist()
 void DumpWalldistToFile(ActionKey *actkey, int iZone)
 {
     DataContainer *cdata = actkey->GetData();
-    cdata->moveto_begin();
+    cdata->MoveToBegin();
 
     int nTotalCell = 0;
-    cdata->read(&nTotalCell, sizeof(int));
+    cdata->Read(&nTotalCell, sizeof(int));
 
     RDouble *walldist = new RDouble[nTotalCell];
-    cdata->read(walldist, sizeof(RDouble) * nTotalCell);
+    cdata->Read(walldist, sizeof(RDouble) * nTotalCell);
     RDouble *nearestwallfacenormalx = new RDouble[nTotalCell];
-    cdata->read(nearestwallfacenormalx, sizeof(RDouble) * nTotalCell);
+    cdata->Read(nearestwallfacenormalx, sizeof(RDouble) * nTotalCell);
     RDouble *nearestwallfacenormaly = new RDouble[nTotalCell];
-    cdata->read(nearestwallfacenormaly, sizeof(RDouble) * nTotalCell);
+    cdata->Read(nearestwallfacenormaly, sizeof(RDouble) * nTotalCell);
     RDouble *nearestwallfacenormalz = new RDouble[nTotalCell];
-    cdata->read(nearestwallfacenormalz, sizeof(RDouble) * nTotalCell);
+    cdata->Read(nearestwallfacenormalz, sizeof(RDouble) * nTotalCell);
 
     ostringstream oss;
     oss << "Grid-" << iZone;

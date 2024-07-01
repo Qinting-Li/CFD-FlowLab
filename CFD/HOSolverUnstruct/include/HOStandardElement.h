@@ -50,12 +50,12 @@ public:
     HighOrderStandardElementBase(unsigned short iVTK_Type,unsigned short iIntegrationOrder);  //! import:VTK_Type and integrationOrder£¬define:xiIntegration,wtIntegration
 
     int GetVTK_Type(void) const {return VTK_Type; }; //Get StandardElementBase type
-    int GetNumberOfIntegrationPoint(void) const {return nIntegrationPoint;}          //Get integration point's number of StandardElementBase
-    int GetOrderExact(void){return integrationOrder;}                                //Get integrationOrder of  StandardElementBase
-    const RDouble* GetXiIntegrationCoor(void) const { return xiIntegration.data();}  //Get coord[Xi] Integration_point of StandardElementBase
-    const RDouble* GetEtIntegrationCoor(void) const { return etIntegration.data();}  //Get coord[Et] Integration_point of StandardElementBase
-    const RDouble* GetZtIntegrationCoor(void) const { return ztIntegration.data();}  //Get coord[Zt] Integration_point of StandardElementBase
-    const RDouble* GetWtIntegration(void) const { return wtIntegration.data();}  //Get weights of the integration points for StandardElementBase
+    int GetNumberOfIntegrationPoint(void) const {return nIntegrationPoint;}           //Get integration point's number of StandardElementBase
+    int GetOrderExact(void){return integrationOrder;}                                 //Get integrationOrder of  StandardElementBase
+    const RDouble * GetXiIntegrationCoor(void) const { return xiIntegration.data();}  //Get coord[Xi] Integration_point of StandardElementBase
+    const RDouble * GetEtIntegrationCoor(void) const { return etIntegration.data();}  //Get coord[Et] Integration_point of StandardElementBase
+    const RDouble * GetZtIntegrationCoor(void) const { return ztIntegration.data();}  //Get coord[Zt] Integration_point of StandardElementBase
+    const RDouble * GetWtIntegration(void) const { return wtIntegration.data();}      //Get weights of the integration points for StandardElementBase
 
     /*!
     * \brief Function, which determines the integration points for a triangle/quadrilateral/tetrahedron/pyramid/prism/hexahedron

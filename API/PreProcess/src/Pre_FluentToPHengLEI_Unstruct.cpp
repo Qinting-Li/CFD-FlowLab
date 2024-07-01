@@ -54,7 +54,7 @@ void Pre_FluentToPHengLEI_Unstruct::Conversion()
 void Pre_FluentToPHengLEI_Unstruct::ReadFluent(GridFormat_Fluent *&fluent_factory, int &nBlocks, const string &casefile)
 {
     fstream file;
-    file.open(casefile.c_str(), ios_base::in);
+    file.open(casefile.c_str(), ios_base::in | ios_base::binary);
     if (!file)
     {
         TK_Exit::FileOpenErrorExit(casefile);
@@ -185,6 +185,27 @@ void Pre_FluentToPHengLEI_Unstruct::AnalysisFluentKeyWord(GridFormat_Fluent *flu
             ReadFluentNodes(rawgrid, first_index, last_index, fluent_factory->GetDimension(), file);
         }
     }
+    else if (section_ID == FLUENT_SPACE::FLUENT_NODES_BINARY)
+    {
+        line = FindNextWord(line, word, separator);
+        from_string< int >(zone_id, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(first_index, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(last_index, word, std::hex);
+
+        int nodeType, nodeDimension;
+        line = FindNextWord(line, word, separator);
+        from_string< int >(nodeType, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(nodeDimension, word, std::hex);
+
+        RawGrid *rawgrid = fluent_factory->GetRawGrid();
+        ReadFluentNodesBinary(rawgrid, first_index, last_index, fluent_factory->GetDimension(), file);
+    }
     else if (section_ID == FLUENT_SPACE::FLUENT_EDGES)
     {
         line = FindNextWord(line, word, separator);
@@ -234,6 +255,28 @@ void Pre_FluentToPHengLEI_Unstruct::AnalysisFluentKeyWord(GridFormat_Fluent *flu
             }
         }
     }
+    else if (section_ID == FLUENT_SPACE::FLUENT_CELLS_BINARY)
+    {
+        line = FindNextWord(line, word, separator);
+        from_string< int >(zone_id, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(first_index, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(last_index, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(type, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(element_type, word, std::hex);
+
+        if (!element_type)
+        {
+            ReadFluentCellBinary(first_index, last_index, file);
+        }
+    }
     else if (section_ID == FLUENT_SPACE::FLUENT_FACES)
     {
         line = FindNextWord(line, word, separator);
@@ -259,6 +302,25 @@ void Pre_FluentToPHengLEI_Unstruct::AnalysisFluentKeyWord(GridFormat_Fluent *flu
 
             ReadFluentFace(fluent_factory, zone_id, first_index, last_index, bc_type, face_type, file);
         }
+    }
+    else if (section_ID == FLUENT_SPACE::FLUENT_FACES_BINARY)
+    {
+        line = FindNextWord(line, word, separator);
+        from_string< int >(zone_id, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(first_index, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(last_index, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(bc_type, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(face_type, word, std::hex);
+
+        ReadFluentFaceBinary(fluent_factory, zone_id, first_index, last_index, bc_type, face_type, file);
     }
     else if (section_ID == FLUENT_SPACE::FLUENT_PERIODICFACES)
     {
@@ -317,6 +379,20 @@ void Pre_FluentToPHengLEI_Unstruct::AnalysisFluentKeyWord(GridFormat_Fluent *flu
         string selfDefineBCName = word;
 
         fluent_factory->SetBoundaryName(zone_id, selfDefineBCName);
+
+        int frontBracket = count(line.begin(), line.end(), '(') + 2;
+        int closedBracket = count(line.begin(), line.end(), ')');
+        frontBracket = frontBracket - closedBracket;
+
+        while (frontBracket)
+        {
+            getline(file, line);
+
+            int frontBracket1 = count(line.begin(), line.end(), '(');
+            int closedBracket1 = count(line.begin(), line.end(), ')');
+
+            frontBracket = frontBracket + frontBracket1 - closedBracket1;
+        }
     }
     else if (section_ID == FLUENT_SPACE::FLUENT_CELLTREE)
     {
@@ -351,6 +427,16 @@ void Pre_FluentToPHengLEI_Unstruct::AnalysisFluentKeyWord(GridFormat_Fluent *flu
         from_string< int >(childZoneId, word, std::hex);
 
         ReadFluentFaceTree(first_index, last_index, file);
+    }
+    else if (section_ID == 3041)
+    {
+        line = FindNextWord(line, word, separator);
+        from_string< int >(first_index, word, std::hex);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(last_index, word, std::hex);
+
+        getline(file, line);
     }
     else
     {
@@ -403,6 +489,38 @@ void Pre_FluentToPHengLEI_Unstruct::ReadFluentNodes(RawGrid *rawgrid, int first_
 
         ++ i;
     } while (i <= last_index);
+}
+
+void Pre_FluentToPHengLEI_Unstruct::ReadFluentNodesBinary(RawGrid *rawgrid, int first_index, int last_index, int dimension, fstream &file)
+{
+    RDouble *x = rawgrid->GetX();
+    RDouble *y = rawgrid->GetY();
+    RDouble *z = rawgrid->GetZ();
+
+    char cbuf;
+    file.read(&cbuf, 1);
+
+    int iNode = first_index;
+    do
+    {
+        double xx, yy, zz;
+        file.read(reinterpret_cast<char *>(&xx), sizeof(double));
+        file.read(reinterpret_cast<char *>(&yy), sizeof(double));
+        if (dimension == TWO_D)
+        {
+            zz = 0.0;
+        }
+        else
+        {
+            file.read(reinterpret_cast<char *>(&zz), sizeof(double));
+        }
+
+        x[iNode - 1] = xx;
+        y[iNode - 1] = yy;
+        z[iNode - 1] = zz;
+
+        ++ iNode;
+    } while (iNode <= last_index);
 }
 
 void Pre_FluentToPHengLEI_Unstruct::ReadFluentFace(GridFormat_Fluent *fluent_factory, int zone_id, int first_index, int last_index, int bc_type, int face_type, fstream &file)
@@ -516,6 +634,85 @@ void Pre_FluentToPHengLEI_Unstruct::ReadFluentFace(GridFormat_Fluent *fluent_fac
         } while (i <= last_index);
     }
     //delete face_patch;
+}
+
+void Pre_FluentToPHengLEI_Unstruct::ReadFluentFaceBinary(GridFormat_Fluent *fluent_factory, int zone_id, int first_index, int last_index, int bc_type, int face_type, fstream &file)
+{
+    char cbuf;
+    file.read(&cbuf, 1);
+
+    int nTotalFace = last_index - first_index + 1;
+
+    FluentFacePatch *face_patch = new FluentFacePatch();
+    vector< FluentFacePatch* > &face_patchs = fluent_factory->GetFluentFacePatchS();
+
+    face_patchs.push_back(face_patch);
+    face_patch->SetZoneID(zone_id);
+    face_patch->SetBCType(bc_type);
+    face_patch->SetFaceType(face_type);
+    face_patch->SetNTotalFace(nTotalFace);
+
+    vector< vector<int> > &face2node = face_patch->GetFace2Node();
+    vector<int> &leftCellOfFace = face_patch->GetLeftCellOfFace();
+    vector<int> &rightCellOfFace = face_patch->GetRightCellOfFace();
+
+    vector<int> face_node;
+    int nodeNumber, nodeId, leftCell, rightCell;
+    if (face_type == 0 || face_type == 5)
+    {
+        int iFace = first_index;
+        do
+        {
+            file.read(reinterpret_cast<char *>(&nodeNumber), sizeof(int));
+            face_node.resize(nodeNumber);
+
+            for (int iNode = 1; iNode <= nodeNumber; ++ iNode)
+            {
+                file.read(reinterpret_cast<char *>(&nodeId), sizeof(int));
+                face_node[iNode - 1] = nodeId;
+            }
+            face2node.push_back(face_node);
+
+            file.read(reinterpret_cast<char *>(&leftCell), sizeof(int));
+            file.read(reinterpret_cast<char *>(&rightCell), sizeof(int));
+
+            if (bc_type == FLUENT_SPACE::INTERIOR && fluent_factory->GetDimension() == THREE_D)
+            {
+                SWAP(leftCell, rightCell);
+            }
+            leftCellOfFace.push_back(leftCell);
+            rightCellOfFace.push_back(rightCell);
+
+            ++ iFace;
+        } while (iFace <= last_index);
+    }
+    else
+    {
+        int iFace = first_index;
+        do
+        {
+            face_node.resize(face_type);
+
+            for (int iNode = 1; iNode <= face_type; ++ iNode)
+            {
+                file.read(reinterpret_cast<char *>(&nodeId), sizeof(int));
+                face_node[iNode - 1] = nodeId;
+            }
+            face2node.push_back(face_node);
+
+            file.read(reinterpret_cast<char *>(&leftCell), sizeof(int));
+            file.read(reinterpret_cast<char *>(&rightCell), sizeof(int));
+
+            if (bc_type == FLUENT_SPACE::INTERIOR && fluent_factory->GetDimension() == THREE_D)
+            {
+                SWAP(leftCell, rightCell);
+            }
+            leftCellOfFace.push_back(leftCell);
+            rightCellOfFace.push_back(rightCell);
+
+            ++ iFace;
+        } while (iFace <= last_index);
+    }
 }
 
 void Pre_FluentToPHengLEI_Unstruct::ReadFluentEdge(int first_index, int last_index, fstream &file)
@@ -635,6 +832,20 @@ void Pre_FluentToPHengLEI_Unstruct::ReadFluentCell(int first_index, int last_ind
             if (word == "") break;
         } while (true);
     } while (i <= last_index);
+}
+
+void Pre_FluentToPHengLEI_Unstruct::ReadFluentCellBinary(int first_index, int last_index, fstream &file)
+{
+    char cbuf;
+    file.read(&cbuf, 1);
+
+    int cellType;
+    int iCell = first_index;
+    do
+    {
+        file.read(reinterpret_cast<char *>(&cellType), sizeof(int));
+        ++ iCell;
+    } while (iCell <= last_index);
 }
 
 GridFormat_Fluent::GridFormat_Fluent()
@@ -972,7 +1183,7 @@ void GridFormat_Fluent::Convert2UnsGrid(UnstructGrid *grid)
     grid->CreateUnstructBCSet(nBCRegionUnstruct);
 
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int* bcRegionIDofBCFace = new int[nBoundFace];
+    int *bcRegionIDofBCFace = new int[nBoundFace];
     set<string>::iterator iter;
     
     count = 0;

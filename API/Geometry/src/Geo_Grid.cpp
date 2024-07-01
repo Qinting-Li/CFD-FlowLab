@@ -71,12 +71,12 @@ Grid::~Grid()
         FreeInterfaceField();
     }
 
-    if (interfaceFields){delete interfaceFields;    interfaceFields = NULL;};
+    //if (interfaceFields){delete interfaceFields;    interfaceFields = NULL;};
     delete interpointFields;    interpointFields = NULL;
 
     delete oversetInformationProxy;    oversetInformationProxy = NULL;
 
-    if (interfaceInfo){delete interfaceInfo;    interfaceInfo = NULL;};
+    //if (interfaceInfo){delete interfaceInfo;    interfaceInfo = NULL;};
     delete interpointInformation;    interpointInformation = NULL;
 
     if (IsFinestGrid())
@@ -242,7 +242,7 @@ LIB_EXPORT void Grid::RotateAboutAxis()
 {
     int nAxisRotateTimes = 0;
     PHSPACE::GlobalDataBase::GetData("nAxisRotateTimes", &nAxisRotateTimes, PHINT, 1);
-    if(nAxisRotateTimes < 1)
+    if (nAxisRotateTimes < 1)
     {
         return;
     }
@@ -256,11 +256,11 @@ LIB_EXPORT void Grid::RotateAboutAxis()
     z = this->GetZ();
 
     //! The axis rotating order.
-    int *axisRotateOrder = new int [nAxisRotateTimes];
+    int axisRotateOrder[100];
     GlobalDataBase::GetData("axisRotateOrder", axisRotateOrder, PHINT, nAxisRotateTimes);
 
     //! The axis rotating angles (degree), which are corresponding to the axis rotating order.
-    RDouble *axisRotateAngles = new RDouble [nAxisRotateTimes];
+    RDouble axisRotateAngles[100];
     GlobalDataBase::GetData("axisRotateAngles", axisRotateAngles, PHDOUBLE, nAxisRotateTimes);
 
     const int AXIS_X = 1;
@@ -273,7 +273,7 @@ LIB_EXPORT void Grid::RotateAboutAxis()
 
         RDouble cosinTheta = cos(rotateAngle);
         RDouble sinTheta   = sin(rotateAngle);
-        if(rotateAxis == AXIS_X)
+        if (rotateAxis == AXIS_X)
         {            
             for (int iNode = 0; iNode < nTotalNode; ++ iNode)
             {
@@ -283,7 +283,7 @@ LIB_EXPORT void Grid::RotateAboutAxis()
                 z[iNode] = -sinTheta  * oldY + cosinTheta * oldZ;
             }
         }
-        else if(rotateAxis == AXIS_Y)
+        else if (rotateAxis == AXIS_Y)
         {
             for (int iNode = 0; iNode < nTotalNode; ++ iNode)
             {
@@ -293,7 +293,7 @@ LIB_EXPORT void Grid::RotateAboutAxis()
                 z[iNode] = -sinTheta  * oldX + cosinTheta * oldZ;
             }
         }
-        else if(rotateAxis == AXIS_Z)
+        else if (rotateAxis == AXIS_Z)
         {
             for (int iNode = 0; iNode < nTotalNode; ++ iNode)
             {
@@ -308,8 +308,6 @@ LIB_EXPORT void Grid::RotateAboutAxis()
             TK_Exit::ExceptionExit("Error axis rotating!");
         }
     }
-    delete []axisRotateOrder;
-    delete []axisRotateAngles;
 
     RDouble xmin, ymin, zmin, xmax, ymax, zmax;
     xmin = ymin = zmin =   LARGE;
@@ -830,7 +828,7 @@ LIB_EXPORT void CommunicateSpecificArray(int level, string arrayName, int nEquat
             {
                 if (sendProcessor != receiveProcessor)
                 {
-                    streamsize nlen = sendBuffer->size();
+                    streamsize nlen = sendBuffer->Size();
 
                     //! Send the data to neighbors.
                     send(sendBuffer, receiveProcessor, nlen, requestContainer, tag);
@@ -858,7 +856,7 @@ LIB_EXPORT void CommunicateSpecificArray(int level, string arrayName, int nEquat
                 if (sendProcessor != receiveProcessor)
                 {
                     //! The data length of the received data is same to the length that send to the neighbor.
-                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->size();
+                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->Size();
 
                     //! Receive data from neighbors.
                     receive(receivedBuffer, sendProcessor, nlen, requestContainer, tag);

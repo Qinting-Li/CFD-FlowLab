@@ -31,6 +31,9 @@ private:
     //! Cell volume data, excluding ghosts.
     RDouble *vol; 
 
+    //! Cell skewness data, excluding ghosts.
+    RDouble *cellSkewness;
+
     //! Used for DES simulation ONLY: largest local grid length, distance of neighbor cell centers.
     RDouble *largestLocalGridLength;
 
@@ -53,6 +56,9 @@ public:
     //! Assign the given pointer to the Cell volume data.
     void SetCellVolume(RDouble *vol);
 
+    //! Assign the given pointer to the Cell skewness data.
+    void SetCellSkewness(RDouble *skewness);
+
     //! Assign the largest local grid spacing.
     void SetLargestLocalGridLength(RDouble *length);
 
@@ -70,6 +76,9 @@ public:
 
     //! Return the cell volume pointer.
     RDouble * GetCellVolume()  const;
+
+    //! Return the cell skewness pointer.
+    RDouble * GetCellSkewness()  const;
 
     //! Return the largest local grid spacing.
     RDouble * GetLargestLocalGridLength();

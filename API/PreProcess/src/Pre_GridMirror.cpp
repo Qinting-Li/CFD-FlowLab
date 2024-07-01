@@ -145,7 +145,7 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
 {
     /*if (numberOfZones > 1)
     {
-        cout<<"\n";
+        cout << "\n";
         cout << "Blocks > 1, Start to Combine Grids" << endl;
         CombinGrid * combinGrid = new CombinGrid(OutputGrid, numberOfZones);
 
@@ -179,7 +179,7 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
     for (int isize = 0; isize < sizes; ++ isize)
     {
         DataContainer *cdata = Gridlist[isize];
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
 
         int nblock = 0;
         PHRead(cdata, &nblock, 1);
@@ -347,7 +347,7 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
                 int bctype;
                 string bcName;
                 PHRead(cdata, &bctype, 1);
-                cdata->read_string(bcName);
+                cdata->ReadString(bcName);
 
                 bcrs[iFace] = new UnstructBCSet();
                 bcrs[iFace]->SetKey(bctype);
@@ -382,7 +382,7 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
             }
         }
 
-        delete cdata;
+        delete cdata;    cdata = nullptr;
     }
 
     /*fstream file;
@@ -493,7 +493,7 @@ void Pre_GridMirror::DumpStrGrid(string out_gfile)
     for (int isize = 0; isize < sizes; ++ isize)
     {
         DataContainer *cdata = Gridlist[isize];
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
 
         int nblock = 0;
         PHRead(cdata, &nblock, 1);
@@ -614,7 +614,7 @@ void Pre_GridMirror::DumpStrGrid(string out_gfile)
                 delete MirrorBCRegion;*/
             }
         }
-        delete cdata;
+        delete cdata;    cdata = nullptr;
     }
     
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
@@ -901,7 +901,7 @@ void Pre_GridMirror::CalSymmetryFace()
 
 void Pre_GridMirror::GridMirror()
 {
-    gridinfo->moveto_begin();
+    gridinfo->MoveToBegin();
     PHWrite(gridinfo, &BlockofEachProc, 1);
 
     for (int iZone = 0; iZone < BlockofEachProc; iZone ++)
@@ -1324,7 +1324,7 @@ void Pre_GridMirror::MirrorBCRegion()
                 if (bctype == PHENGLEI::INTERFACE)
                 {
                     PHWrite(gridinfo, &bctype, 1);
-                    gridinfo->write_string(bcName);
+                    gridinfo->WriteString(bcName);
 
                     int interFace2BoundaryFace = interFace2BoundaryFace_ordinary[iInterfae];
                     int interFace2ZoneID       = interFace2ZoneID_ordinary[iInterfae];
@@ -1351,7 +1351,7 @@ void Pre_GridMirror::MirrorBCRegion()
                     bctype = PHENGLEI::INTERFACE;
                     bcName = "Interface";
                     PHWrite(gridinfo, &bctype, 1);
-                    gridinfo->write_string(bcName);
+                    gridinfo->WriteString(bcName);
 
                     int interFace2BoundaryFace = iFace;
                     int interFace2ZoneID       = Gridindex + numberOfOriginalBlocks;
@@ -1380,7 +1380,7 @@ void Pre_GridMirror::MirrorBCRegion()
                 }
 
                 PHWrite(gridinfo, &bctype, 1);
-                gridinfo->write_string(bcName);
+                gridinfo->WriteString(bcName);
             }
         }
     }

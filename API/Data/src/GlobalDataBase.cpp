@@ -52,14 +52,14 @@ Data_Param * GlobalDataBase::GetDataPara()
 void GlobalDataBase::WriteString(DataContainer *cdata, const string &cs)
 {
     int nlen = static_cast<int>(cs.length());
-    cdata->write(&nlen, sizeof(int));
+    cdata->Write(&nlen, sizeof(int));
 
     char *data = new char[nlen+1];
 
     cs.copy(data, nlen);
     data[nlen] = '\0';
 
-    cdata->write(data, nlen+1);
+    cdata->Write(data, nlen+1);
 
     delete [] data;
 }
@@ -67,10 +67,10 @@ void GlobalDataBase::WriteString(DataContainer *cdata, const string &cs)
 void GlobalDataBase::ReadString(DataContainer *cdata, string &cs)
 {
     int nlen = 0;
-    cdata->read(&nlen, sizeof(int));
+    cdata->Read(&nlen, sizeof(int));
 
     char *data = new char[nlen+1];
-    cdata->read(data, nlen+1);
+    cdata->Read(data, nlen+1);
 
     cs = data;
 
@@ -81,7 +81,7 @@ void GlobalDataBase::WriteVoid(DataContainer *cdata, void *data, int type, int s
 {
     if (type == PHSTRING)
     {
-        string * mydata = reinterpret_cast<string *> (data);
+        string *mydata = reinterpret_cast<string *>(data);
         for (int i = 0; i < size; ++ i)
         {
             WriteString(cdata, mydata[i]);
@@ -89,27 +89,18 @@ void GlobalDataBase::WriteVoid(DataContainer *cdata, void *data, int type, int s
     }
     else if (type == PHINT)
     {
-        int *mydata = reinterpret_cast<int *> (data);
-        for (int i = 0; i < size; ++ i)
-        {
-            cdata->write(&mydata[i], sizeof(int));
-        }
+        int *mydata = reinterpret_cast<int *>(data);
+        cdata->Write(&mydata[0], size * sizeof(int));
     }
     else if (type == PHFLOAT)
     {
-        RFloat *mydata = reinterpret_cast<RFloat *> (data);
-        for (int i = 0; i < size; ++ i)
-        {
-            cdata->write(&mydata[i], sizeof(RFloat));
-        }
+        RFloat *mydata = reinterpret_cast<RFloat *>(data);
+        cdata->Write(&mydata[0], size * sizeof(RFloat));
     }
     else if (type == PHDOUBLE)
     {
-        RDouble *mydata = reinterpret_cast<RDouble *> (data);
-        for (int i = 0; i < size; ++ i)
-        {
-            cdata->write(&mydata[i], sizeof(RDouble));
-        }
+        RDouble *mydata = reinterpret_cast<RDouble *>(data);
+        cdata->Write(&mydata[0], size * sizeof(RDouble));
     }
 }
 
@@ -130,7 +121,7 @@ void GlobalDataBase::UpdateData(DataContainer *cdata, const string &name, int ty
         int *data = new int [size];
         for (int i = 0; i < size; ++ i)
         {
-            cdata->read(&data[i], sizeof(int));
+            cdata->Read(&data[i], sizeof(int));
         }
         UpdateData(name, data, type, size);
         delete [] data;
@@ -140,7 +131,7 @@ void GlobalDataBase::UpdateData(DataContainer *cdata, const string &name, int ty
         RFloat *data = new RFloat [size];
         for (int i = 0; i < size; ++ i)
         {
-            cdata->read(&data[i], sizeof(RFloat));
+            cdata->Read(&data[i], sizeof(RFloat));
         }
         UpdateData(name, data, type, size);
         delete [] data;
@@ -150,7 +141,7 @@ void GlobalDataBase::UpdateData(DataContainer *cdata, const string &name, int ty
         RDouble *data = new RDouble [size];
         for (int i = 0; i < size; ++ i)
         {
-            cdata->read(&data[i], sizeof(RDouble));
+            cdata->Read(&data[i], sizeof(RDouble));
         }
         UpdateData(name, data, type, size);
         delete [] data;
@@ -164,7 +155,7 @@ void GlobalDataBase::CompressData(DataContainer *&cdata)
 
     uint_t ndata = basep->size();
 
-    cdata->write(&ndata, sizeof(uint_t));
+    cdata->Write(&ndata, sizeof(uint_t));
 
     for (iter = basep->begin(); iter != basep->end(); ++ iter)
     {
@@ -172,8 +163,8 @@ void GlobalDataBase::CompressData(DataContainer *&cdata)
         int size = iter->GetSize();
 
         WriteString(cdata, iter->GetName());
-        cdata->write(&type, sizeof(int));
-        cdata->write(&size, sizeof(int));
+        cdata->Write(&type, sizeof(int));
+        cdata->Write(&size, sizeof(int));
         WriteVoid(cdata, iter->GetData(), type, size);
     }
 }
@@ -181,10 +172,10 @@ void GlobalDataBase::CompressData(DataContainer *&cdata)
 void GlobalDataBase::DecompressData(DataContainer *cdata)
 {
     //! It seems that move cdata to the beginning is very important.
-    cdata->moveto_begin();
+    cdata->MoveToBegin();
 
     uint_t ndata = 0;
-    cdata->read(&ndata, sizeof(uint_t));
+    cdata->Read(&ndata, sizeof(uint_t));
 
     for (uint_t i = 0; i < ndata; ++ i)
     {
@@ -193,8 +184,8 @@ void GlobalDataBase::DecompressData(DataContainer *cdata)
         int size;
 
         ReadString(cdata, name);
-        cdata->read(&type, sizeof(int));
-        cdata->read(&size, sizeof(int));
+        cdata->Read(&type, sizeof(int));
+        cdata->Read(&size, sizeof(int));
         UpdateData(cdata, name, type, size);
     }
 }

@@ -281,17 +281,17 @@ void TestBasisFunction()
     const RDouble refCoord[3] = { 0.1, 0.2, 0.3 };
 
     std::cout << "monomial basis function:" << std::endl;
-    for(int i = 0; i < 10; ++i)
+    for (int i = 0; i < 10; ++i)
     {
         std::cout <<  MonomialBasis(refCoord, i) << " ";
     }
     std::cout << std::endl;
 
-    for(int j = 0; j < 3; ++j)
+    for (int j = 0; j < 3; ++j)
     {
         std::cout << "monomial basis function grad:" << j << std::endl;
 
-        for(int i = 0; i < 10; ++i)
+        for (int i = 0; i < 10; ++i)
         {
             std::cout <<  MonomialBasisGrad(refCoord, i, j) << " ";
         }

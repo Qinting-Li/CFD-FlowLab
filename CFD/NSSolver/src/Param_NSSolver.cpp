@@ -193,14 +193,14 @@ LIB_EXPORT void Param_NSSolver::Init()
         isUseLocalCFL = GlobalDataBase::GetIntParaFromDB("isUseLocalCFL");
     }
 
-    //the reference length for computation of Knudsen number.
+    //! the reference length for computation of Knudsen number.
     knLength = 1.0;
     if (GlobalDataBase::IsExist("knudsenLength", PHDOUBLE, 1))
     {
         knLength = GlobalDataBase::GetDoubleParaFromDB("knudsenLength");
     }
 
-    //the flag of using the non-equilibrium condition.
+    //! the flag of using the non-equilibrium condition.
     isUseNoneqCond = 0;
     if (GlobalDataBase::IsExist("isUseNoneqCond", PHINT, 1))
     {

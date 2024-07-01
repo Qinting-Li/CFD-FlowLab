@@ -136,6 +136,7 @@ private:
     int nEquation;
     int nChemical;
     int nPrecondition;
+    int isUnsteady;
     int nTemperatureModel;
     int nEntrFix;
     int nNitrogenIndex;
@@ -187,6 +188,7 @@ public:
     void SetNumberOfLaminar(const int nLaminar) {this->nLaminar = nLaminar;}
     void Setnm(const int nm) {this->nm = nm;}
     void SetIfPrecondition(const int nPrecondition) {this->nPrecondition = nPrecondition;}
+    void SetIfIsUnsteady(const int isUnsteady) {this->isUnsteady = isUnsteady;}
     void SetIfIdealState(const int nIdealState) { this->nIdealState = nIdealState; }
     void SetPreconCoefficient(const RDouble kPrec) { this->kPrec = kPrec; }
     void SetNumberOfChemical(const int nChemical) {this->nChemical = nChemical;}
@@ -249,6 +251,7 @@ public:
 
     int GetEntropyFixMethod() {return this->nEntrFix;}
     int GetIfPrecondition() {return this->nPrecondition;}
+    int GetIfIsUnsteady() {return this->isUnsteady;}
     int GetIfIdealState() { return this->nIdealState; }
     RDouble GetPreconCoefficient() { return this->kPrec; }
     int GetLimiterType(){ return this->limiterType;}    //! GMRESnolim
@@ -282,8 +285,8 @@ public:
     int* GetLeftQSign() {return this->qlsign;}    //! GMRESSign GMRESnolim
     int* GetRightQSign() {return this->qrsign;}   //! GMRESSign GMRESnolim
 
-    RDouble** GetLeftTemperature() {return this->tl;}
-    RDouble** GetRightTemperature() {return this->tr;}
+    RDouble ** GetLeftTemperature() {return this->tl;}
+    RDouble ** GetRightTemperature() {return this->tr;}
 
     RDouble **GetFlux() {return this->flux;}
     RDouble *GetFaceNormalX() {return this->xfn;}

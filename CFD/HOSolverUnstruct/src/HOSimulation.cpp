@@ -64,11 +64,11 @@ void HOSimulation::Run()
 
     InitGeometry();
     
-    SwapGeommetry();
+    SwapGeometry();
 
     InitOversetGrid();
 
-    if(PHMPI::CurrentProcessorIsGridProcessor())
+    if (PHMPI::CurrentProcessorIsGridProcessor())
     {
         return;
     }
@@ -126,7 +126,7 @@ void HOSimulation::UpdateOuterIterationStep(int &outnstep)
     if (ifStaticsFlowField == 1)
     {
         int startStatisticStep = GlobalDataBase::GetIntParaFromDB("startStatisticStep");
-        if(outnstep >= startStatisticStep)
+        if (outnstep >= startStatisticStep)
         {
             int nStatisticalStep = GlobalDataBase::GetIntParaFromDB("nStatisticalStep");
             ++ nStatisticalStep;
@@ -182,9 +182,9 @@ void HOSimulation::ComputeWallDistance()
     InitGeometry();
 }
 
-void HOSimulation::SwapGeommetry()
+void HOSimulation::SwapGeometry()
 {
-    this->region->SwapGeommetry();
+    this->region->SwapGeometry();
 }
 
 void HOSimulation::InitGeometry()
@@ -303,7 +303,7 @@ void HOSimulation::MultiGridInitFlow()
     if (nMGLevel <= 1) return;
 
     int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
-    if(outnstep > 0)
+    if (outnstep > 0)
     {
 //      int newnstep = outnstep;
 //      GlobalDataBase::UpdateData("newnstep",&newnstep, PHINT, 1);
@@ -311,7 +311,7 @@ void HOSimulation::MultiGridInitFlow()
     }
 
     int mgInitStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("mgInitStep");
-    if(mgInitStep <= 0) return;
+    if (mgInitStep <= 0) return;
 
     int mgvist = GlobalDataBase::GetIntParaFromDB("mgvist");
     int nSolver = 1;    //! Consider NS solver only.

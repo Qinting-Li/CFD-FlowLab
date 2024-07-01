@@ -745,7 +745,7 @@ void PH_Read(fstream &file, void *data, int size, int proc)
 
 void PH_Read(fstream &file, void *data, int size)
 {
-    file.read(reinterpret_cast<char*>(data), size);
+    file.read(reinterpret_cast<char *>(data), size);
 }
 
 void PH_ReadBcastInteger(fstream &file, void *data, int size, int proc)
@@ -1213,7 +1213,7 @@ void PH_BcastNonBlocking(DataContainer *&cdata, int bcastProcessor, int tag)
     CharVecSizeType dataLength;
     if (myIDTmp == bcastProcessor)
     {
-        dataLength = cdata->size();
+        dataLength = cdata->Size();
     }
     PH_BcastNonBlocking(&dataLength, 1, bcastProcessor, 0);
 
@@ -1258,7 +1258,7 @@ void PH_BcastNonBlocking(DataContainer *&cdata, int bcastProcessor, int tag)
     //! Step3: Translating.
     if (myIDTmp != bcastProcessor)
     {
-        if (cdata) delete cdata;
+        if (cdata) delete cdata;    cdata = nullptr;
 
         cdata = receivedDataBuffer[0];
     }
@@ -1306,7 +1306,7 @@ void PH_BcastComposite(DATA_COMPRESS dt_c, DATA_DECOMPRESS dt_d, int proc, int t
         dt_d(cdata);
     }
 
-    delete cdata;
+    delete cdata;    cdata = nullptr;
 }
 
 void PH_BcastString(string &cs, int processor, int tag)
@@ -1445,14 +1445,14 @@ void StreamToActionKey(ActionKey *actkey, ostringstream &oss)
     if (actkey)
     {
         DataContainer *cdata = actkey->GetData();
-        cdata->moveto_begin();
-        cdata->write(&oss);
+        cdata->MoveToBegin();
+        cdata->Write(&oss);
     }
 }
 
 void DataCharToString(DataContainer *cdata, string &str)
 {
-    cdata->to_string(str);
+    cdata->ToString(str);
 }
 
 int GetSendRecvTag(ActionKey *actkey, int iZone)
@@ -1595,16 +1595,16 @@ void PH_AllreduceSepMode(int *sendingBuffer, int *receivingBuffer, int numberOfE
 
     if (myIDTmp == serverTmp)
     {
-        cdata->write(receivingBuffer, numberOfElements * sizeof(int));
+        cdata->Write(receivingBuffer, numberOfElements * sizeof(int));
     }
 
     PH_BcastByServerSepMode(cdata);
 
-    cdata->moveto_begin();
+    cdata->MoveToBegin();
 
-    cdata->read(receivingBuffer, numberOfElements * sizeof(int));
+    cdata->Read(receivingBuffer, numberOfElements * sizeof(int));
 
-    delete cdata;
+    delete cdata;        cdata = nullptr;
 
     //ostringstream oss1;
     //oss1 << "After all reduce, sendingBuffer = " << receivingBuffer[0] << endl;
@@ -1704,16 +1704,16 @@ void PH_AllreduceSepMode(float *sendingBuffer, float *receivingBuffer, int numbe
 
     if (myIDTmp == serverTmp)
     {
-        cdata->write(receivingBuffer, numberOfElements * sizeof(int));
+        cdata->Write(receivingBuffer, numberOfElements * sizeof(int));
     }
 
     PH_BcastByServerSepMode(cdata);
 
-    cdata->moveto_begin();
+    cdata->MoveToBegin();
 
-    cdata->read(receivingBuffer, numberOfElements * sizeof(int));
+    cdata->Read(receivingBuffer, numberOfElements * sizeof(int));
 
-    delete cdata;
+    delete cdata;    cdata = nullptr;
 
     //ostringstream oss1;
     //oss1 << "After all reduce, sendingBuffer = " << receivingBuffer[0] << endl;
@@ -1813,16 +1813,16 @@ void PH_AllreduceSepMode(double *sendingBuffer, double *receivingBuffer, int num
 
     if (myIDTmp == serverTmp)
     {
-        cdata->write(receivingBuffer, numberOfElements * sizeof(double));
+        cdata->Write(receivingBuffer, numberOfElements * sizeof(double));
     }
 
     PH_BcastByServerSepMode(cdata);
 
-    cdata->moveto_begin();
+    cdata->MoveToBegin();
 
-    cdata->read(receivingBuffer, numberOfElements * sizeof(double));
+    cdata->Read(receivingBuffer, numberOfElements * sizeof(double));
 
-    delete cdata;
+    delete cdata;    cdata = nullptr;
 
     //ostringstream oss1;
     //oss1 << "After all reduce, sendingBuffer = " << receivingBuffer[0] << endl;

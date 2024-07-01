@@ -13,7 +13,7 @@
 //! @brief     DataStruct_KDNode defines a "Node" data structure used by KDTree
 //!            The "node" has its coordinates(x, y, z) range, level in the tree, and pointer to its "son" node.
 //!            Data is stored in node's item.
-//! @author    hekun.
+//! @author    He Kun.
 #include "Precision.h"
 
 #pragma once
@@ -40,7 +40,7 @@ public:
     //! The right tree.
     KDNode *right;
 
-    void *data;
+    int data;
 
 public:
     //! Constructor, default dimension is three.
@@ -48,9 +48,9 @@ public:
     {
         this->dir = dir;
         pos = new RDouble[dir];
-        left  = NULL;
-        right = NULL;
-        data = NULL;
+        left  = nullptr;
+        right = nullptr;
+        data = 0;
     };
 
     //! Constructor, set with coordinates and data.
@@ -63,9 +63,9 @@ public:
             this->pos[i] = pos[i];
         }
 
-        left  = NULL;
-        right = NULL;
-        data = NULL;
+        left  = nullptr;
+        right = nullptr;
+        data = 0;
     };
 
     //! Constructor, set with another node.
@@ -100,9 +100,21 @@ public:
     //! Destructor.
     ~DataStruct_KDNode()
     {
-        delete [] pos;
-        delete left;
-        delete right;
+        if (pos) 
+        {
+            delete [] pos;
+            pos = nullptr;
+        }
+        if (left)
+        {
+            delete left;
+            left = nullptr;
+        }
+        if (right)
+        {
+            delete right;
+            right = nullptr;
+        }
     };
 
     //! Add an Adt node under the current node.

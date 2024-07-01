@@ -4,20 +4,26 @@ namespace PHSPACE
 {
 LIB_EXPORT Geo_DynamicGridMetrics_Unstruct::Geo_DynamicGridMetrics_Unstruct()
 {
-    voln = NULL;
-    vgn  = NULL;
-    xfv  = NULL;
-    yfv  = NULL;
-    zfv  = NULL;
+    voln = nullptr;
+    vgn  = nullptr;
+    xfv  = nullptr;
+    yfv  = nullptr;
+    zfv  = nullptr;
+    xcv  = nullptr;
+    ycv  = nullptr;
+    zcv  = nullptr;
 }
 
 LIB_EXPORT Geo_DynamicGridMetrics_Unstruct::~Geo_DynamicGridMetrics_Unstruct()
 {
-    if (voln) delete [] voln; voln = NULL;
-    if (vgn) delete [] vgn ; vgn  = NULL;
-    if (xfv) delete [] xfv ; xfv  = NULL;
-    if (yfv) delete [] yfv ; yfv  = NULL;
-    if (zfv) delete [] zfv ; zfv  = NULL;
+    if (voln) delete [] voln; voln = nullptr;
+    if (vgn)  delete [] vgn ; vgn  = nullptr;
+    if (xfv)  delete [] xfv ; xfv  = nullptr;
+    if (yfv)  delete [] yfv ; yfv  = nullptr;
+    if (zfv)  delete [] zfv ; zfv  = nullptr;
+    if (xcv)  delete [] xcv ; xcv  = nullptr;
+    if (ycv)  delete [] ycv ; ycv  = nullptr;
+    if (zcv)  delete [] zcv ; zcv  = nullptr;
 }
 
 }

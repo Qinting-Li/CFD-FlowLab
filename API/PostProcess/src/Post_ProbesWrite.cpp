@@ -37,7 +37,7 @@ LIB_EXPORT void Post_ProbesWrite::Run()
 
     ServerProbesWrite(actkey);
     PostProbesWrite(actkey);
-    delete actkey;
+    delete actkey;    actkey = nullptr;
     this->Clear();
 }
 
@@ -52,7 +52,7 @@ void Post_ProbesWrite::ServerProbesWrite(ActionKey *actkey)
     for (int iZone =  0; iZone < nZones; ++ iZone)
     {
         DataContainer *cdata = actkey->GetData();
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
 
         int send_proc = GetZoneProcessorID(iZone);
         recv_proc = GetServerProcessorID();

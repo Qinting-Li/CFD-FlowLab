@@ -1015,7 +1015,7 @@ void SampleLocationInfo::ReadProbesData()
     else
     {
         ostringstream oss;
-        oss<<"Error: the total number of monitored probes does not match the number of coordinates !" <<endl;
+        oss << "Error: the total number of monitored probes does not match the number of coordinates !" << endl;
         TK_Exit::ExceptionExit(oss);
     }
 
@@ -1082,7 +1082,7 @@ void SampleLocationInfo::ReadLinesData()
     else
     {
         ostringstream oss;
-        oss<<"Error: the total number of monitored probes does not match the number of coordinates !" <<endl;
+        oss << "Error: the total number of monitored probes does not match the number of coordinates !" << endl;
         TK_Exit::ExceptionExit(oss);
     }
 
@@ -1157,7 +1157,7 @@ void SampleLocationInfo::ReadSurfacesData()
     else
     {
         ostringstream oss;
-        oss<<"Error: the total number of monitored probes does not match the number of coordinates !" <<endl;
+        oss << "Error: the total number of monitored probes does not match the number of coordinates !" << endl;
         TK_Exit::ExceptionExit(oss);
     }
 
@@ -1287,7 +1287,7 @@ void SampleLocationInfo::ServerCollectionProbesData()
     DataContainer *cdata = new DataContainer();
     int nTotalProbes = GetTotalProbesNumber();
 
-    cdata->moveto_begin();
+    cdata->MoveToBegin();
     RDouble distance;
     int cellZoneID, cellType, cellID, cellNI, cellNJ, cellNK;
     vector <RDouble> coordinates;
@@ -1334,7 +1334,7 @@ void SampleLocationInfo::ServerCollectionProbesData()
     {
         int tag = myid;
         send(cdata, serverTmp, tag);
-        delete cdata;
+        delete cdata;    cdata = nullptr;
     }
     else
     {
@@ -1344,9 +1344,9 @@ void SampleLocationInfo::ServerCollectionProbesData()
 
             if (serverTmp != iProc)
             {
-                if (cdata != NULL)
+                if (cdata != nullptr)
                 {
-                    delete cdata;
+                    delete cdata;    cdata = nullptr;
                 }
                 cdata = new DataContainer();
                 receive(cdata, iProc, tag);
@@ -1356,7 +1356,7 @@ void SampleLocationInfo::ServerCollectionProbesData()
                 continue;
             }
             int nTotalProbesOfProcessor = GetTotalProbesNumber();
-            cdata->moveto_begin();
+            cdata->MoveToBegin();
 
             int processorOfminDisResRecv = 0;
             RDouble distanceRecv;
@@ -1447,8 +1447,7 @@ void SampleLocationInfo::ServerCollectionProbesData()
                 }
             }
         }
-        delete cdata;
-        cdata = NULL;
+        delete cdata;    cdata = nullptr;
     }
 }
 
@@ -1470,15 +1469,15 @@ void SampleLocationInfo::CheckInvalidProbesData()
             std::ostringstream oss;
             if (dataMonitorType == PROBESMONITOR)
             {
-                oss << " Warning: the monitored probe " << "(x, y, z) = " << coordinates[0] << " " << coordinates[1] << " " << coordinates[2] << " " << " is not in the computational domain! "<< endl;
+                oss << " Warning: the monitored probe " << "(x, y, z) = " << coordinates[0] << " " << coordinates[1] << " " << coordinates[2] << " " << " is not in the computational domain! " << endl;
             }
             else if (dataMonitorType == LINESMONITOR)
             {
-                oss << " Warning: the monitored probe " << "(x, y, z) = " << coordinates[0] << " " << coordinates[1] << " " << coordinates[2] << " " << " of line "<< lineID <<" is not in the computational domain! "<< endl;
+                oss << " Warning: the monitored probe " << "(x, y, z) = " << coordinates[0] << " " << coordinates[1] << " " << coordinates[2] << " " << " of line " << lineID << " is not in the computational domain! " << endl;
             }
             else if (dataMonitorType == SURFACESMONITOR)
             {
-                oss << " Warning: the monitored probe " << "(x, y, z) = " << coordinates[0] << " " << coordinates[1] << " " << coordinates[2] << " " << " of surface "<< surfaceID <<" is not in the computational domain! "<< endl;
+                oss << " Warning: the monitored probe " << "(x, y, z) = " << coordinates[0] << " " << coordinates[1] << " " << coordinates[2] << " " << " of surface " << surfaceID << " is not in the computational domain! " << endl;
             }
             else
             {
@@ -1495,15 +1494,15 @@ void SampleLocationInfo::CheckInvalidProbesData()
         std::ostringstream oss;
         if (dataMonitorType == PROBESMONITOR)
         {
-            oss << " Error: there are " << count << " invalid probes, please modify the probes define file!"<< endl;
+            oss << " Error: there are " << count << " invalid probes, please modify the probes define file!" << endl;
         }
         else if (dataMonitorType == LINESMONITOR)
         {
-            oss << " Error: there are " << count << " invalid probes, please modify the lines define file!"<< endl;
+            oss << " Error: there are " << count << " invalid probes, please modify the lines define file!" << endl;
         }
         else if (dataMonitorType == SURFACESMONITOR)
         {
-            oss << " Error: there are " << count << " invalid probes, please modify the surfaces define file!"<< endl;
+            oss << " Error: there are " << count << " invalid probes, please modify the surfaces define file!" << endl;
         }
         else
         {
@@ -1534,12 +1533,12 @@ void SampleLocationInfo::BroadcastProbesData()
         DecompressProbesData(cdata);
     }
 
-    delete cdata;
+    delete cdata;    cdata = nullptr;
 }
 
 void SampleLocationInfo::CompressProbesData(DataContainer *cdata)
 {
-    cdata->moveto_begin();
+    cdata->MoveToBegin();
 
     int nTotalProbes = GetTotalProbesNumber();
     PHWrite(cdata, nTotalProbes);
@@ -1564,7 +1563,7 @@ void SampleLocationInfo::CompressProbesData(DataContainer *cdata)
 
 void SampleLocationInfo::DecompressProbesData(DataContainer *cdata)
 {
-    cdata->moveto_begin();
+    cdata->MoveToBegin();
     sampleLocationInfo.resize(0);
 
     int nTotalProbesRecv;

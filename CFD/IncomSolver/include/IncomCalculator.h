@@ -39,25 +39,24 @@ namespace PHSPACE
         virtual int GetSolverIndex() { return this->solverIndex; }
         virtual int GetSolverIndex(int iEquation);
 
-        virtual void calculateLinearEquation(Grid* grid, int iEquation,
-            RDouble* x, RDouble* diagCoef, RDouble* b, RDouble* upACOFFace, RDouble* downACOFFace);
+        virtual void calculateLinearEquation(Grid *grid, int iEquation,
+            RDouble *x, RDouble *diagCoef, RDouble *b, RDouble *upACOFFace, RDouble *downACOFFace);
 
-        virtual void SetAxEqualbCalculator(LinearEquationSystemCalculator* hypreAxEqbSolverIn);
+        virtual void SetAxEqualbCalculator(LinearEquationSystemCalculator *hypreAxEqbSolverIn);
 
-        virtual void CalcRes(Grid* grid, int iEquation,
-            RDouble* x, RDouble* diagCoef, RDouble* b, RDouble* upACOFFace, RDouble* downACOFFace);
+        virtual void CalcRes(Grid *grid, int iEquation, RDouble *x, RDouble *diagCoef, RDouble *b, RDouble *upACOFFace, RDouble *downACOFFace);
 
+        void SkewnessCorrection(Grid *grid, RDouble *phi, RDouble *dphidx, RDouble *dphidy, RDouble *dphidz);
 
-        void SkewnessCorrection(Grid*  grid, RDouble* phi, RDouble* dphidx, RDouble* dphidy, RDouble* dphidz);
+        void FaceGradCorrection(Grid *grid, RDouble *dphidxf, RDouble *dphidyf, RDouble *dphidzf, RDouble *phi, RDouble *dphidx, RDouble *dphidy, RDouble *dphidz);
 
-        void FaceGradCorrection(Grid*  grid, RDouble* dphidxf, RDouble* dphidyf, RDouble* dphidzf, RDouble* phi, RDouble* dphidx, RDouble* dphidy, RDouble* dphidz);
+        void FaceValueCorretion(Grid *grid, RDouble *dphidxf, RDouble *dphidyf, RDouble *dphidzf, RDouble *phif, RDouble *phi);
 
-        void FaceValueCorretion(Grid*  grid, RDouble* dphidxf, RDouble* dphidyf, RDouble* dphidzf, RDouble* phif, RDouble* phi);
+        void GradCorrection(Grid *grid, RDouble *phif, RDouble *phi, RDouble *dphidx, RDouble *dphidy, RDouble *dphidz);
 
-        void GradCorrection(Grid*  grid, RDouble* phif, RDouble* phi, RDouble* dphidx, RDouble* dphidy, RDouble* dphidz);
-
-        virtual void GradientCalculation(Grid*  grid, string phiName, string dphidxName, string dphidyName, string dphidzName, bool isComm = false);
-        void calcFaceWeight(Grid*  grid);
+        virtual void GradientCalculation(Grid *grid, string phiName, string dphidxName, string dphidyName, string dphidzName, bool isComm = false);
+        
+        void calcFaceWeight(Grid *grid);
     public:
 
         void CompressAnInterfaceVar(RDouble *field);
@@ -68,11 +67,11 @@ namespace PHSPACE
         void CompressAnInterfaceVar(DataContainer *&dataContainer, RDouble *field, Grid *gridIn, const int &zoneIndex, const int &neighborZoneIndex);
         void DecompressAnInterfaceVar(DataContainer *&dataContainer, RDouble *field, Grid *gridIn, const int &zoneIndex, const int &neighborZoneIndex);
 
-        void InitializeMatrixACoeff(Grid* gridIn);
-        void InitializeBCoeff(Grid* gridIn);
+        void InitializeMatrixACoeff(Grid *gridIn);
+        void InitializeBCoeff(Grid *gridIn);
 
     public:
-        LinearEquationSystemCalculator* AxEqualbCalculator;
+        LinearEquationSystemCalculator *AxEqualbCalculator;
 
         int solverIndex;
 

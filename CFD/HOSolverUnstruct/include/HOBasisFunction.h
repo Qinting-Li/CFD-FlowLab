@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      HOBasisFunction.h
 //! @brief     basis function, such as monomial, orthogonalized etc.
-//! @author    liming, gxq, Wan yunbo, Xu gang.
+//! @author    Li Ming, Gong Xiaoquan, Wan Yunbo, Xu Gang.
 //! @date      2019-10-17
 //! @version   A001
 

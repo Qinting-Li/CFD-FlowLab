@@ -181,7 +181,7 @@ void HoleGrid::MeasureBoxAndCapsual()
         holeLocalFrame = grid->GetLocalFrame();
     }
 
-    for(int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i)
     {
         PH_Bcast(& holeLocalFrame[i][0], 4 * sizeof(RDouble), iProc, 0);
     }
@@ -300,7 +300,7 @@ void HoleGrid::ProbeBorderCell(int iType, int jType)
     delete [] friendZone ; friendZone  = NULL;
 
     uint_t numberOfPoints = myPoint.size();
-    for(int pCounter = 0; pCounter < numberOfPoints; ++ pCounter)
+    for (int pCounter = 0; pCounter < numberOfPoints; ++ pCounter)
     {
         int zoneIndex = myZone[pCounter];
         int globalPointLabel = myPoint[pCounter];
@@ -317,7 +317,7 @@ LIB_EXPORT int HoleGrid::GetCellColor(RDouble x, RDouble y, RDouble z, RDouble f
     vector< RDouble > xi, yi, zi, xs, ys, zs;
 
     vector< RDouble > & box = * this->box;
-    if(x < box[0] || x > box[1] || y < box[2] || y > box[3] || z < box[4] || z > box[5])
+    if (x < box[0] || x > box[1] || y < box[2] || y > box[3] || z < box[4] || z > box[5])
     {
         return GENERIC_COLOR;
     }
@@ -446,20 +446,20 @@ void HoleGrid::Radial_Triangle_Intersect(vector<RDouble> & pst, vector<RDouble> 
     vector< vector<RDouble> > amer(4, vector<RDouble>(4));
 
     RDouble accumulator = 0.0;
-    for(int i = 0; i < 3; ++ i)
+    for (int i = 0; i < 3; ++ i)
     {
         direct[i] = ped[i] - pst[i];
         accumulator += direct[i] * direct[i];
     }
     accumulator = 1.0 / sqrt(accumulator);
-    for(int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i)
     {
         direct[i] *= accumulator;
     }
 
-    for(int iTriangle = 0; iTriangle < numberOfTriangles; ++iTriangle)
+    for (int iTriangle = 0; iTriangle < numberOfTriangles; ++iTriangle)
     {
-        for(int j = 0; j < 3; ++j)
+        for (int j = 0; j < 3; ++j)
         {
             amer[0][j] = xqd[j+iTriangle];
             amer[1][j] = yqd[j+iTriangle];
@@ -467,7 +467,7 @@ void HoleGrid::Radial_Triangle_Intersect(vector<RDouble> & pst, vector<RDouble> 
             amer[3][j] = 1.0;
         }
 
-        for(int i = 0; i < 3; ++i)
+        for (int i = 0; i < 3; ++i)
         {
             amer[i][3] = -direct[i];
             bb[i] = pst[i];
@@ -478,9 +478,9 @@ void HoleGrid::Radial_Triangle_Intersect(vector<RDouble> & pst, vector<RDouble> 
         GaussElimination(amer, bb, 4, xx, flag);
         if (flag == 0) continue;
 
-        if(xx[0] > 0.0 &&  xx[1] > 0.0 &&  xx[2] > 0.0 &&  xx[3] > 0.0)
+        if (xx[0] > 0.0 && xx[1] > 0.0 && xx[2] > 0.0 && xx[3] > 0.0)
         {
-            for(int i = 0; i < 3; ++i)
+            for (int i = 0; i < 3; ++i)
             {
                 pp_ist[3 * pCounter + i] = pst[i] + direct[i] * xx[3];
             }
@@ -497,14 +497,14 @@ void HoleGrid::GaussElimination(vector< vector< RDouble > > & a, vector< RDouble
     flag = 1;
     vector< int > js(n);
 
-    for(int k = 0; k < n-1; ++k)
+    for (int k = 0; k < n-1; ++k)
     {
         RDouble d = 0.0;
-        for(int i = k; i < n; ++i)
+        for (int i = k; i < n; ++i)
         {
-            for(int j = k; j < n; ++j)
+            for (int j = k; j < n; ++j)
             {
-                if(abs(a[i][j]) > d)
+                if (abs(a[i][j]) > d)
                 {
                     d = abs(a[i][j]);
                     js[k] = j;
@@ -521,7 +521,7 @@ void HoleGrid::GaussElimination(vector< vector< RDouble > > & a, vector< RDouble
         {
             if (js[k] != k)
             {
-                for(int i = 0; i < n; ++i)
+                for (int i = 0; i < n; ++i)
                 {
                     RDouble t = a[i][k];
                     a[i][k] = a[i][js[k]];
@@ -529,9 +529,9 @@ void HoleGrid::GaussElimination(vector< vector< RDouble > > & a, vector< RDouble
                 }
             }
 
-            if(is != k)
+            if (is != k)
             {
-                for(int j = k; j < n; ++j)
+                for (int j = k; j < n; ++j)
                 {
                     RDouble t = a[k][j];
                     a[k][j] = a[is][j];
@@ -544,19 +544,19 @@ void HoleGrid::GaussElimination(vector< vector< RDouble > > & a, vector< RDouble
             }
         }
 
-        if(flag == 0) return;
+        if (flag == 0) return;
 
         RDouble sfn = 1.0/a[k][k];
-        for(int j = k+1; j < n; ++j)
+        for (int j = k+1; j < n; ++j)
         {
             a[k][j] *= sfn;
         }
 
         b[k] *= sfn;
 
-        for(int i = k+1; i < n; ++i)
+        for (int i = k+1; i < n; ++i)
         {
-            for(int j = k+1; j < n; ++j)
+            for (int j = k+1; j < n; ++j)
             {
                 a[i][j] -= a[i][k]*a[k][j];
             }
@@ -571,10 +571,10 @@ void HoleGrid::GaussElimination(vector< vector< RDouble > > & a, vector< RDouble
     }
 
     x[n-1] = b[n-1]/a[n-1][n-1];
-    for(int i = n-2; i >= 0; --i)
+    for (int i = n-2; i >= 0; --i)
     {
         RDouble t = 0;
-        for(int j = i+1; j < n; ++j)
+        for (int j = i+1; j < n; ++j)
         {
             t += a[i][j]*x[j];
         }
@@ -582,9 +582,9 @@ void HoleGrid::GaussElimination(vector< vector< RDouble > > & a, vector< RDouble
     }
 
     js[n-1] = n-1;
-    for(int k = n-1; k >= 0; --k)
+    for (int k = n-1; k >= 0; --k)
     {
-        if(js[k] != k)
+        if (js[k] != k)
         {
             RDouble t = x[k];
             x[k] = x[js[k]];
@@ -613,7 +613,7 @@ LIB_EXPORT Stainer::~Stainer()
 LIB_EXPORT void Stainer::ReadHoleData()
 {
     using namespace PHMPI;
-    if(! PHSPACE::GetCodeOfDigHoles()) return;
+    if (! PHSPACE::GetCodeOfDigHoles()) return;
 
     int serverTmp = GetServerProcessorID();
     fstream file;
@@ -677,7 +677,7 @@ void Stainer::PaintGenericColor()
 
         int * iBlank = grid->GetCellTypeContainer();
         int numberOfCells       = grid->GetNTotalCell();
-        for(int iCell = 0; iCell < numberOfCells; ++iCell)
+        for (int iCell = 0; iCell < numberOfCells; ++iCell)
         {
             iBlank[iCell] = GENERIC_COLOR;
         }
@@ -705,7 +705,7 @@ void Stainer::ProbeInternalOverlapCells()
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         StructGrid * grid = PHSPACE::GetStructGrid(iZone);
-        if(! grid) continue;
+        if (! grid) continue;
         grid->GatherCellsByColor(numberOfCellsInHole, IN_HOLE_COLOR);
         grid->GatherCellsByColor(numberOfInternalOversetCells, OVERSET_COLOR);
     }
@@ -815,13 +815,13 @@ void BackgroundTree ::ComputeNumberOfUnitCells()
     using namespace PHMPI;
 
     int counter = 0;
-    for(int iSmile = zone_st; iSmile <= zone_ed; ++iSmile)
+    for (int iSmile = zone_st; iSmile <= zone_ed; ++iSmile)
     {
         int iZone = PHSPACE::GetZoneInverseIndex(iSmile);
 
         StructGrid * grid = PHSPACE::GetStructGrid(iZone);
 
-        if(! grid) continue;
+        if (! grid) continue;
 
         counter += grid->GetNTotalNode();
     }
@@ -867,7 +867,7 @@ void BackgroundTree ::ComputeUnitCellCapsule()
 
         StructGrid * grid = PHSPACE::GetStructGrid(iZone);
 
-        if(! grid) continue;
+        if (! grid) continue;
 
         grid->ComputeUnitCellCapsule(this, iUnitCell);
     }
@@ -890,11 +890,11 @@ LIB_EXPORT void BackgroundTree ::SetUnitCellParameter(int iUnitCell, vector< RDo
 
 void BackgroundTree ::InitFruitLevelAndInheritMapping()
 {
-    for(int iUnitCell = 0; iUnitCell < numberOfUnitCells; ++iUnitCell)
+    for (int iUnitCell = 0; iUnitCell < numberOfUnitCells; ++iUnitCell)
     {
         fruitLevel[iUnitCell] = 0;
 
-        for(int j = 0; j < 3; ++j)
+        for (int j = 0; j < 3; ++j)
         {
             fruitInheritMapping[iUnitCell][j] = 0;
         }
@@ -943,7 +943,7 @@ void BackgroundTree ::ComputeRootSpaceParameter()
 
 bool BackgroundTree ::UnitCellCapsuleBelongsToNewNode(vector< RDouble > & capsule, vector< RDouble > & inf_plane, vector< RDouble > & sup_plane)
 {
-    if(inf_plane[0] <= capsule[0] && capsule[0] <= sup_plane[0] && 
+    if (inf_plane[0] <= capsule[0] && capsule[0] <= sup_plane[0] && 
         inf_plane[1] <= capsule[1] && capsule[1] <= sup_plane[1] &&
         inf_plane[2] <= capsule[2] && capsule[2] <= sup_plane[2] &&
         inf_plane[3] <= capsule[3] && capsule[3] <= sup_plane[3] &&
@@ -1012,9 +1012,9 @@ void BackgroundTree ::ProduceNewLeftNode(int kNode, vector< RDouble > & inf_left
 void BackgroundTree ::ProduceNewRightNode(int kNode, vector< RDouble > & inf_right, vector< RDouble > & sup_right)
 {
     int j = (fruitLevel[kNode] + 1) % 6;
-    for(int i = 0; i < 6; ++ i)
+    for (int i = 0; i < 6; ++ i)
     {
-        if(i == j)
+        if (i == j)
         {
             inf_right[i] = 0.5 * (inf_plane[kNode][i] + sup_plane[kNode][i]);
         }
@@ -1058,7 +1058,7 @@ void BackgroundTree ::ComputeLocalCoordinateByNewtonMethod(RDouble xx, RDouble y
 {
     uint_t node_size = fruitIndexStorage.size();
 
-    for(int i = 0; i < node_size; ++ i)
+    for (int i = 0; i < node_size; ++ i)
     {
         int nodeIndex = fruitIndexStorage[i];
         int iZone = zone_location[nodeIndex];
@@ -1080,13 +1080,13 @@ LIB_EXPORT void BackgroundTree ::ProbeNearestPoint(RDouble xx, RDouble yy, RDoub
     vector< RDouble > ss;
     vector< int > globalPointIndex;
 
-    for(int iSmile = zone_st; iSmile <= zone_ed; ++ iSmile)
+    for (int iSmile = zone_st; iSmile <= zone_ed; ++ iSmile)
     {
         int iZone = PHSPACE::GetZoneInverseIndex(iSmile);
 
         StructGrid * grid = PHSPACE::GetStructGrid(iZone);
 
-        if(! grid) continue;
+        if (! grid) continue;
 
         grid->ProbeNearestPoint(xx, yy, zz, ss, globalPointIndex);
     }
@@ -1123,7 +1123,7 @@ LIB_EXPORT void BackgroundTree ::SearchNodes(OversetCellCollector  * oversetCell
 
     SearchNodes(xx, yy, zz, 0);
 
-    if(fruitIndexStorage.empty())
+    if (fruitIndexStorage.empty())
     {
         RDouble distance = 0.0;
         int index = -1;
@@ -1305,7 +1305,7 @@ LIB_EXPORT void OversetCellCollector ::SearchOptimalUnitCell(BackgroundTree  * b
         for (int ip = 0; ip < numberOfProcessors; ++ ip)
         {
             int numberOfElements = elementNumberRecorder[ip];
-            for(int iElement = 0; iElement < numberOfElements; ++ iElement)
+            for (int iElement = 0; iElement < numberOfElements; ++ iElement)
             {
                 RDouble xx = xCenter[ip][iElement];
                 RDouble yy = yCenter[ip][iElement];
@@ -1394,7 +1394,7 @@ void OversetCellCollector ::CollectOversetCells()
 
     int myid = PHMPI::GetCurrentProcessorID();
 
-    for(int iSmile = zone_st; iSmile <= zone_ed; ++ iSmile)
+    for (int iSmile = zone_st; iSmile <= zone_ed; ++ iSmile)
     {
         int iZone = PHSPACE::GetZoneInverseIndex(iSmile);
 
@@ -1422,7 +1422,7 @@ void OversetCellCollector ::ProbeNearestPoint(BackgroundTree  * backgroundTree, 
 
     radius[ip][iElement] = distance;
     
-    for(int iCell = 0; iCell < NODE_NUM; ++ iCell)
+    for (int iCell = 0; iCell < NODE_NUM; ++ iCell)
     {
         spaceLattice[ip][iElement * NODE_NUM + iCell] = globalPointIndex;
     }
@@ -1521,7 +1521,7 @@ LIB_EXPORT void OversetCellCollector ::SetNearestPointParameter(int ip, int iEle
 
     radius[ip][iElement] = distance;
     
-    for(int iCell = 0; iCell < NODE_NUM; ++ iCell)
+    for (int iCell = 0; iCell < NODE_NUM; ++ iCell)
     {
         spaceLattice[ip][iElement * NODE_NUM + iCell] = index;
     }
@@ -1541,7 +1541,7 @@ LIB_EXPORT void OversetCellCollector ::SetOptimalPointParameter(int ip, int iEle
 
     radius[ip][iElement] = 0.0;
 
-    for(int iCell = 0; iCell < NODE_NUM; ++ iCell)
+    for (int iCell = 0; iCell < NODE_NUM; ++ iCell)
     {
         spaceLattice[ip][iElement * NODE_NUM + iCell] = node[iCell];
     }
@@ -1560,7 +1560,7 @@ void OversetCellCollector ::SetVirtualPointParameter()
     for (int ip = 0; ip < numberOfProcessors; ++ ip)
     {
         int numberOfElements = elementNumberRecorder[ip];
-        for(int iElement = 0; iElement < numberOfElements; ++ iElement)
+        for (int iElement = 0; iElement < numberOfElements; ++ iElement)
         {
             xLocal[ip][iElement] = RELATIVE_LOCATION;
             yLocal[ip][iElement] = RELATIVE_LOCATION;
@@ -1568,7 +1568,7 @@ void OversetCellCollector ::SetVirtualPointParameter()
 
             radius[ip][iElement] = FAR;
 
-            for(int iCell = 0; iCell < NODE_NUM; ++ iCell)
+            for (int iCell = 0; iCell < NODE_NUM; ++ iCell)
             {
                 spaceLattice[ip][iElement * NODE_NUM + iCell] = VIRTUAL_POINT_LABEL;
             }
@@ -1764,9 +1764,9 @@ void OversetStructGrid::ReadBasicParameter()
     sourceZoneStart.resize(searchTimes); sourceZoneEnd.resize(searchTimes);
     targetZoneStart.resize(searchTimes); targetZoneEnd.resize(searchTimes);
 
-    if(thisip == serverTmp)
+    if (thisip == serverTmp)
     {
-        for(int iSearch = 0; iSearch < searchTimes; ++iSearch)
+        for (int iSearch = 0; iSearch < searchTimes; ++iSearch)
         {
             file0 >> sourceZoneStart[iSearch] >> sourceZoneEnd[iSearch] >> targetZoneStart[iSearch] >> targetZoneEnd[iSearch];
         }
@@ -1811,11 +1811,11 @@ void OversetStructGrid::ProbeRelativeOversetLocation()
         delete backgroundTree; backgroundTree = NULL;
     }
 
-    //cout<<"ksai[0].size() = "<< ksai[0].size() << endl;
-    //cout<<"ksai[1].size() = "<< ksai[1].size() << endl;
-    //cout<<"ksai[2].size() = "<< ksai[2].size() << endl;
+    //cout << "ksai[0].size() = " << ksai[0].size() << endl;
+    //cout << "ksai[1].size() = " << ksai[1].size() << endl;
+    //cout << "ksai[2].size() = " << ksai[2].size() << endl;
 
-    //cout<<"waiter->size() = "<< waiter->size() << endl;
+    //cout << "waiter->size() = " << waiter->size() << endl;
 
     //int numberOfOversetCells = ksai[0].size();
     //for (int i = 0; i < numberOfOversetCells; ++ i)
@@ -1847,9 +1847,9 @@ void OversetStructGrid::LinearInsertValue(int numberOfEquations, vector< RDouble
     const int NODE_NUM = 8;
     vector< RDouble > a(NODE_NUM), dq(NODE_NUM);
 
-    for(int m = 0; m < numberOfEquations; ++ m)
+    for (int m = 0; m < numberOfEquations; ++ m)
     {
-        for(int iCell = 0; iCell < NODE_NUM; ++ iCell)
+        for (int iCell = 0; iCell < NODE_NUM; ++ iCell)
         {
             dq[iCell] = backdrop[m * NODE_NUM + iCell ];
         }
@@ -1968,7 +1968,7 @@ LIB_EXPORT void OversetStructGrid::FillSolverContainer()
     int nl = PHSPACE::GlobalDataBase::GetIntParaFromDB("nl");
     equationNumberContainer.push_back(nl);
 
-    if(PHSPACE::GetCodeOfTurbulenceModel())
+    if (PHSPACE::GetCodeOfTurbulenceModel())
     {
         solverNameContainer.push_back("q_turb");
 
@@ -2049,7 +2049,7 @@ LIB_EXPORT void OversetStructGrid::CommunicateOversetField(int iSolver)
     for (int ip = 0; ip < numberOfProcessors; ++ ip)
     {
         uint_t numberOfElements = nodeRecv[ip].size();
-        for(int iElement = 0; iElement < numberOfElements; ++iElement)
+        for (int iElement = 0; iElement < numberOfElements; ++iElement)
         {
             int globalNodeLabel = nodeRecv[ip][iElement];
 
@@ -2061,7 +2061,7 @@ LIB_EXPORT void OversetStructGrid::CommunicateOversetField(int iSolver)
 
             RDouble4D & myField = * (field[zoneIndex][iSolver]);
 
-            for(int iEquation = 0; iEquation < numberOfEquations; ++ iEquation)
+            for (int iEquation = 0; iEquation < numberOfEquations; ++ iEquation)
             {
                 (* dataSend[ip]).push_back(myField(iLocal, jLocal, kLocal, iEquation));
             }
@@ -2085,7 +2085,7 @@ LIB_EXPORT void OversetStructGrid::CommunicateOversetField(int iSolver)
         }
         else
         {
-            for(int jp = 0; jp < numberOfProcessors; ++ jp)
+            for (int jp = 0; jp < numberOfProcessors; ++ jp)
             {
                 if (jp == myid) continue;
 
@@ -2115,19 +2115,19 @@ LIB_EXPORT void OversetStructGrid::CorrectOversetField(int iSolver)
     vector< RDouble > backdrop(numberOfEquations * NODE_NUM), newCellValue(numberOfEquations);
 
     uint_t numberOfOversetCells = cellContainer->size();
-    for(int iOversetCell = 0; iOversetCell < numberOfOversetCells; ++ iOversetCell)
+    for (int iOversetCell = 0; iOversetCell < numberOfOversetCells; ++ iOversetCell)
     {
         int iZone = (* zoneContainer)[iOversetCell];
 
         StructGrid * grid = PHSPACE::GetStructGrid(iZone);
 
-        if(! grid) continue; //Maybe no use!
+        if (! grid) continue; //Maybe no use!
 
-        RDouble4D & myField = * field[iZone][iSolver];
+        RDouble4D &myField = * field[iZone][iSolver];
 
         grid->GetLocalCenter((* cellContainer)[iOversetCell], ic, jc, kc);
 
-        for(int iNeighbor = 0; iNeighbor < NODE_NUM; ++ iNeighbor)
+        for (int iNeighbor = 0; iNeighbor < NODE_NUM; ++ iNeighbor)
         {
             int neighborCellLabel = NODE_NUM * iOversetCell + iNeighbor;
 
@@ -2135,7 +2135,7 @@ LIB_EXPORT void OversetStructGrid::CorrectOversetField(int iSolver)
 
             int iElement = indexGroup[neighborCellLabel];
 
-            for(int iEquation = 0; iEquation < numberOfEquations; ++iEquation)
+            for (int iEquation = 0; iEquation < numberOfEquations; ++iEquation)
             {
                 backdrop[NODE_NUM * iEquation + iNeighbor] = (* dataRecv[iProcessor])[numberOfEquations * iElement + iEquation];
             }
@@ -2143,7 +2143,7 @@ LIB_EXPORT void OversetStructGrid::CorrectOversetField(int iSolver)
 
         LinearInsertValue(numberOfEquations, backdrop, ksai[0][iOversetCell], ksai[1][iOversetCell], ksai[2][iOversetCell], newCellValue);
 
-        for(int iEquation = 0; iEquation < numberOfEquations; ++ iEquation)
+        for (int iEquation = 0; iEquation < numberOfEquations; ++ iEquation)
         {
             myField(ic + 1, jc + 1, kc + 1, iEquation) = newCellValue[iEquation];
         }
@@ -2183,7 +2183,7 @@ LIB_EXPORT int GetZoneInverseIndex(int i_view)
 
 LIB_EXPORT void ComputePhysicalCoordinate(vector< vector< RDouble > > & frame, RDouble x, RDouble y, RDouble z, vector< RDouble > & r)
 {
-    for(int i = 0; i < 3; ++ i)
+    for (int i = 0; i < 3; ++ i)
     {
         r[i] = frame[i][0] + x * frame[i][1] + y * frame[i][2] + z * frame[i][3];
     }

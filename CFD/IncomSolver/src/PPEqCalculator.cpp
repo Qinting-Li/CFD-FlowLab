@@ -115,7 +115,6 @@ namespace PHSPACE
         CommunicateAnInterfaceVar(p);
     }
 
-
     void PPEqCalculator::correctBoundaryVelocity(Grid*  gridIn)
     {
         UnstructGrid* grid = UnstructGridCast(gridIn);
@@ -281,8 +280,7 @@ namespace PHSPACE
             vector<int>* faceIndex = bcRegion->GetFaceIndex();
             Data_Param* bcData = bcRegion->GetBCParamDataBase();
 
-            if (bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::SYMMETRY
-                || bcType == PHENGLEI::INFLOW)
+            if (bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::SYMMETRY || bcType == PHENGLEI::INFLOW)
             {
                 for (std::size_t i = 0; i < faceIndex->size(); ++i)
                 {
@@ -386,7 +384,6 @@ namespace PHSPACE
         correctBoundaryVelocity(grid);
     }
 
-
     void PPEqCalculator::constructMatrixACoeff(Grid* gridIn)
     {
         UnstructGrid* grid = UnstructGridCast(gridIn);
@@ -475,8 +472,7 @@ namespace PHSPACE
                     (bfU[re] * dxfR + bfV[re] * dyfR + bfW[re] * dzfR)- (bfU[le] * dxfL + bfV[le] * dyfL + bfW[le] * dzfL));
                 pdf = ((InverseAp[le] * faceWeightOfLeftCell[iFace] * (dpdx[le] - bfU[le]) + InverseAp[re] * (1.0 - faceWeightOfLeftCell[iFace]) * (dpdx[re] - bfU[re])) * dx +
                     (InverseAp[le] * faceWeightOfLeftCell[iFace] * (dpdy[le] - bfV[le]) + InverseAp[re] * (1.0 - faceWeightOfLeftCell[iFace]) * (dpdy[re] - bfV[re])) * dy +
-                    (InverseAp[le] * faceWeightOfLeftCell[iFace] * (dpdz[le] - bfW[le]) + InverseAp[re] * (1.0 - faceWeightOfLeftCell[iFace]) * (dpdz[re] - bfW[re]) * dz));
-
+                       (InverseAp[le] * faceWeightOfLeftCell[iFace] * (dpdz[le] - bfW[le]) + InverseAp[re] * (1.0 - faceWeightOfLeftCell[iFace]) * (dpdz[re] - bfW[re])) * dz);
             }
 
             pDiff *= a2/ad;

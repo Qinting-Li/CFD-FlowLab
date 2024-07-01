@@ -1,6 +1,7 @@
 #include "Post_WriteVisualFile.h"
 #include "Post_WriteTecplot.h"
 #include "Post_WriteEnsight.h"
+#include "Post_WriteParaview.h"
 #include "Solver.h"
 #include "Glb_Dimension.h"
 #include "HyList.h"
@@ -344,7 +345,7 @@ void Post_WriteVisualFile::StoreVTKData()
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         DataContainer *cdata = new DataContainer();
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
 
         int send_proc = GetZoneProcessorID(iZone);
         int recv_proc = GetServerProcessorID();
@@ -362,7 +363,7 @@ void Post_WriteVisualFile::StoreVTKData()
         }
         else
         {
-            delete cdata;
+            delete cdata;    cdata = nullptr;
         }
     }
 }
@@ -439,7 +440,7 @@ void Post_WriteVisualFile::StoreStrBoundaryVTKData(int zoneIndex, DataContainer 
 
         PHWrite(cdata, TecioMission);
         PHWrite(cdata, bctype);
-        cdata->write_string(bcName);
+        cdata->WriteString(bcName);
 
         int nTotalNode = boundaryGrid[iBoundary]->GetNTotalNode();
         int nTotalCell = boundaryGrid[iBoundary]->GetNTotalCell();
@@ -467,7 +468,7 @@ void Post_WriteVisualFile::StoreStrBoundaryVTKData(int zoneIndex, DataContainer 
             }
 
             PHWrite(cdata, qBoundary, nTotalNode);
-            delete []qBoundary;
+            delete [] qBoundary;
         }
 
         int ni = StructGridCast(boundaryGrid[iBoundary])->GetNI();
@@ -494,7 +495,7 @@ void Post_WriteVisualFile::StoreStrBoundaryVTKData(int zoneIndex, DataContainer 
                         nodeIndex3 = iCell + ni * (jCell + 1) + ni * nj * (kCell + 1);
                         nodeIndex4 = iCell + ni *  jCell      + ni * nj * (kCell + 1);
                     }
-                    else if(nj == 1)
+                    else if (nj == 1)
                     {
                         nodeIndex1 =  iCell      + ni * jCell + ni * nj *  kCell;
                         nodeIndex2 = (iCell + 1) + ni * jCell + ni * nj *  kCell;
@@ -518,10 +519,10 @@ void Post_WriteVisualFile::StoreStrBoundaryVTKData(int zoneIndex, DataContainer 
         }
 
         PHWrite(cdata, cell2node, nTotalCell * 4);
-        delete []cell2node;
+        delete [] cell2node;
     }
 
-    delete []qn;
+    delete [] qn;
 }
 
 void Post_WriteVisualFile::StoreStrFieldVTKData(int zoneIndex, DataContainer *cdata)
@@ -596,17 +597,17 @@ void Post_WriteVisualFile::StoreStrFieldVTKData(int zoneIndex, DataContainer *cd
         PHWrite(cdata, yBoundary, nTotalNode);
         PHWrite(cdata, zBoundary, nTotalNode);
 
-        delete []xBoundary;
-        delete []yBoundary;
-        delete []zBoundary;
+        delete [] xBoundary;
+        delete [] yBoundary;
+        delete [] zBoundary;
 
         for (int m = 0; m < nVisualVariables; ++ m)
         {
             PHWrite(cdata, qBoundary[m], nTotalNode);
-            delete []qBoundary[m];
+            delete [] qBoundary[m];
         }
 
-        delete []qBoundary;
+        delete [] qBoundary;
 
         int *cell2node = new int[nTotalCell * 4];
         int ncount = 0;
@@ -622,8 +623,8 @@ void Post_WriteVisualFile::StoreStrFieldVTKData(int zoneIndex, DataContainer *cd
         }
 
         PHWrite(cdata, cell2node, nTotalCell * 4);
-        delete []cell2node;
-        delete []qn;
+        delete [] cell2node;
+        delete [] qn;
     }
 }
 
@@ -678,7 +679,7 @@ void Post_WriteVisualFile::StoreUnsBoundaryVTKData(int zoneIndex, DataContainer 
 
         PHWrite(cdata, TecioMission);
         PHWrite(cdata, bctype);
-        cdata->write_string(bcName);
+        cdata->WriteString(bcName);
 
         int nTotalNode = boundaryGrid[iBoundary]->GetNTotalNode();
         int nTotalCell = boundaryGrid[iBoundary]->GetNTotalCell();
@@ -711,7 +712,7 @@ void Post_WriteVisualFile::StoreUnsBoundaryVTKData(int zoneIndex, DataContainer 
             }
 
             PHWrite(cdata, qBoundary, nTotalNode);
-            delete []qBoundary;
+            delete [] qBoundary;
         }
 
         int *cell2node = UnstructGridCast(boundaryGrid[iBoundary])->GetCell2Node();
@@ -722,7 +723,7 @@ void Post_WriteVisualFile::StoreUnsBoundaryVTKData(int zoneIndex, DataContainer 
         }
     }
 
-    delete []qn;
+    delete [] qn;    qn = nullptr;
     DelPointer2(qFaceCenter);
 }
 
@@ -805,7 +806,7 @@ void Post_WriteVisualFile::StoreUnsFieldVTKData2D(int zoneIndex, DataContainer *
 
         int targetNode = ip2;
         int checkNode  = ip1;
-        
+
         int nFaceOfCell = cell2face[iCell].size();
         int isClockWise = false;
         while (! isClockWise)
@@ -890,10 +891,10 @@ void Post_WriteVisualFile::StoreUnsFieldVTKData2D(int zoneIndex, DataContainer *
 
     PHWrite(cdata, cell2node_vtk, nTotalCell * 4);
 
-    delete []qn;
-    delete []cell2node;
-    delete []cell2face;
-    delete []cell2node_vtk;
+    delete [] qn;    qn = nullptr;
+    delete [] cell2node;    cell2node = nullptr;
+    delete [] cell2face;    cell2face = nullptr;
+    delete [] cell2node_vtk;    cell2node_vtk = nullptr;
 }
 
 void Post_WriteVisualFile::StoreUnsFieldVTKData3D(int zoneIndex, DataContainer *cdata)
@@ -965,7 +966,7 @@ void Post_WriteVisualFile::StoreUnsFieldVTKData3D(int zoneIndex, DataContainer *
     PHWrite(cdata, nodeNumberOfEachFace, nTotalFace);
     PHWrite(cdata, face2Node, count);
 
-    delete []qn;
+    delete [] qn;
 }
 
 void Post_WriteVisualFile::ComputeNodeData()
@@ -1037,6 +1038,10 @@ void WriteVisualFile(int flowTypeIn)
         else if (visualfileType == Ensight_Binary || visualfileType == Ensight_ASCII)
         {
             generateVisualFile = new Post_WriteEnsight();
+        }
+        else if (visualfileType == Paraview)
+        {
+            generateVisualFile = new Post_WriteParaview();
         }
         else
         {

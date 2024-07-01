@@ -63,7 +63,7 @@ void PostProcess::ComputeMetrics()
             grid->ComputeMetrics(actkey);
         }
     }
-    delete actkey;
+    delete actkey;    actkey = nullptr;
 
 }
 

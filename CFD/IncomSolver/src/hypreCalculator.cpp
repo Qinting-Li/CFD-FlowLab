@@ -19,20 +19,20 @@ hypreCalculator::~hypreCalculator()
     mathLibSolveFinalize();
 }
 
-void hypreCalculator::mathLibSolveInit(Grid* gridIn)
+void hypreCalculator::mathLibSolveInit(Grid *gridIn)
 {
 #ifdef USE_HypreLib
-    UnstructGrid* grid = UnstructGridCast(gridIn);
+    UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
     int nTotalFace = grid->GetNTotalFace();
-    int* leftCellOfFace = grid->GetLeftCellOfFace();
-    int* rightCellOfFace = grid->GetRightCellOfFace();
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
     int zoneID = grid->GetZoneID();
 
-    int* globalCellNoOfGlobalZones = reinterpret_cast<int*> (GlobalDataBase::GetDataPtr("globalCellNoOfGlobalZones"));
-    int* maxIterOfEachEq = reinterpret_cast<int*> (GlobalDataBase::GetDataPtr("maxIterOfEachEq"));
-    RDouble* iterTolOfEachEq = reinterpret_cast<RDouble*> (GlobalDataBase::GetDataPtr("iterTolOfEachEq"));
+    int *globalCellNoOfGlobalZones = reinterpret_cast<int *>(GlobalDataBase::GetDataPtr("globalCellNoOfGlobalZones"));
+    int *maxIterOfEachEq = reinterpret_cast<int *>(GlobalDataBase::GetDataPtr("maxIterOfEachEq"));
+    RDouble *iterTolOfEachEq = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("iterTolOfEachEq"));
 
     localSize = nTotalCell;
     ilower = globalCellNoOfGlobalZones[zoneID];
@@ -59,10 +59,9 @@ void hypreCalculator::mathLibSolveInit(Grid* gridIn)
     //HYPRE_IJVectorSetObjectType(x_hypre, HYPRE_PARCSR);
     //HYPRE_IJVectorInitialize(x_hypre);
 
-    
     int linearSolverSize = 50;
     int *precondID = reinterpret_cast <int *>(GlobalDataBase::GetDataPtr("precondMethodOfLinEqSystem"));
-    precondList = new HYPRE_Solver* [linearSolverSize];
+    precondList = new HYPRE_Solver * [linearSolverSize];
     for (int iSolver = 0 ; iSolver < linearSolverSize; iSolver++)
     {
         if (maxIterOfEachEq[iSolver] > 0)
@@ -86,7 +85,7 @@ void hypreCalculator::mathLibSolveInit(Grid* gridIn)
         }
 
         int precondType = precondID[iSolver];
-        HYPRE_Solver* precond = precondList[iSolver];
+        HYPRE_Solver *precond = precondList[iSolver];
         if (precondType == iNone)
         {
 
@@ -180,7 +179,7 @@ void hypreCalculator::mathLibSolveInit(Grid* gridIn)
     }
 
     int *solMethodOfLinEqSystem = reinterpret_cast <int *>(GlobalDataBase::GetDataPtr("solMethodOfLinEqSystem"));
-    solverList = new HYPRE_Solver* [linearSolverSize];
+    solverList = new HYPRE_Solver * [linearSolverSize];
     for (int iSolver = 0 ; iSolver < linearSolverSize; iSolver++)
     {
         if (maxIterOfEachEq[iSolver] < 0)
@@ -198,7 +197,7 @@ void hypreCalculator::mathLibSolveInit(Grid* gridIn)
         }
 
         int linearSolver = solMethodOfLinEqSystem[iSolver];
-        HYPRE_Solver* solver = solverList[iSolver];
+        HYPRE_Solver *solver = solverList[iSolver];
         int maxIterStep = maxIterOfEachEq[iSolver];
         RDouble iterTol = iterTolOfEachEq[iSolver];
         
@@ -353,7 +352,7 @@ void hypreCalculator::mathLibSolveInit(Grid* gridIn)
     }
 
     RDouble GlobalTotalCells = GlobalDataBase::GetDoubleParaFromDB("GlobalTotalCells");
-    int* localCell2GlobalMap = grid->GetLocalCell2GlobalMap();
+    int *localCell2GlobalMap = grid->GetLocalCell2GlobalMap();
     UnstructBCSet **bcr = grid->GetBCRecord();
 
     ColVectors = new vector<int>[localSize];
@@ -398,20 +397,20 @@ void hypreCalculator::mathLibSolveInit(Grid* gridIn)
 #endif
 }
 
-void hypreCalculator::mathLibSolve(Grid* gridIn, int iEquation, RDouble * fi, RDouble * diagCoef, RDouble *b, RDouble * upNeighCoef, RDouble * dnNeighCoef)
+void hypreCalculator::mathLibSolve(Grid *gridIn, int iEquation, RDouble *fi, RDouble *diagCoef, RDouble *b, RDouble *upNeighCoef, RDouble *dnNeighCoef)
 {
 #ifdef USE_HypreLib
-    UnstructGrid* grid = UnstructGridCast(gridIn);
+    UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
     int nTotalFace = grid->GetNTotalFace();
-    int* leftCellOfFace = grid->GetLeftCellOfFace();
-    int* rightCellOfFace = grid->GetRightCellOfFace();
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
     
-    int* localCell2GlobalMap = grid->GetLocalCell2GlobalMap();
+    int *localCell2GlobalMap = grid->GetLocalCell2GlobalMap();
     RDouble GlobalTotalCells = GlobalDataBase::GetDoubleParaFromDB("GlobalTotalCells");
     
-    //int *constVarNumToSolveVarNum = reinterpret_cast <int*> (grid->GetDataPtr("constVarNumToSolveVarNum"));
+    //int *constVarNumToSolveVarNum = reinterpret_cast<int *>(grid->GetDataPtr("constVarNumToSolveVarNum"));
     HYPRE_Solver *solver = solverList[iEquation];
     int *linearSolverID = reinterpret_cast <int *>(GlobalDataBase::GetDataPtr("solMethodOfLinEqSystem"));
     int linearSolver = linearSolverID[iEquation];
@@ -420,8 +419,8 @@ void hypreCalculator::mathLibSolve(Grid* gridIn, int iEquation, RDouble * fi, RD
     
     UnstructBCSet **bcr = grid->GetBCRecord();
 
-    int* maxIterOfEachEq = reinterpret_cast<int*> (GlobalDataBase::GetDataPtr("maxIterOfEachEq"));
-    RDouble* iterTolOfEachEq = reinterpret_cast<RDouble*> (GlobalDataBase::GetDataPtr("iterTolOfEachEq"));
+    int *maxIterOfEachEq = reinterpret_cast<int *>(GlobalDataBase::GetDataPtr("maxIterOfEachEq"));
+    RDouble *iterTolOfEachEq = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("iterTolOfEachEq"));
 
     int maxIterStep = maxIterOfEachEq[iEquation];
     RDouble iterTol = iterTolOfEachEq[iEquation];
@@ -500,18 +499,18 @@ void hypreCalculator::mathLibSolve(Grid* gridIn, int iEquation, RDouble * fi, RD
     }
     
     HYPRE_IJMatrixAssemble(A_hypre);
-    HYPRE_IJMatrixGetObject(A_hypre, (void**)&parcsr_A_hypre);  
+    HYPRE_IJMatrixGetObject(A_hypre, (void **)&parcsr_A_hypre);  
     
     HYPRE_IJVectorSetValues(b_hypre, localSize, rows, b);
     HYPRE_IJVectorAssemble(b_hypre);
-    HYPRE_IJVectorGetObject(b_hypre, (void**)&par_b_hypre);
+    HYPRE_IJVectorGetObject(b_hypre, (void **)&par_b_hypre);
     
     HYPRE_IJVectorSetValues(x_hypre, localSize, rows, fi);
     HYPRE_IJVectorAssemble(x_hypre);
-    HYPRE_IJVectorGetObject(x_hypre, (void**)&par_x_hypre);
+    HYPRE_IJVectorGetObject(x_hypre, (void **)&par_x_hypre);
     
     int *precondID = reinterpret_cast <int *>(GlobalDataBase::GetDataPtr("precondID"));
-    HYPRE_Solver* precond = precondList[iEquation];
+    HYPRE_Solver *precond = precondList[iEquation];
 
     //if (precondID[iEquation] == iAMGDD)
     //{
@@ -673,12 +672,11 @@ void hypreCalculator::mathLibSolveFinalize()
 
     int linearSolverSize = GlobalDataBase::GetIntParaFromDB("linearSolverSize");
 
-
     int *linearSolverID = reinterpret_cast <int *>(GlobalDataBase::GetDataPtr("solMethodOfLinEqSystem"));
     for (int iSolver = 0 ; iSolver < linearSolverSize; iSolver++)
     {
         int linearSolver = linearSolverID[iSolver];
-        HYPRE_Solver* solver = solverList[iSolver];
+        HYPRE_Solver *solver = solverList[iSolver];
 
         if (linearSolver == GMRESMethod)
         {

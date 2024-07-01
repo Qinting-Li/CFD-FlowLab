@@ -24,7 +24,7 @@ void RunPHengLEI()
     ShowWelcomeTitle();
 
     CompleteParamInfo();
-       
+
     ControlParametersPreliminarySelfCheck();
 
     //! Start CFD simulation.
@@ -60,7 +60,7 @@ void ShowWelcomeTitle()
         oss << "$#       Computational Aerodynamics Institute          #$" << endl;
         oss << "$#  China Aerodynamics Research and Development Center #$" << endl;
         oss << "$#            (C) Copyright, Since 2010                #$" << endl;
-        oss << "$#                  PHengLEI 2312                      #$" << endl;
+            oss << "$#                  PHengLEI 2406                      #$" << endl;
         oss << "$#                                                     #$" << endl;
         oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
 
@@ -93,11 +93,26 @@ void ParametersSelfCheckForCFD()
     int visualVariablesSize = GlobalDataBase::GetSizeOfData("visualVariables");
     int nVisualVariables = visualVariablesSize;
     GlobalDataBase::UpdateData("nVisualVariables", &nVisualVariables, PHINT, 1);
+    int visualWallVariablesSize = GlobalDataBase::GetSizeOfData("visualWallVariables");
+    int nVisualWallVariables = visualWallVariablesSize;
+    GlobalDataBase::UpdateData("nVisualWallVariables", &nVisualWallVariables, PHINT, 1);
 
     int *visualVariables = new int[nVisualVariables];
     GlobalDataBase::GetData("visualVariables", visualVariables, PHINT, nVisualVariables);
+    int *visualWallVariables = new int[nVisualWallVariables];
+    GlobalDataBase::GetData("visualWallVariables", visualWallVariables, PHINT, nVisualWallVariables);
+    RDouble wallTemperature = GlobalDataBase::GetDoubleParaFromDB("wallTemperature");
+
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
+    int plotFieldType = GlobalDataBase::GetIntParaFromDB("plotFieldType");
+    string viscousName = GlobalDataBase::GetStrParaFromDB("viscousName");
+    int isOverset = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+
+    int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
+    int nSlipBCModel = GlobalDataBase::GetIntParaFromDB("nSlipBCModel");
+    int isUseNoneqCond = GlobalDataBase::GetIntParaFromDB("isUseNoneqCond");
+
     for (int i = 0; i < nVisualVariables; ++ i)
     {
         if (visualVariables[i] >= VISUAL_VISCOSITY_LAMINAR && visualVariables[i] < VISUAL_CP)
@@ -110,22 +125,70 @@ void ParametersSelfCheckForCFD()
             }
         }
 
+        if (visualVariables[i] >= VISUAL_VORTICITY_X && visualVariables[i] <= VISUAL_Q_CRITERIA)
+        {
+            if (plotFieldType == TEC_SPACE::BoundaryVisual)
+            {
+                ostringstream oss;
+                oss << "The array \"visualVariables\" is error. The program can not visualization vorticity when plotFieldType = 0!" << endl;
+                TK_Exit::ExceptionExit(oss);
+            }
+        }
+
         if (visualVariables[i] == VISUAL_VISCOSITY_TURBULENT)
         {
             if (viscousType == LAMINAR && iLES == NOLES_SOLVER)
             {
                 ostringstream oss;
-                oss << "The array \"visualVariables\" is error. The laminar solver cannot export the data related to turbulence." << endl;
+                oss << "The array \"visualVariables\" is error. The laminar solver cannot export the data \"viscosityTurbulent\" related to turbulence." << endl;
+                TK_Exit::ExceptionExit(oss);
+            }
+        }
+
+        if (visualVariables[i] >= VISUAL_MODELED_TKE && visualVariables[i] <= VISUAL_MODELED_DISSIPATION)
+        {
+            if (viscousType != TWO_EQU)
+            {
+                ostringstream oss;
+                oss << "The array \"visualVariables\" is error. The solver cannot export the data \"modeledTKE,modeleddissipationrate\" related to 2eq-kw model." << endl;
+                TK_Exit::ExceptionExit(oss);
+            }
+            else if (viscousType == TWO_EQU && viscousName.substr(0, 6) != "2eq-kw")
+            {
+                ostringstream oss;
+                oss << "The array \"visualVariables\" is error. The solver cannot export the data \"modeledTKE,modeleddissipationrate\" related to 2eq-kw model." << endl;
+                TK_Exit::ExceptionExit(oss);
+            }
+        }
+
+        if (visualVariables[i] >= VISUAL_SST_F1 && visualVariables[i] <= VISUAL_SST_F2)
+        {
+            if (viscousType != TWO_EQU)
+            {
+                ostringstream oss;
+                oss << "The array \"visualVariables\" is error. The solver cannot export the data \"SSTF1,SSTF2\" related to SST model." << endl;
+                TK_Exit::ExceptionExit(oss);
+            }
+            else if (viscousType == TWO_EQU && viscousName.substr(0, 17) != "2eq-kw-menter-sst")
+            {
+                ostringstream oss;
+                oss << "The array \"visualVariables\" is error. The solver cannot export the data \"SSTF1,SSTF2\" related to SST model." << endl;
                 TK_Exit::ExceptionExit(oss);
             }
         }
 
         if (visualVariables[i] == VISUAL_INTERMITTENCY || visualVariables[i] == VISUAL_MOMENTUMTHICKREYNOLDS)
         {
-            if (viscousType == ONE_EQU)
+            if (viscousType == INVISCID || viscousType == LAMINAR)
             {
                 ostringstream oss;
-                oss << "The array \"visualVariables\" is error. The solver cannot export the transition data with SA model." << endl;
+                oss << "The array \"visualVariables\" is error. The solver cannot export the transition data \"intermittency,MomentumThicknessReynolds\" with current physical model." << endl;
+                TK_Exit::ExceptionExit(oss);
+            }
+            else if (viscousType == ONE_EQU)
+            {
+                ostringstream oss;
+                oss << "The array \"visualVariables\" is error. The solver cannot export the transition data \"intermittency,MomentumThicknessReynolds\" with SA model." << endl;
                 TK_Exit::ExceptionExit(oss);
             }
             else if (viscousType == TWO_EQU)
@@ -135,17 +198,94 @@ void ParametersSelfCheckForCFD()
                 {
                     ostringstream oss;
                     oss << "transitionType = " << transitionType << endl;
-                    oss << "The array \"visualVariables\" is error. The solver cannot export the transition data with transition type Not Equal 2." << endl;
+                    oss << "The array \"visualVariables\" is error. The solver cannot export the transition data \"intermittency,MomentumThicknessReynolds\" with transition type Not Equal 2." << endl;
                     TK_Exit::ExceptionExit(oss);
                 }
             }
         }
+
+        if (visualVariables[i] >= VISUAL_TEMPERATURE_VIBRATION && visualVariables[i] <= VISUAL_ELECTRON_NUMBER)
+        {
+            if (nChemical == 0 || isUseNoneqCond == 0)
+            {
+                ostringstream oss;
+                oss << "The array \"visualVariables\" is error. The solver cannot export the data \"Tv,Te,Ev,Ee,Ne\" related to Chemical Non-equilibrium" << endl;
+                TK_Exit::ExceptionExit(oss);
+    }
+        }
+
+        if (visualVariables[i] == VISUAL_GAMA || visualVariables[i] == VISUAL_DAMKOHLER_NUMBER || visualVariables[i] == VISUAL_VIBNONEQ_NUMBER)
+        {
+            if (nChemical == 0 || isUseNoneqCond == 0)
+            {
+                ostringstream oss;
+                oss << "The array \"visualVariables\" is error. The solver cannot export the data \"gama,Da,Vi\" related to Chemical Non-equilibrium" << endl;
+                TK_Exit::ExceptionExit(oss);
+            }
+        }
+
+        if (visualVariables[i] == VISUAL_KNUDSEN_NUMBER)
+        {
+            ostringstream oss;
+            oss << "The array \"visualVariables\" is error. The solver cannot export the data \"Kn\". Please dump out the data \"Kn_wall\" in wall_aircoef.dat" << endl;
+            TK_Exit::ExceptionExit(oss);
+        }
+
+        if (visualVariables[i] == VISUAL_IBLANK)
+        {
+            if (!isOverset)
+            {
+                ostringstream oss;
+                oss << "The array \"visualVariables\" is error. The solver cannot export the data related to OversetGrid." << endl;
+                TK_Exit::ExceptionExit(oss);
+            }
+        }
     }
 
-    delete [] visualVariables;
+    delete [] visualVariables;    visualVariables = nullptr;
+
+    //! The parameters selfcheck of VisualWallVariables in wall_aircoef.dat.
+    for (int i = 0; i < nVisualWallVariables; ++i)
+    {
+        if (visualWallVariables[i] >= VISUAL_WALL_QT && visualWallVariables[i] <= VISUAL_WALL_QE)
+        {
+            if (nChemical == 0)
+            {
+                ostringstream oss;
+                oss << "The array \"visualWallVariables\" is error. The solver cannot export the data \"Qtr,Qs,Qv,Qe\" related to Chemical Non-equilibrium" << endl;
+                TK_Exit::ExceptionExit(oss);
+            }
+        }
+
+        if (visualWallVariables[i] == VISUAL_SLIP_TS || visualWallVariables[i] == VISUAL_SLIP_TV 
+            || visualWallVariables[i] == VISUAL_SLIP_TE || visualWallVariables[i] == VISUAL_SLIP_DTS)
+        {
+            if (nSlipBCModel == 0)
+            {
+                ostringstream oss;
+                oss << "The array \"visualWallVariables\" is error. The solver cannot export the data \"Tts,Tvs,Tes,Vs\" related to slip temperature" << endl;
+                TK_Exit::ExceptionExit(oss);
+            }
+        }
+
+        if (visualWallVariables[i] == VISUAL_WALL_ST)
+        {
+            if (wallTemperature < 0)
+            {
+                ostringstream oss;
+                oss << "The array \"visualWallVariables\" is error. The solver cannot export the data \"St\" when the wall is adiabatic" << endl;
+                TK_Exit::ExceptionExit(oss);
+            }
+        }
+    }
+
+    delete [] visualWallVariables;    visualWallVariables = nullptr;
 
     if (isUnsteady)
     {
+        int subTotalIterStep = 0;
+        GlobalDataBase::UpdateData("subTotalIterStep", &subTotalIterStep, PHINT, 1);
+
         int minSubIter = GlobalDataBase::GetIntParaFromDB("min_sub_iter");
         if (minSubIter <= 0)
         {
@@ -164,6 +304,30 @@ void ParametersSelfCheckForCFD()
 
             maxSubIter = minSubIter;
             GlobalDataBase::UpdateData("max_sub_iter", &maxSubIter, PHINT, 1);
+        }
+
+        int ifLowSpeedPrecon =  GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
+
+        if (ifLowSpeedPrecon)
+        {
+            RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
+            RDouble referenceLength  = GlobalDataBase::GetDoubleParaFromDB("referenceLength");
+            RDouble gridScaleFactor  = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
+            RDouble refMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
+
+            RDouble machUsteady = referenceLength / PI / physicalTimeStep * refMachNumber / gridScaleFactor;
+            RDouble machUsteady2 = machUsteady * machUsteady;
+
+            if (1.0 <= machUsteady2)
+            {
+                ifLowSpeedPrecon = 0;
+                GlobalDataBase::UpdateData("ifLowSpeedPrecon", &ifLowSpeedPrecon, PHINT, 1);
+                ostringstream oss;
+                oss << "  Note: ifLowSpeedPrecon = 0, due to the physicalTimeStep being too small!" << endl;
+                PrintToWindow(oss.str());
+                WriteLogFile(oss.str());
+    }
+            GlobalDataBase::UpdateData("preconCoeffConst", &machUsteady2, PHDOUBLE, 1);
         }
     }
 

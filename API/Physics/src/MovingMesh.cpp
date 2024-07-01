@@ -29,7 +29,7 @@ SimpleMovingMesh::~SimpleMovingMesh()
     //if (grid != NULL) delete grid;
 }
 
-void SimpleMovingMesh::SetInitCoordinate(Grid* gridIn)
+void SimpleMovingMesh::SetInitCoordinate(Grid *gridIn)
 {
     this->grid = gridIn;
 
@@ -47,7 +47,7 @@ void SimpleMovingMesh::SetInitCoordinate(Grid* gridIn)
     yPresent.resize(numberOfNodes);
     zPresent.resize(numberOfNodes);
 
-    for(int iNode = 0; iNode < numberOfNodes; ++ iNode)
+    for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
     {
         xPresent[ iNode ] = xInit[ iNode ] = x[ iNode ];
         yPresent[ iNode ] = yInit[ iNode ] = y[ iNode ];
@@ -74,7 +74,7 @@ void SimpleMovingMesh::CalInitCoordinate(SixDofParameter * sixDof)
     massCenter [ 1 ] = sixDof->GetNondimensionalMassCenterY();
     massCenter [ 2 ] = sixDof->GetNondimensionalMassCenterZ();
 
-    for(int iNode = 0; iNode < numberOfNodes; ++ iNode)
+    for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
     {
         coordinateInertial[ 0 ] = xInit[ iNode ];
         coordinateInertial[ 1 ] = yInit[ iNode ];
@@ -91,7 +91,7 @@ void SimpleMovingMesh::CalInitCoordinate(SixDofParameter * sixDof)
 void SimpleMovingMesh::Deforming()
 {
     //! do not consider the mesh deformation in temporary.
-    for(int iNode = 0; iNode < numberOfNodes; ++ iNode)
+    for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
     {
         xPresent[ iNode ] = xInit[ iNode ];
         yPresent[ iNode ] = yInit[ iNode ];
@@ -120,7 +120,7 @@ void SimpleMovingMesh::RigidMoving(SixDofParameter * sixDof)
     massCenter [ 1 ] = sixDof->GetNondimensionalMassCenterY();
     massCenter [ 2 ] = sixDof->GetNondimensionalMassCenterZ();
 
-    for(int iNode = 0; iNode < numberOfNodes; ++ iNode)
+    for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
     {
         coordinateBody[ 0 ] = xInit[ iNode ];
         coordinateBody[ 1 ] = yInit[ iNode ];
@@ -136,13 +136,13 @@ void SimpleMovingMesh::RigidMoving(SixDofParameter * sixDof)
 
 void SimpleMovingMesh::UpdateGrid()
 {
-    RDouble* x = grid->GetX();
-    RDouble* y = grid->GetY();
-    RDouble* z = grid->GetZ();
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
 
     int numberOfNodes = grid->GetNTotalNode();
 
-    for(int iNode = 0; iNode < numberOfNodes; ++ iNode)
+    for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
     {
         x[ iNode ] = xPresent[ iNode ];
         y[ iNode ] = yPresent[ iNode ];
@@ -155,12 +155,12 @@ void SimpleMovingMesh::UpdateGrid()
         Grid *gridUnstr = StructGridCast(grid)->GetUnstrGrid();
         if (gridUnstr != NULL)
         {
-            RDouble* xx = gridUnstr->GetX();
-            RDouble* yy = gridUnstr->GetY();
-            RDouble* zz = gridUnstr->GetZ();
+            RDouble *xx = gridUnstr->GetX();
+            RDouble *yy = gridUnstr->GetY();
+            RDouble *zz = gridUnstr->GetZ();
             int nTotalNode = gridUnstr->GetNTotalNode();
 
-            for(int iNode = 0; iNode < nTotalNode; ++ iNode)
+            for (int iNode = 0; iNode < nTotalNode; ++ iNode)
             {
                 xx[ iNode ] = xPresent[ iNode ];
                 yy[ iNode ] = yPresent[ iNode ];
@@ -190,17 +190,17 @@ OriginalMovingMesh::~OriginalMovingMesh()
     if (presentDeforming != NULL) { delete presentDeforming; presentDeforming = NULL; }
 }
 
-void OriginalMovingMesh::Initialize(Grid * grid, int bodyIndex)
+void OriginalMovingMesh::Initialize(Grid *grid, int bodyIndex)
 {
     this->grid      = grid;
     this->bodyIndex = bodyIndex;
     int numberOfMovingBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
-    if(bodyIndex >= numberOfMovingBodies) return;
+    if (bodyIndex >= numberOfMovingBodies) return;
 
     movingMesh = new SimpleMovingMesh;
 
     fartherIndex = GetIntegerParameterFromDataBase(bodyIndex, "fartherIndex");
-    if(fartherIndex != -1)
+    if (fartherIndex != -1)
     {
         vector< RDouble > configPamameter;
         GetRDoubleVectorFromDataBase(configPamameter, bodyIndex, "configPamameter", 6);
@@ -217,7 +217,7 @@ void OriginalMovingMesh::PreProcessRigidMoving()
     movingMesh->SetInitCoordinate(grid);
 
     //! if the mesh block is assembled to an object as a part.
-    if(fartherIndex != -1)
+    if (fartherIndex != -1)
     {
         SixDofParameter * sixdofFarther = PHSPACE::GetSixDofParameter(fartherIndex);
 
@@ -263,7 +263,7 @@ void OriginalMovingMesh::Restart()
     movingMesh->Deforming  ();
     movingMesh->RigidMoving(presentSixdof   );
 
-    if(fartherIndex != -1)
+    if (fartherIndex != -1)
     {
         SixDofParameter * sixdofFarther = PHSPACE::GetSixDofParameter(fartherIndex);
 
@@ -285,7 +285,7 @@ void OriginalMovingMesh::Run()
     movingMesh->Deforming  ();
     movingMesh->RigidMoving(presentSixdof   );
 
-    if(fartherIndex != -1)
+    if (fartherIndex != -1)
     {
         SixDofParameter * sixdofFarther = PHSPACE::GetSixDofParameter(fartherIndex);
 
@@ -308,7 +308,7 @@ MovingMeshManager::MovingMeshManager()
 
 MovingMeshManager::~MovingMeshManager()
 {
-    for(int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         if (originalMovingMeshes[iZone])
         {
@@ -320,13 +320,13 @@ MovingMeshManager::~MovingMeshManager()
     delete [] originalMovingMeshes;
     originalMovingMeshes = NULL;
 
-    for(int num = 0; num < innerMovingMesh.size(); ++ num)
+    for (int num = 0; num < innerMovingMesh.size(); ++ num)
     {
         delete innerMovingMesh[ num ];
         innerMovingMesh[num] = NULL;
     }
 
-    for(int num = 0; num < outerMovingMesh.size(); ++ num)
+    for (int num = 0; num < outerMovingMesh.size(); ++ num)
     {
         delete outerMovingMesh[ num ];
         outerMovingMesh[num] = NULL;
@@ -341,7 +341,7 @@ void MovingMeshManager::Initialize()
     originalMovingMeshes = new OriginalMovingMesh * [ numberOfZones ];
 
     int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
-    for(int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         int processorIndex = PHMPI::GetZoneProcessorID(iZone);
         if (currentProcessorIndex == processorIndex)
@@ -355,7 +355,7 @@ void MovingMeshManager::Initialize()
     }
 
     //!judge the object that the mesh belonging to by the numbers of mesh files in temporary.
-    for(int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         int processorIndex = PHMPI::GetZoneProcessorID(iZone);
         if (currentProcessorIndex == processorIndex)
@@ -368,7 +368,7 @@ void MovingMeshManager::Initialize()
     }
 
     //! if the deforming meshes, it needs some treatment, such as build the backgroung mehsh and the RBF matrix of the wall points, et. al.
-    for(int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         int processorIndex = PHMPI::GetZoneProcessorID(iZone);
         if (currentProcessorIndex == processorIndex)
@@ -402,7 +402,7 @@ void MovingMeshManager::Initialize()
 void MovingMeshManager::Restart()
 {
     int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
-    for(int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         int processorIndex = PHMPI::GetZoneProcessorID(iZone);
         if (currentProcessorIndex == processorIndex)
@@ -412,12 +412,12 @@ void MovingMeshManager::Restart()
     }
 
     //! the init of the assist meshes.
-    for(int iInnerMesh = 0; iInnerMesh < innerMovingMesh.size(); ++ iInnerMesh)
+    for (int iInnerMesh = 0; iInnerMesh < innerMovingMesh.size(); ++ iInnerMesh)
     {
         innerMovingMesh[ iInnerMesh ]->Restart();
     }
 
-    for(int iOuterMesh = 0; iOuterMesh < outerMovingMesh.size(); ++ iOuterMesh)
+    for (int iOuterMesh = 0; iOuterMesh < outerMovingMesh.size(); ++ iOuterMesh)
     {
         outerMovingMesh[ iOuterMesh ]->Restart();
     }
@@ -426,7 +426,7 @@ void MovingMeshManager::Restart()
 void MovingMeshManager::Run()
 {
     int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
-    for(int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         int processorIndex = PHMPI::GetZoneProcessorID(iZone);
         if (currentProcessorIndex == processorIndex)
@@ -435,12 +435,12 @@ void MovingMeshManager::Run()
         }
     }
 
-    for(int iInnerMesh = 0; iInnerMesh < innerMovingMesh.size(); ++ iInnerMesh)
+    for (int iInnerMesh = 0; iInnerMesh < innerMovingMesh.size(); ++ iInnerMesh)
     {
         innerMovingMesh[ iInnerMesh ]->Run();
     }
 
-    for(int iOuterMesh = 0; iOuterMesh < outerMovingMesh.size(); ++ iOuterMesh)
+    for (int iOuterMesh = 0; iOuterMesh < outerMovingMesh.size(); ++ iOuterMesh)
     {
         outerMovingMesh[ iOuterMesh ]->Run();
     }

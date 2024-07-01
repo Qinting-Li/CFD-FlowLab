@@ -65,15 +65,6 @@ void NSSolver::TimeStep(Grid *grid)
 
 void NSSolver::UpdateResiduals(Grid *grid)
 {
-    Param_NSSolver *parameters = GetControlParameters();
-
-    int ifLowSpeedPrecon = parameters->GetIfLowSpeedPrecon();
-    if (ifLowSpeedPrecon == 1)
-    {
-        ComputePreconditionCoefficient(grid);
-        ConservativePreconMatrix(grid);
-    }
-
     InviscidFlux(grid);
 
     ViscousFlux(grid);
@@ -417,14 +408,14 @@ void NSSolver::CheckResult(Grid *grid, int level)
     {
         string keyVariable = GlobalDataBase::GetStrParaFromDB("keyVariable");
         ostringstream oss;
-        oss<<"The residual variation of "<<keyVariable<<" is: ";
+        oss << "The residual variation of " << keyVariable << " is: ";
         oss << setiosflags(ios::left);
         oss << setprecision(5);
         oss << setiosflags(ios::scientific);
         oss << setiosflags(ios::showpoint);
-        oss<<monitorResidual<<endl;
-        cout<<oss.str();
-        //cout<<"The residual variation of "<<keyVariable<<" is: "<<monitorResidual<<endl;
+        oss << monitorResidual << endl;
+        cout << oss.str();
+        //cout << "The residual variation of " << keyVariable << " is: " << monitorResidual << endl;
     }
 }
 
@@ -512,7 +503,7 @@ void NSSolver::DumpCFLNumber(Grid *grid, int level)
         oss << setiosflags(ios::showpoint);
 
         oss << setw(7) << outnstep << "    ";
-        oss << globalMinCFL << "    "<<globalMaxCFL<<endl;
+        oss << globalMinCFL << "    " << globalMaxCFL << endl;
 
         WriteASCIIFile(file, oss.str());
 
@@ -543,8 +534,8 @@ void NSSolver::CheckSurfaceHeatingChange(Grid *grid, int level)
         oss1 << setprecision(5);
         oss1 << setiosflags(ios::scientific);
         oss1 << setiosflags(ios::showpoint);
-        oss1 << "The maximum change of surface heating ratio is "<<monitorHeatingChange<<endl;
-        cout<<oss1.str();
+        oss1 << "The maximum change of surface heating ratio is " << monitorHeatingChange << endl;
+        cout << oss1.str();
 
         //! Dump to file.
         string saveHeatRes = "./results/heatResidual.plt";
@@ -581,7 +572,7 @@ void NSSolver::CheckSurfaceHeatingChange(Grid *grid, int level)
         oss << setiosflags(ios::showpoint);
 
         oss << setw(7) << outnstep << "    ";
-        oss << monitorHeatingChange <<endl;
+        oss << monitorHeatingChange << endl;
 
         WriteASCIIFile(file, oss.str());
 
@@ -603,7 +594,7 @@ void NSSolver::FillActionKey(ActionKey *actkey, int action, int level)
 
 RDouble NSSolver::ComputeCFL(RDouble partialCFL)
 {
-    int iterationStep;
+    int iterationStep = 0;
 
     Param_NSSolver *parameters = GetControlParameters();
     //! Steady.
@@ -618,22 +609,53 @@ RDouble NSSolver::ComputeCFL(RDouble partialCFL)
         //! Coarse grid.
         GlobalDataBase::GetData("newnstep", &iterationStep, PHINT, 1);
     }
+    //! Unsteady.
+    int isUnsteady = parameters->GetIsUnsteady();
+    if (1 == isUnsteady)
+    {
+        iterationStep = GlobalDataBase::GetIntParaFromDB("innstep");
+    }
+
+    int cflMethod = 0;
+    if (GlobalDataBase::IsExist("CFLMethod", PHINT, 1))
+    {
+        GlobalDataBase::GetData("CFLMethod", &cflMethod, PHINT, 1);
+    }
+    else
+    {
+        GlobalDataBase::UpdateData("CFLMethod", &cflMethod, PHINT, 1);
+    }
 
     int cflNstep    = parameters->GetCFLVaryStep();
     RDouble cflStart = parameters->GetCFLStart();
     RDouble cflEnd   = parameters->GetCFLEnd();
+    RDouble cfl = 0.0;
 
-    if(partialCFL > 0)
-    {
-        cflEnd = partialCFL;
-    }
-
+    
    int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
-    RDouble cfl;
     //! GMRES1st2nd
     if(tscheme != GMRES)
     {
-        cfl = cflStart + (cflEnd - cflStart) * MIN (iterationStep, cflNstep) / cflNstep;
+    if (partialCFL > 0)
+        {
+            cflEnd = partialCFL;
+        }
+        if (iterationStep >= cflNstep)
+        {
+            return cflEnd;
+        }
+        else
+        {
+            if (0 == cflMethod)
+            {
+                cfl = cflStart + (cflEnd - cflStart) * iterationStep / cflNstep;
+            }
+            else
+            {
+                RDouble CFLratio = cflEnd / (cflStart + TINY);
+                cfl = cflStart * pow(CFLratio, (iterationStep -1)* 1.0 / cflNstep);
+            }
+        }
     }
     else
     {
@@ -857,7 +879,7 @@ void NSSolver::RegisterCFDSolverInterfaceField()
             CFDSolver::RegisterInterfaceField(varName, PHDOUBLE, 1);
         }
     }
-    delete postVisualization;
+    delete postVisualization;    postVisualization = nullptr;
 }
 
 void NSSolver::ReleaseCFDSolverInterfaceField()
@@ -868,7 +890,7 @@ void NSSolver::ReleaseCFDSolverInterfaceField()
 void NSSolver::RegisterCFDSolverInterfaceFieldUnstruct()
 {
     Param_NSSolver *parameters = GetControlParameters();
-    
+
     int nEquation = GetNumberOfEquations();
 
     CFDSolver::RegisterInterfaceField("dqdx", PHDOUBLE, nEquation);
@@ -885,6 +907,10 @@ void NSSolver::RegisterCFDSolverInterfaceFieldUnstruct()
     CFDSolver::RegisterInterfaceField("cellQ" , PHDOUBLE, 1);
     CFDSolver::RegisterInterfaceField("cellCP", PHDOUBLE, 1);
     CFDSolver::RegisterInterfaceField("cellCF", PHDOUBLE, 1);
+    CFDSolver::RegisterInterfaceField("cellYPlus", PHDOUBLE, 1);
+    CFDSolver::RegisterInterfaceField("cellPW", PHDOUBLE, 1);
+    CFDSolver::RegisterInterfaceField("cellST", PHDOUBLE, 1);
+    CFDSolver::RegisterInterfaceField("cellKN", PHDOUBLE, 1);
 
     CFDSolver::RegisterInterfaceField("dq", PHDOUBLE, nEquation);
 }
@@ -896,9 +922,50 @@ void NSSolver::RegisterCFDSolverInterpointField()
     int nEquation = GetNumberOfEquations();
 
     CFDSolver::RegisterInterpointField("qnode", PHDOUBLE, nEquation);
-    
+
     int ntmodel = parameters->GetTemperatureModel();
     CFDSolver::RegisterInterpointField("tnode", PHDOUBLE, ntmodel);
+
+    int nVisualVariables = GlobalDataBase::GetIntParaFromDB("nVisualVariables");
+    int visualVariables[100];
+    GlobalDataBase::GetData("visualVariables", visualVariables, PHINT, nVisualVariables);
+    Post_Visual *postVisualization = new Post_Visual(nVisualVariables, visualVariables);
+    set<int>::iterator varIter;
+    set<int> visualVariablesID = postVisualization->GetVisualVariables();
+    for (varIter = visualVariablesID.begin(); varIter != visualVariablesID.end(); ++ varIter)
+    {
+        int varTemp = *varIter;
+        string varName = postVisualization->GetVariableName(varTemp);
+        varName = varName + "_node";
+        CFDSolver::RegisterInterpointField(varName, PHDOUBLE, 1);
+    }
+
+    CFDSolver::RegisterInterpointField("nodeWeight_node", PHDOUBLE, 1);
+
+    int nChemical = parameters->GetChemicalFlag();
+    if (nChemical)
+    {
+        using namespace GAS_SPACE;
+
+        int nm             = parameters->GetNSEquationNumber();
+        int nEquation      = GetNumberOfEquations();
+        int nSpeciesNumber = parameters->GetNumberOfSpecies();
+
+        string *varname = gas->GetNameOfSpecies();
+        for (int m = nm; m < nEquation; ++ m)
+        {
+            string varName = "massfraction-" + varname[m - nm];
+            varName = varName + "_node";
+            CFDSolver::RegisterInterpointField(varName, PHDOUBLE, 1);
+        }
+
+        for (int m = 0; m < nSpeciesNumber; ++ m)
+        {
+            string varName = "molefraction-" + varname[m];
+            varName = varName + "_node";
+            CFDSolver::RegisterInterpointField(varName, PHDOUBLE, 1);
+        }
+    }
 }
 
 void NSSolver::RegisterOversetField()
@@ -956,7 +1023,7 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     int nNitrogenIndex = parameters->GetIndexOfNitrogen();
     int nElectronIndex = parameters->GetIndexOfElectron();
     RDouble kPrec = parameters->GetPreconCoefficient();
-
+    int isUnsteady = parameters->GetIsUnsteady();
     int RoeEntropyFixMethod  = parameters->GetRoeEntropyFixMethod();
     RDouble entrFixCoefLeft  = parameters->GetRoeEntropyFixCoef1();
     RDouble entrFixCoefRight = parameters->GetRoeEntropyFixCoef2();
@@ -971,6 +1038,7 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     invSchemePara->SetNumberOfTemperatureModel(nTemperatureModel);
     invSchemePara->SetNumberOfTotalEquation(nEquation);
     invSchemePara->SetIfPrecondition(nPrecondition);
+    invSchemePara->SetIfIsUnsteady(isUnsteady);
     invSchemePara->SetIfIdealState(nIdealState);
     invSchemePara->SetPreconCoefficient(kPrec);
     invSchemePara->SetEntropyFixMethod(RoeEntropyFixMethod);

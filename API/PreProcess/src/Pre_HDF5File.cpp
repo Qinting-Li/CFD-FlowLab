@@ -175,7 +175,7 @@ void IO_HDF5Write::CreateTotalInfo()
         }
     }
 
-    /*if(parallelPartitionMethod == METIS_OPENMP_METHOD)
+    /*if (parallelPartitionMethod == METIS_OPENMP_METHOD)
     {
         // For OpenMP case, reset the processor ID of sub-zone to the source grid's.
         int zoneID = gridSource->GetGridID()->GetIndex();
@@ -362,7 +362,7 @@ void IO_HDF5Write::WriteFaceTopology(hid_t loc_id, Grid *gridIn)
             SWAP(leftCellOfFace[iFace], rightCellOfFace[iFace]);
         }
     }
-    delete []nodePosi;
+    delete [] nodePosi;
 
     CreateAndWriteData(grpData, "nodeNumberOfEachFace", 1, nTotalFace, PHINT, nodeNumberOfEachFace);
     CreateAndWriteData(grpData, "face2Node"           , 1, faceCount , PHINT, face2Node);
@@ -620,7 +620,7 @@ void IO_HDF5Write::WriteVolumeCondition(hid_t loc_id, Grid *gridIn)
     vcNameChar[nameSize - 1] = '\0';
 
     CreateAndWriteData(grpData, "VCName", 1, nameSize, PHSTRING, vcNameChar);
-    delete []vcNameChar;
+    delete [] vcNameChar;
 
     int vcType = volumeCondition->GetVCType();
     CreateAndWriteData(grpData, "VCType", 1, 1, PHINT, &vcType);
@@ -974,29 +974,29 @@ void IO_HDF5Read::ReadWallDist()
                 string nearestwallfacenormalzname = dataName + "_nwfnz";
                 if (CheckDataExist(file, nearestwallfacenormalxname))
                 {
-                    double* nwfnx = new double[nTotalCell];
+                    double *nwfnx = new double[nTotalCell];
                     ReadData(file, nwfnx, nearestwallfacenormalxname);
 
-                    RDouble* nearestwallfacenormalx = new RDouble[nTotalCell];
+                    RDouble *nearestwallfacenormalx = new RDouble[nTotalCell];
                     for (int iCell = 0; iCell < nTotalCell; ++iCell)
                     {
                         nearestwallfacenormalx[iCell] = static_cast<RDouble>(nwfnx[iCell]);
                         //cout << nearestwallfacenormalx[iCell] << endl;
                     }
 
-                    double* nwfny = new double[nTotalCell];
+                    double *nwfny = new double[nTotalCell];
                     ReadData(file, nwfny, nearestwallfacenormalyname);
 
-                    RDouble* nearestwallfacenormaly = new RDouble[nTotalCell];
+                    RDouble *nearestwallfacenormaly = new RDouble[nTotalCell];
                     for (int iCell = 0; iCell < nTotalCell; ++iCell)
                     {
                         nearestwallfacenormaly[iCell] = static_cast<RDouble>(nwfny[iCell]);
                     }
 
-                    double* nwfnz = new double[nTotalCell];
+                    double *nwfnz = new double[nTotalCell];
                     ReadData(file, nwfnz, nearestwallfacenormalzname);
 
-                    RDouble* nearestwallfacenormalz = new RDouble[nTotalCell];
+                    RDouble *nearestwallfacenormalz = new RDouble[nTotalCell];
                     for (int iCell = 0; iCell < nTotalCell; ++iCell)
                     {
                         nearestwallfacenormalz[iCell] = static_cast<RDouble>(nwfnz[iCell]);
@@ -1006,13 +1006,13 @@ void IO_HDF5Read::ReadWallDist()
                     grid->ReadNearestwallfacenormaly(nearestwallfacenormaly);
                     grid->ReadNearestwallfacenormalz(nearestwallfacenormalz);
 
-                    delete[]nearestwallfacenormalx;
-                    delete[]nearestwallfacenormaly;
-                    delete[]nearestwallfacenormalz;
+                    delete [] nearestwallfacenormalx;
+                    delete [] nearestwallfacenormaly;
+                    delete [] nearestwallfacenormalz;
 
-                    delete[]nwfnx;
-                    delete[]nwfny;
-                    delete[]nwfnz;
+                    delete [] nwfnx;
+                    delete [] nwfny;
+                    delete [] nwfnz;
                 }
 
                 delete [] walldist;
@@ -1426,7 +1426,7 @@ void IO_HDF5Read::ReadVolumeCondition(hid_t loc_id, Grid *gridIn)
     volumeCondition->SetVCName(VCName);
     gridIn->SetVolumeCondition(volumeCondition);
 
-    delete []VCName;
+    delete [] VCName;    VCName = nullptr;
     H5Gclose(grpData);
 }
 
@@ -1519,9 +1519,9 @@ void IO_HDF5Read::ReadBCRegion(hid_t loc_id, Grid *gridIn)
         sLr    = BCInfor[iBCinfo][index++];
         sNd    = BCInfor[iBCinfo][index++];
         iBCinfo ++;
-        
+
         //! Restore periodic boundary bcType and correct read information only for PARTITION_GRID task.
-        if (GetTaskCode() == PARTITION_GRID && PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType") != 0)
+        if (GetTaskCode() == PARTITION_GRID && PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType") != NO_PERIODICITY)
         {
             if (bcregion->GetBCName() == "Periodic_up"|| bcregion->GetBCName() == "Periodic_down")
             {
@@ -1675,8 +1675,8 @@ void IO_HDF5Read::ReadStrBCName(hid_t loc_id, Grid *gridIn)
         bcregion->SetBCName(BCNameList[iBCRegion]);
     }
 
-    delete [] BCNameList;
-    delete [] BCName;
+    delete [] BCNameList;    BCNameList = nullptr;
+    delete [] BCName;    BCName = nullptr;
     H5Gclose(grpData);
 }
 
@@ -1719,8 +1719,8 @@ void IO_HDF5Read::ReadStrPartitionInfo(hid_t loc_id, Grid *gridIn)
     grid->SetOrdinaryDimStartIndex(ordinaryDimStartIndex);
     grid->SetOrdinaryDimEndIndex(ordinaryDimEndIndex);
 
-    delete []ordinaryDimStartIndex;
-    delete []ordinaryDimEndIndex;
+    delete [] ordinaryDimStartIndex;
+    delete [] ordinaryDimEndIndex;
 
     H5Gclose(grpData);
 }
@@ -1911,7 +1911,7 @@ void IO_HDF5Read::ReadUnstrBCName(hid_t loc_id, Grid *gridIn)
     grid->CreateUnstructBCSet(nBCRegionUnstruct);
 
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int* bcRegionIDofBCFace = new int[nBoundFace];
+    int *bcRegionIDofBCFace = new int[nBoundFace];
     set<string>::iterator iter;
     count = 0;
     for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)

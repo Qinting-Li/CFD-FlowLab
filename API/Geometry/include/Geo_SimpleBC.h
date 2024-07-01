@@ -129,9 +129,12 @@ namespace FLUENT_SPACE
     const int FLUENT_HEADER             = 1;
     const int FLUENT_DIMENSIONS         = 2;
     const int FLUENT_NODES              = 10;
+    const int FLUENT_NODES_BINARY  = 3010;
     const int FLUENT_EDGES              = 11;
     const int FLUENT_CELLS              = 12;
+    const int FLUENT_CELLS_BINARY  = 3012;
     const int FLUENT_FACES              = 13;
+    const int FLUENT_FACES_BINARY  = 3013;
     const int FLUENT_PERIODICFACES      = 18;
     const int FLUENT_C39                = 39;
     const int FLUENT_C45                = 45;

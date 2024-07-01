@@ -46,7 +46,13 @@ private:
     //! Grid slice position.
     RDouble slicePosition;
 
+    bool imputNodeDisplacement;
+    vector < vector < RDouble > > nodeDisplacement;
+
 public:
+    DeformParameter();
+    ~DeformParameter();
+
     void SetNDeformStep(int nDeformStepIn);
     void SetFlapAngle(RDouble flapAngleIn);
     void SetRotatePostionZ(RDouble rotatePostionZIn);
@@ -54,6 +60,7 @@ public:
     void SetGridSlice(int gridSliceIn);
     void SetSliceAxis(int sliceAxisIn);
     void SetSlicePosition(RDouble slicePositionIn);
+    void SetNodeDisplacement(vector < vector < RDouble > > nodeDisplacementIn);
 
     int GetNDeformStep();
     RDouble GetFlapAngle();
@@ -62,6 +69,9 @@ public:
     int GetGridSlice();
     int GetSliceAxis();
     RDouble GetSlicePosition();
+    vector < vector < RDouble > > GetNodeDisplacement();
+    bool IsImputNodeDisplacement();
+
 };
 
 //! @brief Mesh_Deformation achieve unstructured grid deform.
@@ -82,6 +92,8 @@ public:
     virtual void SetNumberOfReferenceCP(int numberOfReferenceCPIn) {};
     virtual void SetInfluencePara(RDouble influenceParaIn) {};
 
+    Grid ** GetGrid() { return this->stationalGrid; }
+
 private:
     //! Transform stationalGrid to deformedGrid.
     virtual void TransformGrid() = 0;
@@ -92,8 +104,12 @@ private:
     //! Set vector of surface node.
     virtual void SurfaceGridMove(int iStep) = 0;
 
+    void MatchDynamicPoints();
+
     virtual void MatchControlPoints() = 0;
     virtual void PostTreat() = 0;
+
+    void ModifyOriginalGrid();
 
 protected:
     void SetNodeAttribute(DynamicGrid *grid);

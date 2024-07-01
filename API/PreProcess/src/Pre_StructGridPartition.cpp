@@ -106,7 +106,7 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
 
     int dumpOldGrid = GlobalDataBase::GetIntParaFromDB("dumpOldGrid");
     int ndim = PHSPACE::GetDim();
-    if (ndim == TWO_D || isOverset || (ndim == THREE_D && periodicType != 0))
+    if (ndim == TWO_D || isOverset || (ndim == THREE_D && periodicType != NO_PERIODICITY))
     {
         CheckMeshMultigrid(parititionGrids, numberOfBasicBlocks);
 
@@ -133,27 +133,27 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
             if (maximumProcess < numberOfMultifile)
             {
                 ostringstream oss;
-                oss << " Error: the numberOfMultifile's value is larger than maximumProcess's value "<< endl;
+                oss << " Error: the numberOfMultifile's value is larger than maximumProcess's value " << endl;
                 TK_Exit::ExceptionExit(oss.str());
                 
             }
-            else if(maximumProcess % numberOfMultifile != 0)
+            else if (maximumProcess % numberOfMultifile != 0)
             {
                 ostringstream oss;
-                oss << " Error: the maximumProcess's value is not an integral multiple of numberOfMultifile's value "<< endl;
+                oss << " Error: the maximumProcess's value is not an integral multiple of numberOfMultifile's value " << endl;
                 TK_Exit::ExceptionExit(oss.str());
             }
 
             int procNumberOfEachfile = maximumProcess / numberOfMultifile;
             for (int iFile = 0; iFile < numberOfMultifile; ++iFile)
             {
-                vector < Grid*> tempGrids;
+                vector<Grid *> tempGrids;
                 tempGrids.resize(0);
 
                 for (int iBlock = 0; iBlock < numberOfBasicBlocks; ++iBlock)
                 {
                     int procIndex = parititionGrids[iBlock]->GetGridID()->GetIndex();
-                    int* block_proc_inp = PHMPI::GetZoneProcessorID_INP();
+                    int *block_proc_inp = PHMPI::GetZoneProcessorID_INP();
                     if (block_proc_inp)
                     {
                         procIndex = block_proc_inp[iBlock];
@@ -165,7 +165,7 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
                     }
                     else
                     {
-                        Grid* tempZero = 0;
+                        Grid *tempZero = nullptr;
                         tempGrids.push_back(tempZero);
                     }
                 }
@@ -238,7 +238,7 @@ void Pre_StrGridPartition::WriteWalldist(const string &out_grid_file, Grid **gri
     }
     
     H5Fclose(actkey->filepos);
-    delete actkey;    actkey = NULL;
+    delete actkey;    actkey = nullptr;
 }
 
 void Pre_StrGridPartition::WriteWalldist(ActionKey *actkey, StructGrid *grid)
@@ -329,7 +329,7 @@ void Pre_StrGridPartition::OutputPartitionedGrid()
 
 void Pre_StrGridPartition::SetWallDist()
 {
-    boundaryContainer->moveto_begin();
+    boundaryContainer->MoveToBegin();
 
     int numberOfBasicBlocks = 0;
     PHSPACE::PHRead(boundaryContainer, numberOfBasicBlocks);
@@ -405,7 +405,7 @@ void Pre_StrGridPartition::WriteGridWallDist(StructGrid *grid, StructGrid *Ordin
 
 void Pre_StrGridPartition::OutputPartitionedGridFile()
 {
-    boundaryContainer->moveto_begin();
+    boundaryContainer->MoveToBegin();
 
     int numberOfBasicBlocks = 0;
     PHSPACE::PHRead(boundaryContainer, numberOfBasicBlocks);
@@ -538,7 +538,7 @@ void Pre_StrGridPartition::WriteGridCoordinate(StructGrid *grid, Pre_Block_Struc
 
 void Pre_StrGridPartition::ExtractBoundaryInformation()
 {
-    boundaryContainer->moveto_begin();
+    boundaryContainer->MoveToBegin();
     PHSPACE::PHWrite(boundaryContainer, numberOfBasicBlocks);
 
     for (int iProcessor = 0; iProcessor < numberOfProcessors; ++ iProcessor)

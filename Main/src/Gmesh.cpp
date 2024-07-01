@@ -2,6 +2,8 @@
 #include "TK_Parse.h"
 #include "Math_BasisFunction.h"
 #include "Pre_GridBase.h"
+#include "Glb_Dimension.h"
+#include "TK_Exit.h"
 using namespace std;
 
 #pragma warning (disable:913)
@@ -128,10 +130,10 @@ void CreateValueSet(vector<int> &value_container, set<int> &value_set)
 
 void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_container, vector<int> &number_container, vector<int> &index_container, vector<int> &bctype_container, int *e_nvertex)
 {
-    //找出所有不同的单元类型
+    //找出所有不同的单元类型 
     set<int> elem_type_set;
     for (std::size_t i = 0; i < type_container.size(); ++ i)
-    { 
+    {
         int etype = type_container[i];
         elem_type_set.insert(etype);
     }
@@ -154,8 +156,8 @@ void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_conta
                 nelem_this_type += nelem_num;
             }
         }
-        int nvertex  = e_nvertex[ type[m] ];
-        conn_list[m] = new int[ nelem_this_type * nvertex ];
+        int nvertex  = e_nvertex[type[m]];
+        conn_list[m] = new int[nelem_this_type * nvertex];
         number[m]    = nelem_this_type;
     }
 
@@ -190,7 +192,7 @@ void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_conta
             {
                 for (int j = 0; j < ptmax; ++ j)
                 {
-                    conn_list[m][icount+j] = index_container[jcount+j];
+                    conn_list[m][icount + j] = index_container[jcount + j];
                 }
                 icount += ptmax;
             }
@@ -198,28 +200,27 @@ void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_conta
         }
     }
 
-    //找出所有不同的边界类型
+    //找出所有不同的边界类型 
     set<int> bc_type_set;
     CreateValueSet(bctype_container, bc_type_set);
 
-    //删除内边界
+    //删除内边界 
     bc_type_set.erase(0);
 
     //! Determine the number of boundary conditions for this zone.
-    int nBCRegions = static_cast<int>(bc_type_set.size());
-    int *bctype_array = new int [nBCRegions];
+    int  nBCRegions   = static_cast<int>(bc_type_set.size());
+    int *bctype_array = new int[nBCRegions];
 
     Set2Array(bc_type_set, bctype_array);
 
     CGNSBase *base_cgns = factory_cgns->GetCGNSBase(0);
     base_cgns->CreateBC(nBCRegions);
 
-    int * base_cgns_nBCElem          = base_cgns->GetNumberOfBCElements();
-    int * base_cgns_bc_elem_set_type = base_cgns->GetBoundaryElementType();
-    int * base_cgns_bc_grid_location = base_cgns->GetBoundaryGridLocation();
-    int **base_cgns_bc_conn_list     = (int**) base_cgns->GetBoundaryElementConnectionList();
-    cout << "    Warning: the cgsize_t type of conn_list has been convert to int type, when deal with GMSH grid!!!" 
-         << endl;
+    int  *base_cgns_nBCElem          = base_cgns->GetNumberOfBCElements();
+    int  *base_cgns_bc_elem_set_type = base_cgns->GetBoundaryElementType();
+    int  *base_cgns_bc_grid_location = base_cgns->GetBoundaryGridLocation();
+    int **base_cgns_bc_conn_list     = (int **)base_cgns->GetBoundaryElementConnectionList();
+    cout << "    Warning: the cgsize_t type of conn_list has been convert to int type, when deal with GMSH grid!!!" << endl;
     PointSetType_t ptsetType = PointList;
 
     //! Loop over the number of boundary conditions.
@@ -237,7 +238,7 @@ void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_conta
             cout << "\nGridLocation = Vertex means BC data refers to nodes, not elements\n";
         }
 
-        int bctype = bctype_array[iBCRegion];
+        int bctype  = bctype_array[iBCRegion];
         int nBCElem = 0;
         for (std::size_t i = 0; i < bctype_container.size(); ++ i)
         {
@@ -247,9 +248,8 @@ void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_conta
             }
         }
 
-        base_cgns_nBCElem         [iBCRegion] = nBCElem;
-        base_cgns_bc_conn_list    [iBCRegion] = new int [nBCElem];
-        //base_cgns->bc_type        [iBCRegion] = bocoType;
+        base_cgns_nBCElem[iBCRegion]          = nBCElem;
+        base_cgns_bc_conn_list[iBCRegion]     = new int[nBCElem];
         base_cgns_bc_elem_set_type[iBCRegion] = ptsetType;
         base_cgns_bc_grid_location[iBCRegion] = igr;
 
@@ -365,71 +365,71 @@ void Gmesh::InitGmsh2CGNSMap()
     TypeGmsh2CGNS[ PHSPACE::PH_MSH_HEX_20  ] = HEXA_20;
     TypeGmsh2CGNS[ PHSPACE::PH_MSH_PRI_15  ] = PENTA_15;
     TypeGmsh2CGNS[ PHSPACE::PH_MSH_PYR_13  ] = PYRA_13;
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_9   ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_10  ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_12  ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_15  ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_15I ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_21  ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_4   ] = BAR_3;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_5   ] = BAR_3;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_6   ] = BAR_3;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_20  ] = TETRA_10;    //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_35  ] = TETRA_10;    //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_56  ] = TETRA_10;    //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_34  ] = TETRA_10;    //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_52  ] = TETRA_10;    //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_POLYG_  ] = NGON_n;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_POLYH_  ] = NGON_n;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_16  ] = QUAD_9;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_25  ] = QUAD_9;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_36  ] = QUAD_9;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_12  ] = QUAD_9;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_16I ] = QUAD_9;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_20  ] = QUAD_9;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_28  ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_36  ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_45  ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_55  ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_66  ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_49  ] = QUAD_9;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_64  ] = QUAD_9;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_81  ] = QUAD_9;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_100 ] = QUAD_9;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_121 ] = QUAD_9;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_18  ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_21I ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_24  ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_27  ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_30  ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_24  ] = QUAD_9;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_28  ] = QUAD_9;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_32  ] = QUAD_9;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_36I ] = QUAD_9;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_40  ] = QUAD_9;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_7   ] = BAR_3;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_8   ] = BAR_3;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_9   ] = BAR_3;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_10  ] = BAR_3;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_11  ] = BAR_3;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_B   ] = BAR_3;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_B   ] = TRI_6;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_POLYG_B ] = NGON_n;      //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_C   ] = BAR_3;       //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_84  ] = TETRA_10;    //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_120 ] = TETRA_10;    //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_165 ] = TETRA_10;    //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_220 ] = TETRA_10;    //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_286 ] = TETRA_10;    //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_HEX_64  ] = HEXA_20;     //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_HEX_125 ] = HEXA_20;     //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_HEX_196 ] = HEXA_20;     //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_74  ] = TETRA_10;    //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_100 ] = TETRA_10;    //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_130 ] = TETRA_10;    //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_164 ] = TETRA_10;    //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_202 ] = TETRA_10;    //CGNS没有对应类型
-    TypeGmsh2CGNS[ PHSPACE::PH_MSH_NUM_TYPE] = NGON_n;      //CGNS没有对应类型
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_9   ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_10  ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_12  ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_15  ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_15I ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_21  ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_4   ] = BAR_3;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_5   ] = BAR_3;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_6   ] = BAR_3;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_20  ] = TETRA_10;    //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_35  ] = TETRA_10;    //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_56  ] = TETRA_10;    //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_34  ] = TETRA_10;    //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_52  ] = TETRA_10;    //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_POLYG_  ] = NGON_n;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_POLYH_  ] = NGON_n;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_16  ] = QUAD_9;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_25  ] = QUAD_9;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_36  ] = QUAD_9;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_12  ] = QUAD_9;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_16I ] = QUAD_9;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_20  ] = QUAD_9;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_28  ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_36  ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_45  ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_55  ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_66  ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_49  ] = QUAD_9;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_64  ] = QUAD_9;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_81  ] = QUAD_9;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_100 ] = QUAD_9;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_121 ] = QUAD_9;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_18  ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_21I ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_24  ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_27  ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_30  ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_24  ] = QUAD_9;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_28  ] = QUAD_9;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_32  ] = QUAD_9;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_36I ] = QUAD_9;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_QUA_40  ] = QUAD_9;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_7   ] = BAR_3;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_8   ] = BAR_3;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_9   ] = BAR_3;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_10  ] = BAR_3;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_11  ] = BAR_3;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_B   ] = BAR_3;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TRI_B   ] = TRI_6;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_POLYG_B ] = NGON_n;      //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_LIN_C   ] = BAR_3;       //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_84  ] = TETRA_10;    //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_120 ] = TETRA_10;    //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_165 ] = TETRA_10;    //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_220 ] = TETRA_10;    //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_286 ] = TETRA_10;    //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_HEX_64  ] = HEXA_20;     //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_HEX_125 ] = HEXA_20;     //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_HEX_196 ] = HEXA_20;     //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_74  ] = TETRA_10;    //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_100 ] = TETRA_10;    //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_130 ] = TETRA_10;    //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_164 ] = TETRA_10;    //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_TET_202 ] = TETRA_10;    //CGNS没有对应类型 
+    TypeGmsh2CGNS[ PHSPACE::PH_MSH_NUM_TYPE] = NGON_n;      //CGNS没有对应类型 
 }
 
 void Gmesh::InitCGNSNVertex()
@@ -474,57 +474,58 @@ void Gmesh::Read(fstream &file, CGNSFactory *factory_cgns)
 
 void Gmesh::ReadMeshFormat(fstream &file)
 {
-    string line,word;
+    string line, word;
     string separator = " =\t\r\n#$,;";
     do
     {
-        getline(file,line);
-        line = FindNextWord(line,word,separator);
+        getline(file, line);
+        line = FindNextWord(line, word, separator);
         transform(word.begin(), word.end(), word.begin(), ToLower());
     } while (word != "meshformat");
 
-    getline(file,line);
+    getline(file, line);
 
-    line = FindNextWord(line,word,separator);
-    from_string< RDouble >(version_number,word,std::dec);
+    line = FindNextWord(line, word, separator);
+    from_string< RDouble >(version_number, word, std::dec);
 
-    line = FindNextWord(line,word,separator);
-    from_string< int >(file_type,word,std::dec);
+    line = FindNextWord(line, word, separator);
+    from_string< int >(file_type, word, std::dec);
 
-    line = FindNextWord(line,word,separator);
-    from_string< int >(data_size,word,std::dec);
+    line = FindNextWord(line, word, separator);
+    from_string< int >(data_size, word, std::dec);
 
-
-    cout << "version-number = " << version_number << "\n";
-    cout << "file-type      = " << file_type      << "\n";
-    cout << "data-size      = " << data_size      << "\n";
+    cout << " version-number = " << version_number << "\n";
+    cout << " file-type      = " << file_type      << "\n";
+    cout << " data-size      = " << data_size      << "\n";
 }
 
 void Gmesh::ReadNodes(fstream &file, CGNSFactory *factory_cgns)
 {
-    string line,word;
+    string line, word;
     string separator = " =\t\r\n#$,;";
     do
     {
-        getline(file,line);
-        line = FindNextWord(line,word,separator);
+        getline(file, line);
+        line = FindNextWord(line, word, separator);
         transform(word.begin(), word.end(), word.begin(), ToLower());
     } while (word != "nodes");
 
-    getline(file,line);
+    getline(file, line);
 
-    line = FindNextWord(line,word,separator);
-    from_string< int >(nTotalNode,word,std::dec);
+    line = FindNextWord(line, word, separator);
+    from_string< int >(nTotalNode, word, std::dec);
+
+    cout << "\nRead grid coordinates ...\n";
 
     int nBlocks = 1;
-
     for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        cout << " iZone = " << iZone << " nBlocks = " << nBlocks << "\n";
+        cout << " iZone = " << iZone << " nBlocks = " << nBlocks << endl;
+        cout << " nTotalNode = " << nTotalNode << endl;
 
-        RDouble *x = new RDouble[ nTotalNode ];
-        RDouble *y = new RDouble[ nTotalNode ];
-        RDouble *z = new RDouble[ nTotalNode ];
+        RDouble *x = new RDouble[nTotalNode];
+        RDouble *y = new RDouble[nTotalNode];
+        RDouble *z = new RDouble[nTotalNode];
 
         RawGrid *rawgrid = factory_cgns->GetRawGrid(iZone);
 
@@ -532,33 +533,25 @@ void Gmesh::ReadNodes(fstream &file, CGNSFactory *factory_cgns)
         rawgrid->SetY(y);
         rawgrid->SetZ(z);
 
-        RDouble xmin,ymin,zmin,xmax,ymax,zmax;
+        RDouble xmin, ymin, zmin, xmax, ymax, zmax;
         xmin = ymin = zmin =   LARGE;
         xmax = ymax = zmax = - LARGE;
 
-        cout << " Read grid coordinates \n";
-
-        int iskip = 500000;
         int index;
-
         for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            if (iNode % iskip == 0)
-            {
-                cout << " iNode = " << iNode << " nTotalNode = " << nTotalNode << "\n";
-            }
             getline(file,line);
-            line = FindNextWord(line,word,separator);
-            from_string< int >(index,word,std::dec);
+            line = FindNextWord(line, word, separator);
+            from_string< int >(index, word, std::dec);
 
-            line = FindNextWord(line,word,separator);
-            from_string< RDouble >(x[iNode],word,std::dec);
+            line = FindNextWord(line, word, separator);
+            from_string< RDouble >(x[iNode], word, std::dec);
 
-            line = FindNextWord(line,word,separator);
-            from_string< RDouble >(y[iNode],word,std::dec);
+            line = FindNextWord(line, word, separator);
+            from_string< RDouble >(y[iNode], word, std::dec);
 
-            line = FindNextWord(line,word,separator);
-            from_string< RDouble >(z[iNode],word,std::dec);
+            line = FindNextWord(line, word, separator);
+            from_string< RDouble >(z[iNode], word, std::dec);
 
             xmin = MIN(xmin, x[iNode]);
             ymin = MIN(ymin, y[iNode]);
@@ -578,159 +571,289 @@ void Gmesh::ReadNodes(fstream &file, CGNSFactory *factory_cgns)
         cout << " ymin = " << setw(wordwidth) << ymin << " ymax = " << setw(wordwidth) << ymax << "\n";
         cout << " zmin = " << setw(wordwidth) << zmin << " zmax = " << setw(wordwidth) << zmax << "\n";
     }
+    cout << "Read grid coordinates end \n";
 }
-
-//$MeshFormat
-//2.2 0 8
-//$EndMeshFormat
-//$Nodes
-//6 six mesh nodes:
-//1 0.0 0.0 0.0 node #1: coordinates (0.0, 0.0, 0.0)
-//2 1.0 0.0 0.0 node #2: coordinates (1.0, 0.0, 0.0)
-//3 1.0 1.0 0.0 etc.
-//4 0.0 1.0 0.0
-//5 2.0 0.0 0.0
-//6 2.0 1.0 0.0
-//$EndNodes
-//$Elements
-//2 two elements:
-//1 3 2 99 2 1 2 3 4 quad #1: type 3, physical 99, elementary 2, nodes 1 2 3 4
-//2 3 2 99 2 2 5 6 3 quad #2: type 3, physical 99, elementary 2, nodes 2 5 6 3
-//$EndElements
-//$NodeData
-//1 one string tag:
-//"A scalar view" the name of the view ("A scalar view")
-//1 one real tag:
-//0.0 the time value (0.0)
-//3 three integer tags:
-//0 the time step (0; time steps always start at 0)
-//1 1-component (scalar) field
-//6 six associated nodal values
-//1 0.0 value associated with node #1 (0.0)
-//2 0.1 value associated with node #2 (0.1)
-//3 0.2 etc.
-//4 0.0
-//5 0.2
-//6 0.4
-//$EndNodeData
-
-//2 two elements:
-//1 3 2 99 2 1 2 3 4 quad #1: type 3, physical 99, elementary 2, nodes 1 2 3 4
-//2 3 2 99 2 2 5 6 3 quad #2: type 3, physical 99, elementary 2, nodes 2 5 6 3
-
-//elm-number
-//is the number (index) of the n-th element in the mesh; elm-number must be a
-//postive (non-zero) integer. Note that the elm-numbers do not necessarily have
-//to form a dense nor an ordered sequence.
-//elm-type
-//number-of-tags
-//gives the number of integer tags that follow for the n-th element. By default,
-//the first tag is the number of the physical entity to which the element belongs;
-//the second is the number of the elementary geometrical entity to which the
-//element belongs; the third is the number of mesh partitions to which the element
-//belongs, followed by the partition ids (negative partition ids indicate ghost
-//cells). A zero tag is equivalent to no tag.
-
-//number-of-elements
-//elm-number elm-type number-of-tags < tag > ... node-number-list
-
-//quad #1: type 3, physical 99, elementary 2, nodes 1 2 3 4
-//#1 : 3-node triangle.type 
-//elm-number elm-type number-of-tags physical    elementary 
-//1           2          2            0          2
-//1 2 2 0 2 1 2 3 
-//2 2 2 0 2 2 4 3 
-//3 2 2 0 2 5 6 7  
-//
-//35 27 2 1 0 25 17 26 27 28
-//36 27 2 1 0 17 18 29 30 31
-//37 27 2 1 0 18 19 32 33 34
-//38 27 2 1 0 19 11 35 36 37
-//39 27 2 1 0 11 12 38 39 40
-//40 27 2 1 0 12 23 41 42 43 
 
 void Gmesh::ReadElements(fstream &file, CGNSFactory *factory_cgns)
 {
-    string line,word;
+    string line, word;
     string separator = " =\t\r\n#$,;";
     do
     {
-        getline(file,line);
-        line = FindNextWord(line,word,separator);
+        getline(file, line);
+        line = FindNextWord(line, word, separator);
         transform(word.begin(), word.end(), word.begin(), ToLower());
     } while (word != "elements");
 
-    getline(file,line);
+    getline(file, line);
 
-    //所有单元，包括边界单元
+    //所有单元，包括边界单元 
     int elements = 0;
 
-    line = FindNextWord(line,word,separator);
-    from_string< int >(elements,word,std::dec);
+    line = FindNextWord(line, word, separator);
+    from_string< int >(elements, word, std::dec);
 
-    cout << " Read grid coordinates \n";
+    cout << "\nRead element topology ...\n";
 
-    int elem_index,gmsh_elem_type;
+    int elem_index, gmsh_elem_type;
     int number_of_tags;
     int elem_tag[3];
 
-    vector<int> elem_type_container;
-    vector<int> elem_number_container;
-    vector<int> elem_index_container;
-    vector<int> elem_bctype_container;
+    vector <int>           elem_type_container;
+    vector <int>           elem_physId_container;
+    vector <int>           elem_start_container;
+    vector <int>           elem_end_container;
+    vector < vector<int> > elem_nodes_containers;
 
-    int *node_gmsh = new int [NofValidElementTypesGmsh]();
-    int *node_cgns = new int [NofValidElementTypesGmsh]();
+    int *node_gmsh = new int[NofValidElementTypesGmsh]();
+    int *node_cgns = new int[NofValidElementTypesGmsh]();
 
-    GmeshElem *gmshelem = new GmeshElem();
+    int iElement      = 0;
+    int ori_elem_type = -1;
+    int ori_PhysId    = -1;
 
-    for (int i = 0; i < elements; ++ i)
+    getline(file, line);
+
+    line = FindNextWord(line, word, separator);
+    from_string< int >(elem_index, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string< int >(gmsh_elem_type, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string< int >(number_of_tags, word, std::dec);
+
+    for (int j = 0; j < number_of_tags; ++ j)
     {
-        getline(file,line);
-        line = FindNextWord(line,word,separator);
-        from_string< int >(elem_index,word,std::dec);
+        line = FindNextWord(line, word, separator);
+        from_string< int >(elem_tag[j], word, std::dec);
+    }
 
-        line = FindNextWord(line,word,separator);
-        from_string< int >(gmsh_elem_type,word,std::dec);
+    do
+    {
+        ori_PhysId    = elem_tag[0];
+        ori_elem_type = gmsh_elem_type;
 
-        line = FindNextWord(line,word,separator);
-        from_string< int >(number_of_tags,word,std::dec);
-
-        for (int j = 0; j < number_of_tags; ++ j)
-        {
-            line = FindNextWord(line,word,separator);
-            from_string< int >(elem_tag[j],word,std::dec);
-        }
-
-        elem_bctype_container.push_back(elem_tag[0]);
-
-        int cgns_elem_type = TypeGmsh2CGNS[ gmsh_elem_type ];
-        int cgns_vnum = cgns_nvertex[ cgns_elem_type ];
-        int gesh_vnum = gmesh_nvertex[ gmsh_elem_type ];
+        int cgns_elem_type = TypeGmsh2CGNS[gmsh_elem_type];
+        int cgns_vnum = cgns_nvertex[cgns_elem_type];
+        int gesh_vnum = gmesh_nvertex[gmsh_elem_type];
 
         elem_type_container.push_back(cgns_elem_type);
-        elem_number_container.push_back(1);
+        elem_physId_container.push_back(elem_tag[0]);
+        elem_start_container.push_back(elem_index);
 
-        int nodeindex;
-        for (int j = 0; j < gesh_vnum; ++ j)
-        {
-            line = FindNextWord(line,word,separator);
-            from_string< int >(nodeindex,word,std::dec);
-            node_gmsh[j] = nodeindex;
-        }
+        vector <int> elem_nodes_container;
 
-        ElemReorderGmsh2CGNS(cgns_elem_type, node_gmsh, node_cgns, gesh_vnum);
-        for (int j = 0; j < cgns_vnum; ++ j)
+        do
         {
-            elem_index_container.push_back(node_cgns[j]);
+            int nodeindex;
+            for (int j = 0; j < gesh_vnum; ++j)
+            {
+                line = FindNextWord(line, word, separator);
+                from_string< int >(nodeindex, word, std::dec);
+                node_gmsh[j] = nodeindex;
+            }
+
+            ElemReorderGmsh2CGNS(cgns_elem_type, node_gmsh, node_cgns, gesh_vnum);
+            for (int j = 0; j < cgns_vnum; ++j)
+            {
+                elem_nodes_container.push_back(node_cgns[j]);
+            }
+
+            iElement ++;
+            if (iElement == elements)
+            {
+                elem_index ++;
+                break;
+            }
+
+            getline(file, line);
+
+            line = FindNextWord(line, word, separator);
+            from_string< int >(elem_index, word, std::dec);
+
+            line = FindNextWord(line, word, separator);
+            from_string< int >(gmsh_elem_type, word, std::dec);
+
+            line = FindNextWord(line, word, separator);
+            from_string< int >(number_of_tags, word, std::dec);
+
+            for (int j = 0; j < number_of_tags; ++j)
+            {
+                line = FindNextWord(line, word, separator);
+                from_string< int >(elem_tag[j], word, std::dec);
+            }
+        } while (gmsh_elem_type == ori_elem_type && elem_tag[0] == ori_PhysId);
+
+        elem_end_container.push_back(elem_index - 1);
+        elem_nodes_containers.push_back(elem_nodes_container);
+
+    } while (iElement < elements);
+
+    vector <int>    PhysicalDim;
+    vector <int>    PhysicalId;
+    vector <string> PhysicalName;
+    ReadBoundary(file, PhysicalDim, PhysicalId, PhysicalName);
+
+    ConvertCGNS(factory_cgns, elem_type_container, elem_nodes_containers, elem_start_container, 
+                elem_end_container, elem_physId_container, cgns_nvertex, PhysicalDim, PhysicalId, PhysicalName);
+
+    delete [] node_gmsh;    node_gmsh = nullptr;
+    delete [] node_cgns;    node_cgns = nullptr;
+
+    cout << "Read element topology end\n\n";
+}
+
+void Gmesh::ReadBoundary(fstream &file, vector <int> &PhysicalDim, vector <int> &PhysicalId, vector <string> &PhysicalName)
+{
+    string line, word;
+    string separator = " =\t\r\n#$,;\"";
+    do
+    {
+        getline(file, line);
+        line = FindNextWord(line, word, separator);
+        transform(word.begin(), word.end(), word.begin(), ToLower());
+    } while (word != "physicalnames");
+
+    int nNames, iDim, elem_tag;
+    string physicalNames;
+
+    getline(file, line);
+    line = FindNextWord(line, word, separator);
+    from_string< int >(nNames, word, std::dec);
+
+    for (int iName = 0; iName < nNames; ++ iName)
+    {
+        getline(file, line);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(iDim, word, std::dec);
+        PhysicalDim.push_back(iDim);
+
+        line = FindNextWord(line, word, separator);
+        from_string< int >(elem_tag, word, std::dec);
+        PhysicalId.push_back(elem_tag);
+
+        line = FindNextWord(line, word, separator);
+        from_string< string >(physicalNames, word, std::dec);
+        PhysicalName.push_back(physicalNames);
+    }
+}
+
+void Gmesh::ConvertCGNS(CGNSFactory *factory_cgns, vector<int> &type_container, vector < vector<int> > &elem_nodes_container, 
+                        vector <int> &start_container, vector <int> &end_container, vector<int> &physId_container, 
+                        int *e_nvertex, vector <int> &PhysicalDim, vector <int> &PhysicalId, vector <string> &PhysicalName)
+{
+    CGNSBase *base_cgns = factory_cgns->GetCGNSBase(0);
+
+    int nSections = type_container.size();
+    base_cgns->CreateElement(nSections);
+
+    int       *base_cgns_elem_type       = base_cgns->GetElementType();
+    cgsize_t  *base_cgns_istart          = base_cgns->GetIndexOfStart();
+    cgsize_t  *base_cgns_iend            = base_cgns->GetIndexOfEnd();
+    cgsize_t **base_cgns_conn_list       = base_cgns->GetElementConnectionList();
+    cgsize_t  *base_cgns_elementdatasize = base_cgns->GetElementDataSize();
+
+    for (int iSection = 0; iSection < nSections; ++ iSection)
+    {
+        cout << " Reading section "  << iSection + 1 << " ...\n";
+        cout << "   section type = " << ElementTypeName[type_container[iSection]] << "\n";
+        cout << "   istart,iend =  " << start_container[iSection] << " " << end_container[iSection] << "\n";
+
+        base_cgns_istart[iSection]    = start_container[iSection];
+        base_cgns_iend[iSection]      = end_container[iSection];
+        base_cgns_elem_type[iSection] = type_container[iSection];
+
+        int elementdatasize = elem_nodes_container[iSection].size();
+        base_cgns_elementdatasize[iSection] = elementdatasize;
+
+        base_cgns_conn_list[iSection] = new cgsize_t[elementdatasize];
+        for (int iData = 0; iData < elementdatasize; ++ iData)
+        {
+            base_cgns_conn_list[iSection][iData] = elem_nodes_container[iSection][iData];
         }
     }
 
-    gmshelem->TreatElements(factory_cgns, elem_type_container, elem_number_container, elem_index_container, elem_bctype_container, cgns_nvertex);
+    int nBCRegions = 0;
+    int globalDim  = GetDim();
+    vector <int> BCRegionsIndex(nSections, -1);
 
-    delete gmshelem;    gmshelem = NULL;
-    delete [] node_gmsh;    node_gmsh = NULL;
-    delete [] node_cgns;    node_cgns = NULL;
+    for (int jSection = 0; jSection < PhysicalDim.size(); ++ jSection)
+    {
+        if (PhysicalDim[jSection] == globalDim - 2 || PhysicalDim[jSection] > globalDim)
+        {
+            TK_Exit::ExceptionExit("Error: Dimension in Gmsh file is not according with that in parameter file!");
+        }
+
+        if (PhysicalDim[jSection] == globalDim)
+        {
+            continue;
+        }
+
+        for (int iSection = 0; iSection < nSections; ++ iSection)
+        {
+            if (physId_container[iSection] == PhysicalId[jSection])
+            {
+                BCRegionsIndex[iSection] = jSection;
+                nBCRegions ++;
+            }
+        }
+    }
+
+    cout << "\n Number of BC Regions: " << nBCRegions << endl;
+    base_cgns->CreateBC(nBCRegions);
+
+    int       *base_cgns_nBCElem          = base_cgns->GetNumberOfBCElements();
+    int       *base_cgns_bc_elem_set_type = base_cgns->GetBoundaryElementType();
+    int       *base_cgns_bc_grid_location = base_cgns->GetBoundaryGridLocation();
+    int       *base_cgns_bc_type          = base_cgns->GetBCType();
+    cgsize_t **base_cgns_bc_conn_list     = base_cgns->GetBoundaryElementConnectionList();
+
+    string *boundaryName = new string[nBCRegions]();
+    base_cgns->SetBCName(boundaryName);
+
+    PointSetType_t ptsetType = ElementRange;
+    GridLocation_t igr       = FaceCenter;
+
+    int iBCRegion = 0;
+    for (int iSection = 0; iSection < nSections; ++ iSection)
+    {
+        if (BCRegionsIndex[iSection] < 0)
+        {
+            continue;
+        }
+
+        cout << " Reading bcRegion " << iBCRegion + 1 << " ...\n";
+        cout << "   Boundary Name = " << PhysicalName[BCRegionsIndex[iSection]] << "\n";
+        cout << "   BCtype  = " << BCTypeName[1] << "\n";
+
+        boundaryName[iBCRegion]               = PhysicalName[BCRegionsIndex[iSection]];
+        base_cgns_nBCElem[iBCRegion]          = 2;
+        base_cgns_bc_conn_list[iBCRegion]     = new cgsize_t[2];
+        base_cgns_bc_type[iBCRegion]          = 1;
+        base_cgns_bc_elem_set_type[iBCRegion] = ptsetType;
+        base_cgns_bc_grid_location[iBCRegion] = igr;
+
+        base_cgns_bc_conn_list[iBCRegion][0] = start_container[iSection];
+        base_cgns_bc_conn_list[iBCRegion][1] = end_container[iSection];
+
+        cout << "  Start & End point of Region " << ": "
+            << base_cgns_bc_conn_list[iBCRegion][0] << " " << base_cgns_bc_conn_list[iBCRegion][1] << "\n";
+
+        iBCRegion ++;
+    }
+
+    nTotalCell = 0;
+    for (int iSection = 0; iSection < nSections; ++ iSection)
+    {
+        if (BCRegionsIndex[iSection] < 0)
+        {
+            nTotalCell += end_container[iSection] - start_container[iSection] + 1;
+        }
+    }
+    base_cgns->SetNTotalNode(nTotalNode);
+    base_cgns->SetNTotalCell(nTotalCell);
 }
 
 }

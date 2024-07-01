@@ -31,7 +31,7 @@ ZoneInterface::~ZoneInterface()
 
 void ZoneInterface::Encode(DataContainer *&dataContainer)
 {
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     int zoneIndex = this->GetZoneIndex();
     PHWrite(dataContainer, zoneIndex);
@@ -61,7 +61,7 @@ void ZoneInterface::Encode(DataContainer *&dataContainer)
 
 void ZoneInterface::Decode(DataContainer *&dataContainer)
 {
-    dataContainer->moveto_begin();
+    dataContainer->MoveToBegin();
 
     int zoneIndex;
     PHRead(dataContainer, zoneIndex);
@@ -230,7 +230,7 @@ void ComputationalGridProcess::CreateInterfaceInformation()
         UnstructBC *bcRegion = unstructBCSet ->GetBCRegion(bcRegionIDofBCFace[iFace]);
 
         int boundaryConditionType = bcRegion->GetBCType();
-        if(boundaryConditionType == PHENGLEI::INTERFACE || boundaryConditionType < 0)
+        if (boundaryConditionType == PHENGLEI::INTERFACE || boundaryConditionType < 0)
         {
             ++ numberOfInterfaces;
         }
@@ -880,7 +880,7 @@ void ComputationalGridProcess::UpdateOtherBoundaryTopologyTerm()
     unstructuredGrid->CreateUnstructBCSet(nBCRegionUnstruct);
 
     UnstructBCSet *unstructBCSetNew = unstructuredGrid->GetUnstructBCSet();
-    int* bcRegionIDofBCFace = new int[newNumberOfBoundaryFaces];
+    int *bcRegionIDofBCFace = new int[newNumberOfBoundaryFaces];
     set<string>::iterator iter;
     int count = 0;
     for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
@@ -1159,8 +1159,8 @@ void ComputationalGridProcess::SwapZoneInterfaceLengthToNeighborZones(vector<Cha
                 DataContainer *tempData = new DataContainer();
                 this->CompressZoneInterfaceIntoDataContainer(tempData, iZone);
 
-                dataContainer->moveto_begin();
-                CharVecSizeType len = tempData->size();
+                dataContainer->MoveToBegin();
+                CharVecSizeType len = tempData->Size();
                 PHWrite(dataContainer, len);
                 delete tempData;
             }
@@ -1169,7 +1169,7 @@ void ComputationalGridProcess::SwapZoneInterfaceLengthToNeighborZones(vector<Cha
 
             if (PHMPI::GetCurrentProcessorID() == receiveProcessorIndex)
             {
-                dataContainer->moveto_begin();
+                dataContainer->MoveToBegin();
                 CharVecSizeType len;
                 PHRead(dataContainer, len);
                 neighborLength.push_back(len);
@@ -1287,7 +1287,7 @@ void ComputationalGridProcess::SwapZoneInterfaceTopologyToNeighborZonesNonBlocki
             
             if (currentProcessor == sendProcessor)
             {
-                streamsize nlen = sendBuffer->size();
+                streamsize nlen = sendBuffer->Size();
                 send(sendBuffer, receiveProcessor, nlen, requestContainer, tag);
             }
             else if (currentProcessor == receiveProcessor)

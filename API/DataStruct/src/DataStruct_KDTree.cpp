@@ -100,13 +100,12 @@ namespace PHSPACE
 
         if (rect)
         {
-            rect->Free();
             delete rect;
             rect = NULL;
         }
     }
 
-    void KDTree::ClearRec(KDNode *node, void(*destr)(void *))
+    void KDTree::ClearRec(KDNode *node, void(*destr)(int))
     {
         if (!node)
         {
@@ -119,16 +118,24 @@ namespace PHSPACE
         {
             destr(node->data);
         }
-        delete [] node->pos;
+        if (node->right)
+        {
+            node->right = nullptr;
+        }
+        if (node->left)
+        {
+            node->left = nullptr;
+        }
+        //delete [] node->pos;
         delete node;
     }
 
-    void KDTree::DestructorKDData(void(*destr)(void *))
+    void KDTree::DestructorKDData(void(*destr)(int))
     {
         this->destr = destr;
     }
 
-    int InsertRec(KDNode **nptr, const RDouble *pos, void *data, int dir, int dim)
+    int InsertRec(KDNode **nptr, const RDouble *pos, int data, int dir, int dim)
     {
         int newDir;
         KDNode *node;
@@ -167,7 +174,7 @@ namespace PHSPACE
         return InsertRec(&(*nptr)->right, pos, data, newDir, dim);
     }
 
-    int KDInsert(KDTree *kdTree, const RDouble *pos, void *data)
+    int KDInsert(KDTree *kdTree, const RDouble *pos, int data)
     {
         if (InsertRec(&kdTree->root, pos, data, 0, kdTree->dim))
         {

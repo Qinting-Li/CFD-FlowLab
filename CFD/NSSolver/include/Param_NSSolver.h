@@ -111,9 +111,9 @@ public:
     
     int GetMgProlongationType() const;
 
-    RDouble* GetPrimitiveVarFarfield() const;
+    RDouble * GetPrimitiveVarFarfield() const;
 
-    RDouble* GetFullyCatalyticMassFraction() const;
+    RDouble * GetFullyCatalyticMassFraction() const;
 
     int GetNumberOfSpecies() const;
 

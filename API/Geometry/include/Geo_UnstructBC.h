@@ -94,7 +94,7 @@ public:
     void CreatenBCRegion(uint_t nBCRegion) {bcRegions = new vector<UnstructBC *>(nBCRegion);}
     int GetnBCRegion() const {  return static_cast<int>(bcRegions->size()); }
 
-    void SetBCFaceInfo(int* bcRegionIDofBCFace) {this->bcRegionIDofBCFace = bcRegionIDofBCFace;}
+    void SetBCFaceInfo(int *bcRegionIDofBCFace) {this->bcRegionIDofBCFace = bcRegionIDofBCFace;}
 
     //! Get the bcregion id by interfaceIndexContainerForReceive value.
     int * GetBCFaceInfo() const {  return this->bcRegionIDofBCFace; }

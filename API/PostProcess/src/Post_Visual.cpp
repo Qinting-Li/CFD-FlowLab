@@ -184,7 +184,7 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
         varIter ++;
     }
     GlobalDataBase::UpdateData("visualVariables", visualVariablesData, PHINT, nVisualVariables);
-    delete[] visualVariablesData;    visualVariablesData = nullptr;
+    delete [] visualVariablesData;    visualVariablesData = nullptr;
 }
 
 LIB_EXPORT Post_Visual::~Post_Visual()
@@ -215,9 +215,9 @@ LIB_EXPORT void Post_Visual::GetASCIITecplotHeader(vector<string> &title_tecplot
     {
         //! Chemical turned on.
         using namespace GAS_SPACE;
-        int nm    = GlobalDataBase::GetIntParaFromDB("nm");
-        int nl    = GlobalDataBase::GetIntParaFromDB("nl");
-        int neqn  = nl + nchem;
+        int nm   = GlobalDataBase::GetIntParaFromDB("nm");
+        int nl   = GlobalDataBase::GetIntParaFromDB("nl");
+        int neqn = nl + nchem;
 
         string *varname = gas->GetNameOfSpecies();
         for (int m = nm; m < neqn; ++ m)
@@ -298,7 +298,16 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, RDouble 
         isVelocityForPostVisual = true;
     }
 
-    CompNodeVar(gridUnstruct, qn, cellCenterData, isVelocityForPostVisual);
+    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+    if (COMPRESSIBLE == compressible)
+    {
+        CompNodeVar(gridUnstruct, qn, name, cellCenterData, isVelocityForPostVisual);
+    }
+    else if (INCOMPRESSIBLE == compressible)
+    {
+        CompNodeVar(gridUnstruct, qn, cellCenterData, isVelocityForPostVisual);
+    }
+
     visualVariablesPtr->UpdateDataPtr(name, qn);
 }
 
@@ -379,6 +388,82 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, RDouble3
     RDouble4D *qn = new RDouble4D(I, J, K, M, fortranArray);
     CompNodeVar(grid_str, *qn, 0, cellCenterData);
     ModifyBoundaryNodeValue(name, grid_str, *qn, cellCenterData, PHENGLEI::SOLID_SURFACE);
+    visualVariablesPtr->UpdateDataPtr(name, qn);
+}
+
+LIB_EXPORT void Post_Visual::UpdateVisualNodeNotInterpolation(const string &name, int *cellCenterdata)
+{
+    if (!grid)
+    {
+        TK_Exit::ExceptionExit("Post_Visual::UpdateVisualNodeVarPtr needs Geometry infomation.");
+    }
+
+    UnstructGrid *gridUnstruct = UnstructGridCast(grid);
+    int           nTotalNode   = gridUnstruct->GetNTotalNode();
+    RDouble      *qn           = new RDouble[nTotalNode];
+
+    int  nTotalCell    = gridUnstruct->GetNTotalCell();
+    int *cell2node     = gridUnstruct->GetCell2Node();
+    int *nodeNumOfCell = gridUnstruct->GetNodeNumberOfEachCell();
+
+    SetField(qn, 0.0, nTotalNode);
+    int nodeSubscript = 0;
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        int nodeNum = nodeNumOfCell[iCell];
+        if (-1 != cellCenterdata[iCell])
+        {
+            nodeSubscript += nodeNum;
+            continue;
+        }
+
+        for (int iNode = 0; iNode < nodeNum; ++ iNode)
+        {
+            int nodeIndex = cell2node[nodeSubscript];
+            qn[nodeIndex] = -1.0;
+
+            nodeSubscript ++;
+        }
+    }
+
+    nodeSubscript = 0;
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        int nodeNum = nodeNumOfCell[iCell];
+        if (0 != cellCenterdata[iCell])
+        {
+            nodeSubscript += nodeNum;
+            continue;
+        }
+
+        for (int iNode = 0; iNode < nodeNum; ++ iNode)
+        {
+            int nodeIndex = cell2node[nodeSubscript];
+            qn[nodeIndex] = 0.0;
+
+            nodeSubscript ++;
+        }
+    }
+
+    nodeSubscript = 0;
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        int nodeNum = nodeNumOfCell[iCell];
+        if (1 != cellCenterdata[iCell])
+        {
+            nodeSubscript += nodeNum;
+            continue;
+        }
+
+        for (int iNode = 0; iNode < nodeNum; ++ iNode)
+        {
+            int nodeIndex = cell2node[nodeSubscript];
+            qn[nodeIndex] = 1.0;
+
+            nodeSubscript ++;
+        }
+    }
+
     visualVariablesPtr->UpdateDataPtr(name, qn);
 }
 
@@ -701,7 +786,7 @@ DumpToVTK::DumpToVTK(vector<DataContainer *> datalist_in, string filename_in, bo
 
     for (unsigned int iZone = 0; iZone < vtkdatalist.size(); ++ iZone)
     {
-        vtkdatalist[iZone]->moveto_begin();
+        vtkdatalist[iZone]->MoveToBegin();
     }
     nvarplot = 0;
 }
@@ -826,7 +911,7 @@ void DumpToVTK::WriteVTKFilm()
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         DataContainer *cdata = vtkdatalist[iZone];
-        
+
         int GridID;
         int dimension;
         int type;
@@ -861,7 +946,7 @@ void DumpToVTK::WriteVTKFilm()
                 PHRead(cdata, &bctype, 1);
                 PHWrite(file, bctype);
 
-                cdata->read_string(bcName);
+                cdata->ReadString(bcName);
                 
                 if (bcName.empty())
                 {
@@ -890,9 +975,9 @@ void DumpToVTK::WriteVTKFilm()
             PHWrite(file, y, IMxOrNumPts);
             PHWrite(file, z, IMxOrNumPts);
 
-            delete [] x;
-            delete [] y;
-            delete [] z;
+            delete [] x;    x = nullptr;
+            delete [] y;    y = nullptr;
+            delete [] z;    z = nullptr;
 
             if (nVisualVariables != 0)
             {
@@ -902,7 +987,7 @@ void DumpToVTK::WriteVTKFilm()
                     PHRead(cdata, qq, IMxOrNumPts);
                     PHWrite(file, qq, IMxOrNumPts);
 
-                    delete [] qq;
+                    delete [] qq;    qq = nullptr;
                 }
             }
 
@@ -952,19 +1037,19 @@ void DumpToVTK::WriteVTKFilm()
                 PHRead(cdata, face2Node, count);
                 PHWrite(file, face2Node, count);
 
-                delete [] nodeNumberOfEachCell;
-                delete [] cell2Node;
-                delete [] faceNumberOfEachCell;
-                delete [] cell2Face;
-                delete [] nodeNumberOfEachFace;
-                delete [] face2Node;
+                delete [] nodeNumberOfEachCell;    nodeNumberOfEachCell = nullptr;
+                delete [] cell2Node;    cell2Node = nullptr;
+                delete [] faceNumberOfEachCell;    faceNumberOfEachCell = nullptr;
+                delete [] cell2Face;    cell2Face = nullptr;
+                delete [] nodeNumberOfEachFace;    nodeNumberOfEachFace = nullptr;
+                delete [] face2Node;    face2Node = nullptr;
             }
             else
             {
                 int *face2node = new int [JMxOrNumElements * 4];
                 PHRead(cdata, face2node, JMxOrNumElements * 4);
                 PHWrite(file, face2node, JMxOrNumElements * 4);
-                delete [] face2node;
+                delete [] face2node;    face2node = nullptr;
             }
 
             PHRead(cdata, &TecioMission, 1);
@@ -988,7 +1073,7 @@ DumpToTecio::DumpToTecio(vector<DataContainer *> datalist_in, string filename_in
 
     for (unsigned int iZone = 0; iZone < datalist.size(); ++ iZone)
     {
-        datalist[iZone]->moveto_begin();
+        datalist[iZone]->MoveToBegin();
     }
     nvarplot = 0;
 }
@@ -1123,7 +1208,7 @@ void DumpToTecio::WriteGridFilm()
             if (TecioMission == WriteBoundary)
             {
                 PHRead(cdata, &bctype, 1);
-                cdata->read_string(bcName);
+                cdata->ReadString(bcName);
 
                 if (bcName.empty())
                 {
@@ -1171,11 +1256,11 @@ void DumpToTecio::WriteGridFilm()
 
             if (TecioMission == WriteBlock)
             {
-                oss << "Zone"<< GridID << " BLK";
+                oss << "Zone" << GridID << " BLK";
             }
             else
             {
-                oss << "Zone"<< GridID << " " << bcName;
+                oss << "Zone" << GridID << " " << bcName;
             }
 
             //const char * ZoneTitle = Zonetitle.c_str();
@@ -1260,7 +1345,7 @@ void DumpToTecio::WriteGridFilm()
                     {
                         FaceLeftElems [iFace] = left_cell_of_face [iFace] + 1;
                         FaceRightElems[iFace] = right_cell_of_face[iFace] + 1;
-                        //if (FaceRightElems[iFace] > JMxOrNumElements || FaceRightElems[iFace] < 0) FaceRightElems[iFace] = 0;
+                        if (FaceRightElems[iFace] > JMxOrNumElements || FaceRightElems[iFace] < 0) FaceRightElems[iFace] = 0;
                     }
 
                     INTEGER4 FaceBndryConnectionCounts = 0;
@@ -1445,7 +1530,7 @@ DumpToTecplotASCII::DumpToTecplotASCII(vector<DataContainer *> datalist_in, stri
 
     for (unsigned int iZone = 0; iZone < dataList.size(); ++ iZone)
     {
-        dataList[iZone]->moveto_begin();
+        dataList[iZone]->MoveToBegin();
     }
     nVariable = 0;
 }
@@ -1472,9 +1557,9 @@ void DumpToTecplotASCII::InitVariables()
     {
         using namespace GAS_SPACE;
 
-        int nm    = GlobalDataBase::GetIntParaFromDB("nm");
-        int nl    = GlobalDataBase::GetIntParaFromDB("nl");
-        int neqn  = nl + nchem;
+        int nm   = GlobalDataBase::GetIntParaFromDB("nm");
+        int nl   = GlobalDataBase::GetIntParaFromDB("nl");
+        int neqn = nl + nchem;
 
         nvarplot = nvarplot + 2 * (neqn - nm);
     }
@@ -1563,7 +1648,7 @@ void DumpToTecplotASCII::WriteFlowFilm()
             if (dumpMission == WriteBoundary)
             {
                 PHRead(cdata, &bcType, 1);
-                cdata->read_string(bcName);
+                cdata->ReadString(bcName);
 
                 if (bcName.empty())
                 {
@@ -1758,7 +1843,7 @@ void DumpToTecplotASCII::DumpFlowByFaceTopo(fstream &flowFile, DataContainer *da
 void DumpToTecplotASCII::DumpFlowByCellTopo(fstream &flowFile, DataContainer *data, string zoneTitle)
 {
     int NumPts, NumElements, NumFaces, TotalNumFaceNodes_Rect;
-    
+
     PHRead(data, &NumPts, 1);
     PHRead(data, &NumElements, 1);
     PHRead(data, &NumFaces, 1);
@@ -1816,11 +1901,11 @@ void DumpToTecplotASCII::DumpFlowByCellTopo(fstream &flowFile, DataContainer *da
         flowFile << "\n";
     }
 
-    delete [] x;
-    delete [] y;
-    delete [] z;
-    delete [] node_number_of_each_cell;
-    delete [] cell2node;
+    delete [] x;    x = nullptr;
+    delete [] y;    y = nullptr;
+    delete [] z;    z = nullptr;
+    delete [] node_number_of_each_cell;    node_number_of_each_cell = nullptr;
+    delete [] cell2node;    cell2node = nullptr;
     DelPointer2(qFiled);
 }
 
@@ -2459,7 +2544,7 @@ LIB_EXPORT Post_VisualWall::~Post_VisualWall()
 {
     if (nVisualVariables > 0)
     {
-        delete [] visualVariables;
+        delete [] visualVariables;    visualVariables = nullptr;
         nVisualVariables = 0;
     }
 }

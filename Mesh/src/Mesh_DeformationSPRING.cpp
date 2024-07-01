@@ -18,8 +18,73 @@ Mesh_DeformationSPRING::~Mesh_DeformationSPRING()
 {
 
 }
+
+void Mesh_DeformationSPRING::SurfaceGridMoveByImput()
+{
+    vector < vector < RDouble > > nodeDisplacement = deformParameter->GetNodeDisplacement();
+
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    {
+        DynamicGrid *grid      = deformedGrid[iZone];
+        DYFace      *faceArray = grid->GetFaceArray();
+        DYNode      *nodeArray = grid->GetNodeArray();
+
+        int nBoundFace = grid->GetNBoundFace();
+        int nTotalNode = grid->GetNTotalNode();
+
+        int *nodeMark = new int[nTotalNode];
+        SetField(nodeMark, 0, nTotalNode);
+
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+        {
+            int bctype = faceArray[iFace].bcType;
+            if (bctype != PHENGLEI::SOLID_SURFACE)
+            {
+                continue;
+            }
+
+            for (int iNode = 0; iNode < faceArray[iFace].nodeNumber; ++ iNode)
+            {
+                int nodeIndex = faceArray[iFace].face2node[iNode];
+                if (nodeMark[nodeIndex] == 1)
+                {
+                    continue;
+                }
+
+                for (int iControlPoint = 0; iControlPoint < nodeDisplacement.size(); ++ iControlPoint)
+                {
+                    RDouble disX = nodeArray[nodeIndex].x - nodeDisplacement[iControlPoint][0];
+                    RDouble disY = nodeArray[nodeIndex].y - nodeDisplacement[iControlPoint][1];
+                    RDouble disZ = nodeArray[nodeIndex].z - nodeDisplacement[iControlPoint][2];
+
+                    RDouble dis = DISTANCE(disX, disY, disZ);
+                    if (dis < EPSILON)
+                    {
+                        nodeMark[nodeIndex] = 1;
+
+                        nodeArray[nodeIndex].xnew = nodeArray[nodeIndex].x + nodeDisplacement[iControlPoint][3];
+                        nodeArray[nodeIndex].ynew = nodeArray[nodeIndex].y + nodeDisplacement[iControlPoint][4];
+                        nodeArray[nodeIndex].znew = nodeArray[nodeIndex].z + nodeDisplacement[iControlPoint][5];
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        delete [] nodeMark;    nodeMark = nullptr;
+    }
+}
+
 void Mesh_DeformationSPRING::SurfaceGridMove(int iStep)
 {
+    bool imputNodeDisplacement = deformParameter->IsImputNodeDisplacement();
+    if (imputNodeDisplacement)
+    {
+        SurfaceGridMoveByImput();
+        return;
+    }
+
     RDouble flapAngle = deformParameter->GetFlapAngle();
     int nDeformStep = deformParameter->GetNDeformStep();
     RDouble rotatePostionZ = deformParameter->GetRotatePostionZ();

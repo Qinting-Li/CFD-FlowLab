@@ -66,7 +66,7 @@ inline T Harten(T eigenValue, T eigenValueLimit)
     inline RDouble Harten(RDouble eigenValue, RDouble eigenValueLimit)
     {
         RDouble eigenValueNew = ABS(eigenValue);
-        if(eigenValueNew < eigenValueLimit) 
+    if (eigenValueNew < eigenValueLimit) 
         {
             eigenValueNew = 0.5 * (eigenValue * eigenValue + eigenValueLimit * eigenValueLimit) / eigenValueLimit;
         }

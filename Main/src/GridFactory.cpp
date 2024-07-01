@@ -109,7 +109,7 @@ void GridgenToPHengLEI()
         structgrids[iZone]->SetLnkInfo();
     }
 
-    if (ndim == TWO_D || codeOfOversetGrid == 10 || (ndim == THREE_D && periodicType != 0))
+    if (ndim == TWO_D || codeOfOversetGrid == 10 || (ndim == THREE_D && periodicType != NO_PERIODICITY))
     {
         CheckMeshMultigrid(structgrids, numberOfBlocks);
 
@@ -160,6 +160,8 @@ void GMSH2PHengLEI()
     string fromGridFile = GlobalDataBase::GetStrParaFromDB("from_gfile");
     string outGridFile = GlobalDataBase::GetStrParaFromDB("out_gfile");
 
+    cout << "    Grid file name: " << fromGridFile << "\n";
+
     int numberOfBlocks;
     CGNSFactory *factoryCGNS;
     ReadGMSH(factoryCGNS, numberOfBlocks, fromGridFile);
@@ -174,12 +176,17 @@ void GMSH2PHengLEI()
         Grid *grid = CreateGridGeneral(UNSTRUCTGRID, index, 0, GetDim());
         grids[iZone] = grid;
         CGNS2UnsGrid(factoryCGNS, iZone, UnstructGridCast(grid));
+        grid->ComputeMinMaxBox();
     }
 
     delete factoryCGNS;
 
     ConstructGlobalInterfaceLink(grids, numberOfBlocks);
     DumpGrid(outGridFile, grids, numberOfBlocks);
+
+    WriteBoundaryInfo(grids, numberOfBlocks);
+    WriteBCNameInfo(outGridFile, grids, numberOfBlocks);
+    DumpCharacteristicBoundary(outGridFile, grids, numberOfBlocks);
 
     for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
     {
@@ -235,7 +242,7 @@ void Plot3DToPHengLEI()
         structgrids[iZone]->SetLnkInfo();
     }
 
-    if (ndim == TWO_D || isOverset || (ndim == THREE_D && periodicType != 0))
+    if (ndim == TWO_D || isOverset || (ndim == THREE_D && periodicType != NO_PERIODICITY))
     {
         CheckMeshMultigrid(structgrids, numberOfBlocks);
 
@@ -560,7 +567,7 @@ void Fantasy2Fluent()
         FantasyWriteToFluent(outGridFile, gridMerged);
 
         delete gridMerged[0];
-        delete []gridMerged;
+        delete [] gridMerged;
         delete combinedGrid;
     }
     else
@@ -568,7 +575,7 @@ void Fantasy2Fluent()
         FantasyWriteToFluent(outGridFile, grids);
     }
 
-    delete []grids;
+    delete [] grids;
     delete region;
 }
 
@@ -783,10 +790,10 @@ void CombineGrid()
 
     combinedGrid->RunCombinGrid();
 
-    //combinedGrid->DumpMergedGrid(outGridFile, combinedGrid->GetGridAll(), 1);
     DumpGrid(outGridFile, combinedGrid->GetGridAll(), 1);
-    delete combinedGrid;    combinedGrid = NULL;
-    delete region;    region = NULL;
+
+    delete region;    region = nullptr;
+    delete combinedGrid;    combinedGrid = nullptr;
 }
 
 void RepairGrid()

@@ -19,7 +19,7 @@ void IncomScalarEqCalculator::GetResidual(Grid *gridIn, vector<RDouble>& res)
     UnstructGrid *grid = UnstructGridCast(gridIn);
 }
 
-void IncomScalarEqCalculator::InitFlowAsRestart(Grid* gridIn)
+void IncomScalarEqCalculator::InitFlowAsRestart(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn); 
     int nTotalCell = grid->GetNTotalCell();
@@ -34,15 +34,13 @@ void IncomScalarEqCalculator::InitFlowAsRestart(Grid* gridIn)
     PHSPACE::SetField(DiffusionCoeff[solverIndex], initMu, nTotal);
 
 
-    RDouble* dphidx = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varNameIncom[solverIndex] + "dx"));
-    RDouble* dphidy = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varNameIncom[solverIndex] + "dy"));
-    RDouble* dphidz = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varNameIncom[solverIndex] + "dz"));
+    RDouble *dphidx = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varNameIncom[solverIndex] + "dx"));
+    RDouble *dphidy = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varNameIncom[solverIndex] + "dy"));
+    RDouble *dphidz = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varNameIncom[solverIndex] + "dz"));
 
     PHSPACE::SetField(dphidx, 0.0, nTotal);
     PHSPACE::SetField(dphidy, 0.0, nTotal);
     PHSPACE::SetField(dphidz, 0.0, nTotal);
-
-
 }
 
 void IncomScalarEqCalculator::AllocateGlobalVar(Grid *gridIn)
@@ -59,12 +57,12 @@ void IncomScalarEqCalculator::AllocateGlobalVar(Grid *gridIn)
 
     DiffusionCoeff[solverIndex] = NewPointer<RDouble>(nTotal);
     
-    RDouble* phi = NewPointer<RDouble>(nTotal);
+    RDouble *phi = NewPointer<RDouble>(nTotal);
     grid->UpdateDataPtr(varNameIncom[solverIndex], phi);
 
-    RDouble* dphidx = NewPointer<RDouble>(nTotal);
-    RDouble* dphidy = NewPointer<RDouble>(nTotal);
-    RDouble* dphidz = NewPointer<RDouble>(nTotal);
+    RDouble *dphidx = NewPointer<RDouble>(nTotal);
+    RDouble *dphidy = NewPointer<RDouble>(nTotal);
+    RDouble *dphidz = NewPointer<RDouble>(nTotal);
 
     grid->UpdateDataPtr("d" + varNameIncom[solverIndex] + "dx", dphidx);
     grid->UpdateDataPtr("d" + varNameIncom[solverIndex] + "dy", dphidy);
@@ -73,10 +71,10 @@ void IncomScalarEqCalculator::AllocateGlobalVar(Grid *gridIn)
     AllocateUnsteadyVar(grid);
 }
 
-void IncomScalarEqCalculator::AllocateUnsteadyVar(Grid*  gridIn)
+void IncomScalarEqCalculator::AllocateUnsteadyVar(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
-    string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
+    string *varNameIncom = reinterpret_cast<string *>(GlobalDataBase::GetDataPtr("varNameIncom"));
     int solverIndex = GetSolverIndex();
     string varName = varNameIncom[solverIndex];
 
@@ -115,20 +113,20 @@ void IncomScalarEqCalculator::UpdateUnsteadyVariable(Grid *grid)
 }
 
 
-void IncomScalarEqCalculator::solveScalarEquation(Grid* gridIn, int iEquation)
+void IncomScalarEqCalculator::solveScalarEquation(Grid *gridIn, int iEquation)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn); 
 
     int nTotalCell = grid->GetNTotalCell();
-    int  nBoundFace = grid->GetNBoundFace();
+    int nBoundFace = grid->GetNBoundFace();
     int nTotalFace = grid->GetNTotalFace();
 
-    RDouble* diagMatrixCoeff = reinterpret_cast<RDouble*>(grid->GetDataPtr("diagMatrixCoeff"));
-    RDouble* upperMatrixCoeff  = reinterpret_cast<RDouble*>(grid->GetDataPtr("upperMatrixCoeff"));
-    RDouble* lowerMatrixCoeff = reinterpret_cast<RDouble*>(grid->GetDataPtr("lowerMatrixCoeff"));
-    RDouble* bCoeff = reinterpret_cast<RDouble*>(grid->GetDataPtr("bCoeff"));
+    RDouble *diagMatrixCoeff  = reinterpret_cast<RDouble *>(grid->GetDataPtr("diagMatrixCoeff"));
+    RDouble *upperMatrixCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("upperMatrixCoeff"));
+    RDouble *lowerMatrixCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("lowerMatrixCoeff"));
+    RDouble *bCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("bCoeff"));
 
-    string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
+    string *varNameIncom = reinterpret_cast <string *>(GlobalDataBase::GetDataPtr("varNameIncom"));
     int solverIndex = GetSolverIndex();
     string varName = varNameIncom[solverIndex];
 
@@ -139,7 +137,7 @@ void IncomScalarEqCalculator::solveScalarEquation(Grid* gridIn, int iEquation)
 
     constructBCoeff(grid, solverIndex);
 
-    RDouble* q = reinterpret_cast<RDouble*>(grid->GetDataPtr(varName));
+    RDouble *q = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName));
     calculateLinearEquation(grid, solverIndex, q, diagMatrixCoeff, bCoeff, upperMatrixCoeff , lowerMatrixCoeff);
 
     UpdateBCValue(grid);
@@ -147,7 +145,7 @@ void IncomScalarEqCalculator::solveScalarEquation(Grid* gridIn, int iEquation)
     UpdateProperties(grid);
 }
 
-void IncomScalarEqCalculator::constructMatrixACoeff(Grid* gridIn, int iEquation)
+void IncomScalarEqCalculator::constructMatrixACoeff(Grid *gridIn, int iEquation)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn); 
 
@@ -168,7 +166,7 @@ void IncomScalarEqCalculator::constructMatrixACoeff(Grid* gridIn, int iEquation)
     relaxMatrixTerm(grid, solverIndex);
 }
 
-void IncomScalarEqCalculator::constructBCoeff(Grid* gridIn, int iEquation)
+void IncomScalarEqCalculator::constructBCoeff(Grid *gridIn, int iEquation)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn); 
 
@@ -189,12 +187,12 @@ void IncomScalarEqCalculator::constructBCoeff(Grid* gridIn, int iEquation)
     relaxSourceTerm(grid, solverIndex);
 }
 
-void IncomScalarEqCalculator::UpdateBCValue(Grid*  gridIn)
+void IncomScalarEqCalculator::UpdateBCValue(Grid *gridIn)
 {
 
 }
 
-void IncomScalarEqCalculator::CalcGrad(Grid* gridIn)
+void IncomScalarEqCalculator::CalcGrad(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
@@ -204,9 +202,9 @@ void IncomScalarEqCalculator::CalcGrad(Grid* gridIn)
     string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
     int solverIndex = GetSolverIndex();
     string varName = varNameIncom[solverIndex];
-    RDouble* dphidx = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dx"));
-    RDouble* dphidy = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dy"));
-    RDouble* dphidz = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dz"));
+    RDouble *dphidx = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dx"));
+    RDouble *dphidy = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dy"));
+    RDouble *dphidz = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dz"));
 
     for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
@@ -220,29 +218,29 @@ void IncomScalarEqCalculator::CalcGrad(Grid* gridIn)
 }
 
 
-void IncomScalarEqCalculator::SetDiffusionCoeff(Grid* gridIn) 
+void IncomScalarEqCalculator::SetDiffusionCoeff(Grid *gridIn) 
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int solverIndex = this->GetSolverIndex();
-    RDouble **DiffusionCoeff = reinterpret_cast <RDouble **> (GlobalDataBase::GetDataPtr("DiffusionCoeff"));
+    RDouble **DiffusionCoeff = reinterpret_cast<RDouble **>(GlobalDataBase::GetDataPtr("DiffusionCoeff"));
     CommunicateAnInterfaceVar(DiffusionCoeff[solverIndex]);
 }
 
-void IncomScalarEqCalculator::treatBC(Grid*  gridIn, int iVariable, RDouble matrixCoeff)
+void IncomScalarEqCalculator::treatBC(Grid *gridIn, int iVariable, RDouble matrixCoeff)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
     RDouble **DiffusionCoeff = reinterpret_cast <RDouble **> (GlobalDataBase::GetDataPtr("DiffusionCoeff"));
-    RDouble* diagMatrixCoeff = reinterpret_cast<RDouble *> (grid->GetDataPtr("diagMatrixCoeff"));
-    RDouble* bCoeff = reinterpret_cast<RDouble *> (grid->GetDataPtr("bCoeff"));
+    RDouble *diagMatrixCoeff = reinterpret_cast<RDouble *> (grid->GetDataPtr("diagMatrixCoeff"));
+    RDouble *bCoeff = reinterpret_cast<RDouble *> (grid->GetDataPtr("bCoeff"));
     int solverIndex = GetSolverIndex(iVariable);
 
-    RDouble* mu = DiffusionCoeff[solverIndex];
+    RDouble *mu = DiffusionCoeff[solverIndex];
     string varName = varNameIncom[solverIndex];
-    RDouble* q = reinterpret_cast<RDouble*>(grid->GetDataPtr(varName));
-    RDouble* dqdx = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dx"));
-    RDouble* dqdy = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dy"));
-    RDouble* dqdz = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dz"));
+    RDouble *q = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName));
+    RDouble *dqdx = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dx"));
+    RDouble *dqdy = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dy"));
+    RDouble *dqdz = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dz"));
 
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
@@ -251,7 +249,7 @@ void IncomScalarEqCalculator::treatBC(Grid*  gridIn, int iVariable, RDouble matr
         UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
         vector<int> *faceIndex = bcRegion->GetFaceIndex();
-        Data_Param* bcData = bcRegion->GetBCParamDataBase();
+        Data_Param *bcData = bcRegion->GetBCParamDataBase();
 
         if (bcType == PHENGLEI::SOLID_SURFACE)
         {
@@ -287,15 +285,12 @@ void IncomScalarEqCalculator::treatBC(Grid*  gridIn, int iVariable, RDouble matr
         else if (bcType == PHENGLEI::INTERFACE)
         {
             calInterfaceBC(grid, faceIndex, bcData, diagMatrixCoeff, bCoeff, q, dqdx, dqdy, dqdz, mu, matrixCoeff);
-
         }
     }
-
 }
 
-
-void IncomScalarEqCalculator::calFarfieldBC(Grid*  gridIn, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-    RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff)
+void IncomScalarEqCalculator::calFarfieldBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+    RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
@@ -343,8 +338,8 @@ void IncomScalarEqCalculator::calFarfieldBC(Grid*  gridIn, vector<int>* faceInde
     }
 }
 
-void IncomScalarEqCalculator::calPressureInletBC(Grid*  gridIn, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-    RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff)
+void IncomScalarEqCalculator::calPressureInletBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+    RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
@@ -396,8 +391,8 @@ void IncomScalarEqCalculator::calPressureInletBC(Grid*  gridIn, vector<int>* fac
 }
 
 
-void IncomScalarEqCalculator::calPressureOutletBC(Grid*  gridIn, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-    RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff)
+void IncomScalarEqCalculator::calPressureOutletBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+    RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
@@ -447,8 +442,8 @@ void IncomScalarEqCalculator::calPressureOutletBC(Grid*  gridIn, vector<int>* fa
     }
 }
 
-void IncomScalarEqCalculator::calInterfaceBC(Grid*  gridIn, vector<int>* faceIndex, Data_Param* bcData, RDouble* diagMatrixCoeff, RDouble* bCoeff, RDouble* q,
-    RDouble* dqdx, RDouble* dqdy, RDouble* dqdz, RDouble* mu, RDouble matrixCoeff)
+void IncomScalarEqCalculator::calInterfaceBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+    RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
@@ -503,24 +498,24 @@ void IncomScalarEqCalculator::calInterfaceBC(Grid*  gridIn, vector<int>* faceInd
     }
 }
 
-void IncomScalarEqCalculator::calSymmetryBC(Grid*  gridIn, vector<int>* faceIndex, Data_Param* bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff,  RDouble *q,
+void IncomScalarEqCalculator::calSymmetryBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
     RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
-    int* leftCellOfFace = grid->GetLeftCellOfFace();
-    int* rightCellOfFace = grid->GetRightCellOfFace();
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
     RDouble *area = grid->GetFaceArea();
-    RDouble* xfn = grid->GetFaceNormalX();
-    RDouble* yfn = grid->GetFaceNormalY();
-    RDouble* zfn = grid->GetFaceNormalZ();
-    RDouble* xfc = grid->GetFaceCenterX();
-    RDouble* yfc = grid->GetFaceCenterY();
-    RDouble* zfc = grid->GetFaceCenterZ();
-    RDouble* xcc = grid->GetCellCenterX();
-    RDouble* ycc = grid->GetCellCenterY();
-    RDouble* zcc = grid->GetCellCenterZ();
-    int nTotalCell = grid->GetNTotalCell();
+    RDouble *xfn = grid->GetFaceNormalX();
+    RDouble *yfn = grid->GetFaceNormalY();
+    RDouble *zfn = grid->GetFaceNormalZ();
+    RDouble *xfc = grid->GetFaceCenterX();
+    RDouble *yfc = grid->GetFaceCenterY();
+    RDouble *zfc = grid->GetFaceCenterZ();
+    RDouble *xcc = grid->GetCellCenterX();
+    RDouble *ycc = grid->GetCellCenterY();
+    RDouble *zcc = grid->GetCellCenterZ();
+    int nTotalCell = grid->GetNTotalCell(); 
 
     for (std::size_t iFace = 0; iFace < faceIndex->size(); ++iFace)
     {
@@ -544,7 +539,7 @@ void IncomScalarEqCalculator::calSymmetryBC(Grid*  gridIn, vector<int>* faceInde
     }
 }
 
-void IncomScalarEqCalculator::calVelocityInletBC(Grid*  gridIn, vector<int>* faceIndex, Data_Param* bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff,  RDouble *q,
+void IncomScalarEqCalculator::calVelocityInletBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
     RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
@@ -594,7 +589,7 @@ void IncomScalarEqCalculator::calVelocityInletBC(Grid*  gridIn, vector<int>* fac
 }
 
 
-void IncomScalarEqCalculator::calWallBC(Grid*  gridIn, vector<int>* faceIndex, Data_Param* bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff,  RDouble *q,
+void IncomScalarEqCalculator::calWallBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
     RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
@@ -636,7 +631,7 @@ void IncomScalarEqCalculator::calWallBC(Grid*  gridIn, vector<int>* faceIndex, D
 }
 
 
-void IncomScalarEqCalculator::calcInvisSourceTerm(Grid*  grid, int solverIndex) 
+void IncomScalarEqCalculator::calcInvisSourceTerm(Grid *grid, int solverIndex) 
 {
     string ConvCalcMethod = GlobalDataBase::GetStrParaFromDB("ConvCalcMethod");
     if (ConvCalcMethod == "UPWIND")
@@ -657,7 +652,7 @@ void IncomScalarEqCalculator::calcInvisSourceTerm(Grid*  grid, int solverIndex)
 }
 
 
-void IncomScalarEqCalculator::FirstUpwindInvisTerm(Grid*  gridIn)
+void IncomScalarEqCalculator::FirstUpwindInvisTerm(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
@@ -686,7 +681,7 @@ void IncomScalarEqCalculator::FirstUpwindInvisTerm(Grid*  gridIn)
     }
 }
 
-void IncomScalarEqCalculator::QUICKSourceTerm(Grid*  gridIn, int solverIndex)
+void IncomScalarEqCalculator::QUICKSourceTerm(Grid *gridIn, int solverIndex)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
@@ -703,10 +698,10 @@ void IncomScalarEqCalculator::QUICKSourceTerm(Grid*  gridIn, int solverIndex)
 
     string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
     string varName = varNameIncom[solverIndex];
-    RDouble* q = reinterpret_cast<RDouble*>(grid->GetDataPtr(varName));
-    RDouble* dqdx = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dx"));
-    RDouble* dqdy = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dy"));
-    RDouble* dqdz = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dz"));
+    RDouble *q = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName));
+    RDouble *dqdx = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dx"));
+    RDouble *dqdy = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dy"));
+    RDouble *dqdz = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dz"));
 
     for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
@@ -732,7 +727,7 @@ void IncomScalarEqCalculator::QUICKSourceTerm(Grid*  gridIn, int solverIndex)
 }
 
 
-void IncomScalarEqCalculator::SecondUpWindSourceTerm(Grid*  gridIn, int solverIndex)
+void IncomScalarEqCalculator::SecondUpWindSourceTerm(Grid *gridIn, int solverIndex)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nBoundFace = grid->GetNBoundFace();
@@ -748,10 +743,10 @@ void IncomScalarEqCalculator::SecondUpWindSourceTerm(Grid*  gridIn, int solverIn
 
     string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
     string varName = varNameIncom[solverIndex];
-    RDouble* q = reinterpret_cast<RDouble*>(grid->GetDataPtr(varName));
-    RDouble* dqdx = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dx"));
-    RDouble* dqdy = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dy"));
-    RDouble* dqdz = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dz"));
+    RDouble *q = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName));
+    RDouble *dqdx = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dx"));
+    RDouble *dqdy = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dy"));
+    RDouble *dqdz = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dz"));
 
     for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
@@ -777,7 +772,7 @@ void IncomScalarEqCalculator::SecondUpWindSourceTerm(Grid*  gridIn, int solverIn
 
 }
 
-void IncomScalarEqCalculator::SecondCentralSourceTerm(Grid*  gridIn, int solverIndex)
+void IncomScalarEqCalculator::SecondCentralSourceTerm(Grid *gridIn, int solverIndex)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nBoundFace = grid->GetNBoundFace();
@@ -793,10 +788,10 @@ void IncomScalarEqCalculator::SecondCentralSourceTerm(Grid*  gridIn, int solverI
 
     string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
     string varName = varNameIncom[solverIndex];
-    RDouble* q = reinterpret_cast<RDouble*>(grid->GetDataPtr(varName));
-    RDouble* dqdx = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dx"));
-    RDouble* dqdy = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dy"));
-    RDouble* dqdz = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dz"));
+    RDouble *q = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName));
+    RDouble *dqdx = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dx"));
+    RDouble *dqdy = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dy"));
+    RDouble *dqdz = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dz"));
 
     for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
@@ -821,7 +816,7 @@ void IncomScalarEqCalculator::SecondCentralSourceTerm(Grid*  gridIn, int solverI
     }
 }
 
-void IncomScalarEqCalculator::VisMatrixTerm(Grid*  gridIn, int solverIndex)
+void IncomScalarEqCalculator::VisMatrixTerm(Grid *gridIn, int solverIndex)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nBoundFace = grid->GetNBoundFace();
@@ -842,8 +837,8 @@ void IncomScalarEqCalculator::VisMatrixTerm(Grid*  gridIn, int solverIndex)
     RDouble *upperMatrixCoeff = reinterpret_cast<RDouble *> (grid->GetDataPtr("upperMatrixCoeff"));
     RDouble *lowerMatrixCoeff = reinterpret_cast<RDouble *> (grid->GetDataPtr("lowerMatrixCoeff"));
 
-    RDouble* mu;
-    RDouble* tempmu;
+    RDouble *mu;
+    RDouble *tempmu;
     using namespace IDX;
     RDouble **DiffusionCoeff = reinterpret_cast <RDouble **> (GlobalDataBase::GetDataPtr("DiffusionCoeff"));
     
@@ -851,7 +846,7 @@ void IncomScalarEqCalculator::VisMatrixTerm(Grid*  gridIn, int solverIndex)
     if (solverIndex == S_ITEMP) 
     {
         int nTotalCell = grid->GetNTotalCell();
-        RDouble *cp = reinterpret_cast<RDouble*>(grid->GetDataPtr("cp"));
+        RDouble *cp = reinterpret_cast<RDouble *>(grid->GetDataPtr("cp"));
         tempmu = new RDouble [nTotalCell];
         for (int iCell = 0; iCell < nTotalCell; iCell++)
         {
@@ -886,12 +881,12 @@ void IncomScalarEqCalculator::VisMatrixTerm(Grid*  gridIn, int solverIndex)
 
     if (solverIndex == S_ITEMP)
     {
-        delete[] tempmu;
+        delete [] tempmu;
     }
 }
 
 
-void IncomScalarEqCalculator::VisSourceTerm(Grid*  gridIn, int solverIndex)
+void IncomScalarEqCalculator::VisSourceTerm(Grid *gridIn, int solverIndex)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
@@ -909,16 +904,16 @@ void IncomScalarEqCalculator::VisSourceTerm(Grid*  gridIn, int solverIndex)
 
     RDouble *faceWeightOfLeftCell = reinterpret_cast<RDouble *>(grid->GetDataPtr("faceWeightOfLeftCell"));
 
-    RDouble *bCoeff = reinterpret_cast<RDouble*>(grid->GetDataPtr("bCoeff"));
-    string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
+    RDouble *bCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("bCoeff"));
+    string *varNameIncom = reinterpret_cast<string *>(GlobalDataBase::GetDataPtr("varNameIncom"));
     string varName = varNameIncom[solverIndex];
-    RDouble* q = reinterpret_cast<RDouble*>(grid->GetDataPtr(varName));
-    RDouble* dqdx = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dx"));
-    RDouble* dqdy = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dy"));
-    RDouble* dqdz = reinterpret_cast<RDouble*>(grid->GetDataPtr("d" + varName + "dz"));
+    RDouble *q = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName));
+    RDouble *dqdx = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dx"));
+    RDouble *dqdy = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dy"));
+    RDouble *dqdz = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dz"));
 
-    RDouble **DiffusionCoeff = reinterpret_cast <RDouble **> (GlobalDataBase::GetDataPtr("DiffusionCoeff"));
-    RDouble* mu = DiffusionCoeff[solverIndex];
+    RDouble **DiffusionCoeff = reinterpret_cast<RDouble **>(GlobalDataBase::GetDataPtr("DiffusionCoeff"));
+    RDouble *mu = DiffusionCoeff[solverIndex];
 
     for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
@@ -942,17 +937,15 @@ void IncomScalarEqCalculator::VisSourceTerm(Grid*  gridIn, int solverIndex)
         az = diffCoeF * az - ez * aLR;
 
         RDouble sLR = ax * (faceWeightOfLeftCell[iFace] * dqdx[le] + (1.0 - faceWeightOfLeftCell[iFace]) * dqdx[re]) +
-            ay * (faceWeightOfLeftCell[iFace] * dqdy[le] + (1.0 - faceWeightOfLeftCell[iFace]) * dqdy[re]) +
-            az * (faceWeightOfLeftCell[iFace] * dqdz[le] + (1.0 - faceWeightOfLeftCell[iFace]) * dqdz[re]);
+                      ay * (faceWeightOfLeftCell[iFace] * dqdy[le] + (1.0 - faceWeightOfLeftCell[iFace]) * dqdy[re]) +
+                      az * (faceWeightOfLeftCell[iFace] * dqdz[le] + (1.0 - faceWeightOfLeftCell[iFace]) * dqdz[re]);
 
         bCoeff[le] += sLR;
         bCoeff[re] -= sLR;
     }
-
 }
 
-
-void IncomScalarEqCalculator::calcTransMatrixTerm(Grid*  grid)
+void IncomScalarEqCalculator::calcTransMatrixTerm(Grid *grid)
 {
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     if (isUnsteady == 1)
@@ -969,23 +962,23 @@ void IncomScalarEqCalculator::calcTransMatrixTerm(Grid*  grid)
     }
 }
 
-void IncomScalarEqCalculator::TransMatrixTerm_1st(Grid*  gridIn) 
+void IncomScalarEqCalculator::TransMatrixTerm_1st(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
     int nTotalCell = grid->GetNTotalCell();
     RDouble dt = GlobalDataBase::GetDoubleParaFromDB("dt");
-    RDouble* cvOld = grid->GetCellVolume();
+    RDouble *cvOld = grid->GetCellVolume();
     RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
     RDouble *diagMatrixCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("diagMatrixCoeff"));
 
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        diagMatrixCoeff[iCell]  += rho[iCell] * cvOld[iCell] / dt;
+        diagMatrixCoeff[iCell] += rho[iCell] * cvOld[iCell] / dt;
     }
 }
 
-void IncomScalarEqCalculator::TransMatrixTerm_2nd(Grid*  gridIn) 
+void IncomScalarEqCalculator::TransMatrixTerm_2nd(Grid *gridIn) 
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
@@ -994,7 +987,7 @@ void IncomScalarEqCalculator::TransMatrixTerm_2nd(Grid*  gridIn)
     int timeStepNow;
     GlobalDataBase::GetData("timeStepNow", &timeStepNow, PHINT, 1);
 
-    RDouble* cvOld = grid->GetCellVolume();
+    RDouble *cvOld = grid->GetCellVolume();
     RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
     RDouble *diagMatrixCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("diagMatrixCoeff"));
 
@@ -1014,7 +1007,7 @@ void IncomScalarEqCalculator::TransMatrixTerm_2nd(Grid*  gridIn)
     }
 }
 
-void IncomScalarEqCalculator::calcTransSourceTerm(Grid*  grid, int iVariable)
+void IncomScalarEqCalculator::calcTransSourceTerm(Grid *grid, int iVariable)
 {
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     if (isUnsteady == 1)
@@ -1031,18 +1024,18 @@ void IncomScalarEqCalculator::calcTransSourceTerm(Grid*  grid, int iVariable)
     }
 }
 
-void IncomScalarEqCalculator::TransSourceTerm_1st(Grid*  gridIn, int iVariable) 
+void IncomScalarEqCalculator::TransSourceTerm_1st(Grid *gridIn, int iVariable)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
     int nTotalCell = grid->GetNTotalCell();
-    RDouble* cvOld = grid->GetCellVolume();
+    RDouble *cvOld = grid->GetCellVolume();
     RDouble dt = GlobalDataBase::GetDoubleParaFromDB("dt");
     RDouble *rhoOld = reinterpret_cast<RDouble *>(grid->GetDataPtr("rhoOld"));
     RDouble *bCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("bCoeff"));
     string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
     string varName = varNameIncom[iVariable];
-    RDouble* qOld = reinterpret_cast<RDouble*>(grid->GetDataPtr(varName + "Old"));
+    RDouble *qOld = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName + "Old"));
 
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
@@ -1050,12 +1043,12 @@ void IncomScalarEqCalculator::TransSourceTerm_1st(Grid*  gridIn, int iVariable)
     }
 }
 
-void IncomScalarEqCalculator::TransSourceTerm_2nd(Grid*  gridIn, int iVariable) 
+void IncomScalarEqCalculator::TransSourceTerm_2nd(Grid *gridIn, int iVariable)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
     int nTotalCell = grid->GetNTotalCell();
-    RDouble* cvOld = grid->GetCellVolume();
+    RDouble *cvOld = grid->GetCellVolume();
     RDouble dt = GlobalDataBase::GetDoubleParaFromDB("dt");
 
     int timeStepNow;
@@ -1065,8 +1058,8 @@ void IncomScalarEqCalculator::TransSourceTerm_2nd(Grid*  gridIn, int iVariable)
     RDouble *bCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("bCoeff"));
     string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
     string varName = varNameIncom[iVariable];
-    RDouble* qOld = reinterpret_cast<RDouble*>(grid->GetDataPtr(varName + "Old"));
-    RDouble* qOldOld = reinterpret_cast<RDouble*>(grid->GetDataPtr(varName + "OldOld"));
+    RDouble *qOld = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName + "Old"));
+    RDouble *qOldOld = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName + "OldOld"));
 
     for (int iCell = 0; iCell < nTotalCell; ++iCell)
     {
@@ -1076,11 +1069,11 @@ void IncomScalarEqCalculator::TransSourceTerm_2nd(Grid*  gridIn, int iVariable)
     }
 }
 
-void IncomScalarEqCalculator::relaxMatrixTerm(Grid*  grid, int iVariable)
+void IncomScalarEqCalculator::relaxMatrixTerm(Grid *grid, int iVariable)
 {
     int nTotalCell = grid->GetNTotalCell();
-    RDouble* diagMatrixCoeff = reinterpret_cast<RDouble *> (grid->GetDataPtr("diagMatrixCoeff"));
-    RDouble *soluRelaxCoeff = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("soluRelaxCoeff"));
+    RDouble *diagMatrixCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("diagMatrixCoeff"));
+    RDouble *soluRelaxCoeff = reinterpret_cast <RDouble *>(GlobalDataBase::GetDataPtr("soluRelaxCoeff"));
 
     RDouble RelaxCoeff = soluRelaxCoeff[iVariable];
 
@@ -1090,24 +1083,23 @@ void IncomScalarEqCalculator::relaxMatrixTerm(Grid*  grid, int iVariable)
     }
 }
 
-void IncomScalarEqCalculator::relaxSourceTerm(Grid*  grid, int iVariable)
+void IncomScalarEqCalculator::relaxSourceTerm(Grid *grid, int iVariable)
 {
     int nTotalCell = grid->GetNTotalCell();
-    RDouble* diagMatrixCoeff = reinterpret_cast<RDouble *> (grid->GetDataPtr("diagMatrixCoeff"));
-    RDouble* bCoeff = reinterpret_cast<RDouble *> (grid->GetDataPtr("bCoeff"));
+    RDouble *diagMatrixCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("diagMatrixCoeff"));
+    RDouble *bCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("bCoeff"));
 
-    string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
+    string *varNameIncom = reinterpret_cast <string *>(GlobalDataBase::GetDataPtr("varNameIncom"));
     string varName = varNameIncom[iVariable];
-    RDouble* q = reinterpret_cast<RDouble*>(grid->GetDataPtr(varName));
+    RDouble *q = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName));
 
-    RDouble *soluRelaxCoeff = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("soluRelaxCoeff"));
+    RDouble *soluRelaxCoeff = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("soluRelaxCoeff"));
     RDouble RelaxCoeff = soluRelaxCoeff[iVariable];
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         bCoeff[iCell] = bCoeff[iCell] + (1 - RelaxCoeff) * diagMatrixCoeff[iCell] * q[iCell];
     }
 }
-
 
 void IncomScalarEqCalculator::ImplicitEuler_AllocateMemory(Grid *grid, vector<string> &phiName)
 {
@@ -1117,12 +1109,12 @@ void IncomScalarEqCalculator::ImplicitEuler_AllocateMemory(Grid *grid, vector<st
 
     for (vector<string>::iterator iter = phiName.begin(); iter != phiName.end(); ++ iter)
     {
-        RDouble* phi = NewPointer<RDouble>(nTotal);
+        RDouble *phi = NewPointer<RDouble>(nTotal);
         grid->UpdateDataPtr((*iter) + "Old", phi);
     }
 }
 
-void IncomScalarEqCalculator::ImplicitEuler_ReInitTimeVar(Grid*  grid, vector<string>& phiName)
+void IncomScalarEqCalculator::ImplicitEuler_ReInitTimeVar(Grid *grid, vector<string> &phiName)
 {
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
@@ -1130,8 +1122,8 @@ void IncomScalarEqCalculator::ImplicitEuler_ReInitTimeVar(Grid*  grid, vector<st
 
     for (vector<string>::iterator iter = phiName.begin(); iter != phiName.end(); ++iter)
     {
-        RDouble* initPhi = reinterpret_cast<RDouble*>(grid->GetDataPtr(*iter));
-        RDouble* phi = reinterpret_cast<RDouble*>(grid->GetDataPtr((*iter) + "Old")); 
+        RDouble *initPhi = reinterpret_cast<RDouble *>(grid->GetDataPtr(*iter));
+        RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr((*iter) + "Old"));
 
         for (int iCell = 0; iCell < nTotal; ++iCell)
         {
@@ -1167,13 +1159,13 @@ void IncomScalarEqCalculator::ImplicitEuler_SaveOldTimeValue(Grid *gridIn, vecto
     vector<RDouble *>().swap(phiOld);
 }
 
-void IncomScalarEqCalculator::ImplicitEuler_InitRestartTimeVar(Grid* grid, vector<string>& nameLists)
+void IncomScalarEqCalculator::ImplicitEuler_InitRestartTimeVar(Grid *grid, vector<string> &nameLists)
 {
     int nTotalCell = grid->GetNTotalCell();
     for (vector<string>::iterator iter = nameLists.begin(); iter != nameLists.end(); ++iter)
     {
-        RDouble* phi = reinterpret_cast<RDouble*>(grid->GetDataPtr(*iter));
-        RDouble* phiOldPtr = reinterpret_cast<RDouble*>(grid->GetDataPtr((*iter) + "Old"));
+        RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(*iter));
+        RDouble *phiOldPtr = reinterpret_cast<RDouble *>(grid->GetDataPtr((*iter) + "Old"));
 
         for (int iCell = 0; iCell < nTotalCell; ++iCell)
         {
@@ -1186,7 +1178,7 @@ void IncomScalarEqCalculator::ImplicitEuler_ReadRestartFile(Grid * grid, vector<
 {
     for (vector<string>::iterator iter = nameLists.begin(); iter != nameLists.end(); ++iter)
     {
-        RDouble* phiOldPtr = reinterpret_cast<RDouble*>(grid->GetDataPtr((*iter) + "Old"));
+        RDouble *phiOldPtr = reinterpret_cast<RDouble *>(grid->GetDataPtr((*iter) + "Old"));
         if (phiOldPtr != nullptr)
         {
             ReadData(grploc, &phiOldPtr[0], (*iter));
@@ -1201,8 +1193,8 @@ void IncomScalarEqCalculator::Implicit2ndOrder_AllocateMemory(Grid *grid, vector
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
-    RDouble* phiOld;
-    RDouble* phiOldOld;
+    RDouble *phiOld;
+    RDouble *phiOldOld;
 
     for (vector<string>::iterator iter = phiName.begin(); iter != phiName.end(); ++ iter)
     {
@@ -1214,7 +1206,7 @@ void IncomScalarEqCalculator::Implicit2ndOrder_AllocateMemory(Grid *grid, vector
     }
 }
 
-void IncomScalarEqCalculator::Implicit2ndOrder_ReInitTimeVar(Grid*  grid, vector<string>& phiName)
+void IncomScalarEqCalculator::Implicit2ndOrder_ReInitTimeVar(Grid *grid, vector<string> &phiName)
 {
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
@@ -1222,9 +1214,9 @@ void IncomScalarEqCalculator::Implicit2ndOrder_ReInitTimeVar(Grid*  grid, vector
 
     for (vector<string>::iterator iter = phiName.begin(); iter != phiName.end(); ++iter)
     {
-        RDouble * initPhi = reinterpret_cast<RDouble*>(grid->GetDataPtr(*iter));
-        RDouble * phiOld = reinterpret_cast<RDouble*>(grid->GetDataPtr((*iter) + "Old"));
-        RDouble * phiOldOld = reinterpret_cast<RDouble*>(grid->GetDataPtr((*iter) + "OldOld"));
+        RDouble *initPhi = reinterpret_cast<RDouble *>(grid->GetDataPtr(*iter));
+        RDouble *phiOld = reinterpret_cast<RDouble *>(grid->GetDataPtr((*iter) + "Old"));
+        RDouble *phiOldOld = reinterpret_cast<RDouble *>(grid->GetDataPtr((*iter) + "OldOld"));
 
         for (int iCell = 0; iCell < nTotal; ++iCell)
         {
@@ -1233,7 +1225,6 @@ void IncomScalarEqCalculator::Implicit2ndOrder_ReInitTimeVar(Grid*  grid, vector
         }
     }
 }
-
 
 void IncomScalarEqCalculator::Implicit2ndOrder_SaveOldTimeValue(Grid *gridIn, vector<string> &phiName)
 {
@@ -1267,14 +1258,14 @@ void IncomScalarEqCalculator::Implicit2ndOrder_SaveOldTimeValue(Grid *gridIn, ve
     vector<RDouble *>().swap(phiOldOld);
 }
 
-void IncomScalarEqCalculator::Implicit2ndOrder_InitRestartTimeVar(Grid* grid, vector<string>& nameLists)
+void IncomScalarEqCalculator::Implicit2ndOrder_InitRestartTimeVar(Grid *grid, vector<string> &nameLists)
 {
     int nTotalCell = grid->GetNTotalCell();
     for (vector<string>::iterator iter = nameLists.begin(); iter != nameLists.end(); ++iter)
     {
-        RDouble* phi = reinterpret_cast<RDouble*>(grid->GetDataPtr(*iter));
-        RDouble* phiOldPtr = reinterpret_cast<RDouble*>(grid->GetDataPtr((*iter) + "Old"));
-        RDouble* phiOldOldPtr = reinterpret_cast<RDouble*>(grid->GetDataPtr((*iter) + "OldOld"));
+        RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(*iter));
+        RDouble *phiOldPtr = reinterpret_cast<RDouble *>(grid->GetDataPtr((*iter) + "Old"));
+        RDouble *phiOldOldPtr = reinterpret_cast<RDouble *>(grid->GetDataPtr((*iter) + "OldOld"));
 
         for (int iCell = 0; iCell < nTotalCell; ++iCell)
         {
@@ -1284,17 +1275,17 @@ void IncomScalarEqCalculator::Implicit2ndOrder_InitRestartTimeVar(Grid* grid, ve
     }
 }
 
-void IncomScalarEqCalculator::Implicit2ndOrder_ReadRestartFile(Grid* grid, vector<string>& nameLists, hid_t grploc)
+void IncomScalarEqCalculator::Implicit2ndOrder_ReadRestartFile(Grid *grid, vector<string> &nameLists, hid_t grploc)
 {
     for (vector<string>::iterator iter = nameLists.begin(); iter != nameLists.end(); ++iter)
     {
-        RDouble* phiOldPtr = reinterpret_cast<RDouble*>(grid->GetDataPtr((*iter) + "Old"));
+        RDouble *phiOldPtr = reinterpret_cast<RDouble *>(grid->GetDataPtr((*iter) + "Old"));
         if (phiOldPtr != nullptr)
         {
             ReadData(grploc, &phiOldPtr[0], (*iter));
         }
 
-        RDouble* phiOldOldPtr = reinterpret_cast<RDouble*>(grid->GetDataPtr((*iter) + "OldOld"));
+        RDouble *phiOldOldPtr = reinterpret_cast<RDouble *>(grid->GetDataPtr((*iter) + "OldOld"));
         if (phiOldOldPtr != nullptr)
         {
             ReadData(grploc, &phiOldOldPtr[0], (*iter));

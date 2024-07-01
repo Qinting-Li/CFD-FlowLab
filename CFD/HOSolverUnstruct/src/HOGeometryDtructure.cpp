@@ -29,13 +29,13 @@ void HighOrderCellSol::ComputeCoorOfIntegrationPoint(int nodenumber, const unsig
 {
     //The dof of shape function is equal to the number of nodes;
     const int dofOfShapeFunction = nodenumber;
-    for(int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
+    for (int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
     {
         coorXIntegrationPoints[iGaussPoint] = 0.0;
         coorYIntegrationPoints[iGaussPoint] = 0.0;
         coorZIntegrationPoints[iGaussPoint] = 0.0;
 
-        for(int iDofShapeFun = 0; iDofShapeFun < dofOfShapeFunction; ++iDofShapeFun)
+        for (int iDofShapeFun = 0; iDofShapeFun < dofOfShapeFunction; ++iDofShapeFun)
         {
             coorXIntegrationPoints[iGaussPoint] += pointX[nodeID[iDofShapeFun]] * shapeFunctionVolumPoint[iGaussPoint][iDofShapeFun];
             coorYIntegrationPoints[iGaussPoint] += pointY[nodeID[iDofShapeFun]] * shapeFunctionVolumPoint[iGaussPoint][iDofShapeFun];
@@ -48,16 +48,16 @@ void HighOrderCellSol::ComputeOriginalMassmatrix(HighOrderMatrix & taylorBasisMa
 {
     //compute upper mass matrix
     RDouble volumJacobian = 0.0;
-    for(int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
+    for (int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
     {
         volumJacobian += weightCoeff[iGaussPoint] * JacDetCellIntegration[iGaussPoint];
     }
 
-    for(int idof = 0; idof < nDOFsSol; ++idof)
+    for (int idof = 0; idof < nDOFsSol; ++idof)
     {
-        for(int jdof = idof; jdof < nDOFsSol; ++jdof)
+        for (int jdof = idof; jdof < nDOFsSol; ++jdof)
         {
-            for(int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
+            for (int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
             {
                 taylorBasisMassMatrix(idof, jdof) += weightCoeff[iGaussPoint] * JacDetCellIntegration[iGaussPoint]
                 * basisFuncCellIntegration[iGaussPoint][idof] * basisFuncCellIntegration[iGaussPoint][jdof];
@@ -67,9 +67,9 @@ void HighOrderCellSol::ComputeOriginalMassmatrix(HighOrderMatrix & taylorBasisMa
     }
 
     //Get lower mass matrix
-    for(int idof = 1; idof < nDOFsSol; ++idof)
+    for (int idof = 1; idof < nDOFsSol; ++idof)
     {
-        for(int jdof = 0; jdof < idof; ++jdof)
+        for (int jdof = 0; jdof < idof; ++jdof)
         {
             taylorBasisMassMatrix(idof, jdof) = taylorBasisMassMatrix(jdof, idof);
         }
@@ -82,16 +82,16 @@ void HighOrderCellSol::ComputeOriginalBasisFunction(int currentOrder, RDouble le
     RDouble refCoord[3];
     RDouble oneDLenScal = 1.0/lenScaleOfCell;
     // currentOrder is the accurry of polynomial 
-    if(currentOrder == 0)
+    if (currentOrder == 0)
     {
-        for(int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
+        for (int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
         {
             basisFuncCellIntegration[iGaussPoint][0] = 1.0;  
         }
     }
-    else if(currentOrder == 1)
+    else if (currentOrder == 1)
     {
-        for(int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
+        for (int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
         {
             refCoord[0] = (coorXIntegrationPoints[iGaussPoint] - Xcc) * oneDLenScal;
             refCoord[1] = (coorYIntegrationPoints[iGaussPoint] - Ycc) * oneDLenScal;
@@ -103,9 +103,9 @@ void HighOrderCellSol::ComputeOriginalBasisFunction(int currentOrder, RDouble le
             basisFuncCellIntegration[iGaussPoint][3] = refCoord[2];
         }
     }
-    else if(currentOrder == 2)
+    else if (currentOrder == 2)
     {
-        for(int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
+        for (int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
         {
             refCoord[0] = (coorXIntegrationPoints[iGaussPoint] - Xcc) * oneDLenScal;
             refCoord[1] = (coorYIntegrationPoints[iGaussPoint] - Ycc) * oneDLenScal;
@@ -141,7 +141,7 @@ void HighOrderCellSol::ComputeJacobianDeterminant(int iGaussPoint, int iCellVTKT
 
     //The dof of shape function is equal to the number of nodes;
     JacDetCellIntegration[iGaussPoint] = 0.0;
-    for(int localNode = 0; localNode < nodeNumber; ++localNode)
+    for (int localNode = 0; localNode < nodeNumber; ++localNode)
     {
         dxDxi += pointX[nodeID[localNode]] * gradXiShapeFunction[localNode];
         dxDet += pointX[nodeID[localNode]] * gradEtShapeFunction[localNode];
@@ -181,23 +181,23 @@ void HighOrderCellSol::ComputeJacobianDeterminant(int iGaussPoint, int iCellVTKT
 void HighOrderCellSol::ComputeOrthogonalBasisFunction(int degreeOfFreedom, HighOrderMatrix & orthogonalizationMatrix)
 {
     //20 is the dof for P3,if
-    if(degreeOfFreedom > 20)
+    if (degreeOfFreedom > 20)
     {
-        cout<<"Currect code only suports fourth-order accuracy,if the accuracy is higher, the number of this function needs to be modified"<<endl;
+        cout << "Currect code only suports fourth-order accuracy,if the accuracy is higher, the number of this function needs to be modified" << endl;
     }
 
     RDouble tmpBasisFunction[20];
-    for(int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
+    for (int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
     {
-        for(int idof = 0; idof < nDOFsSol; ++idof)
+        for (int idof = 0; idof < nDOFsSol; ++idof)
         {
             tmpBasisFunction[idof] = 0.0;
-            for(int jdof = 0; jdof < nDOFsSol; ++jdof)
+            for (int jdof = 0; jdof < nDOFsSol; ++jdof)
             {
                 tmpBasisFunction[idof] += orthogonalizationMatrix(idof,jdof) * basisFuncCellIntegration[iGaussPoint][jdof]; 
             }
         }
-        for(int idof = 0; idof < nDOFsSol; ++idof)
+        for (int idof = 0; idof < nDOFsSol; ++idof)
         {
             basisFuncCellIntegration[iGaussPoint][idof] = tmpBasisFunction[idof];
         }
@@ -208,16 +208,16 @@ void HighOrderCellSol::TestOrthogonalBasisFunction(const RDouble *weight)
 {
     //20 is the dof for P3,if
     RDouble tmpMatrix[10][10];
-    for(int n=0;n<10;n++)
+    for (int n=0;n<10;n++)
     {
-        for(int m=0;m<10;m++)
+        for (int m=0;m<10;m++)
         {
             tmpMatrix[n][m] = 0.0;
-            for(int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
+            for (int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
             {
                 tmpMatrix[n][m] += weight[iGaussPoint] *JacDetCellIntegration[iGaussPoint] * basisFuncCellIntegration[iGaussPoint][n] * basisFuncCellIntegration[iGaussPoint][m] ;
             } 
-            cout<<"n:  "<<n<<"  m:   "<<m<<"    tmpMatrix[n][m]   "<<tmpMatrix[n][m]<<endl;
+            cout << "n:  " << n << "  m:   " << m << "    tmpMatrix[n][m]   " << tmpMatrix[n][m] << endl;
         }
     }
            
@@ -232,13 +232,13 @@ void HighOrderCellSol::ComputeGradOfBasisFunctionIntegrationPoint(HighOrderMatri
     RDouble dydBasis[35] = {0};
     RDouble dzdBasis[35] = {0};
 
-    if(nPolySol == 0)
+    if (nPolySol == 0)
     {
         dxdBasis[0] = 0.0;
         dydBasis[0] = 0.0;
         dzdBasis[0] = 0.0;
     }
-    else if(nPolySol == 1)
+    else if (nPolySol == 1)
     {
         dxdBasis[0] = 0.0;
         dxdBasis[1] = oneDLenScal;
@@ -255,7 +255,7 @@ void HighOrderCellSol::ComputeGradOfBasisFunctionIntegrationPoint(HighOrderMatri
         dzdBasis[2] = 0.0;
         dzdBasis[3] = oneDLenScal;
     }
-    else if(nPolySol == 2)
+    else if (nPolySol == 2)
     {
         dxdBasis[0] = 0.0;
         dxdBasis[1] = oneDLenScal;
@@ -291,13 +291,13 @@ void HighOrderCellSol::ComputeGradOfBasisFunctionIntegrationPoint(HighOrderMatri
         dzdBasis[9] =       basisFuncCellIntegration[iGaussPoint][2] * oneDLenScal;
     }
 
-    for(int idof = 0; idof < nDOFsSol; ++idof)
+    for (int idof = 0; idof < nDOFsSol; ++idof)
     {
         dxBasisFuncCellIntegration[iGaussPoint][idof] = 0.0;
         dyBasisFuncCellIntegration[iGaussPoint][idof] = 0.0;
         dzBasisFuncCellIntegration[iGaussPoint][idof] = 0.0;
 
-        for(int jdof = 0; jdof < nDOFsSol;++jdof)
+        for (int jdof = 0; jdof < nDOFsSol;++jdof)
         {
             dxBasisFuncCellIntegration[iGaussPoint][idof] += orthogonalizationMatrix(idof, jdof) * dxdBasis[jdof];
             dyBasisFuncCellIntegration[iGaussPoint][idof] += orthogonalizationMatrix(idof, jdof) * dydBasis[jdof];
@@ -312,13 +312,13 @@ void HighOrderFaceSol::ComputeCoorOfIntegrationPoint(int nodenumber, const unsig
     //The dof of shape function is equal to the number of nodes;
     const int dofOfShapeFunction = nodenumber;
 
-    for(int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
+    for (int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
     {
         coorXIntegrationPoints[iGaussPoint] = 0.0;
         coorYIntegrationPoints[iGaussPoint] = 0.0;
         coorZIntegrationPoints[iGaussPoint] = 0.0;
 
-        for(int iDofShapeFun = 0; iDofShapeFun < dofOfShapeFunction; ++iDofShapeFun)
+        for (int iDofShapeFun = 0; iDofShapeFun < dofOfShapeFunction; ++iDofShapeFun)
         {
             coorXIntegrationPoints[iGaussPoint] += pointX[nodeID[iDofShapeFun]]*shapeFunctionFacePoint[iGaussPoint][iDofShapeFun];
             coorYIntegrationPoints[iGaussPoint] += pointY[nodeID[iDofShapeFun]]*shapeFunctionFacePoint[iGaussPoint][iDofShapeFun];
@@ -337,13 +337,13 @@ void HighOrderFaceSol::ComputeBasisFunction(int iGaussPoint, int leftCell, int r
     //10 if only for P1/P2, if accuracy is P3, 10 should be 20 
     RDouble refCoord[3],leftBasis[10], rightBasis[10], orthMatrix[10][10];
     int leftDof = 0, rightDof = 0, counter = 0;
-    if(nPloyOfLeftCell == 0)
+    if (nPloyOfLeftCell == 0)
     {
         leftDof = 1;
 
         leftBasis[0] = 1.0;
     }    
-    else if(nPloyOfLeftCell == 1)
+    else if (nPloyOfLeftCell == 1)
     {
         leftDof = 4;
 
@@ -352,7 +352,7 @@ void HighOrderFaceSol::ComputeBasisFunction(int iGaussPoint, int leftCell, int r
         leftBasis[2] = (coorYIntegrationPoints[iGaussPoint] - Ycc[leftCell]) * oneDLeftLenScal;
         leftBasis[3] = (coorZIntegrationPoints[iGaussPoint] - Zcc[leftCell]) * oneDLeftLenScal;
     }
-    else if(nPloyOfLeftCell == 2)
+    else if (nPloyOfLeftCell == 2)
     {
         leftDof = 10;
         refCoord[0] = (coorXIntegrationPoints[iGaussPoint] - Xcc[leftCell]) * oneDLeftLenScal;
@@ -374,32 +374,32 @@ void HighOrderFaceSol::ComputeBasisFunction(int iGaussPoint, int leftCell, int r
 
     //left side of face
     counter = 0;
-    for(int iDof = 0; iDof < leftDof; ++iDof)
+    for (int iDof = 0; iDof < leftDof; ++iDof)
     {
-        for(int jDof = 0; jDof < leftDof; ++jDof)
+        for (int jDof = 0; jDof < leftDof; ++jDof)
         {
             orthMatrix[iDof][jDof] = leftOrthMatrix[counter ++];
         }
     }
 
-    for(int iDof = 0; iDof < leftDof; ++iDof)
+    for (int iDof = 0; iDof < leftDof; ++iDof)
     {
         leftBasisFuncFaceIntegration[iGaussPoint][iDof] = 0.0;
-        for(int jDof = 0; jDof < leftDof; ++jDof)
+        for (int jDof = 0; jDof < leftDof; ++jDof)
         {
             leftBasisFuncFaceIntegration[iGaussPoint][iDof] += orthMatrix[iDof][jDof] * leftBasis[jDof];
         }
     }
 
-    if(rightCell < nTotalCell)
+    if (rightCell < nTotalCell)
     {
-        if(nPloyOfRightCell == 0) 
+        if (nPloyOfRightCell == 0) 
         {
             rightDof = 1;
 
             rightBasis[0] = 1.0;
         }
-        else if(nPloyOfRightCell == 1) 
+        else if (nPloyOfRightCell == 1) 
         {
             rightDof = 4;
 
@@ -408,7 +408,7 @@ void HighOrderFaceSol::ComputeBasisFunction(int iGaussPoint, int leftCell, int r
             rightBasis[2] = (coorYIntegrationPoints[iGaussPoint] - Ycc[rightCell]) * oneDRightLenScal;
             rightBasis[3] = (coorZIntegrationPoints[iGaussPoint] - Zcc[rightCell]) * oneDRightLenScal;
         }
-        else if(nPloyOfRightCell == 2)
+        else if (nPloyOfRightCell == 2)
         {
             rightDof = 10;
 
@@ -431,17 +431,17 @@ void HighOrderFaceSol::ComputeBasisFunction(int iGaussPoint, int leftCell, int r
 
         //right side of face
         counter = 0;
-        for(int iDof = 0; iDof < rightDof; ++iDof)
+        for (int iDof = 0; iDof < rightDof; ++iDof)
         {
-            for(int jDof = 0; jDof < rightDof; ++jDof)
+            for (int jDof = 0; jDof < rightDof; ++jDof)
             {
                 orthMatrix[iDof][jDof] = rightOrthMatrix[counter ++];
             }
         }
-        for(int iDof = 0; iDof < rightDof; ++iDof)
+        for (int iDof = 0; iDof < rightDof; ++iDof)
         {
             rightBasisFuncFaceIntegration[iGaussPoint][iDof] = 0.0;
-            for(int jDof = 0; jDof < rightDof; ++jDof)
+            for (int jDof = 0; jDof < rightDof; ++jDof)
             {
                 rightBasisFuncFaceIntegration[iGaussPoint][iDof] += orthMatrix[iDof][jDof] * rightBasis[jDof];
             }
@@ -449,7 +449,7 @@ void HighOrderFaceSol::ComputeBasisFunction(int iGaussPoint, int leftCell, int r
     }
     else
     {
-        for(int iDof = 0; iDof < rightDof; ++iDof)
+        for (int iDof = 0; iDof < rightDof; ++iDof)
         {
             rightBasisFuncFaceIntegration[iGaussPoint][iDof] = leftBasisFuncFaceIntegration[iGaussPoint][iDof];
         }
@@ -762,7 +762,7 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
     int nDim = grid->GetDim();
     int neqn = 5;
 
-    if(nDim == 3)
+    if (nDim == 3)
     {
         neqn = 5;
     }
@@ -781,15 +781,15 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
         nCellNodes = highOrderCells[iCell].nNodes;
         unsigned short int iStandElemIndex = 0;                                   //! @the HigOrderStandardCell type
 
-        for(iStandElemIndex = 0; iStandElemIndex < standardCellElements.size(); ++iStandElemIndex)
+        for (iStandElemIndex = 0; iStandElemIndex < standardCellElements.size(); ++iStandElemIndex)
         {
-            if(standardCellElements[iStandElemIndex].SameStandardElement(iCellVTKType, highOrderCells[iCell].nPolyGrid, accuracyOfVolumeIntegration))
+            if (standardCellElements[iStandElemIndex].SameStandardElement(iCellVTKType, highOrderCells[iCell].nPolyGrid, accuracyOfVolumeIntegration))
             {
                 break;
             }
         }
 
-        if(iStandElemIndex == standardCellElements.size())
+        if (iStandElemIndex == standardCellElements.size())
         {
             standardCellElements.push_back(HighOrderStandardCell(iCellVTKType, nCellNodes, accuracyOfVolumeIntegration));
         }
@@ -820,7 +820,7 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
         RDouble * gradXiShapeFunction;
         RDouble * gradEtShapeFunction;
         RDouble * gradZtShapeFunction;
-        for(int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++iGaussPoint)
+        for (int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++iGaussPoint)
         {
             gradXiShapeFunction = standardCellElements[iStandElemIndex].GetdXiShapeFunctionAtIntegration(iGaussPoint);
             gradEtShapeFunction = standardCellElements[iStandElemIndex].GetdEtShapeFunctionAtIntegration(iGaussPoint);
@@ -862,7 +862,7 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
         lenScaleOfCell = highOrderCells[iCell].lenScale;
 
         highOrderCellsSol[pMultiGridLevel][iCell].basisFuncCellIntegration.resize(integNumberOfGauss);
-        for(int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++iGaussPoint)
+        for (int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++iGaussPoint)
         {
             highOrderCellsSol[pMultiGridLevel][iCell].basisFuncCellIntegration[iGaussPoint].resize(degreeOfFreedom);
         }
@@ -884,9 +884,9 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
         elementNumberOfOrth = highOrderCellsSol[pMultiGridLevel][iCell].nDOFsSol * highOrderCellsSol[pMultiGridLevel][iCell].nDOFsSol;
         highOrderCellsSol[pMultiGridLevel][iCell].orthogonalizedMatrix.resize(elementNumberOfOrth);
         unsigned short int numberOfMatrix = 0;
-        for(int idof = 0; idof < degreeOfFreedom; ++idof)
+        for (int idof = 0; idof < degreeOfFreedom; ++idof)
         {
-            for(int jdof = 0; jdof < degreeOfFreedom; ++jdof)
+            for (int jdof = 0; jdof < degreeOfFreedom; ++jdof)
             {
                 highOrderCellsSol[pMultiGridLevel][iCell].orthogonalizedMatrix[ numberOfMatrix++ ] = orthogonalizationMatrix(idof,jdof);
             }
@@ -897,7 +897,7 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
         highOrderCellsSol[pMultiGridLevel][iCell].dyBasisFuncCellIntegration.resize(integNumberOfGauss);
         highOrderCellsSol[pMultiGridLevel][iCell].dzBasisFuncCellIntegration.resize(integNumberOfGauss);
 
-        for(int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++iGaussPoint)
+        for (int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++iGaussPoint)
         {                
             highOrderCellsSol[pMultiGridLevel][iCell].dxBasisFuncCellIntegration[iGaussPoint].resize(degreeOfFreedom);
             highOrderCellsSol[pMultiGridLevel][iCell].dyBasisFuncCellIntegration[iGaussPoint].resize(degreeOfFreedom);
@@ -918,7 +918,7 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
         highOrderCellsSol[pMultiGridLevel][iCell].q.resize(neqn);
         highOrderCellsSol[pMultiGridLevel][iCell].qAverage.resize(neqn);
 
-        for(int ieqn = 0; ieqn < neqn; ++ieqn)
+        for (int ieqn = 0; ieqn < neqn; ++ieqn)
         {
             highOrderCellsSol[pMultiGridLevel][iCell].dofQ[ieqn].resize(highOrderCellsSol[pMultiGridLevel][iCell].nDOFsSol);
             highOrderCellsSol[pMultiGridLevel][iCell].res[ieqn].resize(highOrderCellsSol[pMultiGridLevel][iCell].nDOFsSol);
@@ -941,7 +941,7 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
         highOrderCellsSol[pMultiGridLevel][iCell].dofQ.resize(neqn);
         highOrderCellsSol[pMultiGridLevel][iCell].qAverage.resize(neqn);
 
-        for(int ieqn = 0; ieqn < neqn; ++ieqn)
+        for (int ieqn = 0; ieqn < neqn; ++ieqn)
         {
             highOrderCellsSol[pMultiGridLevel][iCell].dofQ[ieqn].resize(highOrderCellsSol[pMultiGridLevel][iCell].nDOFsSol);
         }
@@ -954,10 +954,10 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
         iCellVTKType = highOrderCells[iCell].VTK_Type;
         int nPolyGrid = highOrderCells[iCell].nPolyGrid;
 
-        for(int iStandElemIndex = 0; iStandElemIndex < standardCellElements.size(); ++iStandElemIndex)
+        for (int iStandElemIndex = 0; iStandElemIndex < standardCellElements.size(); ++iStandElemIndex)
         {
-            if(iCellVTKType == standardCellElements[iStandElemIndex].GetVTK_Type()  && 
-                nPolyGrid   == standardCellElements[iStandElemIndex].GetNpoly())
+            if (iCellVTKType == standardCellElements[iStandElemIndex].GetVTK_Type() && 
+                nPolyGrid    == standardCellElements[iStandElemIndex].GetNpoly())
             {
                 highOrderCells[iCell].standardElementIndex = static_cast<unsigned short>(iStandElemIndex);
             }
@@ -970,7 +970,7 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
         {
             highOrderCellsSol[pMultiGridLevel][iCell].dofQ1.resize(neqn);
             highOrderCellsSol[pMultiGridLevel][iCell].dofQ2.resize(neqn);
-            for(int ieqn = 0; ieqn < neqn; ++ieqn)
+            for (int ieqn = 0; ieqn < neqn; ++ieqn)
             {
                 highOrderCellsSol[pMultiGridLevel][iCell].dofQ1[ieqn].resize(highOrderCellsSol[pMultiGridLevel][iCell].nDOFsSol);
                 highOrderCellsSol[pMultiGridLevel][iCell].dofQ2[ieqn].resize(highOrderCellsSol[pMultiGridLevel][iCell].nDOFsSol);
@@ -978,14 +978,14 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
         }
     }
 
-    if(viscousType == LAMINAR)
+    if (viscousType == LAMINAR)
     {
         for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
             highOrderCellsSol[pMultiGridLevel][iCell].visl.resize(highOrderCellsSol[pMultiGridLevel][iCell].integNumberOfGaussPoint);
         }
     }
-    else if(viscousType > LAMINAR)
+    else if (viscousType > LAMINAR)
     {
         for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
@@ -1000,7 +1000,7 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
 //! @param[in]   dgSolOrder                the accuracy of DG solution
 //! @param[in]   pMultiGrid                pmultigrid number
 //! @param[out]                            initialize HighOrderfaceSol and build HighOrderStandardface
-void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, int viscousType)
+void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid *grid, int pMultiGrid, int viscousType)
 {     
     int nTotalFace = grid->GetNTotalFace();
     int nBoundFace = grid->GetNBoundFace();
@@ -1016,8 +1016,8 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, in
     int nBCRegion = unstructBCSet->GetnBCRegion();
 
 
-    int * leftCellOfFace = grid->GetLeftCellOfFace();
-    int * rightCellOfFace = grid->GetRightCellOfFace();
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
 
     unsigned long positionOfDof = 0;                    //! @the dof position of curret cell,using for 
     unsigned short int integNumberOfGauss = 0; 
@@ -1035,7 +1035,7 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, in
     int neqn = 5;
     unsigned long pTotalGaussPoint = 0;
 
-    if(nDim == 3)
+    if (nDim == 3)
     {
         neqn = 5;
     }
@@ -1044,14 +1044,14 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, in
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
         int bcType = bcRegion->GetBCType();
         if (bcType == INTERFACE)
         {
-            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            vector<int> *faceIndex = bcRegion->GetFaceIndex();
             for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
-                // iFace is the face number in the set of faceIndex.
+                //! iFace is the face number in the set of faceIndex.
                 int iFace = *iter;
                 highOrderFacesSol[pMultiGrid][iFace].globalID = iFace;
 
@@ -1062,44 +1062,44 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, in
                 nPloyOfLeftCell  = highOrderCellsSol[pMultiGrid][leftCell].nPolySol;
                 nPloyOfRightCell = highOrderCellsSol[pMultiGrid][rightCell].nPolySol;
 
-                highOrderFacesSol[pMultiGrid][iFace].nPolySol = max(nPloyOfLeftCell, nPloyOfRightCell);   //polynomial order
-                                                                                                          // the face integation accuracy
+                highOrderFacesSol[pMultiGrid][iFace].nPolySol = max(nPloyOfLeftCell, nPloyOfRightCell);    //! polynomial order
+                //! the face integation accuracy
                 highOrderFacesSol[pMultiGrid][iFace].accuracyOfFaceIntigration = 2 * highOrderFacesSol[pMultiGrid][iFace].nPolySol + 2;
                 accuracyOfIntigration = highOrderFacesSol[pMultiGrid][iFace].accuracyOfFaceIntigration;
 
-                // unsigned short iFaceVTKType 
+                //! unsigned short iFaceVTKType 
                 iFaceVTKType = highOrderFaces[iFace].VTK_Type;
 
-                // get nodes of face
+                //! get nodes of face
                 nFaceNodes = static_cast<unsigned short>(highOrderFaces[iFace].nNodes);
 
                 //! Determine the VTK type
-                for(iStandElemIndex = 0; iStandElemIndex < standardFaceElements.size(); ++iStandElemIndex) 
+                for (iStandElemIndex = 0; iStandElemIndex < standardFaceElements.size(); ++iStandElemIndex) 
                 {
-                    if(standardFaceElements[iStandElemIndex].SameStandardElement(iFaceVTKType, highOrderFaces[iFace].nPolyGrid, accuracyOfIntigration))
+                    if (standardFaceElements[iStandElemIndex].SameStandardElement(iFaceVTKType, highOrderFaces[iFace].nPolyGrid, accuracyOfIntigration))
                     {
                         break;
                     }
                 }
 
-                if(iStandElemIndex == standardFaceElements.size())
+                if (iStandElemIndex == standardFaceElements.size())
                     standardFaceElements.push_back(HighOrderStandardFace (iFaceVTKType, nFaceNodes, accuracyOfIntigration));
 
                 highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint = static_cast<unsigned short>(standardFaceElements[iStandElemIndex].GetNumberOfIntegrationPoint());
                 integNumberOfGauss = highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint;
                 pTotalGaussPoint += integNumberOfGauss;
-                //apply memory to save coord of integration
+                //! apply memory to save coord of integration
                 highOrderFacesSol[pMultiGrid][iFace].coorXIntegrationPoints.resize(integNumberOfGauss);
                 highOrderFacesSol[pMultiGrid][iFace].coorYIntegrationPoints.resize(integNumberOfGauss);
                 highOrderFacesSol[pMultiGrid][iFace].coorZIntegrationPoints.resize(integNumberOfGauss);
                 const unsigned long * nodeID = highOrderFaces[iFace].GetnodeIDsGrid();
 
-                //1:compute Coor of face integration
+                //! 1:compute Coor of face integration
                 highOrderFacesSol[pMultiGrid][iFace].ComputeCoorOfIntegrationPoint(standardFaceElements[iStandElemIndex].GetNnode(), nodeID, pointX, pointY, pointZ, 
                     standardFaceElements[iStandElemIndex].GetShapeFuncFaceIntegration());
 
-                //compute basis function of face integration
-                //2:compute orthgonal basis function    
+                //! compute basis function of face integration
+                //! 2:compute orthgonal basis function    
                 dofOfLeftCell = highOrderCellsSol[pMultiGrid][leftCell].nDOFsSol;
                 dofOfRightCell = highOrderCellsSol[pMultiGrid][rightCell].nDOFsSol;
                 lenScaleOfLeftCell  = highOrderCells[leftCell].lenScale;
@@ -1109,7 +1109,7 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, in
 
                 highOrderFacesSol[pMultiGrid][iFace].leftBasisFuncFaceIntegration.resize(integNumberOfGauss);
                 highOrderFacesSol[pMultiGrid][iFace].rightBasisFuncFaceIntegration.resize(integNumberOfGauss);
-                for(int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++iGaussPoint)
+                for (int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++iGaussPoint)
                 {                
                     highOrderFacesSol[pMultiGrid][iFace].leftBasisFuncFaceIntegration[iGaussPoint].resize(dofOfLeftCell); 
                     highOrderFacesSol[pMultiGrid][iFace].rightBasisFuncFaceIntegration[iGaussPoint].resize(dofOfRightCell);
@@ -1118,10 +1118,10 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, in
                         lenScaleOfLeftCell, lenScaleOfRightCell, Xcc, Ycc, Zcc, leftOrthMatrix, rightOrthMatrix);
                 }
 
-                //3:compute the normals in the integration points of the face
+                //! 3:compute the normals in the integration points of the face
                 highOrderFacesSol[pMultiGrid][iFace].metricNormalsFace.resize(integNumberOfGauss);
                 highOrderFacesSol[pMultiGrid][iFace].JacDetFaceIntegration.resize(integNumberOfGauss);
-                //3-1: compute dx/dxi,dx/det,   dy/dxi,dy/det,   dz/dxi,dz/det
+                //! 3-1: compute dx/dxi,dx/det,   dy/dxi,dy/det,   dz/dxi,dz/det
                 RDouble * gradXiShapeFunction;
                 RDouble * gradEtShapeFunction;
 
@@ -1130,7 +1130,7 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, in
                     gradXiShapeFunction = standardFaceElements[iStandElemIndex].GetdXiShapeFunctionAtIntegration(iGaussPoint);
                     gradEtShapeFunction = standardFaceElements[iStandElemIndex].GetdEtShapeFunctionAtIntegration(iGaussPoint);
 
-                    //0:nx,1:ny,2:nz
+                    //! 0:nx,1:ny,2:nz
                     highOrderFacesSol[pMultiGrid][iFace].metricNormalsFace[iGaussPoint].resize(3);
 
                     highOrderFacesSol[pMultiGrid][iFace].ComputeMetricNormalsFace(iGaussPoint, iFaceVTKType, standardFaceElements[iStandElemIndex].GetNnode(), nodeID, pointX, pointY, pointZ,
@@ -1139,12 +1139,12 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, in
 
             }
         }
-        else if (bcType != INTERFACE)   //need modify to fit parallel
+        else if (bcType != INTERFACE)    //! need modify to fit parallel
         {
-            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            vector<int> *faceIndex = bcRegion->GetFaceIndex();
             for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
-                // iFace is the face number in the set of faceIndex.
+                //! iFace is the face number in the set of faceIndex.
                 int iFace = *iter;
 
                 highOrderFacesSol[pMultiGrid][iFace].globalID = iFace;
@@ -1156,44 +1156,44 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, in
 
                 nPloyOfLeftCell  = highOrderCellsSol[pMultiGrid][leftCell].nPolySol;
                 nPloyOfRightCell = nPloyOfLeftCell;
-                highOrderFacesSol[pMultiGrid][iFace].nPolySol = nPloyOfLeftCell;   //polynomial order
-                                                                                   // the face integation accuracy
+                highOrderFacesSol[pMultiGrid][iFace].nPolySol = nPloyOfLeftCell;    //!polynomial order
+                //! the face integation accuracy
                 highOrderFacesSol[pMultiGrid][iFace].accuracyOfFaceIntigration = 2 * highOrderFacesSol[pMultiGrid][iFace].nPolySol + 2;
                 accuracyOfIntigration = highOrderFacesSol[pMultiGrid][iFace].accuracyOfFaceIntigration;
 
-                // unsigned short iFaceVTKType
+                //! unsigned short iFaceVTKType
                 iFaceVTKType = highOrderFaces[iFace].VTK_Type;
 
-                // get nodes of face
+                //! get nodes of face
                 nFaceNodes = static_cast<unsigned short>(highOrderFaces[iFace].nNodes);
 
                 //! Determine the VTK type
                 for (iStandElemIndex = 0; iStandElemIndex < standardFaceElements.size(); ++ iStandElemIndex)
                 {
-                    if(standardFaceElements[iStandElemIndex].SameStandardElement(iFaceVTKType, highOrderFaces[iFace].nPolyGrid, accuracyOfIntigration))
+                    if (standardFaceElements[iStandElemIndex].SameStandardElement(iFaceVTKType, highOrderFaces[iFace].nPolyGrid, accuracyOfIntigration))
                     {
                         break;
                     }
                 }
 
-                if(iStandElemIndex == standardFaceElements.size())
+                if (iStandElemIndex == standardFaceElements.size())
                     standardFaceElements.push_back(HighOrderStandardFace (iFaceVTKType, nFaceNodes, accuracyOfIntigration));
 
                 highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint = static_cast<unsigned short>(standardFaceElements[iStandElemIndex].GetNumberOfIntegrationPoint());
                 integNumberOfGauss = highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint;
                 pTotalGaussPoint += integNumberOfGauss;
-                //apply memory to save coord of integration
+                //! apply memory to save coord of integration
                 highOrderFacesSol[pMultiGrid][iFace].coorXIntegrationPoints.resize(integNumberOfGauss);
                 highOrderFacesSol[pMultiGrid][iFace].coorYIntegrationPoints.resize(integNumberOfGauss);
                 highOrderFacesSol[pMultiGrid][iFace].coorZIntegrationPoints.resize(integNumberOfGauss);
                 const unsigned long *nodeID = highOrderFaces[iFace].GetnodeIDsGrid();
 
-                //1:compute Coor of face integration
+                //! 1:compute Coor of face integration
                 highOrderFacesSol[pMultiGrid][iFace].ComputeCoorOfIntegrationPoint(standardFaceElements[iStandElemIndex].GetNnode(), nodeID, pointX, pointY, pointZ, 
                     standardFaceElements[iStandElemIndex].GetShapeFuncFaceIntegration());
 
-                //compute basis function of face integration
-                //2:compute orthgonal basis function    
+                //! compute basis function of face integration
+                //! 2:compute orthgonal basis function    
                 dofOfLeftCell = highOrderCellsSol[pMultiGrid][leftCell].nDOFsSol;
                 dofOfRightCell = dofOfLeftCell;
                 lenScaleOfLeftCell  = highOrderCells[leftCell].lenScale;
@@ -1212,11 +1212,11 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, in
                         lenScaleOfLeftCell, lenScaleOfRightCell, Xcc, Ycc, Zcc, leftOrthMatrix, rightOrthMatrix);
                 }
 
-                //3:compute the normals in the integration points of the face
+                //! 3:compute the normals in the integration points of the face
                 highOrderFacesSol[pMultiGrid][iFace].metricNormalsFace.resize(integNumberOfGauss);
                 highOrderFacesSol[pMultiGrid][iFace].JacDetFaceIntegration.resize(integNumberOfGauss);
 
-                //3-1: compute dx/dxi,dx/det, dy/dxi,dy/det, dz/dxi,dz/det
+                //! 3-1: compute dx/dxi,dx/det, dy/dxi,dy/det, dz/dxi,dz/det
                 RDouble * gradXiShapeFunction;
                 RDouble * gradEtShapeFunction;
 
@@ -1225,7 +1225,7 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, in
                     gradXiShapeFunction = standardFaceElements[iStandElemIndex].GetdXiShapeFunctionAtIntegration(iGaussPoint);
                     gradEtShapeFunction = standardFaceElements[iStandElemIndex].GetdEtShapeFunctionAtIntegration(iGaussPoint);
 
-                    //0:nx,1:ny,2:nz
+                    //! 0:nx,1:ny,2:nz
                     highOrderFacesSol[pMultiGrid][iFace].metricNormalsFace[iGaussPoint].resize(3);
 
                     highOrderFacesSol[pMultiGrid][iFace].ComputeMetricNormalsFace(iGaussPoint, iFaceVTKType, standardFaceElements[iStandElemIndex].GetNnode(), 
@@ -1248,44 +1248,44 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, in
         nPloyOfRightCell = highOrderCellsSol[pMultiGrid][rightCell].nPolySol;
 
         highOrderFacesSol[pMultiGrid][iFace].nPolySol = max(nPloyOfLeftCell, nPloyOfRightCell);   //polynomial order
-        // the face integation accuracy
+        //! the face integation accuracy
         highOrderFacesSol[pMultiGrid][iFace].accuracyOfFaceIntigration = 2 * highOrderFacesSol[pMultiGrid][iFace].nPolySol + 2;
         accuracyOfIntigration = highOrderFacesSol[pMultiGrid][iFace].accuracyOfFaceIntigration;
 
-        // unsigned short iFaceVTKType
+        //! unsigned short iFaceVTKType
         iFaceVTKType = highOrderFaces[iFace].VTK_Type;
 
-        // get nodes of face
+        //! get nodes of face
         nFaceNodes = static_cast<unsigned short>(highOrderFaces[iFace].nNodes);
 
         //! Determine the VTK type
-        for(iStandElemIndex = 0; iStandElemIndex < standardFaceElements.size(); ++iStandElemIndex)
+        for (iStandElemIndex = 0; iStandElemIndex < standardFaceElements.size(); ++iStandElemIndex)
         {
-            if(standardFaceElements[iStandElemIndex].SameStandardElement(iFaceVTKType, highOrderFaces[iFace].nPolyGrid, accuracyOfIntigration))
+            if (standardFaceElements[iStandElemIndex].SameStandardElement(iFaceVTKType, highOrderFaces[iFace].nPolyGrid, accuracyOfIntigration))
             {
                 break;
             }
         }
 
-        if(iStandElemIndex == standardFaceElements.size())
+        if (iStandElemIndex == standardFaceElements.size())
             standardFaceElements.push_back(HighOrderStandardFace (iFaceVTKType, nFaceNodes, accuracyOfIntigration));
 
         highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint = static_cast<unsigned short>(standardFaceElements[iStandElemIndex].GetNumberOfIntegrationPoint());
         integNumberOfGauss = highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint;
         highOrderFacesSol[pMultiGrid][iFace].offsetGaussPoint = pTotalGaussPoint;
         pTotalGaussPoint += integNumberOfGauss;
-        //apply memory to save coord of integration
+        //! apply memory to save coord of integration
         highOrderFacesSol[pMultiGrid][iFace].coorXIntegrationPoints.resize(integNumberOfGauss);
         highOrderFacesSol[pMultiGrid][iFace].coorYIntegrationPoints.resize(integNumberOfGauss);
         highOrderFacesSol[pMultiGrid][iFace].coorZIntegrationPoints.resize(integNumberOfGauss);
         const unsigned long *nodeID = highOrderFaces[iFace].GetnodeIDsGrid();
 
-        //1:compute Coor of face integration
+        //! 1:compute Coor of face integration
         highOrderFacesSol[pMultiGrid][iFace].ComputeCoorOfIntegrationPoint(standardFaceElements[iStandElemIndex].GetNnode(), nodeID, pointX, pointY, pointZ, 
             standardFaceElements[iStandElemIndex].GetShapeFuncFaceIntegration());
 
-        //compute basis function of face integration
-        //2:compute orthgonal basis function    
+        //! compute basis function of face integration
+        //! 2:compute orthgonal basis function    
         dofOfLeftCell = highOrderCellsSol[pMultiGrid][leftCell].nDOFsSol;
         dofOfRightCell = highOrderCellsSol[pMultiGrid][rightCell].nDOFsSol;
         lenScaleOfLeftCell  = highOrderCells[leftCell].lenScale;
@@ -1303,10 +1303,10 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, in
                 lenScaleOfLeftCell, lenScaleOfRightCell, Xcc, Ycc, Zcc, leftOrthMatrix, rightOrthMatrix);
         }
 
-        //3:compute the normals in the integration points of the face
+        //! 3:compute the normals in the integration points of the face
         highOrderFacesSol[pMultiGrid][iFace].metricNormalsFace.resize(integNumberOfGauss);
         highOrderFacesSol[pMultiGrid][iFace].JacDetFaceIntegration.resize(integNumberOfGauss);
-        //3-1: compute dx/dxi,dx/det,   dy/dxi,dy/det,   dz/dxi,dz/det
+        //! 3-1: compute dx/dxi,dx/det,   dy/dxi,dy/det,   dz/dxi,dz/det
         RDouble *gradXiShapeFunction;
         RDouble *gradEtShapeFunction;
 
@@ -1315,7 +1315,7 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, in
             gradXiShapeFunction = standardFaceElements[iStandElemIndex].GetdXiShapeFunctionAtIntegration(iGaussPoint);
             gradEtShapeFunction = standardFaceElements[iStandElemIndex].GetdEtShapeFunctionAtIntegration(iGaussPoint);
 
-            //0:nx,1:ny,2:nz
+            //! 0:nx,1:ny,2:nz
             highOrderFacesSol[pMultiGrid][iFace].metricNormalsFace[iGaussPoint].resize(3);
 
             highOrderFacesSol[pMultiGrid][iFace].ComputeMetricNormalsFace(iGaussPoint, iFaceVTKType, standardFaceElements[iStandElemIndex].GetNnode(), nodeID, pointX, pointY, pointZ,
@@ -1325,21 +1325,21 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, in
 
     totalFaceGaussPoint[pMultiGrid] = pTotalGaussPoint;
 
-    //HighOrderFaceµÄstandardFaceElements type
+    //! HighOrderFaceµÄstandardFaceElements type
     for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
         //! Determine the standardElementType, pMultiGrid
         iFaceVTKType = highOrderFaces[iFace].VTK_Type;
         int nPolyGrid = highOrderFaces[iFace].nPolyGrid;
-        for(iStandElemIndex = 0; iStandElemIndex < standardFaceElements.size(); ++iStandElemIndex)
+        for (iStandElemIndex = 0; iStandElemIndex < standardFaceElements.size(); ++iStandElemIndex)
         {
-            if(iFaceVTKType == standardFaceElements[iStandElemIndex].GetVTK_Type() && 
+            if (iFaceVTKType == standardFaceElements[iStandElemIndex].GetVTK_Type() && 
                 nPolyGrid   == standardFaceElements[iStandElemIndex].GetNpoly())
             {
                 highOrderFaces[iFace].standardElementIndex = static_cast<unsigned short>(iStandElemIndex);
             }
         } 
-        if(pMultiGrid == 0)
+        if (pMultiGrid == 0)
         {
             RDouble areaTmp = 0.0, xfc = 0.0, yfc = 0.0, zfc = 0.0;
             const RDouble *weightCoeff;
@@ -1364,21 +1364,21 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, in
         highOrderFacesSol[pMultiGrid][iFace].q.resize(neqn);
         highOrderFacesSol[pMultiGrid][iFace].visl.resize(highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint);
 
-        for(int ieqn = 0; ieqn < neqn; ++ieqn)
+        for (int ieqn = 0; ieqn < neqn; ++ieqn)
         {
             //[neqn][2*gausspoint], [neqn][0]:L,[neqn][0+nTotalFace]:R
             highOrderFacesSol[pMultiGrid][iFace].q[ieqn].resize(2 * highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint);
         }
     }
 
-    if(viscousType == LAMINAR)
+    if (viscousType == LAMINAR)
     {
         for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
             highOrderFacesSol[pMultiGrid][iFace].visl.resize(2 * highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint);
         }
     }
-    else if(viscousType > LAMINAR)
+    else if (viscousType > LAMINAR)
     {
         for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
@@ -1411,7 +1411,7 @@ void HighOrderGrid::InitDofOfCell(UnstructGrid * grid, vector < RDouble > & cons
             {
                 weigthMultJac = weightCoeff[iGaussPoint] * highOrderCellsSol[0][iCell].JacDetCellIntegration[iGaussPoint];
 
-                for(int iDof = 0; iDof < highOrderCellsSol[0][iCell].nDOFsSol; ++ iDof)
+                for (int iDof = 0; iDof < highOrderCellsSol[0][iCell].nDOFsSol; ++ iDof)
                 {
                     dofQTmp[iDof] += weigthMultJac * highOrderCellsSol[0][iCell].basisFuncCellIntegration[iGaussPoint][iDof];
                 }
@@ -1429,7 +1429,7 @@ void HighOrderGrid::InitDofOfCell(UnstructGrid * grid, vector < RDouble > & cons
     {
         for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
-            for(int iDof = 0;iDof < highOrderCellsSol[0][iCell].nDOFsSol; ++iDof)
+            for (int iDof = 0;iDof < highOrderCellsSol[0][iCell].nDOFsSol; ++iDof)
             {
                 highOrderCellsSol[0][iCell].res[ieqn][iDof] = 0.0;
             }
@@ -1441,7 +1441,7 @@ void HighOrderGrid::InitDofOfCell(UnstructGrid * grid, vector < RDouble > & cons
     {
         for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
-            for(int iGaussPoint = 0;iGaussPoint < highOrderCellsSol[0][iCell].integNumberOfGaussPoint; ++iGaussPoint)
+            for (int iGaussPoint = 0;iGaussPoint < highOrderCellsSol[0][iCell].integNumberOfGaussPoint; ++iGaussPoint)
             {
                 highOrderCellsSol[0][iCell].q[ieqn][iGaussPoint] = conserValue[ieqn];
             }
@@ -1533,7 +1533,7 @@ void HighOrderGrid::GetQDOFs(const UnstructGrid * grid, int neqn, RDouble *** q)
     {
         for (int iEqn = 0; iEqn < neqn; ++ iEqn)
         {
-            for(int iDof = 0;iDof < highOrderCellsSol[0][iCell].nDOFsSol; ++iDof)
+            for (int iDof = 0;iDof < highOrderCellsSol[0][iCell].nDOFsSol; ++iDof)
             {
                 q[iCell][iEqn][iDof] = highOrderCellsSol[0][iCell].dofQ[iEqn][iDof];
             }

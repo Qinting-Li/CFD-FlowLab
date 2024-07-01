@@ -230,7 +230,7 @@ void Pre_StructToUnstruct::ConstructBCType()
         int nBCRegionUnstruct = static_cast<int>(nBCRegion);
         unsGrid->CreateUnstructBCSet(nBCRegionUnstruct);
         UnstructBCSet *unstructBCSet = unsGrid->GetUnstructBCSet();
-        int* bcRegionIDofBCFace = new int[nBoundFace];
+        int *bcRegionIDofBCFace = new int[nBoundFace];
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {

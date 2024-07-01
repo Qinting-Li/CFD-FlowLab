@@ -32,6 +32,10 @@
 
 ​       网址：https://eigen.tuxfamily.org/
 
+- Tecio
+
+​       网址：https://tecplot.com/products/tecio-library/
+
 - FFTW
 
 ​       网址：http://fftw.org/

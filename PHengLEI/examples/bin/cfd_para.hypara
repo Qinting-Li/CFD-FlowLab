@@ -8,7 +8,7 @@
 //          Platform for Hybrid Engineering Simulation of Flows           +
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
-//                         PHengLEI 2312                                  +
+//                         PHengLEI 2406                                  +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ###########################################################################
 #                       Default parameters for Grid conversion            #
@@ -518,6 +518,9 @@ double AusmpwPlusLimiter = 1.0;
 //          9 -- GMRES.
 // iSimplifyViscousTerm: Simplify the computation of viscous term in the Block LU-SGS method. The default value assigns 1 that could speed up the computation.
 //                       Otherwise, the viscous Jacobian matrix Mv should be computed that will increase the memory and time in iteration of the BLUSGS method.
+// CFLMethod: The method to compute cfl number.
+//                 0 -- Linear change.
+//                 1 -- Exponential change.
 // CFLStart: Started cfl number.
 // CFLEnd: End cfl number.
 // CFLVaryStep: The number of step when cfl increase from CFLStart to CFLEnd.
@@ -678,6 +681,7 @@ int plotFieldType = 0;
 //                 1 -- Tecplot ASCII.
 //                 2 -- Ensight binary.
 //                 3 -- Ensight ASCII.
+//                 4 -- Paraview.
 int visualfileType = 1;
 
 // samplefileMode: The dump mode of sample file.
@@ -716,7 +720,7 @@ double upperPlotFieldBox[] = [1.0 1.0 1.0];
 //                   -- number density of electron(Ne, 37), dimensioanl density(rho, 38), dimensioanl pressure(p, 39), dimensioanl temperature(T, 40),
 //                   -- gradientUx(41), gradientUy(42), gradientVx(43), gradientVy(44), streamline_u(45), streamline_v(46), streamline_w(47),
 //                   -- transition intermittency(intermittency, 51), transition momentum thickness reynolds(MomentumThicknessReynolds, 52),
-//                   -- local CFL Number(localCFL, 57), minimal CFL Number(minCFL, 58),
+//                   -- local CFL Number(localCFL, 57), minimal CFL Number(minCFL, 58)(the two parameters are related to CFL self-adaptive, only support struct grid)
 //                   -- overlap iblank(iblank, 81),
 //                   -- specific heat ratio(gama, 56), Knudsen number(kn, 60), Damkohler number(Da, 61), vibrational nonequilibrium number(Vi, 62).
 // Important Warning: Array size of visualVariables MUST be equal to nVisualVariables!!!
@@ -733,8 +737,8 @@ double upperPlotFieldBox[] = [1.0 1.0 1.0];
 int nVisualVariables = 8;
 int visualVariables[] = [0, 1, 2, 3, 4, 5, 6, 15];
 
-int nVisualWallVariables = 9;
-int visualWallVariables[] = [0, 1, 2, 3, 4, 5, 9, 10, 11];
+int nVisualWallVariables = 6;
+int visualWallVariables[] = [0, 1, 2, 3, 4, 5];
 
 // dumpStandardModel: Dump many standard model data.
 //                    1 -- Turbulent flat plate.
@@ -1195,7 +1199,6 @@ double molecularWeightSpeciesB = 30.0;
 
 int nFraction = 0;
 int nContinueModel = 0;
-int nChemicalFlowStep = 0;
 int ifStartFromPerfectGasResults = 0;
 int isUseNoneqCond = 0;
 double frozenCondition = 0.01;
@@ -1408,6 +1411,8 @@ double rotateFrequency_0 = 0.0;
 //string uDFSixDofFileName_0 = "./Bin/UDFSixDof.Parameter";
 // dimensional physical time for additional force(s).
 double addedForceTime_0[] = 0.0;
+// dimensional massCenterPosition for additional force(s).
+double addedForcePosition_0[] = 0.0, 0.0, 0.0;
 // additional force(inertia system) fX fY fZ.  
 double addedForce_0[] = 0.0, 0.0, 0.0;
 // additional moment(inertia system) mX mY mZ.  

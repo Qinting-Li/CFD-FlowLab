@@ -162,7 +162,7 @@ namespace PHSPACE
         {
             GetIntegral2ndOrder(iVar, f, sum1, sum2);
         }
-        else if(integralOrder == 4)
+        else if (integralOrder == 4)
         {
             GetIntegral4thOrder(iVar, f, sum1, sum2);
         }
@@ -287,7 +287,7 @@ namespace PHSPACE
     {
         int totalCycle = nDataLine / nLineOneCycle;
         int startCycle = 0;
-        if(totalCycle > 2)
+        if (totalCycle > 2)
         {
             nCycle = totalCycle - 1;
             startCycle = 1;

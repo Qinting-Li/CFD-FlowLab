@@ -184,14 +184,14 @@ void Mesh_ConstructInterfaceLink::CollectUnsGridInterfaceInfo(Grid *grid, DataCo
     }
 
     PHWrite(cdata, nodeNumOfFaceLocal, nIFace);
-    PHWrite(cdata, face2NodeLocal    , faceNodeLocalSize);
-    delete [] nodeNumOfFaceLocal; nodeNumOfFaceLocal = nullptr;
-    delete [] face2NodeLocal; face2NodeLocal = nullptr;
+    PHWrite(cdata, face2NodeLocal, faceNodeLocalSize);
+    delete [] nodeNumOfFaceLocal;    nodeNumOfFaceLocal = nullptr;
+    delete [] face2NodeLocal;    face2NodeLocal = nullptr;
 }
 
 void Mesh_ConstructInterfaceLink::DecodeInterfaceInfo(ZoneInterface *zoneInterface, DataContainer *cdata)
 {
-    cdata->moveto_begin();
+    cdata->MoveToBegin();
 
     int zoneIndex = -1;
     PHRead(cdata, zoneIndex);
@@ -264,7 +264,7 @@ void Mesh_ConstructInterfaceLink::BuildZoneInterfacesInfo()
     for (int iZone = 0; iZone < nZonesGlobal; ++ iZone)
     {
         DataContainer *cdata = new DataContainer();
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
 
         int sendProc = zoneProc[iZone];
         int tag = iZone;
@@ -285,7 +285,7 @@ void Mesh_ConstructInterfaceLink::BuildZoneInterfacesInfo()
         }
 
         PHMPI::PH_Bcast(cdata, sendProc, tag);
-        cdata->moveto_begin();
+        cdata->MoveToBegin();
 
         int neighborZoneIndex = -1;
         PHRead(cdata, neighborZoneIndex);
@@ -295,7 +295,7 @@ void Mesh_ConstructInterfaceLink::BuildZoneInterfacesInfo()
 
         if (0 == nIFace)
         {
-            delete cdata;
+            delete cdata;    cdata = nullptr;
             continue;
         }
 
@@ -329,7 +329,7 @@ void Mesh_ConstructInterfaceLink::BuildZoneInterfacesInfo()
 
         if (!currentZoneIsNeighbor)
         {
-            delete cdata;
+            delete cdata;    cdata = nullptr;
             continue;
         }
 
@@ -337,7 +337,7 @@ void Mesh_ConstructInterfaceLink::BuildZoneInterfacesInfo()
         DecodeInterfaceInfo(zoneInterfacesTopology, cdata);
 
         zoneInterfacesTopologyList.push_back(zoneInterfacesTopology);
-        delete cdata;
+        delete cdata;    cdata = nullptr;
     }
 
 }

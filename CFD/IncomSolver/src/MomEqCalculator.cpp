@@ -56,7 +56,6 @@ namespace PHSPACE
         calculateLinearEquation(grid, solverIndex, q, diagMatrixCoeff, bCoeff, upperMatrixCoeff , lowerMatrixCoeff);
     }
 
-
     void MomEqCalculator::calcFaceFlux(Grid*  gridIn)
     {
         UnstructGrid* grid = UnstructGridCast(gridIn);
@@ -149,8 +148,7 @@ namespace PHSPACE
                     (bfU[re] * dxfR + bfV[re] * dyfR + bfW[re] * dzfR)- (bfU[le] * dxfL + bfV[le] * dyfL + bfW[le] * dzfL));
                 pdf = ((InverseAp[le] * faceWeightOfLeftCell[iFace] * (dpdx[le] - bfU[le]) + InverseAp[re] * (1.0 - faceWeightOfLeftCell[iFace]) * (dpdx[re] - bfU[re])) * dx +
                     (InverseAp[le] * faceWeightOfLeftCell[iFace] * (dpdy[le] - bfV[le]) + InverseAp[re] * (1.0 - faceWeightOfLeftCell[iFace]) * (dpdy[re] - bfV[re])) * dy +
-                    (InverseAp[le] * faceWeightOfLeftCell[iFace] * (dpdz[le] - bfW[le]) + InverseAp[re] * (1.0 - faceWeightOfLeftCell[iFace]) * (dpdz[re] - bfW[re]) * dz));
-
+                       (InverseAp[le] * faceWeightOfLeftCell[iFace] * (dpdz[le] - bfW[le]) + InverseAp[re] * (1.0 - faceWeightOfLeftCell[iFace]) * (dpdz[re] - bfW[re])) * dz);
             };
 
             pDiff *= a2/ad;
@@ -158,7 +156,6 @@ namespace PHSPACE
 
             FaceFlux[iFace] = rhoFace[iFace] * (ubar_a - pDiff + pdf + FaceFluxRelaxCoeff * dun[iFace]);
         }
-
 
         for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
         {
@@ -1169,7 +1166,6 @@ namespace PHSPACE
         updateBCValue(grid);
     }
 
-
     void MomEqCalculator::UpdateUnsteadyFlux(Grid*  gridIn)
     {
         UnstructGrid *grid = UnstructGridCast(gridIn);
@@ -1294,7 +1290,6 @@ namespace PHSPACE
             RDouble* Rg = reinterpret_cast<RDouble*>(grid->GetDataPtr("Rg"));
             GAS_SPACE::gas->UpdateRg(grid, Rg);
         }
-
 
         RDouble* rho  = reinterpret_cast<RDouble*>(grid->GetDataPtr("rho"));
         RDouble* mu   = reinterpret_cast<RDouble*>(grid->GetDataPtr("mu"));
@@ -1558,7 +1553,6 @@ namespace PHSPACE
                 bcData->GetData("initV", &refflowV, PHDOUBLE, 1);
                 bcData->GetData("initW", &refflowW, PHDOUBLE, 1);
 
-
                 RDouble refflowT;
                 RDouble refflowP;
                 bcData->GetData("initT", &refflowT, PHDOUBLE, 1);
@@ -1582,7 +1576,6 @@ namespace PHSPACE
                         p[re] = p[le];
 
                         FaceFlux[iFacelocal] = rho[re]* (u[re] * xfn[iFacelocal] + v[re] * yfn[iFacelocal] + w[re] * zfn[iFacelocal]);
-
                     }
                     else
                     {
@@ -1715,8 +1708,6 @@ namespace PHSPACE
             {
             }
 
-
-
             if (bcType == PHENGLEI::SOLID_SURFACE)
 
             {
@@ -1781,7 +1772,6 @@ namespace PHSPACE
                 }
             }
             else if (bcType == PHENGLEI::SYMMETRY)
-
             {
                 int* leftCellOfFace = grid->GetLeftCellOfFace();
                 int* rightCellOfFace = grid->GetRightCellOfFace();
@@ -1806,7 +1796,6 @@ namespace PHSPACE
                 }
             }
             else if (bcType == PHENGLEI::FARFIELD)
-
             {
                 RDouble refMachNumber = 0.0;
                 int* leftCellOfFace = grid->GetLeftCellOfFace();
@@ -2063,10 +2052,8 @@ namespace PHSPACE
         RDouble *lowerMatrixCoeff = NewPointer<RDouble>(nTotalFace);
         grid->UpdateDataPtr("lowerMatrixCoeff", lowerMatrixCoeff);
 
-
         RDouble *FaceFlux = NewPointer<RDouble>(nTotalFace);
         grid->UpdateDataPtr("FaceFlux", FaceFlux);
-
 
         int bodyForceFlag = GlobalDataBase::GetIntParaFromDB("bodyForceFlag");
         if (bodyForceFlag == 1)
@@ -2100,7 +2087,6 @@ namespace PHSPACE
 
         RDouble *mu = NewPointer<RDouble>(nTotal);
         grid->UpdateDataPtr("mu", mu);
-
 
         RDouble *hu = NewPointer<RDouble>(nTotal);
         grid->UpdateDataPtr("hu", hu);
@@ -2139,7 +2125,6 @@ namespace PHSPACE
         grid->UpdateDataPtr("dpcdx", dpcdx);
         grid->UpdateDataPtr("dpcdy", dpcdy);
         grid->UpdateDataPtr("dpcdz", dpcdz);
-
 
         RDouble* faceWeightOfLeftCell = NewPointer<RDouble>(nTotalFace);
         grid->UpdateDataPtr("faceWeightOfLeftCell", faceWeightOfLeftCell);
@@ -2183,7 +2168,6 @@ namespace PHSPACE
         int nTotalCell = grid->GetNTotalCell();
         int nBoundFace = grid->GetNBoundFace();
         int nTotal = nTotalCell + nBoundFace;
-
 
         RDouble* u = reinterpret_cast<RDouble *>(grid->GetDataPtr("U"));
         RDouble initU = GlobalDataBase::GetDoubleParaFromDB("initU");
@@ -2284,7 +2268,6 @@ namespace PHSPACE
         PHSPACE::SetField(dpcdy, 0.0, nTotal);
         PHSPACE::SetField(dpcdz, 0.0, nTotal);
 
-
         string flowSolverName = GlobalDataBase::GetStrParaFromDB("flowSolverName");
         if (flowSolverName == "CompressibleSIMPLE")
         {
@@ -2359,8 +2342,6 @@ namespace PHSPACE
         string flowSolverName = GlobalDataBase::GetStrParaFromDB("flowSolverName");
         if (flowSolverName == "CompressibleSIMPLE")
         {
-            PHString1D phiNameList;
-
             phiNameList.push_back("rho");
         }
 

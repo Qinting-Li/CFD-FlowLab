@@ -33,19 +33,19 @@ namespace PHSPACE
         ~PPEqCalculator();
 
     public:
-        void correctPressureAndVelocity(Grid*  grid);
-        void correctBoundaryVelocity(Grid*  grid);
-        void UpdateBCValue(Grid*  grid);
+        void correctPressureAndVelocity(Grid *grid);
+        void correctBoundaryVelocity(Grid *grid);
+        void UpdateBCValue(Grid *grid);
         
-        void solvePPEquation(Grid*  grid);
+        void solvePPEquation(Grid *grid);
         void Post() {};
         
-        void treatBC(Grid*  grid);
-        void constructMatrixACoeff(Grid*  grid);
-        void constructBCoeff(Grid*  grid);
-        void calcTransMatrixTerm(Grid*  grid);
-        void TransMatrixTerm_1st(Grid*  grid);
-        void TransMatrixTerm_2nd(Grid*  grid);
+        void treatBC(Grid *grid);
+        void constructMatrixACoeff(Grid *grid);
+        void constructBCoeff(Grid *grid);
+        void calcTransMatrixTerm(Grid *grid);
+        void TransMatrixTerm_1st(Grid *grid);
+        void TransMatrixTerm_2nd(Grid *grid);
 
     };
 }

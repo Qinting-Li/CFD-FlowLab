@@ -69,7 +69,7 @@ namespace PHSPACE
 
         Range(int first, int last, int stride = 1)
             : first_(first), last_(last), stride_(stride)
-        { 
+        {
         }
 
         //! Return the start index.

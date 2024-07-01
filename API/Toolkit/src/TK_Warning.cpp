@@ -25,7 +25,7 @@ LIB_EXPORT void TK_Warning::FunctionDeprecation(const string &oldFunctionName, c
 LIB_EXPORT void TK_Warning::Warning(const string &information)
 {
     ostringstream oss;
-    oss << "Warning: " << information << " !!!"<< endl;
+    oss << "Warning: " << information << " !!!" << endl;
     PrintToWindow(oss.str());
     WriteWarningLogFile(oss.str());
 }

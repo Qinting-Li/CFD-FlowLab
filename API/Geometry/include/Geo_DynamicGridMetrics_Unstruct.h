@@ -34,6 +34,9 @@ private:
     //! face velocity.
     RDouble *xfv, *yfv, *zfv;
 
+    //! cell velocity.
+    RDouble *xcv, *ycv, *zcv;
+
 public:
     LIB_EXPORT Geo_DynamicGridMetrics_Unstruct();
     LIB_EXPORT ~Geo_DynamicGridMetrics_Unstruct();
@@ -48,6 +51,15 @@ public:
     //! Assign the given pointer to the Z face velocity.
     void SetFaceVelocityZ(RDouble *zfv);
     
+    //! Assign the given pointer to the X cell velocity.
+    void SetCellVelocityX(RDouble *xcv);
+
+    //! Assign the given pointer to the Y cell velocity.
+    void SetCellVelocityY(RDouble *ycv);
+
+    //! Assign the given pointer to the Z cell velocity.
+    void SetCellVelocityZ(RDouble *zcv);
+
     //! Assign the given pointer to the face normal velocity.
     void SetFaceNormalVelocity(RDouble *vgn);
 
@@ -62,6 +74,15 @@ public:
 
     //! Return the Z face velocity pointer.
     RDouble * GetFaceVelocityZ() const;
+
+    //! Return the X cell velocity pointer.
+    RDouble * GetCellVelocityX() const;
+
+    //! Return the Y cell velocity pointer.
+    RDouble * GetCellVelocityY() const;
+
+    //! Return the Z cell velocity pointer.
+    RDouble * GetCellVelocityZ() const;
 
     //! Return the face normal velocity pointer.
     RDouble * GetFaceNormalVelocity() const;

@@ -33,24 +33,24 @@ class hypreCalculator : public LinearEquationSystemCalculator
 
 #ifdef USE_HypreLib
 private:
-    Grid* grid;
+    Grid *grid;
     HYPRE_IJMatrix A_hypre;
     HYPRE_ParCSRMatrix parcsr_A_hypre;
     HYPRE_IJVector b_hypre;
     HYPRE_ParVector par_b_hypre;
     HYPRE_IJVector x_hypre;
     HYPRE_ParVector par_x_hypre;
-    HYPRE_Solver** solverList;
-    HYPRE_Solver** precondList;
-    vector<int>* ColVectors;
-    vector<double>* ValuesVector;
+    HYPRE_Solver **solverList;
+    HYPRE_Solver **precondList;
+    vector<int> *ColVectors;
+    vector<double> *ValuesVector;
 
     int ilower;
     int iupper;
     int localSize;
     int *rows;
-    RDouble* colValueOfOneRow;
-    int* colNumberOfOneRow;
+    RDouble *colValueOfOneRow;
+    int *colNumberOfOneRow;
 #endif
 public:
     // constructor & destructor
@@ -59,16 +59,15 @@ public:
     virtual ~hypreCalculator();
 
 public:
-    void mathLibSolveInit(Grid* gridIn);
-    void mathLibSolve(Grid* gridIn, int iEquation, RDouble * x, RDouble * diagCoef, RDouble *b, RDouble * upACOFFace, RDouble * downACOFFace);
+    void mathLibSolveInit(Grid *gridIn);
+    void mathLibSolve(Grid *gridIn, int iEquation, RDouble *x, RDouble *diagCoef, RDouble *b, RDouble *upACOFFace, RDouble *downACOFFace);
     void mathLibSolveFinalize();
 
 #ifdef USE_HypreLib
-    void SetAMGDDPrecondParameters(HYPRE_Solver& amg_precond);
-    void destoryTempDataInAMGDD(HYPRE_Solver& amgddsolver);
+    void SetAMGDDPrecondParameters(HYPRE_Solver &amg_precond);
+    void destoryTempDataInAMGDD(HYPRE_Solver &amgddsolver);
 #endif
 };
-
 
 }
 

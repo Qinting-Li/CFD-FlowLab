@@ -218,21 +218,21 @@ LIB_EXPORT void DumpOldGrid(const string &gridFileName, Grid **grids, int nBlock
         }
     }
 
-    file.write(reinterpret_cast<char*>(&nBlocks), sizeof(int));
+    file.write(reinterpret_cast<char *>(&nBlocks), sizeof(int));
 
     int m_block_proc = PHMPI::GetZoneDistributionMethod();
     if (m_block_proc == DETERMIN_BY_PARTITION && IsConvertGridToMixGrid())
     {
         int *block_proc_dump = GetZoneProcessorIDDump();
-        file.write(reinterpret_cast<char*>(block_proc_dump), nZones*sizeof(int));
+        file.write(reinterpret_cast<char *>(block_proc_dump), nZones*sizeof(int));
     }
     else
     {
-        file.write(reinterpret_cast<char*>(block_proc), nZones*sizeof(int));
+        file.write(reinterpret_cast<char *>(block_proc), nZones*sizeof(int));
     }
 
-    file.write(reinterpret_cast<char*>(block_idx), nZones*sizeof(int));
-    file.write(reinterpret_cast<char*>(block_type), nZones*sizeof(int));
+    file.write(reinterpret_cast<char *>(block_idx), nZones*sizeof(int));
+    file.write(reinterpret_cast<char *>(block_type), nZones*sizeof(int));
 
     for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
@@ -371,7 +371,7 @@ void ConstructGlobalInterfaceLink(Grid **grids, int nBlocks)
             grids[nb]->ChangeBCType(PHENGLEI::NO_BOUNDARY_CONDITION, PHENGLEI::INTERFACE);
 
             //! Consider the periodic boundary as the interface.
-            if (PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType") != 0)
+            if (PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType") != NO_PERIODICITY)
             {
                 grids[nb]->ChangeBCType(PHENGLEI::USER_DEFINED, PHENGLEI::INTERFACE);
             }
@@ -424,7 +424,7 @@ void DumpCharacteristicBoundary(const string &gridFileName, Grid **grids, int nB
     for (int iZone =  0; iZone < nBlocks; ++ iZone)
     {
         DataContainer *data = new DataContainer();
-        data->moveto_begin();
+        data->MoveToBegin();
 
         Grid *grid = grids[iZone];
         grid->AllocateOversetGrid();
@@ -682,7 +682,7 @@ void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data)
         PHWrite(data, &bctype, 1);
 
         string bcName = bcregion->GetBCName();
-        data->write_string(bcName);
+        data->WriteString(bcName);
 
         int *s_lr3d = bcregion->GetFaceDirectionIndex();
         int nDim = GetDim();
@@ -954,7 +954,7 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
             PHWrite(data, &BCtype, 1);
 
             string bcName = (*iter).second;
-            data->write_string(bcName);
+            data->WriteString(bcName);
 
             face2nodelist.resize(0);
             linkmap.resize(0);
@@ -1174,7 +1174,7 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
             PHWrite(data, &BCtype, 1);
 
             string bcName = (*iter).second;
-            data->write_string(bcName);
+            data->WriteString(bcName);
 
             face2nodelist.resize(0);
             linkmap.resize(0);
