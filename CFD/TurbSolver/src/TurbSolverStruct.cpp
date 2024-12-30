@@ -4746,14 +4746,12 @@ void TurbSolverStr::VisWallWithWallFunctionStandard(Grid *gridIn, StructBC *stru
                 structBC->GetGhostCellIndex(i, j, k, it1, jt1, kt1, 1);
                 structBC->GetGhostCellIndex(i, j, k, it2, jt2, kt2, 2);
 
-                RDouble rhoInside = qLaminar(is1, js1, ks1, IDX::IR);
-                RDouble rhoGhost = qLaminar(it1, jt1, kt1, IDX::IR);
-                RDouble densityWall = half * (rhoInside + rhoGhost);
+                RDouble densityWall = qLaminar(is1, js1, ks1, IDX::IR);
                 RDouble up = qLaminar(is1, js1, ks1, IDX::IU);
                 RDouble vp = qLaminar(is1, js1, ks1, IDX::IV);
                 RDouble wp = qLaminar(is1, js1, ks1, IDX::IW);
-                RDouble laminarViscosity = half * (viscousLaminars(is1, js1, ks1) + viscousLaminars(it1, jt1, kt1));
-                RDouble turbulentViscosity = half * (viscousTurbulence(is1, js1, ks1) + viscousTurbulence(it1, jt1, kt1));
+                RDouble laminarViscosity = viscousLaminars(is1, js1, ks1);
+                RDouble turbulentViscosity = viscousTurbulence(is1, js1, ks1);
                 RDouble alphaLaminar = laminarViscosity / prandtlLaminar * specificHeatAtConstantPressure;
                 RDouble alphaTurbulent = turbulentViscosity / prandtlTurbulence * specificHeatAtConstantPressure;
 
@@ -4800,6 +4798,7 @@ void TurbSolverStr::VisWallWithWallFunctionStandard(Grid *gridIn, StructBC *stru
                 }
 
                 viscousTurbulenceWall = laminarViscosity * (taow / (uvw + small) / laminarViscosity * wallDistance * refReNumber - 1.0);
+                viscousTurbulenceWall = MAX(viscousTurbulenceWall, 0.0);
                 viscousTurbulence(it1, jt1, kt1) = 2.0 * viscousTurbulenceWall - viscousTurbulence(is1, js1, ks1);
                 viscousTurbulence(it2, jt2, kt2) = viscousTurbulence(it1, jt1, kt1);
 
@@ -4833,6 +4832,7 @@ void TurbSolverStr::VisWallWithWallFunctionStandard(Grid *gridIn, StructBC *stru
                     }
                     else
                     {
+                        omgi = MAX(omgi, 0.0);
                         qTurbulence(it1, jt1, kt1, IDX::IKW) = 20.0 * omgi - qTurbulence(is1, js1, ks1, IDX::IKW);
                         qTurbulence(it1, jt1, kt1, IDX::IKE) = -qTurbulence(is1, js1, ks1, IDX::IKE);
 
@@ -5310,7 +5310,7 @@ void TurbSolverStr::WallFunctionPab3D(Grid *gridIn, StructBC *structBC, int is, 
     {
         xnplus = paba11[0] + paba11[1] * rc + paba11[2] * rc * rc + paba11[3] * rc * rc * rc + paba11[4] * rc * rc * rc * rc;
     }
-    else if (rc > 4000.0)
+    else
     {
         xnplus = paba12[0] + paba12[1] * rc + paba12[2] * rc * rc;
     }

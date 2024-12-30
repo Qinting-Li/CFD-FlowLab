@@ -114,6 +114,7 @@ private:
     void ChemicalSource(Grid *gridIn);  //! Source.
     
     void gravitySource(Grid* gridIn) {};  //! Source.
+    void PorousMediumSource(Grid *gridIn) {};//! Source
 
     void RotatingSource(Grid* gridIn) {};  //! Source.
 

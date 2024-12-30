@@ -23,6 +23,15 @@
 #include "TECXXX.h"
 #endif
 
+#ifdef USE_CUDA
+#include "TemporaryOperations.h"
+#include "BasicDeviceVariables.h"
+#include "GPUMPICommunication.h"
+using namespace GPUMemory;
+using namespace GPUControlVariables;
+using namespace TemporaryOperations;
+#endif
+
 #include "Gas.h"
 
 using namespace std;
@@ -1199,6 +1208,14 @@ void CFDSolver::RungeKutta(Grid *grid, FieldProxy *rhsProxy)
     //! The right term of RK, named as RK-residual, which is lamda*dt*res/volume.
     FieldProxy *resRK = CreateFieldProxy(grid);
 
+#ifdef USE_CUDA
+    using namespace GPUMemory;
+    using namespace GPUControlVariables;
+    using namespace TemporaryOperations;
+    SetGPUNSFillField(d_FillField_ns, "q_proxyToq_proxy_temp");
+    SetGPUTurbFillField(d_FillField_turb, "q_proxyToq_proxy_temp");
+#endif
+
     LoadQ(grid, qProxy);
 
     //! Back up the Q0.
@@ -1210,10 +1227,23 @@ void CFDSolver::RungeKutta(Grid *grid, FieldProxy *rhsProxy)
 
         UpdateResiduals(grid);
 
+    #ifdef USE_CUDA
+        using namespace GPUMemory;
+        using namespace GPUControlVariables;
+        using namespace TemporaryOperations;
+        SetGPUNSFillField(d_FillField_ns, "empty");
+        SetGPUTurbFillField(d_FillField_turb, "empty");
+    #endif 
+
         FillField(grid, resRK, resProxy);
 
         //! Compute the DQ: (Dt * Res / vol).
         RungeKuttaResidual(grid, resRK, lamda[iStage]);
+
+    #ifdef USE_CUDA
+        SetGPUNSFillField(d_FillField_ns, "q_proxy_tempToq_proxy");
+        SetGPUTurbFillField(d_FillField_turb, "q_proxy_tempToq_proxy");
+    #endif
 
         //! Give the back-up Q0 back to Q, in order to compute new Q.
         FillField(grid, qProxy, q0ProxyTemp);
@@ -1296,20 +1326,20 @@ void CFDSolver::Action(ActionKey *actkey)
 {
     switch (actkey->action)
     {
-    case UPDATE_INTERFACE_DATA:
-        GetInterfaceData(actkey);
-        break;
-    case UPDATE_INTERPOINT_DATA:
-        GetInterpointData(actkey);
-        break;
-    case UPDATE_OVERSET_DATA:
-        GetOversetData(actkey);
-        break;
-    case VISUALIZATION_AVERAGE_FLOW:
-        VisualizationAverageFlow(actkey);
-        break;
-    default:
-        break;
+        case UPDATE_INTERFACE_DATA:
+            GetInterfaceData(actkey);
+            break;
+        case UPDATE_INTERPOINT_DATA:
+            GetInterpointData(actkey);
+            break;
+        case UPDATE_OVERSET_DATA:
+            GetOversetData(actkey);
+            break;
+        case VISUALIZATION_AVERAGE_FLOW:
+            VisualizationAverageFlow(actkey);
+            break;
+        default:
+            break;
     } 
 }
 
@@ -1317,17 +1347,17 @@ void CFDSolver::TranslateAction(ActionKey *actkey)
 {
     switch (actkey->action)
     {
-    case UPDATE_INTERFACE_DATA:
-        TranslateInterfaceData(actkey);
-        break;
-    case UPDATE_OVERSET_DATA:
-        TranslateOversetData(actkey);
-        break;
-    case UPDATE_INTERPOINT_DATA:
-        TranslateInterpointData(actkey);
-        break;
-    default:
-        break;
+        case UPDATE_INTERFACE_DATA:
+            TranslateInterfaceData(actkey);
+            break;
+        case UPDATE_OVERSET_DATA:
+            TranslateOversetData(actkey);
+            break;
+        case UPDATE_INTERPOINT_DATA:
+            TranslateInterpointData(actkey);
+            break;
+        default:
+            break;
     }
 }
 
@@ -1666,7 +1696,7 @@ void CFDSolver::GetOversetInterfaceData(OversetInformationProxy *oversetInformat
             }
         }
         cdata->Write(qtmp, nlen * sizeof(RDouble));
-        delete [] qtmp;     qtmp = nullptr;
+        delete [] qtmp;    qtmp = nullptr;
     }
 }
 
@@ -1751,69 +1781,69 @@ void CFDSolver::ComputeDualTimeCoefficient(int methodOfDualTime, RDouble *dualTi
 
     switch (methodOfDualTime)
     {
-    case EULEREXPLICIT:
-        theta =  0.0;
-        xi    =  0.0;
-        phi   =  0.0;
-        break;
-    case BACKWARDEULER:
-        theta =  1.0;
-        xi    =  0.0;
-        phi   =  0.0;
-        break;
-    case ONESTEPTRAPEZOIDAL:
-        theta =  0.5;
-        xi    =  0.0;
-        phi   =  0.0;
-        break;
-    case BACKWARDDIFFERENTIATION:
-        theta =  1.0;
-        xi    =  0.5;
-        phi   =  0.0;
-        break;
-    case ADAMSTYPE:
-        theta =  0.75;
-        xi    =  0.0;
-        phi   = -0.25;
-        break;
-    case LEESTYPE:
-        theta =  1.0/3.0;
-        xi    = -1.0/2.0;
-        phi   = -1.0/3.0;
-        break;
-    case TWOSTEPTRAPEZOIDAL:
-        theta =  1.0/2.0;
-        xi    = -1.0/2.0;
-        phi   = -1.0/2.0;
-        break;
-    case LEAPFROG:
-        theta =  0.0;
-        xi    = -0.5;
-        phi   =  0.0;
-        break;
-    case ADAMSBASHFORTH:
-        theta =  0.0;
-        xi    =  0.0;
-        phi   =  0.5;
-        break;
-    case THIRDORDERIMPLICIT:
-        theta =  1.0/3.0;
-        xi    = -1.0/6.0;
-        phi   =  0.0;
-        break;
-    case ADAMSMOULTON:
-        theta =  5.0/12.0;
-        xi    =  0.0;
-        phi   =  1.0/12.0;
-        break;
-    case MILNE:
-        theta =  1.0/6.0;
-        xi    = -1.0/2.0;
-        phi   = -1.0/6.0;
-        break;
-    default:
-        TK_Exit::UnexpectedVarValue("methodOfDualTime", methodOfDualTime);
-        break;
+        case EULEREXPLICIT:
+            theta =  0.0;
+            xi    =  0.0;
+            phi   =  0.0;
+            break;
+        case BACKWARDEULER:
+            theta =  1.0;
+            xi    =  0.0;
+            phi   =  0.0;
+            break;
+        case ONESTEPTRAPEZOIDAL:
+            theta =  0.5;
+            xi    =  0.0;
+            phi   =  0.0;
+            break;
+        case BACKWARDDIFFERENTIATION:
+            theta =  1.0;
+            xi    =  0.5;
+            phi   =  0.0;
+            break;
+        case ADAMSTYPE:
+            theta =  0.75;
+            xi    =  0.0;
+            phi   = -0.25;
+            break;
+        case LEESTYPE:
+            theta =  1.0/3.0;
+            xi    = -1.0/2.0;
+            phi   = -1.0/3.0;
+            break;
+        case TWOSTEPTRAPEZOIDAL:
+            theta =  1.0/2.0;
+            xi    = -1.0/2.0;
+            phi   = -1.0/2.0;
+            break;
+        case LEAPFROG:
+            theta =  0.0;
+            xi    = -0.5;
+            phi   =  0.0;
+            break;
+        case ADAMSBASHFORTH:
+            theta =  0.0;
+            xi    =  0.0;
+            phi   =  0.5;
+            break;
+        case THIRDORDERIMPLICIT:
+            theta =  1.0/3.0;
+            xi    = -1.0/6.0;
+            phi   =  0.0;
+            break;
+        case ADAMSMOULTON:
+            theta =  5.0/12.0;
+            xi    =  0.0;
+            phi   =  1.0/12.0;
+            break;
+        case MILNE:
+            theta =  1.0/6.0;
+            xi    = -1.0/2.0;
+            phi   = -1.0/6.0;
+            break;
+        default:
+            TK_Exit::UnexpectedVarValue("methodOfDualTime", methodOfDualTime);
+            break;
     }
 
     RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");

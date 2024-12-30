@@ -180,7 +180,8 @@ public:
     void ViscousFlux   (Grid *gridIn);
     void ChemicalSource(Grid *gridIn);
     void gravitySource(Grid *gridIn);
-    void RotatingSource(Grid *gridIn);
+    void PorousMediumSource(Grid *gridIn);
+    void RotatingSource(Grid* gridIn);
     void DualTimeSource(Grid *gridIn);
     void StoreHistoricalResidual(Grid *gridIn);
     void UpdateUnsteadyFlow(Grid *gridIn);

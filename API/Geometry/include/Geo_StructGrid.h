@@ -555,6 +555,8 @@ public:
     void CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, const int &neighborZoneIndex, const int &neqn);
     void DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, const int &neighborZoneIndex, const int &neqn);
 
+    void ComputeBCOriginal();
+
 private:
     void ReadXYZ(fstream &file, RDouble3D &coor, int ist, int ied, int jst, int jed, int kst, int ked);
     void ReadXYZASCII(fstream &file, RDouble3D &coor, int ist, int ied, int jst, int jed, int kst, int ked);

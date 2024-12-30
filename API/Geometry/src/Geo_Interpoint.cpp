@@ -10,8 +10,8 @@ namespace PHSPACE
 {
 InterpointPatch::InterpointPatch()
 {
-    pointIndexForReceive = NULL;
-    pointIndexForSend = NULL;
+    pointIndexForReceive = nullptr;
+    pointIndexForSend = nullptr;
     dataStorageSend = new Data_ParamFieldSuite();
     dataStorageReceive = new Data_ParamFieldSuite();
     zoneID = 0;
@@ -47,11 +47,11 @@ InterpointPatch::~InterpointPatch()
     delete dataStorageReceive;
     if (pointIndexForReceive)
     {
-        delete [] pointIndexForReceive;
+        delete [] pointIndexForReceive;    pointIndexForReceive = nullptr;
     }
     if (pointIndexForSend)
     {
-        delete [] pointIndexForSend;
+        delete [] pointIndexForSend;    pointIndexForReceive = nullptr;
     }
 }
 
@@ -70,19 +70,19 @@ InterpointInformation::InterpointInformation()
 {
     numberOfInterpoints = 0;
     numberOfNeighbor = 0;
-    cellNumberOfInterPoint = NULL;
-    totalZonesOfInterPoint = NULL;
-    labelOfInterPoint = NULL;
-    parent = NULL;
-    interPoint2ZoneID = NULL;
-    interPoint2InterPointID = NULL;
-    interPoint2GlobalPoint = NULL;
+    cellNumberOfInterPoint = nullptr;
+    totalZonesOfInterPoint = nullptr;
+    labelOfInterPoint = nullptr;
+    parent = nullptr;
+    interPoint2ZoneID = nullptr;
+    interPoint2InterPointID = nullptr;
+    interPoint2GlobalPoint = nullptr;
 
     dataForSend = new Data_ParamFieldSuite[GetNumberOfGhostCellLayers()];
     dataForReceive = new Data_ParamFieldSuite[GetNumberOfGhostCellLayers()];
 
-    interPointPatch = NULL;
-    isNeighborInterpointFound = NULL;
+    interPointPatch = nullptr;
+    isNeighborInterpointFound = nullptr;
 }
 
 InterpointInformation::InterpointInformation(const InterpointInformation &interpointInformationIn)
@@ -165,14 +165,14 @@ InterpointInformation::InterpointInformation(int numberOfInterpoints, Grid *pare
 
 InterpointInformation::~InterpointInformation()
 {
-    delete [] interPoint2ZoneID;
-    delete [] interPoint2InterPointID;
-    delete [] interPoint2GlobalPoint;
-    delete [] cellNumberOfInterPoint;
-    delete [] totalZonesOfInterPoint;
-    delete [] labelOfInterPoint;
-    delete [] dataForSend;
-    delete [] dataForReceive;
+    delete [] interPoint2ZoneID;    interPoint2ZoneID = nullptr;
+    delete [] interPoint2InterPointID;    interPoint2InterPointID = nullptr;
+    delete [] interPoint2GlobalPoint;    interPoint2GlobalPoint = nullptr;
+    delete [] cellNumberOfInterPoint;    cellNumberOfInterPoint = nullptr;
+    delete [] totalZonesOfInterPoint;    totalZonesOfInterPoint = nullptr;
+    delete [] labelOfInterPoint;    labelOfInterPoint = nullptr;
+    delete [] dataForSend;    dataForSend = nullptr;
+    delete [] dataForReceive;    dataForReceive = nullptr;
 
     if (interPointPatch)
     {
@@ -180,10 +180,10 @@ InterpointInformation::~InterpointInformation()
         {
             delete interPointPatch[iNeighbor];
         }
-        delete [] interPointPatch;
+        delete [] interPointPatch;    interPointPatch = nullptr;
     }
 
-    delete [] isNeighborInterpointFound;
+    delete [] isNeighborInterpointFound;    isNeighborInterpointFound = nullptr;
 }
 
 void InterpointInformation::AllocateNeighborInfo()
@@ -248,7 +248,7 @@ void InterpointInformation::FindNeighbors()
         }
     }
 
-    delete [] zoneFlag;
+    delete [] zoneFlag;    zoneFlag = nullptr;
 }
 
 void InterpointInformation::ComputePointIndexForReceive(int iNeighbor)
@@ -369,12 +369,12 @@ void InterpointInformation::ReSize(int numberOfNewInterpoints)
         return;
     }
 
-    delete [] interPoint2ZoneID;
-    delete [] interPoint2InterPointID;
-    delete [] interPoint2GlobalPoint;
-    delete [] cellNumberOfInterPoint;
-    delete [] totalZonesOfInterPoint;
-    delete [] labelOfInterPoint;
+    delete [] interPoint2ZoneID;    interPoint2ZoneID = nullptr;
+    delete [] interPoint2InterPointID;    interPoint2InterPointID = nullptr;
+    delete [] interPoint2GlobalPoint;    interPoint2GlobalPoint = nullptr;
+    delete [] cellNumberOfInterPoint;    cellNumberOfInterPoint = nullptr;
+    delete [] totalZonesOfInterPoint;    totalZonesOfInterPoint = nullptr;
+    delete [] labelOfInterPoint;    labelOfInterPoint = nullptr;
 
     this->numberOfInterpoints = numberOfNewInterpoints;
 
@@ -516,6 +516,7 @@ InterpointDataProxy::InterpointDataProxy()
 
 InterpointDataProxy::~InterpointDataProxy()
 {
+
 }
 
 vector<RDouble **> &InterpointDataProxy::GetVectorData()

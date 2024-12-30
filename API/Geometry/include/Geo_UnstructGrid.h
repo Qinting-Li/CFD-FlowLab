@@ -443,6 +443,8 @@ public:
     //! Return the order of the left cell on the neighbor cell list.
     int * Getfc2cR() const;
 
+    void ConstructBCRegion();
+
     LIB_EXPORT void InitGrid(GridID *index, int level, int dim, int type);
 
     //! Get the Number of faces per cell.

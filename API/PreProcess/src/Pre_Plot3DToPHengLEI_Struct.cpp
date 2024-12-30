@@ -21,9 +21,9 @@ LIB_EXPORT Pre_Plot3DToPHengLEI_Struct::~Pre_Plot3DToPHengLEI_Struct()
 void Pre_Plot3DToPHengLEI_Struct::ReadGrid()
 {
     int fileFormat = GlobalDataBase::GetIntParaFromDB("fileformat");
-    //fileformat : Grid file format.
-    //             1 --- ASCII
-    //             0 --- BINARY
+    //! fileformat : Grid file format.
+    //!              1 --- ASCII
+    //!              0 --- BINARY
     fileFormat = CheckPlot3DFileIfASCII();
     GlobalDataBase::UpdateData("fileformat", &fileFormat, PHINT, 1);
 
@@ -318,12 +318,12 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGridgenBC()
     int *blockProcessorINP = GetZoneProcessorID_INP();
 
     string boundaryName[100] = {"NO_BOUNDARY_CONDITION", "EXTRAPOLATION", "SOLID_SURFACE", "SYMMETRY", 
-                            "FARFIELD", "INFLOW", "OUTFLOW", "POLE", "Wall_8", "Wall_9", "Wall_10", "Wall_11", 
-                            "Wall_12", "Wall_13", "Wall_14", "Wall_15", "Wall_16", "Wall_17", "Wall_18", "Wall_19",
-                            "Wall_20", "Wall_21", "Wall_22", "Wall_23", "Wall_24", "Wall_25", "Wall_26", "Wall_27", 
-                            "Wall_28", "Wall_29", "Wall_30", "Wall_31", "Wall_32", "Wall_33", "Wall_34", "Wall_35",
-                            "Wall_36", "Wall_37", "Wall_38", "Wall_39", "Wall_40", "Wall_41", "Wall_42", "Wall_43",
-                            "Wall_44", "Wall_45", "Wall_46", "Wall_47", "Wall_48", "Wall_49", "Wall_50"};
+                                "FARFIELD", "INFLOW", "OUTFLOW", "POLE", "Wall_8", "Wall_9", "Wall_10", "Wall_11", 
+                                "Wall_12", "Wall_13", "Wall_14", "Wall_15", "Wall_16", "Wall_17", "Wall_18", "Wall_19",
+                                "Wall_20", "Wall_21", "Wall_22", "Wall_23", "Wall_24", "Wall_25", "Wall_26", "Wall_27", 
+                                "Wall_28", "Wall_29", "Wall_30", "Wall_31", "Wall_32", "Wall_33", "Wall_34", "Wall_35",
+                                "Wall_36", "Wall_37", "Wall_38", "Wall_39", "Wall_40", "Wall_41", "Wall_42", "Wall_43",
+                                "Wall_44", "Wall_45", "Wall_46", "Wall_47", "Wall_48", "Wall_49", "Wall_50"};
     boundaryName[52] = "PRESSURE_INLET";
     boundaryName[62] = "PRESSURE_OUTLET";
     boundaryName[71] = "POLE1";
@@ -476,7 +476,7 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGridgenBC()
 
     if (!blockProcessFlag)
     {
-        delete [] blockProcessorINP;
+        delete [] blockProcessorINP;    blockProcessorINP = nullptr;
         SetZoneProcessID_INP(0);
     }
 

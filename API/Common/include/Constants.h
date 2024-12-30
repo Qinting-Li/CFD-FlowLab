@@ -119,6 +119,7 @@ const int TEMPERATURE_DENSITY   = 4;
 const int TEMPERATURE_PRESSURE  = 5;
 const int MACH_TEMP_PRE         = 6;
 const int WEATHERCONDITION      = 7;
+const int WINDSPEEDPROFILE      = 8;
 const int PRIMITIVE_VARIABLES   = 9;
 const int TRAJECTORY            = 10;
 
@@ -460,5 +461,9 @@ const int FEPOLYHEDRON    = 7;
 const int BoundaryVisual  = 0;
 const int FieldVisual     = 1;
 const int BlockVisual     = 2;
+
+const int WriteBoundary = 0;
+const int WriteBlock = 1;
+const int Writecomplete = 2;
 }
 

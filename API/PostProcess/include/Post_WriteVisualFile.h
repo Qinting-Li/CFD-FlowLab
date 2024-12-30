@@ -105,7 +105,7 @@ public:
     vector<DataContainer *> VTKDataList;
 };
 
-//! Determine whether to dump field results to visulization.
 bool WantVisualField(Grid *grid);
+
 
 }

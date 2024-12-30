@@ -46,6 +46,7 @@ void Fantasy2Ustar3D();
 
 void ReProcessBCInfo(Grid **grids, int nBlocks);
 void ReadLnkFile(const string &fileName_in, Grid **grids, int nBlocks);
+void ReadLnkInfor(const string &fileName_in, Grid **grids, int nBlocks);
 void FantasyWriteToGrd(const string &cel_file, Grid **grids, int nBlocks);
 void FantasyWriteToInp(const string &bnd_file, Grid **grids, int nBlocks);
 

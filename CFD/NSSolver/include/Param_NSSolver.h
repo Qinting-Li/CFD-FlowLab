@@ -170,6 +170,17 @@ public:
 
     int GetNonequilibriumConditionFlag() const;
 
+    //! Get if need plot volume field.
+    int GetIsPorousZone() const;
+
+    const RDouble *GetViscousResistanceCoeff() const;
+    const RDouble *GetInertialResistanceCoeff() const;
+
+    RDouble GetPorosity() const;
+    RDouble GetDensitySolid() const;
+    RDouble GetSpecificHeatSolid() const;
+    RDouble GetHeatConductivitySolid() const;
+
     void SetNonequilibriumConditionFlag(int nUseNoneqCond) {isUseNoneqCond = nUseNoneqCond;}
 
 private:
@@ -302,6 +313,14 @@ private:
 
     RDouble knLength; //the characteristic length for computation of Knudsen number.
     int isUseNoneqCond; //Use the non-equilibrium condition or not.
+
+    int isPorousZone;
+    RDouble viscousResistanceCoeff[3];
+    RDouble inertialResistanceCoeff[3];
+    RDouble porosity;
+    RDouble densitySolid;
+    RDouble cpSolid;
+    RDouble kSolid;
 };
 
 #include "Param_NSSolver.hxx"

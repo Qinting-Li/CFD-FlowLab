@@ -8,6 +8,10 @@
 #include "Residual.h"
 #include "Post_Visual.h"
 
+#ifdef USE_CUDA
+#include "GPUDeviceControl.h"
+#endif
+
 using namespace std;
 
 namespace PHSPACE
@@ -17,6 +21,12 @@ void RunPHengLEI()
     //! Initialize global variables and MPI.
 
     PHMPI::Initialization();
+
+#ifdef USE_CUDA
+    //! Query and set the device
+    int numberOfProcessors = PHMPI::GetNumberOfProcessor();
+    GPUDeviceMultiGPU(numberOfProcessors, GPUNum, GPUProp);
+#endif
 
     //! Read control parameters and do self-checking.
     ReadControlParameters();
@@ -60,7 +70,7 @@ void ShowWelcomeTitle()
         oss << "$#       Computational Aerodynamics Institute          #$" << endl;
         oss << "$#  China Aerodynamics Research and Development Center #$" << endl;
         oss << "$#            (C) Copyright, Since 2010                #$" << endl;
-            oss << "$#                  PHengLEI 2406                      #$" << endl;
+        oss << "$#                  PHengLEI 2412                      #$" << endl;
         oss << "$#                                                     #$" << endl;
         oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
 

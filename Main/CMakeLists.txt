@@ -186,6 +186,14 @@ set(MESH_TARGET_NAME "PHMesh")
 set(CFD_TARGET_NAME "PHCFD")
 set(Grider_TARGET_NAME "PHGrider")
 
+if(BUILD_GPU) 
+  add_definitions(-DUSE_CUDA)
+  #add_definitions(-DCUDAUNITTEST)
+  #add_definitions(-DUNITTESTOUTPUT) 
+  message(STATUS "Linking ${GPU_TARGET_NAME} ...")
+  list(APPEND LINK_LIBRARY_LIST ${GPU_TARGET_NAME})
+endif(BUILD_GPU)
+
 message(STATUS "Linking ${MESH_TARGET_NAME} ...")
 list(APPEND LINK_LIBRARY_LIST ${MESH_TARGET_NAME})
 

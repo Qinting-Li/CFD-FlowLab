@@ -280,3 +280,38 @@ inline int Param_NSSolver::GetNonequilibriumConditionFlag() const
 {
     return isUseNoneqCond;
 }
+
+inline int Param_NSSolver::GetIsPorousZone() const
+{
+    return isPorousZone;
+}
+
+inline const RDouble *Param_NSSolver::GetViscousResistanceCoeff() const
+{
+    return viscousResistanceCoeff;
+}
+
+inline const RDouble *Param_NSSolver::GetInertialResistanceCoeff() const
+{
+    return inertialResistanceCoeff;
+}
+
+inline RDouble Param_NSSolver::GetPorosity() const
+{
+    return porosity;
+}
+
+inline RDouble Param_NSSolver::GetDensitySolid() const
+{
+    return densitySolid;
+}
+
+inline RDouble Param_NSSolver::GetSpecificHeatSolid() const
+{
+    return cpSolid;
+}
+
+inline RDouble Param_NSSolver::GetHeatConductivitySolid() const
+{
+    return kSolid;
+}

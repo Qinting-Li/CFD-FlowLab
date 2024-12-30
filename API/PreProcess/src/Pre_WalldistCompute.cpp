@@ -392,6 +392,13 @@ void Pre_WalldistCompute::ComputeWallDist2DByBinarySearching(UnstructGrid *grid)
     cout.precision(0);
 
     int interval = GetProgressInterval(nTotalCell, 10);
+
+#ifdef AI_RandomForestRegressor
+    RDouble faceNormal[3];
+    vector<RDouble> icellToWallNormal(3);
+    vector<vector<RDouble>> allCellToWallNormal;
+#endif
+
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         if (viscousType <= LAMINAR && wallCellLabel[iCell] != 1 && iLES == NOLES_SOLVER) continue;
@@ -416,7 +423,12 @@ void Pre_WalldistCompute::ComputeWallDist2DByBinarySearching(UnstructGrid *grid)
             WallStructure::value_type &x = cwalldist->GetX();
             WallStructure::value_type &y = cwalldist->GetY();
             WallStructure::value_type &z = cwalldist->GetZ();
-           
+
+#ifdef AI_RandomForestRegressor
+            WallStructure::value_type &xfnAI = cwalldist->GetXFaceNormal();
+            WallStructure::value_type &yfnAI = cwalldist->GetYFaceNormal();
+            WallStructure::value_type &zfnAI = cwalldist->GetZFaceNormal();
+#endif           
             int *nPointPerFace = cwalldist->GetnPointPerFace();
             int *wallFace2Node = cwalldist->GetWallFace2Node();
 
@@ -429,6 +441,12 @@ void Pre_WalldistCompute::ComputeWallDist2DByBinarySearching(UnstructGrid *grid)
                 RDouble &xMid = xfc[iFace];
                 RDouble &yMid = yfc[iFace];
                 RDouble &zMid = zfc[iFace];
+
+#ifdef AI_RandomForestRegressor
+                RDouble &xNormal = xfnAI[iFace];
+                RDouble &yNormal = yfnAI[iFace];
+                RDouble &zNormal = zfnAI[iFace];
+#endif
 
                 //! The following computing would be executed two times for 2d case,
                 //! but it's regardless, because the time consuming is little.
@@ -466,9 +484,19 @@ void Pre_WalldistCompute::ComputeWallDist2DByBinarySearching(UnstructGrid *grid)
                     {
                         walldist[iCell] = wdst;
                         markFace = static_cast<int>(iFace);
+
+#ifdef AI_RandomForestRegressor
+                        icellToWallNormal[0] = xNormal;
+                        icellToWallNormal[1] = yNormal;
+                        icellToWallNormal[2] = zNormal;
+#endif
                     }
                 }
             }
+
+#ifdef AI_RandomForestRegressor
+            allCellToWallNormal.push_back(icellToWallNormal);
+#endif
 
             if (markFace <= -1)
             {
@@ -484,6 +512,9 @@ void Pre_WalldistCompute::ComputeWallDist2DByBinarySearching(UnstructGrid *grid)
             nearestwallfacenormalz[iCell] = zfn[markFace];
         }
     }
+#ifdef AI_RandomForestRegressor
+    DumpCellToWallNormal(allCellToWallNormal);
+#endif
 }
 
 void Pre_WalldistCompute::ComputeWallDist3DByProjectingAccurateAndNodeMethod(UnstructGrid *grid)
@@ -968,6 +999,12 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
 
     TimeSpan partTime;
     int interval = GetProgressInterval(nTotalCell, 10);
+
+#ifdef AI_RandomForestRegressor
+    vector<RDouble> icellToWallNormal;
+    vector<vector<RDouble>> allCellToWallNormal;
+#endif
+
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         if (viscousType <= LAMINAR && wallCellLabel[iCell] != 1 && iLES == NOLES_SOLVER) continue;
@@ -1106,9 +1143,17 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
                             walldist[iCell] = wdst;
                             isFoundNearestFace = true;
                             markFace = iWall;
+
+#ifdef AI_RandomForestRegressor
+                            icellToWallNormal[0] = faceNormal[0];
+                            icellToWallNormal[1] = faceNormal[1];
+                            icellToWallNormal[2] = faceNormal[2];
+#endif
                         }
                     }
-
+#ifdef AI_RandomForestRegressor
+                    allCellToWallNormal.push_back(icellToWallNormal);
+#endif
                     uint_t wallStructID = nList[markFace]->GetData().first;
                     int faceID = nList[markFace]->GetData().second;
                     WallStructure* cwalldist = (*wallstructureList)[wallStructID];
@@ -1155,7 +1200,23 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
             }
         }
     }    //! iCell.
+#ifdef AI_RandomForestRegressor
+    DumpCellToWallNormal(allCellToWallNormal);
+#endif
 }
+
+#ifdef AI_RandomForestRegressor
+void  DumpCellToWallNormal(vector<vector<RDouble>> allCellToWallNormal)
+{
+    ofstream dataFile;
+    dataFile.open("./grid/CellToWallNormal.txt", ofstream::app);
+    for(int i = 0; i<allCellToWallNormal.size(); ++i)
+    {
+        dataFile << allCellToWallNormal[i][0] << " " << allCellToWallNormal[i][1] << " " << allCellToWallNormal[i][2] << endl;
+    }
+    dataFile.close();
+}
+#endif
 
 void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(StructGrid *grid)
 {
@@ -5282,7 +5343,22 @@ void GenerateWalldist()
     {
         CompMaxBoundaryLayerWalldist();
     }
+#ifdef AI_RandomForestRegressor    
+    DumpMaxBoundaryLayerWalldist();
+#endif
 }
+
+#ifdef AI_RandomForestRegressor
+void DumpMaxBoundaryLayerWalldist()
+{
+    ofstream dataFile;
+    dataFile.open("./grid/DistAndNormal.txt", ofstream::app);
+    RDouble globalMaxBoundaryLayerWalldist;
+    GlobalDataBase::GetData("maxBoundaryLayerWalldist", &globalMaxBoundaryLayerWalldist, PHDOUBLE, 1);
+    dataFile << globalMaxBoundaryLayerWalldist << endl;
+    dataFile.close();
+}
+#endif
 
 void CompMaxBoundaryLayerWalldist()
 {

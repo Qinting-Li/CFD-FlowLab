@@ -126,10 +126,9 @@ public:
     void DecompressUnstructProbeCellInfo(DataContainer *cdata);
 };
 
-class SampleLocationInfo
+class SampleFileReader
 {
 private:
-
     string defineFileName;
     int numberToMonitor;
     bool defineFileExist;
@@ -137,15 +136,20 @@ private:
     vector <int> numberOfProbes;
     vector <int> surfaceProbes_ni;
     vector <int> surfaceProbes_nj;
-    vector <int> typeOfTotalProbes;
     vector <ProbeData *> sampleLocationInfo;
 
 public:
-    SampleLocationInfo();
-    ~SampleLocationInfo();
+    SampleFileReader();
+    ~SampleFileReader();
 
 public:
-    void Run();
+    //! Read coordination parameter in File.
+    void ReadSampleFile();
+
+    //! Add or update some global parameters about probes information.
+    void UpdateProbesGlobalPara();
+
+public:
     //! To set the file name of data monitor parameter.
     void SetDefineFileName(const string &defineFileName);
     //! To set the number of lines or surfaces.
@@ -158,9 +162,6 @@ public:
     void SetSurfaceProbesNI(const vector <int> &surfaceProbes_ni);
     //! To set the probe dimension of J direction of each surface..
     void SetSurfaceProbesNJ(const vector <int> &surfaceProbes_nj);
-    //!To set the grid type of all probes.
-    void SetTotalProbesType(const vector <int> &typeOfTotalProbes);
-
     //! Check if the defined file exist(xxx_XYZ.dat).
     void CheckIfDefineFileExist();
     //! To get the number of lines or surfaces.
@@ -176,9 +177,6 @@ public:
     vector <int> GetSurfaceProbesNI();
     //! To get the probe dimension of J direction of each surface..
     vector <int> GetSurfaceProbesNJ();
-    //!To get the grid type of all probes.
-    vector <int> GetTotalProbesType();
-
     //! To get the location information of all probes.
     vector<ProbeData *> GetSampleLocationInfo();
     //! If the defined file exist or not(xxx_XYZ.dat).
@@ -193,34 +191,63 @@ private:
     void ReadLinesData();
     //! To read coordination parameter in surfacesDefineFile.
     void ReadSurfacesData();
-    //! Check the invalid probes data in define file.
-    void CheckInvalidProbesData();
-    //! Add or update all the probes' cell information to ProbData.
-    void UpdateAllProbesData();
-    //! Add or update all the probes' nearest cell information to ProbData.
-    void UpdateNearestCellsData();
-    //! Add or update all the probes' real cell information to ProbData.
-    void UpdateRealCellsData();
-    //! Add or update some global parameters about probes information.
-    void UpdateProbesGlobalPara();
+};
+
+class SampleLocationSearch
+{
+private:
+    int    nZones;
+    Grid **grids;
+    int    numberOfTotalProbes;
+    vector <ProbeData *> probeDataList;
+
+public:
+    SampleLocationSearch(vector <ProbeData *> probeDataListIn, Grid **gridsIn, int nZonesIn);
+    ~SampleLocationSearch();
+
+public:
+    void SearchSampleLocation();
+
     //! Communicate with each processor,then determine probes' cell of all zones with minimum distance.
     void ServerCollectionProbesData();
+
     //! Broadcast all probes data to all processor.
     void BroadcastProbesData();
+
+    //! To save the all probes cells data to class grid.
+    void SampleLocationInfoToGrid();
+
+    //! To dump the information of the all probes cells.
+    void WriteProbesCellInfo();
+
+private:
+    void UpdateNearestCellsData();
+    void UpdateRealCellsData();
+
     //! Compress each ProbeData probe cell information to DataContainer.
     void CompressProbesData(DataContainer *cdata);
     //! Decompress DataContainer's probe cell information into each ProbeData
     void DecompressProbesData(DataContainer *cdata);
-    //! To save the all probes cells data to class grid.
-    void SampleLocationInfoToGrid();
-    //! To dump the information of the all probes cells.
-    void WriteProbesCellInfo(const string &filename);
+
+    //! Check the invalid probes data in define file.
+    void CheckInvalidProbesData();
 };
+
+
+class SampleLocationInfo
+{
+public:
+    SampleLocationInfo();
+    ~SampleLocationInfo();
+
+public:
+    void Run();
+};
+
 
 //! Check if the probe in Min-Max box.
 bool CheckIfProbeInMinMaxBox(RDouble coordX, RDouble coordY, RDouble coordZ, RDouble *pmin, RDouble *pmax);
 
 //! To dump the probes cells information file title.
 void WriteProbesCellInfoHeader(fstream &file);
-
 }

@@ -8,7 +8,7 @@
 //          Platform for Hybrid Engineering Simulation of Flows           +
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
-//                         PHengLEI 2406                                  +
+//                         PHengLEI 2412                                  +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ###########################################################################
 #                       Default parameters for Grid conversion            #
@@ -355,6 +355,14 @@ double freestream_vibration_temperature = 300.00;
 //double longitude = 110.95    
 //double latitude = 19.61;
 
+// The is calculated by an exponential function, temperature and pressure are fixed.
+//int inflowParaType = 8;
+//double refDimensionalVelocity = 15;
+//double refDimensionalHeight = 10;
+//double powerLawCoefficient = 0.25;
+//double refDimensionalPressure = 101325;
+//double refDimensionalTemperature = 271.97;
+
 double wallTemperature = -1.0;
 
 double radiationCoef = 0.8;
@@ -608,6 +616,28 @@ double lamda[] = [0.5, 1.0];
 
 //int RKStage    = 4;
 //double lamda[] = [0.25, 0.33333333333, 0.5, 1.0];
+
+#************************************************************************
+#                         Porous medium Parameter                      *
+#************************************************************************
+// isPorousZone: Is porous medium area or not.
+//            0 -- no.
+//            1 -- yes.
+// viscousResistanceCoeff[]: The coefficient of viscous resistance in different directions, unit of 1/m^2.
+// inertialResistanceCoeff[]: The coefficient of inertial resistance in different directions, unit of 1/m.
+// porosity: The porosity of porous media.
+// densitySolid: The solid density of porous media, unit of kg/m^3.
+// cpSolid: The species constant pressure specific heat of porous media, unit of J/(kg·K).
+// kSolid: The heat conductivity coefficient, unit of W/(m·K)‌.
+
+int isPorousZone = 0;
+double viscousResistanceCoeff[] = [4.2e8 0.0 0.0];
+double inertialResistanceCoeff[] = [6.349 1.0 1.0];
+double porosity = 1.0;
+double densitySolid = 2719.0;
+double cpSolid = 871.0;
+double kSolid = 202.4;
+
 #************************************************************************
 #                           File In or Out                              *
 #************************************************************************
@@ -675,6 +705,7 @@ string derivativeFileName = "results/identify.dat";
 string hysteresisFileName = "results/force_beta.plt";
 
 int plotFieldType = 0;
+int dumpFlowOnOriginalGrid = 0;
 
 // visualfileType: The file type of visualfile.
 //                 0 -- Tecplot binary.

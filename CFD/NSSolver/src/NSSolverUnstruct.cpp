@@ -22,6 +22,38 @@
 #include "PHMpi.h"
 #include "TK_Time.h"
 #include "Geo_GridIndex.h"
+#ifdef USE_CUDA
+#include "GPUKernelTest.h"
+#include "GPUInviscidFlux.h"
+#include "TemporaryOperations.h"
+#include "BasicDeviceVariables.h"
+#include "GPUNSSolver.h"
+#include "GPUInvVisSpectrum.h"
+#include "GPUMPICommunication.h"
+#include "GPUTurbAhead.h"
+#include "GPUComputeNodeValue.h"
+#include "GPUFaceWeight.h"
+#include "GPUGetVisFaceValue.h"
+#include "GPUCompVisfluxTEST.h"
+#include "GPULUSGS.h"
+#include "GPUSpectrumRadius.h"
+#include "GPULoadFlux.h"
+#include "GPUCompGradientGGNode.h"
+#include "GPUCompGradientGGCell.h"
+#include "GPUCompGradientGGNodeNew.h"
+#include "GPUCompGradientGGCell.h"
+#include "TemporaryOperations.h"
+#include "TemporaryOperationsPart2.h"
+using namespace TemporaryOperations;
+using namespace GPUNSSolverUnstruct;
+using namespace GPUKernels;
+#endif
+
+#ifdef CUDAUNITTEST
+#include "GPUKernelTestPart2.h"
+#include "GPUTestFunctions.h"
+#endif
+
 #include "MixedGas.h"
 #include "Gas.h"
 #ifdef USE_GMRESSOLVER
@@ -158,20 +190,20 @@ void NSSolverUnstruct::AllocateJacobianMatrix4GMRES(Grid *gridIn)
 {
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
 
-    // get limiter order 
+    //! get limiter order 
     Param_NSSolverUnstruct *parameters = GetControlParameters();
     int limiterType = parameters->GetLimiterType();
 
-    // get flow type: inviscid or viscous
+    //! get flow type: inviscid or viscous
     int viscousType = parameters->GetViscousType();
 
-    // determine the order required for the Jacobian matrix components
+    //! determine the order required for the Jacobian matrix components
     int order = 1;
     int order_inv = 1;
     int order_vis = 1;
     if (tscheme == GMRES || tscheme == LU_SGS)
     {
-        // inviscid part
+        //! inviscid part
         if(limiterType == ILMT_FIRST)
         {
             order_inv = 1;
@@ -186,7 +218,7 @@ void NSSolverUnstruct::AllocateJacobianMatrix4GMRES(Grid *gridIn)
             TK_Exit::ExceptionExit("If you implemented other methods, please change it in subroutine [FindJacobianIndex4GMRES]");
         }
 
-        // viscous part
+        //! viscous part
         if(viscousType!=INVISCID)
         {
             string gradientName = parameters->GetGradientName();
@@ -207,7 +239,7 @@ void NSSolverUnstruct::AllocateJacobianMatrix4GMRES(Grid *gridIn)
         order = MAX(order_inv, order_vis);
     }
 
-    // get grid information
+    //! get grid information
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
@@ -230,7 +262,7 @@ void NSSolverUnstruct::AllocateJacobianMatrix4GMRES(Grid *gridIn)
     }
 
     int TotalSize = AI[nTotal];
-    RDouble** dRdq = NewPointer2<RDouble>(nEquation, nEquation * TotalSize);
+    RDouble **dRdq = NewPointer2<RDouble>(nEquation, nEquation * TotalSize);
     grid->UpdateDataPtr("dRdq", dRdq);
     PHSPACE::SetField(dRdq, nEquation, nEquation * TotalSize, 0.0);
 
@@ -242,20 +274,20 @@ void NSSolverUnstruct::AllocateJacobianMatrix4GMRES_Neighbor(Grid *gridIn)
 {
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
 
-    // get limiter order 
+    //! get limiter order 
     Param_NSSolverUnstruct *parameters = GetControlParameters();
     int limiterType = parameters->GetLimiterType();
 
-    // get flow type: inviscid or viscous
+    //! get flow type: inviscid or viscous
     int viscousType = parameters->GetViscousType();
 
-    // determine the order required for the Jacobian matrix components
+    //! determine the order required for the Jacobian matrix components
     int order = 1;
     int order_inv = 1;
     int order_vis = 1;
     //if (tscheme == GMRES)
     //{
-    // inviscid part
+    //! inviscid part
     if(limiterType == ILMT_FIRST)
     {
         order_inv = 1;
@@ -269,7 +301,7 @@ void NSSolverUnstruct::AllocateJacobianMatrix4GMRES_Neighbor(Grid *gridIn)
         printf("GMRES solver: uns_limiter_name is fixed to [1st] and [nolim] so far\n");
         TK_Exit::ExceptionExit("If you implemented other methods, please change it in subroutine [FindJacobianIndex4GMRES]");
     }
-    // viscous part
+    //! viscous part
     if(viscousType!=INVISCID)
     {
         string gradientName = parameters->GetGradientName();
@@ -289,8 +321,7 @@ void NSSolverUnstruct::AllocateJacobianMatrix4GMRES_Neighbor(Grid *gridIn)
     }
     order = MAX(order_inv, order_vis);
     //}
-   
-    // get grid information
+    //! get grid information
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
@@ -310,21 +341,21 @@ void NSSolverUnstruct::AllocateJacobianMatrix4GMRES_Neighbor(Grid *gridIn)
         int* localInterfaceCellIndex = interfaceInfo->GetLocalInterfaceCellIndex();
     }
     //! GMRES CSR Format Jacobian matrix with respect to primitive variables
-    //   #AI:The i-th element records the number of non-zero elements contained in the first i-1 row
-    //   #AJ:The i-th element records the index of columns of the V [i] element, which V [i] is used to store the values of non zero elements in a matrix;
+    //! #AI:The i-th element records the number of non-zero elements contained in the first i-1 row
+    //! #AJ:The i-th element records the index of columns of the V [i] element, which V [i] is used to store the values of non zero elements in a matrix;
     vector<int> AI;
     vector<int> AJ;
     //! GMRESParallel
-    vector<int> AK; // stores the number of ghost cell for interface bc at each row
+    vector<int> AK;    //! stores the number of ghost cell for interface bc at each row
 
-    vector<int> AI1st;  // GMRESJac1st  
-    vector<int> AJ1st;  // GMRESJac1st
+    vector<int> AI1st;    //! GMRESJac1st  
+    vector<int> AJ1st;    //! GMRESJac1st
 
     AI.insert(AI.begin(), nTotal + 1, 0);
     AK.insert(AK.begin(), nTotal, 0); 
     if (order == 2)
     {
-        AI1st.insert(AI1st.begin(), nTotal + 1, 0); // GMRESJac1st
+        AI1st.insert(AI1st.begin(), nTotal + 1, 0);    //! GMRESJac1st
     }
 
     for (int iCell = 0; iCell < nTotal; iCell++)
@@ -332,7 +363,7 @@ void NSSolverUnstruct::AllocateJacobianMatrix4GMRES_Neighbor(Grid *gridIn)
         AI[iCell + 1]++;
         AJ.push_back(iCell);
 
-        // GMRESJac1st
+        //! GMRESJac1st
         if(order == 2)
         {
             AI1st[iCell + 1]++;
@@ -355,7 +386,7 @@ void NSSolverUnstruct::AllocateJacobianMatrix4GMRES_Neighbor(Grid *gridIn)
             }
             if(order == 2)
             {
-                // GMRESJac1st
+                //! GMRESJac1st
                 AI1st[iCell + 1]++;
                 AJ1st.push_back(neighborIndex);
                 
@@ -379,10 +410,10 @@ void NSSolverUnstruct::AllocateJacobianMatrix4GMRES_Neighbor(Grid *gridIn)
 
         if( order == 2)
         {
-            if(iCell < nTotal - 1) AI1st[iCell + 2] = AI1st[iCell + 1];  // GMRESJac1st
-        } 
+            if(iCell < nTotal - 1) AI1st[iCell + 2] = AI1st[iCell + 1];    //! GMRESJac1st
+        }
     }
-   
+
      //! set AK
     if (interfaceInfo != nullptr && PHMPI::GetCurrentProcessorID() == 0)
     {
@@ -418,15 +449,15 @@ void NSSolverUnstruct::AllocateJacobianMatrix4GMRES_Neighbor(Grid *gridIn)
     grid->SetBlockSizeOfJacobianMatrix(blockSizeOfJacobianMatrix);
     
     int TotalSize = AI[nTotal];
-    RDouble** dRdq = NewPointer2<RDouble>(nEquation, nEquation * TotalSize);
+    RDouble **dRdq = NewPointer2<RDouble>(nEquation, nEquation * TotalSize);
     grid->UpdateDataPtr("dRdq", dRdq);
     PHSPACE::SetField(dRdq, nEquation, nEquation * TotalSize, 0.0);
 
-    // GMRESJac1st
+    //! GMRESJac1st
     if( order == 2 )
     {
         int TotalSize1st    = AI1st[nTotal];
-        RDouble** dRdq1st   = NewPointer2<RDouble>(nEquation, nEquation * TotalSize1st);
+        RDouble **dRdq1st   = NewPointer2<RDouble>(nEquation, nEquation * TotalSize1st);
         grid->UpdateDataPtr("dRdq1st", dRdq1st);
         PHSPACE::SetField(dRdq1st, nEquation, nEquation * TotalSize1st, 0.0);
     }
@@ -444,46 +475,45 @@ void NSSolverUnstruct::AllocateJacobianMatrix4GMRES_Neighbor(Grid *gridIn)
     grid->SetJacobianAJ4GMRES(AJ);
     grid->SetJacobianAK4GMRES(AK);
 
-    // GMRESCoupled
+    //! GMRESCoupled
     if( viscousType == ONE_EQU )
     {
         int TotalSize = AI[nTotal];
-        RDouble** dRdqCoupledTerm = NewPointer2<RDouble>(nEquation, TotalSize);
+        RDouble **dRdqCoupledTerm = NewPointer2<RDouble>(nEquation, TotalSize);
         grid->UpdateDataPtr("dRdqCoupledTerm", dRdqCoupledTerm);
         PHSPACE::SetField(dRdqCoupledTerm, nEquation, TotalSize, 0.0);
     }
 
-    RDouble** dRdqCoupledTerm_turb = NewPointer2<RDouble>(1, nEquation*TotalSize);
+    RDouble **dRdqCoupledTerm_turb = NewPointer2<RDouble>(1, nEquation * TotalSize);
     grid->UpdateDataPtr("dRdqCoupledTerm_turb", dRdqCoupledTerm_turb);
-    PHSPACE::SetField(dRdqCoupledTerm_turb, 1, nEquation*TotalSize, 0.0);
+    PHSPACE::SetField(dRdqCoupledTerm_turb, 1, nEquation * TotalSize, 0.0);
 
-    // GMRESCoupled1st
+    //! GMRESCoupled1st
     if( viscousType == ONE_EQU && order == 2 )
     {
         int TotalSize1st    = AI1st[nTotal];
-        RDouble** dRdqCoupledTerm1st = NewPointer2<RDouble>(nEquation, TotalSize1st);
+        RDouble **dRdqCoupledTerm1st = NewPointer2<RDouble>(nEquation, TotalSize1st);
         grid->UpdateDataPtr("dRdqCoupledTerm1st", dRdqCoupledTerm1st);
         PHSPACE::SetField(dRdqCoupledTerm1st, nEquation, TotalSize1st, 0.0);
     }
     else
     {
-        RDouble** dRdqCoupledTerm1st = NewPointer2<RDouble>(1, 1);
+        RDouble **dRdqCoupledTerm1st = NewPointer2<RDouble>(1, 1);
         grid->UpdateDataPtr("dRdqCoupledTerm1st", dRdqCoupledTerm1st);
     }
 
     if( order==2 )
     {
         int TotalSize1st    = AI1st[nTotal];
-        RDouble** dRdqCoupledTerm_turb1st = NewPointer2<RDouble>(1, nEquation*TotalSize1st);
+        RDouble **dRdqCoupledTerm_turb1st = NewPointer2<RDouble>(1, nEquation*TotalSize1st);
         grid->UpdateDataPtr("dRdqCoupledTerm_turb1st", dRdqCoupledTerm_turb1st);
         PHSPACE::SetField(dRdqCoupledTerm_turb1st, 1, nEquation*TotalSize1st, 0.0);
     }
     else
     {
-        RDouble** dRdqCoupledTerm_turb1st = NewPointer2<RDouble>(1, 1);
+        RDouble **dRdqCoupledTerm_turb1st = NewPointer2<RDouble>(1, 1);
         grid->UpdateDataPtr("dRdqCoupledTerm_turb1st", dRdqCoupledTerm_turb1st);
     }
-
 
 }
 #endif
@@ -534,7 +564,7 @@ void NSSolverUnstruct::AllocateGlobalVar(Grid *gridIn)
     PHSPACE::SetField(dDdP, nEquation, nEquation*nBoundFace, 0.0);
 #endif
 
-    RDouble **limit2D   = NewPointer2<RDouble>(nEquation, nTotal);
+    RDouble **limit2D = NewPointer2<RDouble>(nEquation, nTotal);
     grid->UpdateDataPtr("limit2D", limit2D);
 
     int nTotalNode = grid->GetNTotalNode();
@@ -545,7 +575,7 @@ void NSSolverUnstruct::AllocateGlobalVar(Grid *gridIn)
     grid->UpdateDataPtr("tnode", tnode);    //! Static temperature at node.
 
     RDouble *nodeWeight = new RDouble[nTotalNode];
-    grid->UpdateDataPtr("nodeWeight", nodeWeight);   //! Weight coefficient at node.
+    grid->UpdateDataPtr("nodeWeight", nodeWeight);    //! Weight coefficient at node.
 
     RDouble *nodeWeightTrade = new RDouble[nTotalNode];
     PHSPACE::SetField(nodeWeightTrade, 0.0, nTotalNode);
@@ -802,7 +832,7 @@ void NSSolverUnstruct::DeAllocateGlobalVar(Grid *gridIn)
 
     DelPointer2(q);
     DelPointer2(res);
-    delete [] diagonal;
+    delete [] diagonal;    diagonal = nullptr;
 
     RDouble **limit2D = reinterpret_cast <RDouble **> (grid->GetDataPtr("limit2D"));
     DelPointer2(limit2D);
@@ -814,8 +844,8 @@ void NSSolverUnstruct::DeAllocateGlobalVar(Grid *gridIn)
 
     RDouble *nodeWeight = reinterpret_cast <RDouble *> (grid->GetDataPtr("nodeWeight"));
     RDouble *nodeWeightTrade = reinterpret_cast <RDouble *> (grid->GetDataPtr("nodeWeightTrade"));
-    delete [] nodeWeight;
-    delete [] nodeWeightTrade;
+    delete [] nodeWeight;    nodeWeight = nullptr;
+    delete [] nodeWeightTrade;    nodeWeightTrade = nullptr;
 
     int referenceFrame = PHSPACE::GlobalDataBase::GetIntParaFromDB("referenceFrame");
     int nTurboZone = 0;
@@ -823,7 +853,6 @@ void NSSolverUnstruct::DeAllocateGlobalVar(Grid *gridIn)
     {
         nTurboZone = PHSPACE::GlobalDataBase::GetIntParaFromDB("nTurboZone");
     }
-
 
 #ifdef USE_GMRESSOLVER
     //! GMRESBoundary
@@ -845,7 +874,7 @@ void NSSolverUnstruct::DeAllocateGlobalVar(Grid *gridIn)
         int GviscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
         if( GviscousType == ONE_EQU )
         {
-            RDouble **dRdqCoupledTerm       = reinterpret_cast <RDouble**> (grid->GetDataPtr("dRdqCoupledTerm"));
+            RDouble **dRdqCoupledTerm = reinterpret_cast <RDouble**> (grid->GetDataPtr("dRdqCoupledTerm"));
 
             DelPointer2(dRdqCoupledTerm);
         }
@@ -861,7 +890,7 @@ void NSSolverUnstruct::DeAllocateGlobalVar(Grid *gridIn)
     if (grid->GetLevel() == 0)
     {
         int *nodeBCType = reinterpret_cast <int *> (grid->GetDataPtr("nodeBCType"));
-        delete [] nodeBCType;
+        delete [] nodeBCType;    nodeBCType = nullptr;
     }
 
     InterpointInformation *interpointInformation = grid->GetInterpointInfo();
@@ -874,38 +903,38 @@ void NSSolverUnstruct::DeAllocateGlobalVar(Grid *gridIn)
     }
 
     RDouble *rtem = reinterpret_cast <RDouble *> (grid->GetDataPtr("rtem"));
-    delete [] rtem;
+    delete [] rtem;    rtem = nullptr;
     RDouble *invSpectralRadius = reinterpret_cast <RDouble *> (grid->GetDataPtr("invSpectralRadius"));
-    delete [] invSpectralRadius;
+    delete [] invSpectralRadius;    invSpectralRadius = nullptr;
     RDouble *visSpectralRadius = reinterpret_cast <RDouble *> (grid->GetDataPtr("visSpectralRadius"));
-    delete [] visSpectralRadius;
+    delete [] visSpectralRadius;    visSpectralRadius = nullptr;
 
     RDouble* DiagValue = reinterpret_cast <RDouble*> (grid->GetDataPtr("DiagValue"));
-    if (DiagValue != NULL)
+    if (DiagValue != nullptr)
     {
-        delete [] DiagValue;    DiagValue = NULL;
+        delete [] DiagValue;    DiagValue = nullptr;
     }
 
-    RDouble**** DMatrixStartByLine = reinterpret_cast<RDouble****>(grid->GetDataPtr("DMatrixStartByLine"));
-    RDouble**** UMatrixStartByLine = reinterpret_cast<RDouble****>(grid->GetDataPtr("UMatrixStartByLine"));
-    RDouble**** LMatrixStartByLine = reinterpret_cast<RDouble****>(grid->GetDataPtr("LMatrixStartByLine"));
+    RDouble ****DMatrixStartByLine = reinterpret_cast<RDouble****>(grid->GetDataPtr("DMatrixStartByLine"));
+    RDouble ****UMatrixStartByLine = reinterpret_cast<RDouble****>(grid->GetDataPtr("UMatrixStartByLine"));
+    RDouble ****LMatrixStartByLine = reinterpret_cast<RDouble****>(grid->GetDataPtr("LMatrixStartByLine"));
 
-    if (DMatrixStartByLine != NULL)
+    if (DMatrixStartByLine != nullptr)
     {
-        delete [] DMatrixStartByLine;    DMatrixStartByLine = NULL;
-        delete [] UMatrixStartByLine;    UMatrixStartByLine = NULL;
-        delete [] LMatrixStartByLine;    LMatrixStartByLine = NULL;
+        delete [] DMatrixStartByLine;    DMatrixStartByLine = nullptr;
+        delete [] UMatrixStartByLine;    UMatrixStartByLine = nullptr;
+        delete [] LMatrixStartByLine;    LMatrixStartByLine = nullptr;
     }
 
-    MAT3D< RDouble >* diagMatrix = reinterpret_cast<MAT3D< RDouble > *>(grid->GetDataPtr("diagMatrix"));
-    MAT3D< RDouble >* lowerMatrix = reinterpret_cast<MAT3D< RDouble > *>(grid->GetDataPtr("lowerMatrix"));
-    MAT3D< RDouble >* upperMatrix = reinterpret_cast<MAT3D< RDouble > *>(grid->GetDataPtr("upperMatrix"));
+    MAT3D< RDouble > *diagMatrix = reinterpret_cast<MAT3D< RDouble > *>(grid->GetDataPtr("diagMatrix"));
+    MAT3D< RDouble > *lowerMatrix = reinterpret_cast<MAT3D< RDouble > *>(grid->GetDataPtr("lowerMatrix"));
+    MAT3D< RDouble > *upperMatrix = reinterpret_cast<MAT3D< RDouble > *>(grid->GetDataPtr("upperMatrix"));
 
-    if (diagMatrix != NULL)
+    if (diagMatrix != nullptr)
     {
-        delete diagMatrix;
-        delete upperMatrix;
-        delete lowerMatrix;
+        delete diagMatrix;    diagMatrix = nullptr;
+        delete upperMatrix;    upperMatrix = nullptr;
+        delete lowerMatrix;    lowerMatrix = nullptr;
     }
 
     if (nChemical == 1)
@@ -964,10 +993,10 @@ void NSSolverUnstruct::DeAllocateGlobalVar(Grid *gridIn)
     DelPointer2(t );
 
     RDouble * dt  = reinterpret_cast< RDouble * > (grid->GetDataPtr("dt" ));
-    delete [] dt;    dt = NULL;
+    delete [] dt;    dt = nullptr;
 
     RDouble * gama  = reinterpret_cast< RDouble * > (grid->GetDataPtr("gama" ));
-    delete [] gama;    gama = NULL;
+    delete [] gama;    gama = nullptr;
 
     int viscousType = parameters->GetViscousType();
 
@@ -975,15 +1004,15 @@ void NSSolverUnstruct::DeAllocateGlobalVar(Grid *gridIn)
     {
         RDouble * visl = reinterpret_cast< RDouble * > (grid->GetDataPtr("visl"));
         RDouble * vist = reinterpret_cast< RDouble * > (grid->GetDataPtr("vist"));
-        delete [] visl;    visl = NULL;
-        delete [] vist;    vist = NULL;
+        delete [] visl;    visl = nullptr;
+        delete [] vist;    vist = nullptr;
     }
 
     int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
     if(iLES == LES_SOLVER)
     {
         RDouble * subgridScaleEnergy = reinterpret_cast< RDouble * > (grid->GetDataPtr("subgridScaleEnergy"));
-        delete [] subgridScaleEnergy;
+        delete [] subgridScaleEnergy;    subgridScaleEnergy = nullptr;
     }
 
     //! deallocate mixing plane array.
@@ -1057,8 +1086,8 @@ void NSSolverUnstruct::DeAllocateGlobalVar(Grid *gridIn)
     if (level ==0 && zoneID == 0)
     {
         RDouble *monitorVariables = reinterpret_cast< RDouble * > (GlobalDataBase::GetDataPtr("monitorVariables" ));
-        delete [] monitorVariables;
-}
+        delete [] monitorVariables;    monitorVariables = nullptr;
+    }
 }
 
 bool NSSolverUnstruct::JudgeIfRestart()
@@ -1535,13 +1564,13 @@ void NSSolverUnstruct::ReadRestartH5(ActionKey *actkey)
 void NSSolverUnstruct::ReadRestart(ActionKey *actkey)
 {
     int level = actkey->level;
-    UnstructGrid * grid = UnstructGridCast(GetGrid(level));
+    UnstructGrid *grid = UnstructGridCast(GetGrid(level));
 
     Param_NSSolverUnstruct *parameters = GetControlParameters();
 
     int nEquation = GetNumberOfEquations();
 
-    DataContainer * cdata = actkey->GetData();
+    DataContainer *cdata = actkey->GetData();
     cdata->MoveToBegin();
     int outnstep = 0;
     cdata->Read(&outnstep,sizeof(int));
@@ -1933,7 +1962,6 @@ void NSSolverUnstruct::CommunicationInterpointWeight(ActionKey *actkey)
                     nodeWeightTrade[globalPoint] += valueWeight;
                 }
             }
-
             delete cdata;    cdata = nullptr;
         }
     }
@@ -1973,7 +2001,7 @@ void NSSolverUnstruct::DownloadInterpointWeight(ActionKey *actkey)
 void NSSolverUnstruct::UploadOversetData(ActionKey *actkey)
 {
     int level = actkey->level;
-    UnstructGrid * grid = reinterpret_cast< UnstructGrid * >(GetGrid(level));
+    UnstructGrid *grid = reinterpret_cast< UnstructGrid * >(GetGrid(level));
 
     Param_NSSolverUnstruct *parameters = GetControlParameters();
     int nTemperatureModel = parameters->GetTemperatureModel();
@@ -1991,7 +2019,7 @@ void NSSolverUnstruct::DownloadOversetData(ActionKey *actkey)
 {
     Param_NSSolverUnstruct *parameters = GetControlParameters();
     int level = actkey->level;
-    UnstructGrid * grid = reinterpret_cast< UnstructGrid * >(GetGrid(level));
+    UnstructGrid *grid = reinterpret_cast< UnstructGrid * >(GetGrid(level));
 
     int nTemperatureModel = parameters->GetTemperatureModel();
 
@@ -2346,7 +2374,7 @@ void NSSolverUnstruct::MixingPlaneDataTransfer(Grid *grid, Grid *NeighborGrid)
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion++)
     {
-        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
         vector<int> *faceIndex = bcRegion->GetFaceIndex();
 
         int bcType = bcRegion->GetBCType();
@@ -2688,7 +2716,7 @@ void NSSolverUnstruct::NonReflective(Grid *grid, Grid *NeighborGrid)
             }
         }
     }
-    delete []ExtraDq;
+    delete [] ExtraDq;    ExtraDq = nullptr;
 }
 
 //! function to set radial profile of mixingin and mixingout.
@@ -2773,7 +2801,6 @@ void NSSolverUnstruct::SetMixingPlaneData(Grid *grid)
         {
             iTurboZone = gridUnstruct->GetZoneID();
         }
-
 
         string MixingPlaneIn, MixingPlaneOut;
 
@@ -2937,7 +2964,7 @@ void NSSolverUnstruct::RotateVectorFromInterface(Grid *gridIn, const int &neighb
                 gridUnstruct->GetTargetIndex(iFace, 1, t1);
 
                 int iBFace = interFace2BoundaryFace[iFace];
-                UnstructBC* bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iBFace]);
+                UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iBFace]);
                 string bcName = bcRegion->GetBCName();
 
                 RDouble theta;
@@ -3177,9 +3204,9 @@ FieldProxy * NSSolverUnstruct::GetFieldProxy(Grid *gridIn, const string &field_n
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
-    RDouble ** field = reinterpret_cast< RDouble ** > (grid->GetDataPtr(field_name));
+    RDouble **field = reinterpret_cast< RDouble ** > (grid->GetDataPtr(field_name));
 
-    FieldProxy * field_proxy = new FieldProxy();
+    FieldProxy *field_proxy = new FieldProxy();
 
     field_proxy->SetField_UNS(field);
 
@@ -3201,6 +3228,11 @@ FieldProxy * NSSolverUnstruct::GetResidualProxy(Grid *gridIn)
 
 void NSSolverUnstruct::RecoverResidual(Grid *gridIn, FieldProxy *rhsProxy)
 {
+#ifdef USE_CUDA
+    int nEquation_gpu = GetNumberOfEquations();
+    CallGPURecoverResidual(gridIn, nEquation_gpu);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
@@ -3225,6 +3257,11 @@ void NSSolverUnstruct::RecoverResidual(Grid *gridIn, FieldProxy *rhsProxy)
 
 void NSSolverUnstruct::StoreRhsByResidual(Grid *gridIn, FieldProxy *rhsProxy)
 {
+#ifdef USE_CUDA
+    int nEquation_gpu = GetNumberOfEquations();
+    CallGPUStoreRhsByResidual(gridIn, nEquation_gpu);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
@@ -3267,6 +3304,7 @@ void NSSolverUnstruct::InitResidual(Grid *gridIn, FieldProxy *rhsProxy)
 
 void NSSolverUnstruct::FreeGradientProxy(Grid *grid)
 {
+
 }
 
 void NSSolverUnstruct::DumpLeakageInformation(Grid *gridIn)
@@ -3296,7 +3334,7 @@ void NSSolverUnstruct::DumpLeakageInformation(Grid *gridIn)
     for (int i = 0; i < 30; i++)
     {
         tempVariables[i] = 0.0;
-        tempTotalVariables[i] = 0.0;		
+        tempTotalVariables[i] = 0.0;
     }
     RDouble *monitorVariables = reinterpret_cast< RDouble * > (GlobalDataBase::GetDataPtr("monitorVariables" ));
 
@@ -3479,10 +3517,9 @@ void NSSolverUnstruct::DumpLeakageInformation(Grid *gridIn)
             CloseFile(file);
         }
     }
-
-    delete [] tempVariables;
-    delete [] tempTotalVariables;
-    delete [] primVars;
+    delete [] tempVariables;    tempVariables = nullptr;
+    delete [] tempTotalVariables;    tempTotalVariables = nullptr;
+    delete [] primVars;    primVars = nullptr;
 }
 
 
@@ -3515,6 +3552,11 @@ void NSSolverUnstruct::Turb_Sengy(Grid *gridIn)
 //! Load flow variables stored in grid to q.
 void NSSolverUnstruct::LoadQ(Grid *gridIn, FieldProxy *qProxy)
 {
+#ifdef USE_CUDA
+    Param_NSSolverUnstruct *parameters_gpu = GetControlParameters();
+    CallGPULoadQ(gridIn, parameters_gpu);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
@@ -3609,7 +3651,7 @@ void NSSolverUnstruct::CorrectFineGridZeroOrder(Grid *fgrid_in, Grid *cgrid_in)
 
     int fnTCell = fgrid->GetNTotalCell();
 
-    int * cell2coarsegridcell   = fgrid->GetCell2CoarseGridCell();
+    int *cell2coarsegridcell = fgrid->GetCell2CoarseGridCell();
 
     RDouble **fq = reinterpret_cast< RDouble ** > (fgrid->GetDataPtr("q"));
     RDouble **cq = reinterpret_cast< RDouble ** > (cgrid->GetDataPtr("q"));
@@ -3645,14 +3687,14 @@ void NSSolverUnstruct::CorrectFineGridHighOrder(Grid *fgrid_in, Grid *cgrid_in)
     int fnBFace = fgrid->GetNBoundFace();
     int fnTFace = fgrid->GetNTotalFace();
 
-    int * cell2CoarseGridCell = fgrid->GetCell2CoarseGridCell();
-    int * fleft_cell_of_face  = fgrid->GetLeftCellOfFace();
-    int * fright_cell_of_face = fgrid->GetRightCellOfFace();
+    int *cell2CoarseGridCell = fgrid->GetCell2CoarseGridCell();
+    int *fleft_cell_of_face  = fgrid->GetLeftCellOfFace();
+    int *fright_cell_of_face = fgrid->GetRightCellOfFace();
 
-    int * cright_cell_of_face = cgrid->GetRightCellOfFace();
+    int *cright_cell_of_face = cgrid->GetRightCellOfFace();
 
-    int ** face2nodeArray = fgrid->GetFace2NodeArray();
-    int * fnode_number_of_each_face = fgrid->GetNodeNumberOfEachFace();
+    int **face2nodeArray = fgrid->GetFace2NodeArray();
+    int *fnode_number_of_each_face = fgrid->GetNodeNumberOfEachFace();
 
     RDouble **fq = reinterpret_cast< RDouble ** > (fgrid->GetDataPtr("q"));
     RDouble **cq = reinterpret_cast< RDouble ** > (cgrid->GetDataPtr("q"));
@@ -3673,8 +3715,8 @@ void NSSolverUnstruct::CorrectFineGridHighOrder(Grid *fgrid_in, Grid *cgrid_in)
     {
         //if(m == 1 || m == 2 || m == 3) continue;
         //! On coarse mesh, average the cell data onto nodes.
-        RDouble * fqNode  = new RDouble [ fnTNode ];
-        int * fnodeCount = new int [fnTNode];
+        RDouble *fqNode  = new RDouble [ fnTNode ];
+        int *fnodeCount = new int [fnTNode];
         for (int iNode = 0; iNode < fnTNode; ++ iNode)
         {
             fqNode[iNode]     = 0.0;
@@ -3716,21 +3758,21 @@ void NSSolverUnstruct::CorrectFineGridHighOrder(Grid *fgrid_in, Grid *cgrid_in)
 
                 if(rightCoarseCell != -1)
                 {
-                fqNode[fnodeID] += cq[m][rightCoarseCell];
+                    fqNode[fnodeID] += cq[m][rightCoarseCell];
                     fnodeCount[fnodeID] ++;
+                }
             }
-        }
         }
 
         for (int iNode = 0; iNode < fnTNode; ++ iNode)
         {
             fqNode[iNode] /= fnodeCount[iNode];
         }
-        delete [] fnodeCount;
+        delete [] fnodeCount;    fnodeCount = nullptr;
 
         //! On fine mesh, average the nodes data to cells.
-        int * fcellCount   = new int [fnTCell];
-        RDouble * fcellData = new RDouble [fnTCell];
+        int *fcellCount   = new int [fnTCell];
+        RDouble *fcellData = new RDouble [fnTCell];
         for (int iCell = 0; iCell < fnTCell; ++ iCell)
         {
             fcellCount[iCell] = 0;
@@ -3768,7 +3810,7 @@ void NSSolverUnstruct::CorrectFineGridHighOrder(Grid *fgrid_in, Grid *cgrid_in)
                 ++ fcellCount[re];
             }
         }
-        delete [] fqNode;
+        delete [] fqNode;    fqNode = nullptr;
 
         //! Add the correction onto fine grid.
         for (int iCell = 0; iCell < fnTCell; ++ iCell)
@@ -3789,9 +3831,8 @@ void NSSolverUnstruct::CorrectFineGridHighOrder(Grid *fgrid_in, Grid *cgrid_in)
                 }
             }
         }
-        
-        delete [] fcellCount;
-        delete [] fcellData;
+        delete [] fcellCount;    fcellCount = nullptr;
+        delete [] fcellData;    fcellData = nullptr;
     }
 }
 
@@ -3840,6 +3881,11 @@ void NSSolverUnstruct::InterpolatFineGrid(Grid *fineGrid, Grid *coarseGrid)
 //! Load rhs to residual res stored in grid.
 void NSSolverUnstruct::LoadResiduals(Grid *gridIn, FieldProxy *rhsProxy)
 {
+#ifdef USE_CUDA
+    int nEquation_gpu = GetNumberOfEquations();
+    CallGPULoadResiduals(gridIn, nEquation_gpu);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
@@ -4260,6 +4306,54 @@ void NSSolverUnstruct::gravitySource(Grid* gridIn)
     }
 }
 
+void NSSolverUnstruct::PorousMediumSource(Grid *gridIn)
+{
+    UnstructGrid *grid = UnstructGridCast(gridIn);
+    int nTotalCell = grid->GetNTotalCell();
+    RDouble *vol = grid->GetCellVolume();
+
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
+
+    int isPorousZone = parameters->GetIsPorousZone();
+
+    if (isPorousZone == 0)
+    {
+        return;
+    }
+
+    SimpleVC *volumeCondition = gridIn->GetVolumeConditionIn();
+    int vcType = volumeCondition->GetVCType();
+    if (vcType != 0)
+    {
+        return;
+    }
+
+    RDouble **q = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
+    RDouble **res = reinterpret_cast<RDouble **> (grid->GetDataPtr("res"));
+    RDouble *viscousLaminar = reinterpret_cast<RDouble *> (grid->GetDataPtr("visl"));
+
+    RDouble refReNumber = parameters->GetRefReNumber();
+    RDouble referenceLength = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
+    RDouble referenceLengthSquare = referenceLength * referenceLength;
+    const RDouble *viscousResistanceCoeff = parameters->GetViscousResistanceCoeff();
+    const RDouble *inertialResistanceCoeff = parameters->GetInertialResistanceCoeff();
+
+    for (int iCell = 0; iCell < nTotalCell; ++iCell)
+    {
+        res[IRU][iCell] -= viscousResistanceCoeff[0] * referenceLengthSquare * viscousLaminar[iCell] * q[IU][iCell] * vol[iCell] / refReNumber;
+        res[IRV][iCell] -= viscousResistanceCoeff[1] * referenceLengthSquare * viscousLaminar[iCell] * q[IV][iCell] * vol[iCell] / refReNumber;
+        res[IRW][iCell] -= viscousResistanceCoeff[2] * referenceLengthSquare * viscousLaminar[iCell] * q[IW][iCell] * vol[iCell] / refReNumber;
+    }
+
+    for (int iCell = 0; iCell < nTotalCell; ++iCell)
+    {
+        res[IRU][iCell] -= half * inertialResistanceCoeff[0] * referenceLength * q[IR][iCell] * fabs(q[IU][iCell]) * q[IU][iCell] * vol[iCell];
+        res[IRV][iCell] -= half * inertialResistanceCoeff[1] * referenceLength * q[IR][iCell] * fabs(q[IV][iCell]) * q[IV][iCell] * vol[iCell];
+        res[IRW][iCell] -= half * inertialResistanceCoeff[2] * referenceLength * q[IR][iCell] * fabs(q[IW][iCell]) * q[IW][iCell] * vol[iCell];
+    }
+
+}
+
 void NSSolverUnstruct::RotatingSource(Grid* gridIn)
 {
     UnstructGrid *grid = UnstructGridCast (gridIn);
@@ -4317,7 +4411,7 @@ void NSSolverUnstruct::ComputeFirstLayerGridHeight(Grid *gridIn)
         vector<int> *faceIndex = bcRegion->GetFaceIndex();
         for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
         {
-            // iFace is the face number in the set of faceIndex.
+            //! iFace is the face number in the set of faceIndex.
             if (!IsWall(bcType) && bcType != PHENGLEI::ABLATION_SURFACE)
             {
                 continue;
@@ -4336,6 +4430,11 @@ void NSSolverUnstruct::ComputeFirstLayerGridHeight(Grid *gridIn)
 
 void NSSolverUnstruct::ComputeGamaAndTemperature(Grid *gridIn)
 {
+#ifdef USE_CUDA
+    Param_NSSolverUnstruct *parameters_gpu = GetControlParameters();
+    CallGPUComputeGamaAndTemperature(gridIn, parameters_gpu);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
     int nTotalCell = grid->GetNTotalCell();
@@ -4399,6 +4498,11 @@ void NSSolverUnstruct::ComputeGamaAndTemperature(Grid *gridIn)
 
 void NSSolverUnstruct::ComputeNodeValue(Grid *gridIn)
 {
+#ifdef USE_CUDA
+    int nEquation_gpu = GetNumberOfEquations();
+    CallGPUComputeNodeValue(gridIn, nEquation_gpu);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
     int nTotalCell = grid->GetNTotalCell();
@@ -4488,7 +4592,6 @@ void NSSolverUnstruct::ComputeNodeValue(Grid *gridIn)
                     {
                         continue;
                     }
-
                     nodeBC[point] = bcType;
                 }
             }
@@ -4519,7 +4622,6 @@ void NSSolverUnstruct::ComputeNodeValue(Grid *gridIn)
                 {
                     continue;
                 }
-
                 nodeBC[point] = bcType;
             }
         }
@@ -4656,16 +4758,16 @@ void NSSolverUnstruct::ComputeNodeValue(Grid *gridIn)
                     RDouble dy = y[point] - yfc[iFace];
                     RDouble dz = z[point] - zfc[iFace];
                     RDouble dist = DISTANCE(dx, dy, dz);
-                    RDouble weightTemp = 1.0 / dist;                
+                    RDouble weightTemp = 1.0 / dist;
 
                     for (int m = 0; m < nEquation; ++ m)
                     {
                         RDouble faceQtemp = qOnBCFace[m][iFace];
                         qNode[m][point] += faceQtemp * weightTemp;
-                    }            
+                    }
                     tNode[0][point] += qOnBCFace[nEquation][iFace] * weightTemp;
 
-                    nodeWeight[point] += weightTemp;                
+                    nodeWeight[point] += weightTemp;
                 }
             }
         }
@@ -4705,7 +4807,6 @@ void NSSolverUnstruct::ComputeNodeValue(Grid *gridIn)
     }
 
     //! The velocity modify has not been considered on the symmetry!
-
     //! Change the number of points divided by the interpoint to the number of points before partition,because it is a face loop,each point is calculated twice,so the number of points needs to be multiplied by 2.
     InterpointInformation *interPointInfor = grid->GetInterpointInfo();
     if (interPointInfor)
@@ -4746,6 +4847,11 @@ void NSSolverUnstruct::ComputeNodeValue(Grid *gridIn)
 
 void NSSolverUnstruct::ModifyNodeValue(Grid *grid_in)
 {
+#ifdef USE_CUDA
+    int nEquation_gpu = GetNumberOfEquations();
+    CallGPUModifyNodeValue(grid_in, nEquation_gpu);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(grid_in);
     int nTotalNode = grid->GetNTotalNode();
 
@@ -4781,7 +4887,6 @@ void NSSolverUnstruct::ModifyNodeValue(Grid *grid_in)
         CompNodeVarForGGNodeLaplacian(grid);
     }
 }
-
 
 void NSSolverUnstruct::CompNodeVarForGGNodeLaplacian(Grid *grid_in)
 {
@@ -4834,7 +4939,7 @@ void NSSolverUnstruct::CompNodeVarForGGNodeLaplacian(Grid *grid_in)
         tnode[0][inode] = 0.0;
         n_count[ inode ] = 0.0;
     }
-    count=0;
+    count = 0;
     for( inode = 0; inode < nTotalNode; ++ inode )
     {
         for( j = 0; j < nCPN[ inode ]; ++j )
@@ -4900,7 +5005,7 @@ RDouble** NSSolverUnstruct::ComputePrimitiveVariablesWithMoleFraction(Grid *grid
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
-    RDouble **q   = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
+    RDouble **q = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
 
     Param_NSSolverUnstruct *parameters = GetControlParameters();
     int nm = parameters->GetNSEquationNumber();
@@ -4921,10 +5026,9 @@ RDouble** NSSolverUnstruct::ComputePrimitiveVariablesWithMoleFraction(Grid *grid
         {
             moleFraction[m][iCell] = moleFractionTemp[m];
         }
-        delete []massFractionTemp;
-        delete []moleFractionTemp;
+        delete []massFractionTemp;    massFractionTemp = nullptr;
+        delete []moleFractionTemp;    moleFractionTemp = nullptr;
     }
-
     return moleFraction;
 }
 
@@ -4935,8 +5039,8 @@ RDouble** NSSolverUnstruct::ComputeDimensionalVariables(Grid *gridIn)
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
-    RDouble **q   = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
-    RDouble **t   = reinterpret_cast< RDouble ** > (grid->GetDataPtr("t"));
+    RDouble **q = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
+    RDouble **t = reinterpret_cast< RDouble ** > (grid->GetDataPtr("t"));
 
     Param_NSSolverUnstruct *parameters = GetControlParameters();
     RDouble refDensity = parameters->GetRefDimensionalDensity();
@@ -5079,7 +5183,7 @@ void NSSolverUnstruct::ComputeVorticitybyQCriteria(Grid *gridIn, RDouble * vorti
     RDouble * dwdyField = dqdy[ IW ];
     RDouble * dwdzField = dqdz[ IW ];
 
-    RDouble Omx,Omy,Omz,Om;
+    RDouble Omx, Omy, Omz, Om;
     RDouble s11, s12, s13, s22, s23, s33, S;
 
     for (int iCell = 0; iCell < nTotal; ++ iCell) 
@@ -5099,7 +5203,7 @@ void NSSolverUnstruct::ComputeVorticitybyQCriteria(Grid *gridIn, RDouble * vorti
 
         s11 = dudx; s22 = dvdy; s33 = dwdz;
         s12 = half * (dudy + dvdx); s13 = half * (dudz + dwdx); s23 = half * (dvdz + dwdy);
-        S = two * (s11*s11 + s22*s22 + s33*s33 + two*(s12*s12 + s13*s13 + s23*s23));
+        S = two * (s11 * s11 + s22 * s22 + s33 * s33 + two*(s12 * s12 + s13 * s13 + s23 * s23));
         S = sqrt (S);
         strain_rate[iCell] = S;
 
@@ -5123,7 +5227,7 @@ RDouble * NSSolverUnstruct::ComputeCp(Grid *gridIn)
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
-    RDouble ** q   = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
+    RDouble **q = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
 
     Param_NSSolverUnstruct *parameters = GetControlParameters();
     RDouble *primitiveVarFarfield = parameters->GetPrimitiveVarFarfield();
@@ -5132,7 +5236,7 @@ RDouble * NSSolverUnstruct::ComputeCp(Grid *gridIn)
     RDouble poo = primitiveVarFarfield[IP];
 
     //! Pressure cofficients: cp = [p - 1.0 / (gama * mach * mach)] / 2.0 = (p - poo) / 2.0.
-    RDouble * cp = new RDouble [nTotal];
+    RDouble *cp = new RDouble [nTotal];
     for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
         cp[iCell] = 2.0 * (q[IP][iCell] - poo);
@@ -5302,6 +5406,11 @@ void NSSolverUnstruct::GetPreconCoefficientLR(Grid *gridIn, FaceProxy *faceProxy
 
 void NSSolverUnstruct::ZeroResiduals(Grid *gridIn)
 {
+#ifdef USE_CUDA
+    int nEquation_gpu = GetNumberOfEquations();
+    CallGPUZeroResiduals(gridIn, nEquation_gpu);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
@@ -5357,6 +5466,12 @@ void NSSolverUnstruct::ComputeMinTimeStep(Grid *gridIn, RDouble &minDt, RDouble 
 
     minDt = LARGE;
     maxDt = - LARGE;
+
+#ifdef USE_CUDA
+    CallGPUComputeMinTimeStep(nTotalCell);	
+    return;
+#endif
+
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         minDt = MIN(minDt, dt[iCell]);
@@ -5366,6 +5481,10 @@ void NSSolverUnstruct::ComputeMinTimeStep(Grid *gridIn, RDouble &minDt, RDouble 
 
 void NSSolverUnstruct::ReduceMaxTimeStep(Grid *gridIn, RDouble globalMinDt)
 {
+#ifdef USE_CUDA
+    CallGPUReduceMaxTimeStep(gridIn);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     RDouble *volume = grid->GetCellVolume();
@@ -5394,6 +5513,10 @@ void NSSolverUnstruct::ReduceMaxTimeStep(Grid *gridIn, RDouble globalMinDt)
 //! Referenced in R. F. Chen && Z. J. Wang, AIAA Journal 2000, 38(12).
 void NSSolverUnstruct::SpectrumRadiusInviscid(Grid *gridIn)
 {
+#ifdef USE_CUDA
+    CallGPUSpectrumRadiusInviscid(gridIn);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int *leftCellofFace  = grid->GetLeftCellOfFace();
     int *rightCellofFace = grid->GetRightCellOfFace();
@@ -5493,6 +5616,11 @@ void NSSolverUnstruct::SpectrumRadiusInviscid(Grid *gridIn)
 
 void NSSolverUnstruct::SpectrumRadiusViscous(Grid *gridIn)
 {
+#ifdef USE_CUDA
+    Param_NSSolverUnstruct *parameters_gpu = GetControlParameters();
+    CallGPUSpectrumRadiusViscous(gridIn, parameters_gpu);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int *leftCellofFace  = grid->GetLeftCellOfFace();
     int *rightCellofFace = grid->GetRightCellOfFace();
@@ -5635,6 +5763,12 @@ void NSSolverUnstruct::SpectrumRadiusChemical(Grid *gridIn)
 
 void NSSolverUnstruct::LocalTimeStep(Grid *gridIn)
 {
+#ifdef USE_CUDA
+    Param_NSSolverUnstruct *parameters_gpu = GetControlParameters();
+    Param_NSSolver *parameters_nsgpu = GetControlParameters();
+    CallGPULocalTimeStep(gridIn, parameters_gpu, parameters_nsgpu);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
     RDouble *volume    = grid->GetCellVolume();
 
@@ -5718,9 +5852,9 @@ void NSSolverUnstruct::LimitCFL(Grid *gridIn, RDouble *CFLCell)
 
     RDouble *cellSkewness = grid->GetCellSkewness();
 
-    //！adjust CFLCell according to p in the cell.
-        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
-        {
+    //! adjust CFLCell according to p in the cell.
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
         if(q[IP][iCell] < pLowerLimit)
         {
             CFLCell[iCell] = CFLStart;
@@ -5729,11 +5863,11 @@ void NSSolverUnstruct::LimitCFL(Grid *gridIn, RDouble *CFLCell)
         {
             CFLCell[iCell] = (q[IP][iCell]-pUpperLimit)*(CFL-CFLStart)/(pUpperLimit-pLowerLimit) + CFL;
         }
-        }
+    }
 
     if(0 == level)
     {
-        //！adjust CFLCell according to skewness in the cell.
+        //! adjust CFLCell according to skewness in the cell.
         for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
             if(cellSkewness[iCell] < tenth)
@@ -5750,23 +5884,23 @@ void NSSolverUnstruct::LimitCFL(Grid *gridIn, RDouble *CFLCell)
 
 void NSSolverUnstruct::LocalTimeStep_Prince(Grid* gridIn)
 {
-    UnstructGrid* grid = UnstructGridCast(gridIn);
+    UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nTotalFace = grid->GetNTotalFace();
     int nBoundFace = grid->GetNBoundFace();
-    int* leftCellofFace = grid->GetLeftCellOfFace();
-    int* rightCellofFace = grid->GetRightCellOfFace();
-    RDouble* xfc = grid->GetFaceCenterX();
-    RDouble* yfc = grid->GetFaceCenterY();
-    RDouble* zfc = grid->GetFaceCenterZ();
-    RDouble* xcc = grid->GetCellCenterX();
-    RDouble* ycc = grid->GetCellCenterY();
-    RDouble* zcc = grid->GetCellCenterZ();
-    RDouble* xfn = grid->GetFaceNormalX();
-    RDouble* yfn = grid->GetFaceNormalY();
-    RDouble* zfn = grid->GetFaceNormalZ();
-    RDouble* area = grid->GetFaceArea();
-    RDouble* vol = grid->GetCellVolume();
+    int *leftCellofFace = grid->GetLeftCellOfFace();
+    int *rightCellofFace = grid->GetRightCellOfFace();
+    RDouble *xfc = grid->GetFaceCenterX();
+    RDouble *yfc = grid->GetFaceCenterY();
+    RDouble *zfc = grid->GetFaceCenterZ();
+    RDouble *xcc = grid->GetCellCenterX();
+    RDouble *ycc = grid->GetCellCenterY();
+    RDouble *zcc = grid->GetCellCenterZ();
+    RDouble *xfn = grid->GetFaceNormalX();
+    RDouble *yfn = grid->GetFaceNormalY();
+    RDouble *zfn = grid->GetFaceNormalZ();
+    RDouble *area = grid->GetFaceArea();
+    RDouble *vol = grid->GetCellVolume();
 
     RDouble **q   = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
     RDouble *visl = reinterpret_cast<RDouble *> (grid->GetDataPtr("visl"));
@@ -6039,6 +6173,11 @@ void NSSolverUnstruct::FillField(Grid *gridIn, FieldProxy *field_proxy, RDouble 
 
 void NSSolverUnstruct::FillField(Grid *gridIn, FieldProxy *fieldTarget, FieldProxy *fieldSource)
 {
+#ifdef USE_CUDA
+    int nEquation_gpu = GetNumberOfEquations();
+    CallGPUFillField(gridIn, nEquation_gpu);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
@@ -6060,6 +6199,11 @@ void NSSolverUnstruct::FillField(Grid *gridIn, FieldProxy *fieldTarget, FieldPro
 
 void NSSolverUnstruct::RungeKuttaResidual(Grid *gridIn, FieldProxy *dqProxy, RDouble coef)
 {
+#ifdef USE_CUDA
+    int nEquation_gpu = GetNumberOfEquations();
+    CallGPURungeKuttaResidual(gridIn, nEquation_gpu, coef);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int      nTotalCell = grid->GetNTotalCell();
 
@@ -6144,6 +6288,10 @@ void NSSolverUnstruct::RestrictAllQ(Grid *fgrid, Grid *cgrid)
 
 void NSSolverUnstruct::LoadFlux(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd)
 {
+#ifdef USE_CUDA
+    CallGPULoadFlux(gridIn, localStart, localEnd);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nBoundFace = grid->GetNBoundFace();
 
@@ -6351,7 +6499,6 @@ void NSSolverUnstruct::ComputeViscousCoeff(Grid *gridIn)
     {
         ComputeViscousCoefficient(gridIn);
     }
-
 }
 
 void NSSolverUnstruct::ComputeViscousCoefficient(Grid *gridIn)
@@ -6423,11 +6570,16 @@ void NSSolverUnstruct::ComputeViscousCoefficient(Grid *gridIn)
         }
     }
 
-    delete []primitiveVars;
+    delete [] primitiveVars;    primitiveVars = nullptr;
 }
 
 void NSSolverUnstruct::ComputeViscousCoefficientWithoutChemical(Grid *gridIn)
 {
+#ifdef USE_CUDA
+    Param_NSSolverUnstruct *parameters_gpu = GetControlParameters();
+    CallGPUComputeViscousCoefficientWithoutChemical(gridIn, parameters_gpu);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
@@ -6454,7 +6606,7 @@ void NSSolverUnstruct::InitCGrid(Grid *fgrid_in, Grid *cgrid_in)
 {
     UnstructGrid *fgrid = UnstructGridCast(fgrid_in);
     UnstructGrid *cgrid = UnstructGridCast(cgrid_in);
-    int * cell2coarsegridcell  = fgrid->GetCell2CoarseGridCell();
+    int *cell2coarsegridcell = fgrid->GetCell2CoarseGridCell();
     int fnTotalCell = fgrid->GetNTotalCell();
     int cnTCell = cgrid->GetNTotalCell();
     RDouble *cvol = cgrid->GetCellVolume();
@@ -6493,7 +6645,7 @@ void NSSolverUnstruct::InitCGrid(Grid *fgrid_in, Grid *cgrid_in)
 
 void NSSolverUnstruct::ComputePreconditionCoefficient(Grid *gridIn)
 {
-    UnstructGrid *grid   = UnstructGridCast(gridIn);
+    UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
 
     RDouble **q = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
@@ -6526,8 +6678,8 @@ void NSSolverUnstruct::ComputePreconditionCoefficient(Grid *gridIn)
         RDouble mach2 = v2 / c2;
         RDouble machPrec2 = MIN(MAX(mach2,kPreconCoeff * machinf2),1.0);
 
-            preconCoefficient[iCell] = machPrec2;
-        }
+        preconCoefficient[iCell] = machPrec2;
+    }
 
     grid->SetGhostCell(preconCoefficient);
 }
@@ -6540,9 +6692,9 @@ void NSSolverUnstruct::ComputePreconditionCoefficientUnsteady(Grid *gridIn)
     int nTotal = nTotalCell + nBoundFace;
 
     RDouble *vol = grid->GetCellVolume();
-    RDouble * cellVelocityX      = grid->GetCellVelocityX();
-    RDouble * cellVelocityY      = grid->GetCellVelocityY();
-    RDouble * cellVelocityZ      = grid->GetCellVelocityZ();
+    RDouble *cellVelocityX = grid->GetCellVelocityX();
+    RDouble *cellVelocityY = grid->GetCellVelocityY();
+    RDouble *cellVelocityZ = grid->GetCellVelocityZ();
 
     RDouble **q = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
     RDouble *gamma = reinterpret_cast< RDouble * > (grid->GetDataPtr("gama"));
@@ -6565,11 +6717,11 @@ void NSSolverUnstruct::ComputePreconditionCoefficientUnsteady(Grid *gridIn)
     {
         GlobalDataBase::GetData("maxTimeCoeff", &maxTimeCoeff, PHINT, 1);
     }
-        else
-        {
-        GlobalDataBase::UpdateData("maxTimeCoeff", &maxTimeCoeff, PHINT, 1);
-        }
-        
+    else
+    {
+    GlobalDataBase::UpdateData("maxTimeCoeff", &maxTimeCoeff, PHINT, 1);
+    }
+
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         RDouble rm  = q[IR][iCell];
@@ -6579,9 +6731,9 @@ void NSSolverUnstruct::ComputePreconditionCoefficientUnsteady(Grid *gridIn)
         RDouble pm  = q[IP][iCell];
         RDouble gama = gamma[iCell];
 
-        RDouble ucc  = cellVelocityX[iCell];
-        RDouble vcc  = cellVelocityY[iCell];
-        RDouble wcc  = cellVelocityZ[iCell];
+        RDouble ucc = cellVelocityX[iCell];
+        RDouble vcc = cellVelocityY[iCell];
+        RDouble wcc = cellVelocityZ[iCell];
 
         RDouble c2 = gama * pm / rm;
         RDouble v2 = (um - ucc) * (um - ucc) + (vm - vcc) * (vm - vcc) + (wm - wcc) * (wm - wcc);
@@ -6598,12 +6750,12 @@ void NSSolverUnstruct::ComputePreconditionCoefficientUnsteady(Grid *gridIn)
             RDouble dt_max_lim = maxTimeCoeff * physicalTimeStep;
             dtemp = MIN(dtemp, dt_max_lim);
             dt[iCell] = dtemp / (vol[iCell] + SMALL);
-    }
+        }
 
         timeCoefficient[iCell] = (1.0 + timeAccuracyLowPre )* dtemp / physicalTimeStep ;
         timeCoefficientInverse[iCell] = 1.0 / (1.0 + timeCoefficient[iCell]);
         preconCoefficient[iCell] = preconCoefficient[iCell] / (timeCoefficientInverse[iCell] + (1.0 - timeCoefficientInverse[iCell]) * preconCoefficient[iCell]);
-}
+    }
 
     grid->SetGhostCellExceptInterface(timeCoefficient);
     grid->SetGhostCellExceptInterface(timeCoefficientInverse);
@@ -6647,8 +6799,8 @@ void NSSolverUnstruct::InviscidFlux(Grid *gridIn)
     RDouble** dRdq1stfromGrid = reinterpret_cast<RDouble**> (grid->GetDataPtr("dRdq1st"));
     faceProxy->SetJacobianMatrix1st(dRdq1stfromGrid);
 
-    // GMRESBoundary
-    RDouble** dDdPfromGrid = reinterpret_cast<RDouble**> (grid->GetDataPtr("dDdP"));
+    //! GMRESBoundary
+    RDouble **dDdPfromGrid = reinterpret_cast<RDouble**> (grid->GetDataPtr("dDdP"));
     faceProxy->SetdDdPMatrix(dDdPfromGrid);
 #endif
 
@@ -6682,78 +6834,79 @@ void NSSolverUnstruct::CalPressureFactor(Grid *gridIn)
     int nTotalCell = grid->GetNTotalCell();
 
     int **cell2face = grid->GetCell2Face();
-	vector<int> * c2c = grid->GetCell2Cell();
+    vector<int> * c2c = grid->GetCell2Cell();
     int *faceNumberOfEachCell = grid->GetFaceNumberOfEachCell();
 
     int *leftCellofFace = grid->GetLeftCellOfFace();
     int *rightCellofFace = grid->GetRightCellOfFace();
 
-	RDouble minPressureRatio = 1.3;
-	RDouble maxPressureRatio = 2.6;
-	RDouble pi = 3.141592653589;
-
-	int RoeEntropyFixMethod = this->GetControlParameters()->GetRoeEntropyFixMethod();
+    RDouble minPressureRatio = 1.3;
+    RDouble maxPressureRatio = 2.6;
+    RDouble pi = 3.141592653589;
+    
+    int RoeEntropyFixMethod = this->GetControlParameters()->GetRoeEntropyFixMethod();
 
     RDouble **q   = reinterpret_cast <RDouble **> (grid->GetDataPtr("q"));
     RDouble *rtem = reinterpret_cast <RDouble *> (grid->GetDataPtr("rtem"));
 
-	if (RoeEntropyFixMethod == 2)
-	{
-		for (int iCell = 0; iCell < nTotalCell; ++iCell)
-		{
-			RDouble LeftPressureOfCell = zero;
-			RDouble RightPressureOfCell = zero;
-			rtem[iCell] = zero;
-			for (int j = 0; j < faceNumberOfEachCell[iCell]; ++j)
-			{
-				int face = cell2face[iCell][j];
-				int le = leftCellofFace[face];
-				int re = rightCellofFace[face];
+    if (RoeEntropyFixMethod == 2)
+    {
+        for (int iCell = 0; iCell < nTotalCell; ++iCell)
+        {
+            RDouble LeftPressureOfCell = zero;
+            RDouble RightPressureOfCell = zero;
+            rtem[iCell] = zero;
+            for (int j = 0; j < faceNumberOfEachCell[iCell]; ++j)
+            {
+                int face = cell2face[iCell][j];
+                int le = leftCellofFace[face];
+                int re = rightCellofFace[face];
+                
+                LeftPressureOfCell += q[PHSPACE::IDX::IP][le];
+                RightPressureOfCell += q[PHSPACE::IDX::IP][re];
+            }
+            rtem[iCell] += ABS(RightPressureOfCell - LeftPressureOfCell) / ABS(RightPressureOfCell + LeftPressureOfCell);
+            rtem[iCell] /= static_cast <RDouble> (faceNumberOfEachCell[iCell]);
+        }
+    }
 
-				LeftPressureOfCell += q[PHSPACE::IDX::IP][le];
-				RightPressureOfCell += q[PHSPACE::IDX::IP][re];
-			}
-			rtem[iCell] += ABS(RightPressureOfCell - LeftPressureOfCell) / ABS(RightPressureOfCell + LeftPressureOfCell);
-			rtem[iCell] /= static_cast <RDouble> (faceNumberOfEachCell[iCell]);
-		}
-	}
+    if (RoeEntropyFixMethod == 6)
+    {
+        for (int iCell = 0; iCell < nTotalCell; ++iCell)
+        {
+            int nNeighbor = static_cast<int>(c2c[iCell].size());
 
-	if (RoeEntropyFixMethod == 6)
-	{	
-		for (int iCell = 0; iCell < nTotalCell; ++iCell)
-		{
-			int nNeighbor = static_cast<int>(c2c[iCell].size());
+            RDouble minPressure = q[IP][iCell];
+            RDouble maxPressure = q[IP][iCell];
 
-			RDouble minPressure = q[IP][iCell];
-			RDouble maxPressure = q[IP][iCell];
+            for (int j = 0; j < nNeighbor; ++j)
+            {
+                int neighborCell = c2c[iCell][j];
+                if (q[IP][neighborCell] < minPressure)
+                {
+                    minPressure = q[IP][neighborCell];
+                }
+                if (q[IP][neighborCell] > maxPressure)
+                {
+                    maxPressure = q[IP][neighborCell];
+                }
+            }
 
-			for (int j = 0; j < nNeighbor; ++j)
-			{
-				int neighborCell = c2c[iCell][j];
-				if (q[IP][neighborCell] < minPressure)
-				{
-					minPressure = q[IP][neighborCell];
-				}
-				if (q[IP][neighborCell] > maxPressure)
-				{
-					maxPressure = q[IP][neighborCell];
-				}
-			}
+            RDouble pressureRatio = maxPressure / minPressure;
+            RDouble presFunc = min(one, max(zero, (maxPressureRatio - pressureRatio) / (maxPressureRatio - minPressureRatio)));
+            RDouble pressCosFunc = cos(presFunc*pi);
+            pressCosFunc = max(-one, min(pressCosFunc, one));
 
-			RDouble pressureRatio = maxPressure / minPressure;
-			RDouble presFunc = min(one, max(zero, (maxPressureRatio - pressureRatio) / (maxPressureRatio - minPressureRatio)));
-			RDouble pressCosFunc = cos(presFunc*pi);
-			pressCosFunc = max(-one, min(pressCosFunc, one));
-
-			rtem[iCell] = half * (one - pressCosFunc);
-		}
-	}
+            rtem[iCell] = half * (one - pressCosFunc);
+        }
+    }
 
     grid->SetGhostCellExceptInterface(rtem);
 }
 
 void NSSolverUnstruct::GetHeatTransferCoeff(Grid *gridIn)
 {
+
 }
 
 void NSSolverUnstruct::ViscousFlux(Grid *gridIn)
@@ -6764,6 +6917,12 @@ void NSSolverUnstruct::ViscousFlux(Grid *gridIn)
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalFace = grid->GetNTotalFace();
+
+#ifdef USE_CUDA
+    using namespace GPUMemory;
+    using namespace GPUControlVariables;
+    SetGPUVisFluxSolverControlVars(d_visflux_solver ,"NSSolverUnstruct");
+#endif
 
     FaceProxy *faceProxy = CreateFaceProxy(grid);
     faceProxy->SetNSFaceValue(CreateNSFaceValue(grid));
@@ -6796,6 +6955,12 @@ void NSSolverUnstruct::ViscousFlux(Grid *gridIn)
         localStart = localEnd;
     } while (localStart < nTotalFace);
 
+#ifdef USE_CUDA
+    using namespace GPUMemory;
+    using namespace GPUControlVariables;
+    SetGPUVisFluxSolverControlVars(d_visflux_solver ,"Empty");
+#endif
+
     delete faceProxy;    faceProxy = nullptr;
 }
 
@@ -6811,6 +6976,13 @@ void NSSolverUnstruct::ComputeFaceWeight(Grid *gridIn, FaceProxy *faceProxy, int
 
 void NSSolverUnstruct::GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd)
 {
+#ifdef USE_CUDA
+    using namespace GPUKernels;
+    int nEquation_gpu = GetNumberOfEquations();
+    Param_NSSolverUnstruct *parameters_gpu = GetControlParameters();
+    CallGPUGetVisFaceValue(gridIn, parameters_gpu, nEquation_gpu, localStart, localEnd);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nBoundFace = grid->GetNBoundFace();
     int nTotalCell = grid->GetNTotalCell();
@@ -6846,6 +7018,19 @@ void NSSolverUnstruct::GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int l
 
     int numberOfSpecies = parameters->GetNumberOfSpecies();
     int nChemical = parameters->GetChemicalFlag();
+
+    int isPorousZone = parameters->GetIsPorousZone();
+    RDouble porosity, kSolid;
+
+    using namespace PHENGLEI;
+    int vcType = FLUID;
+    if (isPorousZone != 0)
+    {
+        porosity = parameters->GetPorosity();
+        kSolid = parameters->GetHeatConductivitySolid();
+        SimpleVC *volumeCondition = gridIn->GetVolumeConditionIn();
+        vcType = volumeCondition->GetVCType();
+    }
 
     int nEquation = GetNumberOfEquations();
 
@@ -6927,6 +7112,11 @@ void NSSolverUnstruct::GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int l
         {
             RDouble cp = 1.0 / ((refGama - 1.0) * referenceMachNumberSquare);
             kCp[jFace] = (viscousLaminarFace[jFace] * oPrandtlLaminar + viscousTurbulenceFace[jFace] * oPrandtlTurbulence) * cp;
+            if (isPorousZone != 0 && vcType == 0)
+            {
+                kCp[jFace] *= porosity;
+                kCp[jFace] += kSolid * refDimensionalTemperature * (1.0 - porosity);
+            }
         }
     }
 
@@ -6939,7 +7129,7 @@ void NSSolverUnstruct::GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int l
     {
         UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
         int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
-        
+
         RDouble tw = tWall / refDimensionalTemperature;
         for (int iFace = localStart; iFace < nMid; ++ iFace)
         {
@@ -7018,6 +7208,11 @@ void NSSolverUnstruct::GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int l
                     RDouble nonDimensionalSutherlandTemperature = parameters->GetNonDimensionalSutherlandTemperature();
                     viscousLaminarFace[jFace] = tMid[0][jFace] * sqrt(tMid[0][jFace]) * (1.0 + nonDimensionalSutherlandTemperature) / (tMid[0][jFace] + nonDimensionalSutherlandTemperature);
                     kCp[jFace] = (viscousLaminarFace[jFace] * oPrandtlLaminar + viscousTurbulenceFace[jFace] * oPrandtlTurbulence) * cp;
+                    if (isPorousZone != 0 && vcType == UNDEFINED)
+                    {
+                        kCp[jFace] *= porosity;
+                        kCp[jFace] += kSolid * refDimensionalTemperature * (1.0 - porosity);
+                    }
                 }
             }
         }
@@ -7052,7 +7247,7 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
     RDouble **dtdy = reinterpret_cast <RDouble **> (gridIn->GetDataPtr("gradTemperatureY"));
     RDouble **dtdz = reinterpret_cast <RDouble **> (gridIn->GetDataPtr("gradTemperatureZ"));
 
-    RDouble  **flux = faceProxy->GetFlux();
+    RDouble **flux = faceProxy->GetFlux();
 
     RDouble *deltaL = faceProxy->GetWeightL();
     RDouble *deltaR = faceProxy->GetWeightR();
@@ -7116,37 +7311,35 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
     RDouble **aniss  = 0;
     RDouble coefficientofStateEquation = gas->GetCoefficientOfStateEquation();
 
-
     if (nrokplus > 0)
     {
         qTurb = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"));
         aniss  = reinterpret_cast<RDouble **> (grid->GetDataPtr("aniss"));
     }
 
-    // GMRESCoupled
+    //! GMRESCoupled
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
-    RDouble** dRdqCoupledTerm = 0;
+    RDouble **dRdqCoupledTerm = 0;
     if( viscousType == ONE_EQU )
     {
-        dRdqCoupledTerm         = reinterpret_cast <RDouble**> (grid->GetDataPtr("dRdqCoupledTerm"));
+        dRdqCoupledTerm = reinterpret_cast <RDouble**> (grid->GetDataPtr("dRdqCoupledTerm"));
     }
-    RDouble **primitiveturb             = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"  ));
-    RDouble **dDdP_turb                 = reinterpret_cast<RDouble **> (grid->GetDataPtr("dDdP_turb"));
-    RDouble* dFluxdnutL                 = new RDouble[nEquation]();
-    RDouble* dFluxdnutR                 = new RDouble[nEquation]();
+    RDouble **primitiveturb = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"  ));
+    RDouble **dDdP_turb     = reinterpret_cast<RDouble **> (grid->GetDataPtr("dDdP_turb"));
+    RDouble *dFluxdnutL     = new RDouble[nEquation]();
+    RDouble *dFluxdnutR     = new RDouble[nEquation]();
 
-
-    // GMRES2ndCorrection
+    //! GMRES2ndCorrection
     vector<int> BCLeftCells     = grid->GetBCLeftCells();
     vector<int> BCRightCells    = grid->GetBCRightCells();
     vector<int> BCFaces         = grid->GetBCFaces();
 
     int nIndependentVars = nEquation * 2 + (nEquation + nTemperatureModel) * 6;
     int halfIndependentVars = nIndependentVars / 2;
-    // GMRESCoupled
+    //! GMRESCoupled
     if( viscousType == ONE_EQU )
     {
-        nIndependentVars += 2;  // two extra terms include the derivative w.r.t nut_L, nut_R
+        nIndependentVars += 2;    //! two extra terms include the derivative w.r.t nut_L, nut_R
     }
 
     int colidx, colidx2, colidx1st, colidx21st;
@@ -7162,54 +7355,53 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
 
     RDouble *primL = new RDouble[nEquation];
     RDouble *primR = new RDouble[nEquation];
-    RDouble *fN    = new RDouble[nEquation]; // for neighbors
+    RDouble *fN    = new RDouble[nEquation];    //! for neighbors
     ADReal *fL     = new ADReal[nEquation];
     ADReal *fR     = new ADReal[nEquation];
     ADReal *fluxp  = new ADReal[nLaminar];
-    ADReal fLturb;  // GMRESCoupled
-    ADReal fRturb;  // GMRESCoupled
-
+    ADReal fLturb;    //! GMRESCoupled
+    ADReal fRturb;    //! GMRESCoupled
 
     RDouble t1x, t1y, t1z, t2x, t2y, t2z;
-    RDouble txx,tyy,tzz;
-    RDouble txy,txz,tyz;
-    
-    bool isFineGrid = grid->IsFinestGrid();
-    
-    using namespace IDX;
-    RDouble  dFluxdpL[nEquation][nEquation];
-    RDouble  dFluxdpR[nEquation][nEquation];
-    RDouble  dGradtmp[nEquation][nEquation];
-    RDouble  dGradtmpBC[nEquation][nEquation];
-    RDouble  dDdPlocal[nEquation][nEquation];
-    RDouble  dFluxdgradxL[nEquation][nEquation+nTemperatureModel];
-    RDouble  dFluxdgradyL[nEquation][nEquation+nTemperatureModel];
-    RDouble  dFluxdgradzL[nEquation][nEquation+nTemperatureModel];
-    RDouble  dFluxdgradxR[nEquation][nEquation+nTemperatureModel];
-    RDouble  dFluxdgradyR[nEquation][nEquation+nTemperatureModel];
-    RDouble  dFluxdgradzR[nEquation][nEquation+nTemperatureModel];
-    RDouble  dfpert;
-    RDouble  dgradpert;
-    RDouble  perturbScale = 1e-6;
+    RDouble txx, tyy, tzz;
+    RDouble txy, txz, tyz;
 
-    vector<int>* neighborCells = grid->GMRESGetNeighborCells();
-    vector<int>* neighborFaces = grid->GMRESGetNeighborFaces();
-    vector<int>* neighborLR = grid->GMRESGetNeighborLR();
-    RDouble** dqdcvL= new RDouble*[nEquation];
-    RDouble** dqdcvR= new RDouble*[nEquation];
-    RDouble** dqdcvN= new RDouble*[nEquation];  // dqdcv for neighbors
-    RDouble** dgraddqx = new RDouble*[nEquation+nTemperatureModel];
-    RDouble** dgraddqy = new RDouble*[nEquation+nTemperatureModel];
-    RDouble** dgraddqz = new RDouble*[nEquation+nTemperatureModel];
+    bool isFineGrid = grid->IsFinestGrid();
+
+    using namespace IDX;
+    RDouble dFluxdpL[nEquation][nEquation];
+    RDouble dFluxdpR[nEquation][nEquation];
+    RDouble dGradtmp[nEquation][nEquation];
+    RDouble dGradtmpBC[nEquation][nEquation];
+    RDouble dDdPlocal[nEquation][nEquation];
+    RDouble dFluxdgradxL[nEquation][nEquation+nTemperatureModel];
+    RDouble dFluxdgradyL[nEquation][nEquation+nTemperatureModel];
+    RDouble dFluxdgradzL[nEquation][nEquation+nTemperatureModel];
+    RDouble dFluxdgradxR[nEquation][nEquation+nTemperatureModel];
+    RDouble dFluxdgradyR[nEquation][nEquation+nTemperatureModel];
+    RDouble dFluxdgradzR[nEquation][nEquation+nTemperatureModel];
+    RDouble dfpert;
+    RDouble dgradpert;
+    RDouble perturbScale = 1e-6;
+
+    vector<int> *neighborCells = grid->GMRESGetNeighborCells();
+    vector<int> *neighborFaces = grid->GMRESGetNeighborFaces();
+    vector<int> *neighborLR = grid->GMRESGetNeighborLR();
+    RDouble **dqdcvL= new RDouble*[nEquation];
+    RDouble **dqdcvR= new RDouble*[nEquation];
+    RDouble **dqdcvN= new RDouble*[nEquation];    //! dqdcv for neighbors
+    RDouble **dgraddqx = new RDouble*[nEquation+nTemperatureModel];
+    RDouble **dgraddqy = new RDouble*[nEquation+nTemperatureModel];
+    RDouble **dgraddqz = new RDouble*[nEquation+nTemperatureModel];
 
     for(int indexI=0; indexI < nEquation; indexI++)
     {
-        dqdcvL[indexI]      = new RDouble[nEquation];
-        dqdcvR[indexI]      = new RDouble[nEquation];
-        dqdcvN[indexI]      = new RDouble[nEquation];
-        dgraddqx[indexI]    = new RDouble[nEquation];
-        dgraddqy[indexI]    = new RDouble[nEquation];
-        dgraddqz[indexI]    = new RDouble[nEquation];
+        dqdcvL[indexI]   = new RDouble[nEquation];
+        dqdcvR[indexI]   = new RDouble[nEquation];
+        dqdcvN[indexI]   = new RDouble[nEquation];
+        dgraddqx[indexI] = new RDouble[nEquation];
+        dgraddqy[indexI] = new RDouble[nEquation];
+        dgraddqz[indexI] = new RDouble[nEquation];
         
         for(int indexJ =0; indexJ < nEquation; indexJ ++)
         {
@@ -7223,14 +7415,14 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
     dgraddqz[nEquation]    = new RDouble[nEquation];
 
     int nMid = 0;
-        
-    // GMRESBoundary
+
+    //! GMRESBoundary
      if (localStart >= nBoundFace)
      {
-         nMid = localStart;  
+         nMid = localStart;
      }
      else if (localEnd <= nBoundFace) 
-     { 
+     {
         //! If they are all boundary faces.
          nMid = localEnd;
      }
@@ -7239,8 +7431,8 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
          //! Part of them are boundary faces.
          nMid = nBoundFace;
      }
-    
-    // boundary faces
+
+    //! boundary faces
     for (int iFace = localStart; iFace < nMid; ++ iFace)
     {
         int le = leftCellofFace [iFace];
@@ -7250,25 +7442,25 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
         //! init the value
         for (int m = 0; m < nEquation; ++ m)
         {
-            fL[m]       = primitiveVariable[m][le];
-            fR[m]       = primitiveVariable[m][re];
-            primL[m]    = primitiveVariable[m][le];
-            primR[m]    = primitiveVariable[m][re];
-            dqdxL[m]    = dqdx[m][le];
-            dqdyL[m]    = dqdy[m][le];
-            dqdzL[m]    = dqdz[m][le];
-            dqdxR[m]    = dqdx[m][re];
-            dqdyR[m]    = dqdy[m][re];
-            dqdzR[m]    = dqdz[m][re];
+            fL[m]    = primitiveVariable[m][le];
+            fR[m]    = primitiveVariable[m][re];
+            primL[m] = primitiveVariable[m][le];
+            primR[m] = primitiveVariable[m][re];
+            dqdxL[m] = dqdx[m][le];
+            dqdyL[m] = dqdy[m][le];
+            dqdzL[m] = dqdz[m][le];
+            dqdxR[m] = dqdx[m][re];
+            dqdyR[m] = dqdy[m][re];
+            dqdzR[m] = dqdz[m][re];
         }
-        dqdxL[nEquation]        = dtdx[ITT][le];
-        dqdyL[nEquation]        = dtdy[ITT][le];
-        dqdzL[nEquation]        = dtdz[ITT][le];
-        dqdxR[nEquation]        = dtdx[ITT][re];
-        dqdyR[nEquation]        = dtdy[ITT][re];
-        dqdzR[nEquation]        = dtdz[ITT][re];
+        dqdxL[nEquation] = dtdx[ITT][le];
+        dqdyL[nEquation] = dtdy[ITT][le];
+        dqdzL[nEquation] = dtdz[ITT][le];
+        dqdxR[nEquation] = dtdx[ITT][re];
+        dqdyR[nEquation] = dtdy[ITT][re];
+        dqdzR[nEquation] = dtdz[ITT][re];
 
-        // GMRESCoupled
+        //! GMRESCoupled
         if( viscousType == ONE_EQU )
         {
             fLturb = primitiveturb[0][le];
@@ -7291,14 +7483,12 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             dqdzR[m].diff(halfIndependentVars + nEquation + 2 * (nEquation + nTemperatureModel) + m, nIndependentVars);
         }
 
-
-        // GMRESCoupled
+        //! GMRESCoupled
         if( viscousType == ONE_EQU )
         {
             fLturb.diff(nIndependentVars-2,nIndependentVars);
             fRturb.diff(nIndependentVars-1,nIndependentVars);
         }
-
 
         if( viscousType == LAMINAR )
         {
@@ -7312,8 +7502,6 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                                 dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
                                 gridIn, faceProxy, parameters); 
         }
-
-
 
         for (int m = 0; m < nLaminar; ++ m)
         {
@@ -7335,7 +7523,7 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                 dFluxdgradzR[m][n] = fluxp[m].dx(halfIndependentVars + nEquation + 2 * (nEquation + nTemperatureModel) + n);
             }
         }
-        
+
         if( viscousType == ONE_EQU )
         {
             for (int m = 0; m < nLaminar; ++ m)
@@ -7357,8 +7545,8 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                 dRdqCoupledTerm[indexI][colidx2] += dFluxdnutR[indexI]*dDdP_turb[0][re-nTotalCell];
             }
         }
-        // assemble the matrix
-        // contributions from the bc
+        //! assemble the matrix
+        //! contributions from the bc
         int indexre = (re - nTotalCell) * nEquation;
         for (int indexI = 0; indexI < nEquation; indexI++)
         {
@@ -7368,15 +7556,15 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             }
         }
 
-        // GMRESPV , obtain the dqdcv for the left cell
+        //! GMRESPV , obtain the dqdcv for the left cell
         gas->dPrimitive2dConservative(primL,gama[le],dqdcvL);
 
-        // convert dFluxdpL to dFluxdcvL by right multiplying the dqdcvL,
-        // then minus to the corresponding location in dRdq.
-        int indexf = re * nEquation; // first index
-        int indexs = le * nEquation; // second index
-        colidx      = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, re, le);
-        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, re, le); // GMRESJac1st
+        //! convert dFluxdpL to dFluxdcvL by right multiplying the dqdcvL,
+        //! then minus to the corresponding location in dRdq.
+        int indexf = re * nEquation;    //! first index
+        int indexs = le * nEquation;    //! second index
+        colidx     = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, re, le);
+        colidx1st  = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, re, le);    //! GMRESJac1st
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -7388,13 +7576,13 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                                                              dqdcvL[indexK][indexJ];
 
                     dRdq1st[indexI][colidx1st + indexJ] -= dFluxdpL[indexI][indexK]*
-                                                                dqdcvL[indexK][indexJ]; // GMRESJac1st
+                                                                dqdcvL[indexK][indexJ];    //! GMRESJac1st
                 }
             }
         }
 
-        // contributions from the bc, 
-        // dFluxdpL = dFluxdpL + dFluxdPR*dDdPlocal
+        //! contributions from the bc, 
+        //! dFluxdpL = dFluxdpL + dFluxdPR*dDdPlocal
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -7407,12 +7595,12 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             }
         }
 
-        // convert dFluxdpL to dFluxdcvL by right multiplying the dqdcvL,
-        // then add to the corresponding location in dRdq.
-        indexf = le * nEquation; // first index
-        indexs = le * nEquation; // second index
+        //! convert dFluxdpL to dFluxdcvL by right multiplying the dqdcvL,
+        //! then add to the corresponding location in dRdq.
+        indexf = le * nEquation;    //! first index
+        indexs = le * nEquation;    //! second index
         colidx      = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, le, le);
-        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, le, le); // GMRESJac1st
+        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, le, le);    //! GMRESJac1st
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -7429,14 +7617,14 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             }
         }
 
-        // considering the perturbation of the gradient in the flux calculation
-        RDouble nxs         = xfn[iFace];
-        RDouble nys         = yfn[iFace];
-        RDouble nzs         = zfn[iFace];
-        RDouble ns          = area[iFace];
-        RDouble volume      = vol[re];
-        // dgradtmp = dfluxdgradxR*dgradRdqLx + dfluxdgradyR*dgradRdqLy + dfluxdgradzR*dgraddqLz
-        // dRdq[le][le] += dgradtmp*dqdcvL
+        //! considering the perturbation of the gradient in the flux calculation
+        RDouble nxs    = xfn[iFace];
+        RDouble nys    = yfn[iFace];
+        RDouble nzs    = zfn[iFace];
+        RDouble ns     = area[iFace];
+        RDouble volume = vol[re];
+        //dgradtmp = dfluxdgradxR*dgradRdqLx + dfluxdgradyR*dgradRdqLy + dfluxdgradzR*dgraddqLz
+        //dRdq[le][le] += dgradtmp*dqdcvL
         gas->dGradient2dPrimitive(primL,-1,dgraddqx, 'x', nxs, nys,nzs,ns,volume);
         gas->dGradient2dPrimitive(primL,-1,dgraddqy, 'y', nxs, nys,nzs,ns,volume);
         gas->dGradient2dPrimitive(primL,-1,dgraddqz, 'z', nxs, nys,nzs,ns,volume);
@@ -7459,12 +7647,12 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             }
         }
 
-        // convert dGradtmp by right multiplying the dqdcvL,
-        // then add to the corresponding location in dRdq.
-        indexf = le * nEquation; // first index
-        indexs = le * nEquation; // second index
+        //! convert dGradtmp by right multiplying the dqdcvL,
+        //! then add to the corresponding location in dRdq.
+        indexf = le * nEquation;    //! first index
+        indexs = le * nEquation;    //! second index
         colidx      = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, le, le);
-        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, le, le);  // GMRESJac1st
+        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, le, le);    //! GMRESJac1st
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -7481,10 +7669,10 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             }
         }
 
-        indexf = re * nEquation; // first index
-        indexs = le * nEquation; // second index
+        indexf = re * nEquation;    //! first index
+        indexs = le * nEquation;    //! second index
         colidx      = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, re, le);
-        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, re, le); // GMRESJac1st
+        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, re, le);    //! GMRESJac1st
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -7501,11 +7689,11 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             }
         }
 
-        nxs         = xfn[iFace];
-        nys         = yfn[iFace];
-        nzs         = zfn[iFace];
-        ns          = area[iFace];
-        volume      = vol[le];
+        nxs    = xfn[iFace];
+        nys    = yfn[iFace];
+        nzs    = zfn[iFace];
+        ns     = area[iFace];
+        volume = vol[le];
         // dgradtmp = dfluxdgradxL*dgradLdqRx + dfluxdgradyL*dgradLdqRy + dfluxdgradzL*dgradLdqRz
         // dRdq[le][re] += dgradtmp*dqdcvL
         gas->dGradient2dPrimitive(primR,1,dgraddqx, 'x', nxs, nys,nzs,ns,volume);
@@ -7530,9 +7718,8 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             }
         }
 
-
-        // contributions from the bc, 
-        // dFluxdPR*dDdPlocal
+        //! contributions from the bc, 
+        //! dFluxdPR*dDdPlocal
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -7546,17 +7733,16 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             }
         }
 
-        // convert dGradtmpBC by right multiplying the dqdcvL,
-        // then add to the corresponding location in dRdq.
+        //! convert dGradtmpBC by right multiplying the dqdcvL,
+        //! then add to the corresponding location in dRdq.
         indexf = le * nEquation; // first index
         indexs = le * nEquation; // second index
         colidx      = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, le, le);
-        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, le, le); // GMRESJac1st
+        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, le, le);    //! GMRESJac1st
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
             {
-                
                 for(int indexK=0; indexK < nEquation; indexK++)
                 {
                     dRdq[indexI][colidx+indexJ] += dGradtmpBC[indexI][indexK]*
@@ -7568,8 +7754,7 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             }
         }
 
-        
-        // the neighbors of the left cells
+        //! the neighbors of the left cells
         for(int index = 0; index < neighborCells[le].size(); index++)
         {
             int neighborIndex = neighborCells[le][index];
@@ -7577,7 +7762,7 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             if(neighborIndex != re)
             {
                 int Faceindex   = neighborFaces[le][index];
-                // judge whether it is the boundary face and obtain its boundary type
+                //! judge whether it is the boundary face and obtain its boundary type
                 bool isGhostCell = false;
                 UnstructBC *neighborBCRegion = nullptr;
                 int neighborBCType;
@@ -7588,12 +7773,12 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                     neighborBCType = neighborBCRegion->GetBCType();
                 }
 
-                int sign        = neighborLR[le][index];
-                RDouble nxs     = xfn[Faceindex];
-                RDouble nys     = yfn[Faceindex];
-                RDouble nzs     = zfn[Faceindex];
-                RDouble ns      = area[Faceindex];
-                RDouble volume  = vol[le];
+                int sign       = neighborLR[le][index];
+                RDouble nxs    = xfn[Faceindex];
+                RDouble nys    = yfn[Faceindex];
+                RDouble nzs    = zfn[Faceindex];
+                RDouble ns     = area[Faceindex];
+                RDouble volume = vol[le];
                 for(int m =0; m < nEquation; m++)
                 {
                     fN[m] = primitiveVariable[m][neighborIndex];
@@ -7623,8 +7808,8 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                     }
                 }
 
-                int indexf  = le * nEquation; // first index
-                int indexs  = neighborIndex * nEquation; // second index
+                int indexf  = le * nEquation;    //! first index
+                int indexs  = neighborIndex * nEquation;    //! second index
                 int indexf2 = re * nEquation; 
                 colidx  = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, le, neighborIndex);
                 colidx2 = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, re, neighborIndex);
@@ -7688,13 +7873,12 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                             }
                         }
                     }
-
-                }           
+                }
             }
         }
     }
 
-    // interior faces
+    //! interior faces
     for (int iFace = nMid; iFace < localEnd; ++ iFace)
     {
         int le = leftCellofFace [iFace];
@@ -7704,25 +7888,25 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
         //! init the value
         for (int m = 0; m < nEquation; ++ m)
         {
-            fL[m]       = primitiveVariable[m][le];
-            fR[m]       = primitiveVariable[m][re];
-            primL[m]    = primitiveVariable[m][le];
-            primR[m]    = primitiveVariable[m][re];
-            dqdxL[m]    = dqdx[m][le];
-            dqdyL[m]    = dqdy[m][le];
-            dqdzL[m]    = dqdz[m][le];
-            dqdxR[m]    = dqdx[m][re];
-            dqdyR[m]    = dqdy[m][re];
-            dqdzR[m]    = dqdz[m][re];
+            fL[m]    = primitiveVariable[m][le];
+            fR[m]    = primitiveVariable[m][re];
+            primL[m] = primitiveVariable[m][le];
+            primR[m] = primitiveVariable[m][re];
+            dqdxL[m] = dqdx[m][le];
+            dqdyL[m] = dqdy[m][le];
+            dqdzL[m] = dqdz[m][le];
+            dqdxR[m] = dqdx[m][re];
+            dqdyR[m] = dqdy[m][re];
+            dqdzR[m] = dqdz[m][re];
         }
-        dqdxL[nEquation]        = dtdx[ITT][le];
-        dqdyL[nEquation]        = dtdy[ITT][le];
-        dqdzL[nEquation]        = dtdz[ITT][le];
-        dqdxR[nEquation]        = dtdx[ITT][re];
-        dqdyR[nEquation]        = dtdy[ITT][re];
-        dqdzR[nEquation]        = dtdz[ITT][re];
+        dqdxL[nEquation] = dtdx[ITT][le];
+        dqdyL[nEquation] = dtdy[ITT][le];
+        dqdzL[nEquation] = dtdz[ITT][le];
+        dqdxR[nEquation] = dtdx[ITT][re];
+        dqdyR[nEquation] = dtdy[ITT][re];
+        dqdzR[nEquation] = dtdz[ITT][re];
 
-        // GMRESCoupled
+        //! GMRESCoupled
         if( viscousType == ONE_EQU )
         {
             fLturb = primitiveturb[0][le];
@@ -7745,7 +7929,7 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             dqdzR[m].diff(halfIndependentVars + nEquation + 2 * (nEquation + nTemperatureModel) + m, nIndependentVars);
         }
 
-        // GMRESCoupled
+        //! GMRESCoupled
         if( viscousType == ONE_EQU )
         {
             fLturb.diff(nIndependentVars-2,nIndependentVars);
@@ -7812,15 +7996,15 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             }
         }
 
-        // GMRESPV , obtain the dqdcv for the left cell
+        //! GMRESPV , obtain the dqdcv for the left cell
         gas->dPrimitive2dConservative(primL,gama[le],dqdcvL);
 
-        // convert dFluxdpL to dFluxdcvL by right multiplying the dqdcvL,
-        // then minus to the corresponding location in dRdq.
-        int indexf = re * nEquation; // first index
-        int indexs = le * nEquation; // second index
+        //! convert dFluxdpL to dFluxdcvL by right multiplying the dqdcvL,
+        //! then minus to the corresponding location in dRdq.
+        int indexf = re * nEquation;    //! first index
+        int indexs = le * nEquation;    //! second index
         colidx      = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, re, le);
-        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, re, le);  // GMRESJac1st
+        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, re, le);    //! GMRESJac1st
         for (int indexI = 0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -7829,17 +8013,17 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                 {
                     dRdq[indexI][colidx+indexJ] -= dFluxdpL[indexI][indexK] * dqdcvL[indexK][indexJ];
 
-                    dRdq1st[indexI][colidx1st+indexJ] -= dFluxdpL[indexI][indexK] * dqdcvL[indexK][indexJ];  // GMRESJac1st
+                    dRdq1st[indexI][colidx1st+indexJ] -= dFluxdpL[indexI][indexK] * dqdcvL[indexK][indexJ];    //! GMRESJac1st
                 }
             }
         }
-        
-        // convert dFluxdpL to dFluxdcvL by right multiplying the dqdcvL,
-        // then add to the corresponding location in dRdq.
-        indexf = le * nEquation; // first index
-        indexs = le * nEquation; // second index
+
+        //! convert dFluxdpL to dFluxdcvL by right multiplying the dqdcvL,
+        //! then add to the corresponding location in dRdq.
+        indexf = le * nEquation;    //! first index
+        indexs = le * nEquation;    //! second index
         colidx      = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, le, le);
-        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, le, le);  // GMRESJac1st
+        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, le, le);    //! GMRESJac1st
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -7848,20 +8032,20 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                 {
                     dRdq[indexI][colidx+indexJ] += dFluxdpL[indexI][indexK] * dqdcvL[indexK][indexJ];
 
-                    dRdq1st[indexI][colidx1st+indexJ] += dFluxdpL[indexI][indexK] * dqdcvL[indexK][indexJ];  // GMRESJac1st
+                    dRdq1st[indexI][colidx1st+indexJ] += dFluxdpL[indexI][indexK] * dqdcvL[indexK][indexJ];    //! GMRESJac1st
                 }
             }
         }
 
-         // GMRESPV , obtain the dqdcv for the right cell
+         //! GMRESPV , obtain the dqdcv for the right cell
         gas->dPrimitive2dConservative(primR,gama[re],dqdcvR);
 
-        // convert dFluxdpR to dFluxdcvR by right multiplying the dqdcvR,
-        // then minus to the corresponding location in dRdq.
-        indexf = re * nEquation; // first index
-        indexs = re * nEquation; // second index
-        colidx      = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, re, re);
-        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, re, re); // GMRESJac1st
+        //! convert dFluxdpR to dFluxdcvR by right multiplying the dqdcvR,
+        //! then minus to the corresponding location in dRdq.
+        indexf = re * nEquation;    //! first index
+        indexs = re * nEquation;    //! second index
+        colidx    = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, re, re);
+        colidx1st = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, re, re);    //! GMRESJac1st
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -7875,12 +8059,12 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             }
         }
 
-        // convert dFluxdpR to dFluxdcvR by right multiplying the dqdcvR,
-        // then add to the corresponding location in dRdq.
-        indexf = le * nEquation; // first index
-        indexs = re * nEquation; // second index
+        //! convert dFluxdpR to dFluxdcvR by right multiplying the dqdcvR,
+        //! then add to the corresponding location in dRdq.
+        indexf = le * nEquation;    //! first index
+        indexs = re * nEquation;    //! second index
         colidx      = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, le, re);
-        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, le, re);  // GMRESJac1st
+        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, le, re);    //! GMRESJac1st
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -7889,13 +8073,12 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                 {
                     dRdq[indexI][colidx+indexJ] += dFluxdpR[indexI][indexK] * dqdcvR[indexK][indexJ];
 
-                    dRdq1st[indexI][colidx1st+indexJ] += dFluxdpR[indexI][indexK] * dqdcvR[indexK][indexJ];  // GMRESJac1st
+                    dRdq1st[indexI][colidx1st+indexJ] += dFluxdpR[indexI][indexK] * dqdcvR[indexK][indexJ];    //! GMRESJac1st
                 }
             }
         }
 
-        
-        // considering the perturbation of the gradient in the flux calculation
+        //! considering the perturbation of the gradient in the flux calculation
         RDouble nxs         = xfn[iFace];
         RDouble nys         = yfn[iFace];
         RDouble nzs         = zfn[iFace];
@@ -7921,12 +8104,12 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             }
         }
 
-        // convert dGradtmp by right multiplying the dqdcvL,
-        // then add to the corresponding location in dRdq.
-        indexf = le * nEquation; // first index
-        indexs = le * nEquation; // second index
+        //! convert dGradtmp by right multiplying the dqdcvL,
+        //! then add to the corresponding location in dRdq.
+        indexf = le * nEquation;    //! first index
+        indexs = le * nEquation;    //! second index
         colidx      = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, le, le);
-        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, le, le); // GMRESJac1st
+        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, le, le);    //! GMRESJac1st
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -7935,18 +8118,17 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                 {
                     dRdq[indexI][colidx+indexJ] += dGradtmp[indexI][indexK] * dqdcvL[indexK][indexJ];
 
-                    dRdq1st[indexI][colidx1st+indexJ] += dGradtmp[indexI][indexK] * dqdcvL[indexK][indexJ]; // GMRESJac1st
+                    dRdq1st[indexI][colidx1st+indexJ] += dGradtmp[indexI][indexK] * dqdcvL[indexK][indexJ];    //! GMRESJac1st
                 }
             }
         }
 
-
-        // dgradtmp = dfluxdgradxR*dgradRdqLx + dfluxdgradyR*dgradRdqLy + dfluxdgradzR*dgraddqLz
-        // dRdq[re][le] += dgradtmp*dqdcvL
-        indexf = re * nEquation; // first index
-        indexs = le * nEquation; // second index
+        //! dgradtmp = dfluxdgradxR*dgradRdqLx + dfluxdgradyR*dgradRdqLy + dfluxdgradzR*dgraddqLz
+        //! dRdq[re][le] += dgradtmp*dqdcvL
+        indexf = re * nEquation;    //! first index
+        indexs = le * nEquation;    //! second index
         colidx      = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, re, le);
-        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, re, le); // GMRESJac1st
+        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, re, le);    //! GMRESJac1st
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -7965,8 +8147,8 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
         nzs         = zfn[iFace];
         ns          = area[iFace];
         volume      = vol[le];
-        // dgradtmp = dfluxdgradxL*dgradLdqRx + dfluxdgradyL*dgradLdqRy + dfluxdgradzL*dgradLdqRz
-        // dRdq[le][re] += dgradtmp*dqdcvL
+        //! dgradtmp = dfluxdgradxL*dgradLdqRx + dfluxdgradyL*dgradLdqRy + dfluxdgradzL*dgradLdqRz
+        //! dRdq[le][re] += dgradtmp*dqdcvL
         gas->dGradient2dPrimitive(primR,1,dgraddqx, 'x', nxs, nys,nzs,ns,volume);
         gas->dGradient2dPrimitive(primR,1,dgraddqy, 'y', nxs, nys,nzs,ns,volume);
         gas->dGradient2dPrimitive(primR,1,dgraddqz, 'z', nxs, nys,nzs,ns,volume);
@@ -7989,12 +8171,12 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             }
         }
 
-        // convert dGradtmp by right multiplying the dqdcvL,
-        // then add to the corresponding location in dRdq.
-        indexf = le * nEquation; // first index
-        indexs = re * nEquation; // second index
+        //! convert dGradtmp by right multiplying the dqdcvL,
+        //! then add to the corresponding location in dRdq.
+        indexf = le * nEquation;    //! first index
+        indexs = re * nEquation;    //! second index
         colidx      = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, le, re);
-        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, le, re); // GMRESJac1st
+        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, le, re);    //! GMRESJac1st
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -8006,35 +8188,33 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                                                              dqdcvR[indexK][indexJ];
 
                     dRdq1st[indexI][colidx1st+indexJ] += dGradtmp[indexI][indexK]*
-                                                             dqdcvR[indexK][indexJ];   // GMRESJac1st                                                        
+                                                             dqdcvR[indexK][indexJ];    //! GMRESJac1st
                 }
             }
         }
 
-
         // dgradtmp = dfluxdgradxL*dgradLdqRx + dfluxdgradyL*dgradLdqRy + dfluxdgradzL*dgradLdqRz
         // dRdq[re][re] += dgradtmp*dqdcvL
-        indexf = re * nEquation; // first index
-        indexs = re * nEquation; // second index
+        indexf = re * nEquation;    //! first index
+        indexs = re * nEquation;    //! second index
         colidx      = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, re, re);
-        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, re, re); // GMRESJac1st   
+        colidx1st   = GetIndexOfBlockJacobianMatrix(AI1st, AJ1st, nEquation, re, re);    //! GMRESJac1st
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
             {
-                
                 for(int indexK=0; indexK < nEquation; indexK++)
                 {
                     dRdq[indexI][colidx+indexJ] -= dGradtmp[indexI][indexK]*
                                                              dqdcvR[indexK][indexJ];
 
                     dRdq1st[indexI][colidx1st+indexJ] -= dGradtmp[indexI][indexK]*
-                                                             dqdcvR[indexK][indexJ]; // GMRESJac1st                                                             
+                                                             dqdcvR[indexK][indexJ];    //! GMRESJac1st
                 }
             }
         }
-        
-        // the neighbors of the left cells
+
+        //! the neighbors of the left cells
         for(int index = 0; index < neighborCells[le].size(); index++)
         {
             int neighborIndex = neighborCells[le][index];
@@ -8042,7 +8222,7 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             if(neighborIndex != re)
             {
                 int Faceindex   = neighborFaces[le][index];
-                // judge whether it is the boundary face and obtain its boundary type
+                //! judge whether it is the boundary face and obtain its boundary type
                 bool isGhostCell = false;
                 UnstructBC *neighborBCRegion = nullptr;
                 int neighborBCType;
@@ -8053,12 +8233,12 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                     neighborBCType = neighborBCRegion->GetBCType();
                 }
                 
-                int sign        = neighborLR[le][index];
-                RDouble nxs     = xfn[Faceindex];
-                RDouble nys     = yfn[Faceindex];
-                RDouble nzs     = zfn[Faceindex];
-                RDouble ns      = area[Faceindex];
-                RDouble volume  = vol[le];
+                int sign       = neighborLR[le][index];
+                RDouble nxs    = xfn[Faceindex];
+                RDouble nys    = yfn[Faceindex];
+                RDouble nzs    = zfn[Faceindex];
+                RDouble ns     = area[Faceindex];
+                RDouble volume = vol[le];
 
                 for(int m =0; m < nEquation; m++)
                 {
@@ -8089,8 +8269,8 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                     }
                 }
 
-                int indexf  = le * nEquation; // first index
-                int indexs  = neighborIndex * nEquation; // second index
+                int indexf  = le * nEquation;    //! first index
+                int indexs  = neighborIndex * nEquation;    //! second index
                 int indexf2 = re * nEquation; 
                 colidx  = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, le, neighborIndex);
                 colidx2 = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, re, neighborIndex);
@@ -8104,15 +8284,15 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                             // dRL/dqLNeighbors += dRL/dGradL*dGradL/dqLNeighbors ===> dFluxdgradL*dgraddq
                             dRdq[indexI][colidx+indexJ] += dGradtmp[indexI][indexK]*
                                                                      dqdcvN[indexK][indexJ];
-                            
+
                             // dRR/dqLNeighbors -= dRR/dGradL*dGradL/dqLNeighbors ===> dFluxdgradL*dgraddq
                             dRdq[indexI][colidx2+indexJ] -= dGradtmp[indexI][indexK]*
                                                                      dqdcvN[indexK][indexJ];
                         }
                     }
-                }  
-                
-                // boundary condition except interface
+                }
+
+                //! boundary condition except interface
                 if (isGhostCell && neighborBCType != PHENGLEI::INTERFACE)
                 {
                     int indexre = (neighborIndex - nTotalCell) * nEquation;
@@ -8155,13 +8335,11 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                             }
                         }
                     }
-                }          
+                }
             }
         }
 
-
-        // the neighbors of the right cells
-        
+        //! the neighbors of the right cells
         for(int index = 0; index < neighborCells[re].size(); index++)
         {
             int neighborIndex = neighborCells[re][index];
@@ -8169,7 +8347,7 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
             if(neighborIndex != le)
             {
                 int Faceindex       = neighborFaces[re][index];
-                 // judge whether it is the boundary face and obtain its boundary type
+                 //! judge whether it is the boundary face and obtain its boundary type
                 bool isGhostCell = false;
                 UnstructBC *neighborBCRegion = nullptr;
                 int neighborBCType;
@@ -8181,23 +8359,23 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                 }
 
                 int sign = neighborLR[re][index];
-                RDouble nxs         = xfn[Faceindex];
-                RDouble nys         = yfn[Faceindex];
-                RDouble nzs         = zfn[Faceindex];
-                RDouble ns          = area[Faceindex];
-                RDouble volume      = vol[re];
-    
+                RDouble nxs    = xfn[Faceindex];
+                RDouble nys    = yfn[Faceindex];
+                RDouble nzs    = zfn[Faceindex];
+                RDouble ns     = area[Faceindex];
+                RDouble volume = vol[re];
+
                 for(int m=0; m < nEquation; m++)
                 {
                     fN[m] = primitiveVariable[m][neighborIndex];
                 }
-    
+
                 gas->dPrimitive2dConservative(fN,gama[neighborIndex],dqdcvN);
-    
+
                 gas->dGradient2dPrimitive(fN,sign,dgraddqx, 'x', nxs, nys,nzs,ns,volume);
                 gas->dGradient2dPrimitive(fN,sign,dgraddqy, 'y', nxs, nys,nzs,ns,volume);
                 gas->dGradient2dPrimitive(fN,sign,dgraddqz, 'z', nxs, nys,nzs,ns,volume);
-    
+
                 for(int indexI=0; indexI < nEquation; indexI++)
                 {
                     for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -8214,9 +8392,9 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                         }
                     }
                 }
-    
-                int indexf  = le * nEquation; // first index
-                int indexs  = neighborIndex * nEquation; // second index
+
+                int indexf  = le * nEquation;    //! first index
+                int indexs  = neighborIndex * nEquation;    //! second index
                 int indexf2 = re * nEquation; 
                 colidx  = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, le, neighborIndex);
                 colidx2 = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, re, neighborIndex);
@@ -8226,7 +8404,6 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                     {
                         for(int indexK=0; indexK < nEquation; indexK++)
                         {
-                            
                             // dRL/dqRNeighbors += dRL/dGradR*dGradR/dqRNeighbors ===> dFluxdgradR*dgraddq
                             dRdq[indexI][colidx+indexJ] += dGradtmp[indexI][indexK]*
                                                                      dqdcvN[indexK][indexJ];
@@ -8282,49 +8459,48 @@ void NSSolverUnstruct::ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, 
                         }
                     }
                 }
-            }   
+            }
         }
-
     }
-    delete []dqdxL;    dqdxL = NULL;
-    delete []dqdyL;    dqdyL = NULL;
-    delete []dqdzL;    dqdzL = NULL;
+    delete [] dqdxL;    dqdxL = nullptr;
+    delete [] dqdyL;    dqdyL = nullptr;
+    delete [] dqdzL;    dqdzL = nullptr;
 
-    delete []dqdxR;    dqdxR = NULL;
-    delete []dqdyR;    dqdyR = NULL;
-    delete []dqdzR;    dqdzR = NULL;
+    delete [] dqdxR;    dqdxR = nullptr;
+    delete [] dqdyR;    dqdyR = nullptr;
+    delete [] dqdzR;    dqdzR = nullptr;
 
-    delete []fL;        fL = NULL;
-    delete []fR;        fR = NULL;
-    delete []fN;        fN = NULL;
-    delete []fluxp;     fluxp = NULL;
-    delete []primL;     primL = NULL;
-    delete []primR;     primR = NULL;
+    delete [] fL;       fL = nullptr;
+    delete [] fR;       fR = nullptr;
+    delete [] fN;       fN = nullptr;
+    delete [] fluxp;    fluxp = nullptr;
+    delete [] primL;    primL = nullptr;
+    delete [] primR;    primR = nullptr;
 
     for(int index = 0; index < nEquation; index++)
     {
-        delete[] dqdcvL[index];
-        delete[] dqdcvR[index];
-        delete[] dqdcvN[index];
-        delete[] dgraddqx[index];
-        delete[] dgraddqy[index];
-        delete[] dgraddqz[index];
+        delete [] dqdcvL[index];
+        delete [] dqdcvR[index];
+        delete [] dqdcvN[index];
+        delete [] dgraddqx[index];
+        delete [] dgraddqy[index];
+        delete [] dgraddqz[index];
     }
-    delete[]    dgraddqx[nEquation];
-    delete[]    dgraddqy[nEquation];
-    delete[]    dgraddqz[nEquation];
-    delete[]    dqdcvL;
-    delete[]    dqdcvR;
-    delete[]    dqdcvN;
-    delete[]    dgraddqx;
-    delete[]    dgraddqy;
-    delete[]    dgraddqz;
+    delete [] dgraddqx[nEquation];
+    delete [] dgraddqy[nEquation];
+    delete [] dgraddqz[nEquation];
+    delete [] dqdcvL;    dqdcvL = nullptr;
+    delete [] dqdcvR;    dqdcvR = nullptr;
+    delete [] dqdcvN;    dqdcvN = nullptr;
+    delete [] dgraddqx;    dgraddqx = nullptr;
+    delete [] dgraddqy;    dgraddqy = nullptr;
+    delete [] dgraddqz;    dgraddqz = nullptr;
 
-    delete[] dFluxdnutL;  dFluxdnutL = NULL;
-    delete[] dFluxdnutR;  dFluxdnutR = NULL;
+    delete [] dFluxdnutL;    dFluxdnutL = nullptr;
+    delete [] dFluxdnutR;    dFluxdnutR = nullptr;
 }
 
-// GMRESVis
+//! GMRESVis
 void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
@@ -8404,14 +8580,11 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
     RDouble **aniss  = 0;
     RDouble coefficientofStateEquation = gas->GetCoefficientOfStateEquation();
 
-
     if (nrokplus > 0)
     {
         qTurb = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"));
         aniss  = reinterpret_cast<RDouble **> (grid->GetDataPtr("aniss"));
     }
-
-    
 
     RDouble *dqdxL = new RDouble[nEquation+nTemperatureModel];
     RDouble *dqdyL = new RDouble[nEquation+nTemperatureModel];
@@ -8422,22 +8595,21 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
     RDouble *dqdzR = new RDouble[nEquation+nTemperatureModel];
     RDouble *dgrad = new RDouble[nEquation+nTemperatureModel];
 
-    RDouble *fL         = new RDouble[nEquation+nTemperatureModel];
-    RDouble *fLpert     = new RDouble[nEquation+nTemperatureModel];
-    RDouble *fR         = new RDouble[nEquation+nTemperatureModel];
-    RDouble *fRpert     = new RDouble[nEquation+nTemperatureModel];
-    RDouble *fN         = new RDouble[nEquation]; // for neighbors
-    RDouble *fMid       = new RDouble[nEquation+nTemperatureModel];
-    RDouble *fMidpert   = new RDouble[nEquation+nTemperatureModel];
-    RDouble *fluxp      = new RDouble[nLaminar];
-
+    RDouble *fL       = new RDouble[nEquation+nTemperatureModel];
+    RDouble *fLpert   = new RDouble[nEquation+nTemperatureModel];
+    RDouble *fR       = new RDouble[nEquation+nTemperatureModel];
+    RDouble *fRpert   = new RDouble[nEquation+nTemperatureModel];
+    RDouble *fN       = new RDouble[nEquation]; // for neighbors
+    RDouble *fMid     = new RDouble[nEquation+nTemperatureModel];
+    RDouble *fMidpert = new RDouble[nEquation+nTemperatureModel];
+    RDouble *fluxp    = new RDouble[nLaminar];
 
     RDouble t1x, t1y, t1z, t2x, t2y, t2z;
     RDouble txx,tyy,tzz;
     RDouble txy,txz,tyz;
-    
+
     bool isFineGrid = grid->IsFinestGrid();
-    
+
     using namespace IDX;
     RDouble  dFluxdpL[nEquation][nEquation];
     RDouble  dFluxdpR[nEquation][nEquation];
@@ -8454,13 +8626,13 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
     RDouble  dgradpert;
     RDouble  perturbScale = 1e-6;
 
-    vector<int>* neighborCells = grid->GMRESGetNeighborCells();
-    vector<int>* neighborFaces = grid->GMRESGetNeighborFaces();
-    vector<int>* neighborLR = grid->GMRESGetNeighborLR();
+    vector<int> *neighborCells = grid->GMRESGetNeighborCells();
+    vector<int> *neighborFaces = grid->GMRESGetNeighborFaces();
+    vector<int> *neighborLR = grid->GMRESGetNeighborLR();
 
     RDouble** dqdcvL= new RDouble*[nEquation];
     RDouble** dqdcvR= new RDouble*[nEquation];
-    RDouble** dqdcvN= new RDouble*[nEquation];  // dqdcv for neighbors
+    RDouble** dqdcvN= new RDouble*[nEquation];    //! dqdcv for neighbors
     RDouble** dgraddqx = new RDouble*[nEquation+nTemperatureModel];
     RDouble** dgraddqy = new RDouble*[nEquation+nTemperatureModel];
     RDouble** dgraddqz = new RDouble*[nEquation+nTemperatureModel];
@@ -8481,30 +8653,28 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             dqdcvN[indexI][indexJ] = 0.0;
         }
     }
-    dgraddqx[nEquation]    = new RDouble[nEquation];
-    dgraddqy[nEquation]    = new RDouble[nEquation];
-    dgraddqz[nEquation]    = new RDouble[nEquation];
+    dgraddqx[nEquation] = new RDouble[nEquation];
+    dgraddqy[nEquation] = new RDouble[nEquation];
+    dgraddqz[nEquation] = new RDouble[nEquation];
 
     int nMid;
-        // GMRESBoundary
-     if (localStart >= nBoundFace)
-     {
-         nMid = localStart;  // a bug 01.07
-     }
-     else if (localEnd <= nBoundFace)  // add else 
-     {
-         //! If they are all boundary faces.
-         nMid = localEnd;
-     }
-     else
-     {
-         //! Part of them are boundary faces.
-         nMid = nBoundFace;
-     }
-    
-    
+        //! GMRESBoundary
+    if (localStart >= nBoundFace)
+    {
+        nMid = localStart;    //! a bug 01.07
+    }
+    else if (localEnd <= nBoundFace)    //! add else 
+    {
+        //! If they are all boundary faces.
+        nMid = localEnd;
+    }
+    else
+    {
+        //! Part of them are boundary faces.
+        nMid = nBoundFace;
+    }
 
-    // boundary faces
+    //! boundary faces
     for (int iFace = localStart; iFace < nMid; ++ iFace)
     {
         int le = leftCellofFace [iFace];
@@ -8548,11 +8718,10 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
         UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
         int bcType = bcRegion->GetBCType();
 
-        // for solid walls, primitiveVariableFace[IU,IV,IW][jFace] = 0
+        //! for solid walls, primitiveVariableFace[IU,IV,IW][jFace] = 0
         if (bcType == PHENGLEI::SOLID_SURFACE)
         {
-        
-            // perturb the density of the left cell of the face
+            //! perturb the density of the left cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fLpert[index]   = fL[index];
@@ -8573,7 +8742,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpL[m][IR] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
 
-            // perturb the u of the left cell of the face
+            //! perturb the u of the left cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fLpert[index]   = fL[index];
@@ -8594,7 +8763,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpL[m][IU] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
 
-            // perturb the v of the left cell of the face
+            //! perturb the v of the left cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fLpert[index]   = fL[index];
@@ -8615,7 +8784,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpL[m][IV] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
 
-            // perturb the w of the left cell of the face
+            //! perturb the w of the left cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fLpert[index]   = fL[index];
@@ -8636,8 +8805,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpL[m][IW] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
 
-
-            // perturb the pressure of the left cell of the face
+            //! perturb the pressure of the left cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fLpert[index]   = fL[index];
@@ -8658,8 +8826,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpL[m][IP] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
 
-
-            // perturb the density of the right cell of the face
+            //! perturb the density of the right cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fRpert[index]   = fR[index];
@@ -8680,7 +8847,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpR[m][IR] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
 
-            // perturb the u of the right cell of the face
+            //! perturb the u of the right cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fRpert[index]   = fR[index];
@@ -8743,8 +8910,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpR[m][IW] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
 
-
-            // perturb the pressure of the right cell of the face
+            //! perturb the pressure of the right cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fRpert[index]   = fR[index];
@@ -8767,7 +8933,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
         }
         else
         {
-            // perturb the density of the left cell of the face
+            //! perturb the density of the left cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fLpert[index]   = fL[index];
@@ -8788,7 +8954,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpL[m][IR] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
 
-            // perturb the u of the left cell of the face
+            //! perturb the u of the left cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fLpert[index]   = fL[index];
@@ -8809,7 +8975,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpL[m][IU] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
 
-            // perturb the v of the left cell of the face
+            //! perturb the v of the left cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fLpert[index]   = fL[index];
@@ -8830,7 +8996,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpL[m][IV] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
 
-            // perturb the w of the left cell of the face
+            //! perturb the w of the left cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fLpert[index]   = fL[index];
@@ -8851,8 +9017,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpL[m][IW] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
 
-
-            // perturb the pressure of the left cell of the face
+            //! perturb the pressure of the left cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fLpert[index]   = fL[index];
@@ -8873,8 +9038,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpL[m][IP] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
 
-
-            // perturb the density of the right cell of the face
+            //! perturb the density of the right cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fRpert[index]   = fR[index];
@@ -8895,7 +9059,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpR[m][IR] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
 
-            // perturb the u of the right cell of the face
+            //! perturb the u of the right cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fRpert[index]   = fR[index];
@@ -8916,7 +9080,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpR[m][IU] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
 
-            // perturb the v of the right cell of the face
+            //! perturb the v of the right cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fRpert[index]   = fR[index];
@@ -8937,7 +9101,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpR[m][IV] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
 
-            // perturb the w of the right cell of the face
+            //! perturb the w of the right cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fRpert[index]   = fR[index];
@@ -8958,18 +9122,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpR[m][IW] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
 
-
-            // perturb the pressure of the right cell of the face
+            //! perturb the pressure of the right cell of the face
             for(int index = 0; index < nEquation; index++)
             {
                 fRpert[index]   = fR[index];
-                fMidpert[index] = fMid[index];  
+                fMidpert[index] = fMid[index];
             }
-            fRpert[IP]          *=  (1.0 + perturbScale);
-            fRpert[nEquation]   =   fRpert[IP]/(coefficientofStateEquation * fRpert[IR]);
-            dfpert              =   fRpert[IP] - fR[IP];
-            fMidpert[IP]        =   half * (fL[IP]+fRpert[IP]);
-            fMidpert[nEquation] =   half * (fL[nEquation]+fRpert[nEquation]);
+            fRpert[IP]          *= (1.0 + perturbScale);
+            fRpert[nEquation]   =  fRpert[IP] / (coefficientofStateEquation * fRpert[IR]);
+            dfpert              =  fRpert[IP] - fR[IP];
+            fMidpert[IP]        =  half * (fL[IP] + fRpert[IP]);
+            fMidpert[nEquation] =  half * (fL[nEquation] + fRpert[nEquation]);
 
             Cal_GMRES_Visflux(fL, fRpert, fMidpert, dqdxL, dqdyL, dqdzL, 
                               dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -8980,9 +9143,9 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 dFluxdpR[m][IP] = (fluxp[m] - flux[m][jFace])/dfpert;
             }
         }
-        
-        // assemble the matrix
-        // contributions from the bc
+
+        //! assemble the matrix
+        //! contributions from the bc
         int indexre = (re-nTotalCell)*nEquation;
         for(int indexI=0; indexI < nEquation; indexI++)
         {
@@ -8992,13 +9155,13 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-        // GMRESPV , obtain the dqdcv for the left cell
+        //! GMRESPV , obtain the dqdcv for the left cell
         gas->dPrimitive2dConservative(fL,gama[le],dqdcvL);
 
-        // convert dFluxdpL to dFluxdcvL by right multiplying the dqdcvL,
-        // then minus to the corresponding location in dRdq.
-        int indexf = re * nEquation; // first index
-        int indexs = le * nEquation; // second index
+        //! convert dFluxdpL to dFluxdcvL by right multiplying the dqdcvL,
+        //! then minus to the corresponding location in dRdq.
+        int indexf = re * nEquation;    //! first index
+        int indexs = le * nEquation;    //! second index
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -9012,8 +9175,8 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-        // contributions from the bc, 
-        // dFluxdpL = dFluxdpL + dFluxdPR*dDdPlocal
+        //! contributions from the bc, 
+        //! dFluxdpL = dFluxdpL + dFluxdPR*dDdPlocal
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -9026,10 +9189,10 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-        // convert dFluxdpL to dFluxdcvL by right multiplying the dqdcvL,
-        // then add to the corresponding location in dRdq.
-        indexf = le * nEquation; // first index
-        indexs = le * nEquation; // second index
+        //! convert dFluxdpL to dFluxdcvL by right multiplying the dqdcvL,
+        //! then add to the corresponding location in dRdq.
+        indexf = le * nEquation;    //! first index
+        indexs = le * nEquation;    //! second index
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -9043,13 +9206,13 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-         // GMRESPV , obtain the dqdcv for the right cell
+        //! GMRESPV , obtain the dqdcv for the right cell
         gas->dPrimitive2dConservative(fR,gama[re],dqdcvR);
 
-        // convert dFluxdpR to dFluxdcvR by right multiplying the dqdcvR,
-        // then minus to the corresponding location in dRdq.
-        indexf = re * nEquation; // first index
-        indexs = re * nEquation; // second index
+        //! convert dFluxdpR to dFluxdcvR by right multiplying the dqdcvR,
+        //! then minus to the corresponding location in dRdq.
+        indexf = re * nEquation;    //! first index
+        indexs = re * nEquation;    //! second index
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -9063,10 +9226,10 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-        // convert dFluxdpR to dFluxdcvR by right multiplying the dqdcvR,
-        // then add to the corresponding location in dRdq.
-        indexf = le * nEquation; // first index
-        indexs = re * nEquation; // second index
+        //! convert dFluxdpR to dFluxdcvR by right multiplying the dqdcvR,
+        //! then add to the corresponding location in dRdq.
+        indexf = le * nEquation;    //! first index
+        indexs = re * nEquation;    //! second index
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -9080,16 +9243,15 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-
-        // considering the perturbation of the gradient in the flux calculation
-        // perturb the drhodx of the left cell of the face
+        //! considering the perturbation of the gradient in the flux calculation
+        //! perturb the drhodx of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxL[index];
+            dgrad[index] = dqdxL[index];
         }
-        dgrad[nEquation]    =   dqdxL[nEquation];
-        dgrad[IR]           +=  perturbScale;
-        dgradpert           =   dgrad[IR] - dqdxL[IR];
+        dgrad[nEquation] =  dqdxL[nEquation];
+        dgrad[IR]        += perturbScale;
+        dgradpert        =  dgrad[IR] - dqdxL[IR];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dgrad, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9097,18 +9259,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxL[m][IR] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxL[m][IR] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        
-        // perturb the dudx of the left cell of the face
+        //! perturb the dudx of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxL[index];
+            dgrad[index] = dqdxL[index];
         }
-        dgrad[nEquation]    =   dqdxL[nEquation];
-        dgrad[IU]           +=  perturbScale;
-        dgradpert           =   dgrad[IU] - dqdxL[IU];
+        dgrad[nEquation] =  dqdxL[nEquation];
+        dgrad[IU]        += perturbScale;
+        dgradpert        =  dgrad[IU] - dqdxL[IU];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dgrad, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9116,18 +9277,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxL[m][IU] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxL[m][IU] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dvdx of the left cell of the face
+        //! perturb the dvdx of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxL[index];
+            dgrad[index] = dqdxL[index];
         }
-        dgrad[nEquation]    =   dqdxL[nEquation];
-        dgrad[IV]           +=  perturbScale;
-        dgradpert           =   dgrad[IV] - dqdxL[IV];
+        dgrad[nEquation] =  dqdxL[nEquation];
+        dgrad[IV]        += perturbScale;
+        dgradpert        =  dgrad[IV] - dqdxL[IV];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dgrad, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9135,18 +9295,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxL[m][IV] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxL[m][IV] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dwdx of the left cell of the face
+        //! perturb the dwdx of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxL[index];
+            dgrad[index] = dqdxL[index];
         }
-        dgrad[nEquation]    =   dqdxL[nEquation];
-        dgrad[IW]           +=  perturbScale;
-        dgradpert           =   dgrad[IW] - dqdxL[IW];
+        dgrad[nEquation] =  dqdxL[nEquation];
+        dgrad[IW]        += perturbScale;
+        dgradpert        =  dgrad[IW] - dqdxL[IW];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dgrad, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9154,17 +9313,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxL[m][IW] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxL[m][IW] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dPdx of the left cell of the face
+        //! perturb the dPdx of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxL[index];
+            dgrad[index] = dqdxL[index];
         }
-        dgrad[nEquation]    =   dqdxL[nEquation];
-        dgrad[IP]           +=  perturbScale;
-        dgradpert           =   dgrad[IP] - dqdxL[IP];
+        dgrad[nEquation] =   dqdxL[nEquation];
+        dgrad[IP]        +=  perturbScale;
+        dgradpert        =   dgrad[IP] - dqdxL[IP];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dgrad, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9172,18 +9331,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxL[m][IP] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxL[m][IP] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dTdx of the left cell of the face
+        //! perturb the dTdx of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxL[index];
+            dgrad[index] = dqdxL[index];
         }
-        dgrad[nEquation]   =   dqdxL[nEquation];
-        dgrad[nEquation]   +=  perturbScale;
-        dgradpert          =   dgrad[nEquation] - dqdxL[nEquation];
+        dgrad[nEquation] =  dqdxL[nEquation];
+        dgrad[nEquation] += perturbScale;
+        dgradpert        =  dgrad[nEquation] - dqdxL[nEquation];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dgrad, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9191,18 +9349,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxL[m][nEquation] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxL[m][nEquation] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the drhody of the left cell of the face
+        //! perturb the drhody of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyL[index];
+            dgrad[index] = dqdyL[index];
         }
-        dgrad[nEquation]    =   dqdyL[nEquation];
-        dgrad[IR]           +=  perturbScale;
-        dgradpert           =   dgrad[IR] - dqdyL[IR];
+        dgrad[nEquation] =  dqdyL[nEquation];
+        dgrad[IR]        += perturbScale;
+        dgradpert        =  dgrad[IR] - dqdyL[IR];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dgrad, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9210,11 +9367,10 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyL[m][IR] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyL[m][IR] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dudy of the left cell of the face
+        //! perturb the dudy of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             dgrad[index]   = dqdyL[index];
@@ -9229,17 +9385,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyL[m][IU] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyL[m][IU] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dvdy of the left cell of the face
+        //! perturb the dvdy of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyL[index];
+            dgrad[index] = dqdyL[index];
         }
-        dgrad[nEquation]    =   dqdyL[nEquation];
-        dgrad[IV]           +=  perturbScale;
-        dgradpert           =   dgrad[IV] - dqdyL[IV];
+        dgrad[nEquation] =  dqdyL[nEquation];
+        dgrad[IV]        += perturbScale;
+        dgradpert        =  dgrad[IV] - dqdyL[IV];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dgrad, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9247,17 +9403,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyL[m][IV] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyL[m][IV] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dwdy of the left cell of the face
+        //! perturb the dwdy of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyL[index];
+            dgrad[index] = dqdyL[index];
         }
-        dgrad[nEquation]    =   dqdyL[nEquation];
-        dgrad[IW]           +=  perturbScale;
-        dgradpert           =   dgrad[IW] - dqdyL[IW];
+        dgrad[nEquation] =  dqdyL[nEquation];
+        dgrad[IW]        += perturbScale;
+        dgradpert        =  dgrad[IW] - dqdyL[IW];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dgrad, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9265,18 +9421,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyL[m][IW] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyL[m][IW] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        
-        // perturb the dPdy of the left cell of the face
+        //! perturb the dPdy of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyL[index];
+            dgrad[index] = dqdyL[index];
         }
-        dgrad[nEquation]    =   dqdyL[nEquation];
-        dgrad[IP]           +=  perturbScale;
-        dgradpert           =   dgrad[IP] - dqdyL[IP];
+        dgrad[nEquation] =  dqdyL[nEquation];
+        dgrad[IP]        += perturbScale;
+        dgradpert        =  dgrad[IP] - dqdyL[IP];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dgrad, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9284,17 +9439,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyL[m][IP] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyL[m][IP] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dTdy of the left cell of the face
+        //! perturb the dTdy of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyL[index];
+            dgrad[index] = dqdyL[index];
         }
-        dgrad[nEquation]    =   dqdyL[nEquation];
-        dgrad[nEquation]    +=  perturbScale;
-        dgradpert           =   dgrad[nEquation] - dqdyL[nEquation];
+        dgrad[nEquation] =  dqdyL[nEquation];
+        dgrad[nEquation] += perturbScale;
+        dgradpert        =  dgrad[nEquation] - dqdyL[nEquation];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dgrad, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9302,18 +9457,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyL[m][nEquation] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyL[m][nEquation] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the drhodz of the left cell of the face
+        //! perturb the drhodz of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzL[index];
+            dgrad[index] = dqdzL[index];
         }
-        dgrad[nEquation]    =   dqdzL[nEquation];
-        dgrad[IR]           +=  perturbScale;
-        dgradpert           =   dgrad[IR] - dqdzL[IR];
+        dgrad[nEquation] =  dqdzL[nEquation];
+        dgrad[IR]        += perturbScale;
+        dgradpert        =  dgrad[IR] - dqdzL[IR];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dgrad, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9321,18 +9475,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzL[m][IR] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzL[m][IR] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dudz of the left cell of the face
+        //! perturb the dudz of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzL[index];
+            dgrad[index] = dqdzL[index];
         }
-        dgrad[nEquation]    =   dqdzL[nEquation];
-        dgrad[IU]           +=  perturbScale;
-        dgradpert           =   dgrad[IU] - dqdzL[IU];
+        dgrad[nEquation] =  dqdzL[nEquation];
+        dgrad[IU]        += perturbScale;
+        dgradpert        =  dgrad[IU] - dqdzL[IU];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dgrad, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9340,17 +9493,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzL[m][IU] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzL[m][IU] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dvdz of the left cell of the face
+        //! perturb the dvdz of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzL[index];
+            dgrad[index] = dqdzL[index];
         }
-        dgrad[nEquation]    =   dqdzL[nEquation];
-        dgrad[IV]           +=  perturbScale;
-        dgradpert           =   dgrad[IV] - dqdzL[IV];
+        dgrad[nEquation] =  dqdzL[nEquation];
+        dgrad[IV]        += perturbScale;
+        dgradpert        =  dgrad[IV] - dqdzL[IV];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dgrad, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9358,17 +9511,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzL[m][IV] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzL[m][IV] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dwdz of the left cell of the face
+        //! perturb the dwdz of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzL[index];
+            dgrad[index] = dqdzL[index];
         }
-        dgrad[nEquation]    =   dqdzL[nEquation];
-        dgrad[IW]           +=  perturbScale;
-        dgradpert           =   dgrad[IW] - dqdzL[IW];
+        dgrad[nEquation] =  dqdzL[nEquation];
+        dgrad[IW]        += perturbScale;
+        dgradpert        =  dgrad[IW] - dqdzL[IW];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dgrad, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9376,18 +9529,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzL[m][IW] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzL[m][IW] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dPdz of the left cell of the face
+        //! perturb the dPdz of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzL[index];
+            dgrad[index] = dqdzL[index];
         }
-        dgrad[nEquation]    =   dqdzL[nEquation];
-        dgrad[IP]           +=  perturbScale;
-        dgradpert           =   dgrad[IP] - dqdzL[IP];
+        dgrad[nEquation] =  dqdzL[nEquation];
+        dgrad[IP]        += perturbScale;
+        dgradpert        =  dgrad[IP] - dqdzL[IP];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dgrad, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9395,10 +9547,10 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzL[m][IP] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzL[m][IP] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dTdz of the left cell of the face
+        //! perturb the dTdz of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             dgrad[index]   = dqdzL[index];
@@ -9413,11 +9565,10 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzL[m][nEquation] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzL[m][nEquation] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the drhodx of the right cell of the face
+        //! perturb the drhodx of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             dgrad[index]   = dqdxR[index];
@@ -9432,11 +9583,10 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxR[m][IR] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxR[m][IR] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dudx of the right cell of the face
+        //! perturb the dudx of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             dgrad[index]   = dqdxR[index];
@@ -9451,10 +9601,10 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxR[m][IU] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxR[m][IU] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dvdx of the right cell of the face
+        //! perturb the dvdx of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             dgrad[index]   = dqdxR[index];
@@ -9469,18 +9619,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxR[m][IV] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxR[m][IV] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        
-        // perturb the dwdx of the right cell of the face
+        //! perturb the dwdx of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxR[index];
+            dgrad[index] = dqdxR[index];
         }
-        dgrad[nEquation]    =   dqdxR[nEquation];
-        dgrad[IW]           +=  perturbScale;
-        dgradpert           =   dgrad[IW] - dqdxR[IW];
+        dgrad[nEquation] =  dqdxR[nEquation];
+        dgrad[IW]        += perturbScale;
+        dgradpert        =  dgrad[IW] - dqdxR[IW];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dgrad, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9488,18 +9637,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxR[m][IW] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxR[m][IW] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dPdx of the right cell of the face
+        //! perturb the dPdx of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxR[index];
+            dgrad[index] = dqdxR[index];
         }
-        dgrad[nEquation]    =   dqdxR[nEquation];
-        dgrad[IP]           +=  perturbScale;
-        dgradpert           =   dgrad[IP] - dqdxR[IP];
+        dgrad[nEquation] =  dqdxR[nEquation];
+        dgrad[IP]        += perturbScale;
+        dgradpert        =  dgrad[IP] - dqdxR[IP];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dgrad, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9507,18 +9655,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxR[m][IP] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxR[m][IP] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dTdx of the right cell of the face
+        //! perturb the dTdx of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxR[index];
+            dgrad[index] = dqdxR[index];
         }
-        dgrad[nEquation]    =   dqdxR[nEquation];
-        dgrad[nEquation]    +=  perturbScale;
-        dgradpert           =   dgrad[nEquation] - dqdxR[nEquation];
+        dgrad[nEquation] =  dqdxR[nEquation];
+        dgrad[nEquation] += perturbScale;
+        dgradpert        =  dgrad[nEquation] - dqdxR[nEquation];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dgrad, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -9526,17 +9673,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxR[m][nEquation] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxR[m][nEquation] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the drhody of the right cell of the face
+        //!  perturb the drhody of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyR[index];
+            dgrad[index] = dqdyR[index];
         }
-        dgrad[nEquation]    =   dqdyR[nEquation];
-        dgrad[IR]           +=  perturbScale;
-        dgradpert           =   dgrad[IR] - dqdyR[IR];
+        dgrad[nEquation] =  dqdyR[nEquation];
+        dgrad[IR]        += perturbScale;
+        dgradpert        =  dgrad[IR] - dqdyR[IR];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dgrad, dqdzR, iFace, jFace, fluxp, 
@@ -9544,17 +9691,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyR[m][IR] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyR[m][IR] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dudy of the right cell of the face
+        //! perturb the dudy of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyR[index];
+            dgrad[index] = dqdyR[index];
         }
-        dgrad[nEquation]    =   dqdyR[nEquation];
-        dgrad[IU]           +=  perturbScale;
-        dgradpert           =   dgrad[IU] - dqdyR[IU];
+        dgrad[nEquation] =  dqdyR[nEquation];
+        dgrad[IU]        += perturbScale;
+        dgradpert        =  dgrad[IU] - dqdyR[IU];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dgrad, dqdzR, iFace, jFace, fluxp, 
@@ -9562,17 +9709,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyR[m][IU] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyR[m][IU] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dvdy of the right cell of the face
+        //! perturb the dvdy of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyR[index];
+            dgrad[index] = dqdyR[index];
         }
-        dgrad[nEquation]    =   dqdyR[nEquation];
-        dgrad[IV]           +=  perturbScale;
-        dgradpert           =   dgrad[IV] - dqdyR[IV];
+        dgrad[nEquation] =  dqdyR[nEquation];
+        dgrad[IV]        += perturbScale;
+        dgradpert        =  dgrad[IV] - dqdyR[IV];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dgrad, dqdzR, iFace, jFace, fluxp, 
@@ -9580,17 +9727,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyR[m][IV] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyR[m][IV] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dwdy of the right cell of the face
+        //! perturb the dwdy of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyR[index];
+            dgrad[index] = dqdyR[index];
         }
-        dgrad[nEquation]    =   dqdyR[nEquation];
-        dgrad[IW]           +=  perturbScale;
-        dgradpert           =   dgrad[IW] - dqdyR[IW];
+        dgrad[nEquation] =  dqdyR[nEquation];
+        dgrad[IW]        += perturbScale;
+        dgradpert        =  dgrad[IW] - dqdyR[IW];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dgrad, dqdzR, iFace, jFace, fluxp, 
@@ -9598,18 +9745,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyR[m][IW] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyR[m][IW] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dPdy of the right cell of the face
+        //! perturb the dPdy of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyR[index];
+            dgrad[index] = dqdyR[index];
         }
-        dgrad[nEquation]    =   dqdyR[nEquation];
-        dgrad[IP]           +=  perturbScale;
-        dgradpert           =   dgrad[IP] - dqdyR[IP];
+        dgrad[nEquation] =   dqdyR[nEquation];
+        dgrad[IP]        +=  perturbScale;
+        dgradpert        =   dgrad[IP] - dqdyR[IP];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dgrad, dqdzR, iFace, jFace, fluxp, 
@@ -9617,18 +9763,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyR[m][IP] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyR[m][IP] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dTdy of the right cell of the face
+        //! perturb the dTdy of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyR[index];
+            dgrad[index] = dqdyR[index];
         }
-        dgrad[nEquation]    =   dqdyR[nEquation];
-        dgrad[nEquation]    +=  perturbScale;
-        dgradpert           =   dgrad[nEquation] - dqdyR[nEquation];
+        dgrad[nEquation] =  dqdyR[nEquation];
+        dgrad[nEquation] += perturbScale;
+        dgradpert        =  dgrad[nEquation] - dqdyR[nEquation];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dgrad, dqdzR, iFace, jFace, fluxp, 
@@ -9636,17 +9781,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyR[m][nEquation] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyR[m][nEquation] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the drhodz of the right cell of the face
+        //! perturb the drhodz of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzR[index];
+            dgrad[index] = dqdzR[index];
         }
-        dgrad[nEquation]    =   dqdzR[nEquation];
-        dgrad[IR]           +=  perturbScale;
-        dgradpert           =   dgrad[IR] - dqdzR[IR];
+        dgrad[nEquation] =  dqdzR[nEquation];
+        dgrad[IR]        += perturbScale;
+        dgradpert        =  dgrad[IR] - dqdzR[IR];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dgrad, iFace, jFace, fluxp, 
@@ -9654,18 +9799,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzR[m][IR] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzR[m][IR] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        
-        // perturb the dudz of the right cell of the face
+        //!S perturb the dudz of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzR[index];
+            dgrad[index] = dqdzR[index];
         }
-        dgrad[nEquation]    =   dqdzR[nEquation];
-        dgrad[IU]           +=  perturbScale;
-        dgradpert           =   dgrad[IU] - dqdzR[IU];
+        dgrad[nEquation] =  dqdzR[nEquation];
+        dgrad[IU]        += perturbScale;
+        dgradpert        =  dgrad[IU] - dqdzR[IU];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dgrad, iFace, jFace, fluxp, 
@@ -9673,17 +9817,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzR[m][IU] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzR[m][IU] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dvdz of the right cell of the face
+        //! perturb the dvdz of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzR[index];
+            dgrad[index] = dqdzR[index];
         }
-        dgrad[nEquation]    =   dqdzR[nEquation];
-        dgrad[IV]           +=  perturbScale;
-        dgradpert           =   dgrad[IV] - dqdzR[IV];
+        dgrad[nEquation] =  dqdzR[nEquation];
+        dgrad[IV]        += perturbScale;
+        dgradpert        =  dgrad[IV] - dqdzR[IV];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dgrad, iFace, jFace, fluxp, 
@@ -9691,17 +9835,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzR[m][IV] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzR[m][IV] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dwdz of the right cell of the face
+        //! perturb the dwdz of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzR[index];
+            dgrad[index] = dqdzR[index];
         }
-        dgrad[nEquation]    =   dqdzR[nEquation];
-        dgrad[IW]           +=  perturbScale;
-        dgradpert           =   dgrad[IW] - dqdzR[IW];
+        dgrad[nEquation] =  dqdzR[nEquation];
+        dgrad[IW]        += perturbScale;
+        dgradpert        =  dgrad[IW] - dqdzR[IW];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dgrad, iFace, jFace, fluxp, 
@@ -9709,17 +9853,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzR[m][IW] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzR[m][IW] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dPdz of the right cell of the face
+        //! perturb the dPdz of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzR[index];
+            dgrad[index] = dqdzR[index];
         }
-        dgrad[nEquation]    =   dqdzR[nEquation];
-        dgrad[IP]           +=  perturbScale;
-        dgradpert           =   dgrad[IP] - dqdzR[IP];
+        dgrad[nEquation] =  dqdzR[nEquation];
+        dgrad[IP]        += perturbScale;
+        dgradpert        =  dgrad[IP] - dqdzR[IP];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dgrad, iFace, jFace, fluxp, 
@@ -9727,17 +9871,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzR[m][IP] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzR[m][IP] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dTdz of the right cell of the face
+        //! perturb the dTdz of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzR[index];
+            dgrad[index] = dqdzR[index];
         }
-        dgrad[nEquation]    =   dqdzR[nEquation];
-        dgrad[nEquation]    +=  perturbScale;
-        dgradpert           =   dgrad[nEquation] - dqdzR[nEquation];
+        dgrad[nEquation] =  dqdzR[nEquation];
+        dgrad[nEquation] += perturbScale;
+        dgradpert        =  dgrad[nEquation] - dqdzR[nEquation];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dgrad, iFace, jFace, fluxp, 
@@ -9748,12 +9892,11 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             dFluxdgradzR[m][nEquation] = (fluxp[m] - flux[m][jFace])/dgradpert;
         }
 
-
-        RDouble nxs         = xfn[iFace];
-        RDouble nys         = yfn[iFace];
-        RDouble nzs         = zfn[iFace];
-        RDouble ns          = area[iFace];
-        RDouble volume      = vol[re];
+        RDouble nxs    = xfn[iFace];
+        RDouble nys    = yfn[iFace];
+        RDouble nzs    = zfn[iFace];
+        RDouble ns     = area[iFace];
+        RDouble volume = vol[re];
         // dgradtmp = dfluxdgradxR*dgradRdqLx + dfluxdgradyR*dgradRdqLy + dfluxdgradzR*dgraddqLz
         // dRdq[le][le] += dgradtmp*dqdcvL
         gas->dGradient2dPrimitive(fL,-1,dgraddqx, 'x', nxs, nys,nzs,ns,volume);
@@ -9778,10 +9921,10 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-        // convert dGradtmp by right multiplying the dqdcvL,
-        // then add to the corresponding location in dRdq.
-        indexf = le * nEquation; // first index
-        indexs = le * nEquation; // second index
+        //! convert dGradtmp by right multiplying the dqdcvL,
+        //! then add to the corresponding location in dRdq.
+        indexf = le * nEquation;    //! first index
+        indexs = le * nEquation;    //! second index
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -9794,7 +9937,6 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 }
             }
         }
-
 
         // dgradtmp = dfluxdgradxR*dgradRdqLx + dfluxdgradyR*dgradRdqLy + dfluxdgradzR*dgraddqLz
         // dRdq[re][le] += dgradtmp*dqdcvL
@@ -9842,10 +9984,10 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-        // convert dGradtmp by right multiplying the dqdcvL,
-        // then add to the corresponding location in dRdq.
-        indexf = le * nEquation; // first index
-        indexs = re * nEquation; // second index
+        //! convert dGradtmp by right multiplying the dqdcvL,
+        //! then add to the corresponding location in dRdq.
+        indexf = le * nEquation;    //! first index
+        indexs = re * nEquation;    //! second index
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -9859,11 +10001,10 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-
         // dgradtmp = dfluxdgradxL*dgradLdqRx + dfluxdgradyL*dgradLdqRy + dfluxdgradzL*dgradLdqRz
         // dRdq[re][re] += dgradtmp*dqdcvL
-        indexf = re * nEquation; // first index
-        indexs = re * nEquation; // second index
+        indexf = re * nEquation;    //! first index
+        indexs = re * nEquation;    //! second index
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -9877,8 +10018,8 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-        // contributions from the bc, 
-        // dFluxdPR*dDdPlocal
+        //! contributions from the bc, 
+        //! dFluxdPR*dDdPlocal
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -9892,15 +10033,14 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-        // convert dGradtmpBC by right multiplying the dqdcvL,
-        // then add to the corresponding location in dRdq.
-        indexf = le * nEquation; // first index
-        indexs = le * nEquation; // second index
+        //! convert dGradtmpBC by right multiplying the dqdcvL,
+        //! then add to the corresponding location in dRdq.
+        indexf = le * nEquation;    //! first index
+        indexs = le * nEquation;    //! second index
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
             {
-                
                 for(int indexK=0; indexK < nEquation; indexK++)
                 {
                     dRdq[indexf+indexI][indexs+indexJ] += dGradtmpBC[indexI][indexK]*
@@ -9909,21 +10049,20 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-
-        // the neighbors of the left cells
+        //! the neighbors of the left cells
         for(int index = 0; index < neighborCells[le].size(); index++)
         {
             int neighborIndex = neighborCells[le][index];
 
             if(neighborIndex != re)
             {
-                int Faceindex   = neighborFaces[le][index];
-                int sign        = neighborLR[le][index];
-                RDouble nxs     = xfn[Faceindex];
-                RDouble nys     = yfn[Faceindex];
-                RDouble nzs     = zfn[Faceindex];
-                RDouble ns      = area[Faceindex];
-                RDouble volume  = vol[le];
+                int Faceindex  = neighborFaces[le][index];
+                int sign       = neighborLR[le][index];
+                RDouble nxs    = xfn[Faceindex];
+                RDouble nys    = yfn[Faceindex];
+                RDouble nzs    = zfn[Faceindex];
+                RDouble ns     = area[Faceindex];
+                RDouble volume = vol[le];
                 for(int m =0; m < nEquation; m++)
                 {
                     fN[m] = primitiveVariable[m][neighborIndex];
@@ -9972,38 +10111,36 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                                                                      dqdcvN[indexK][indexJ];
                         }
                     }
-                }            
+                }
             }
         }
 
-
-        // the neighbors of the right cells
-        
+        //! the neighbors of the right cells
         for(int index = 0; index < neighborCells[re].size(); index ++)
         {
             int neighborIndex = neighborCells[re][index];
 
             if(neighborIndex != le)
             {
-                int Faceindex       = neighborFaces[re][index];
-                int sign            = neighborLR[re][index];
-                RDouble nxs         = xfn[Faceindex];
-                RDouble nys         = yfn[Faceindex];
-                RDouble nzs         = zfn[Faceindex];
-                RDouble ns          = area[Faceindex];
-                RDouble volume      = vol[re];
-    
+                int Faceindex  = neighborFaces[re][index];
+                int sign       = neighborLR[re][index];
+                RDouble nxs    = xfn[Faceindex];
+                RDouble nys    = yfn[Faceindex];
+                RDouble nzs    = zfn[Faceindex];
+                RDouble ns     = area[Faceindex];
+                RDouble volume = vol[re];
+
                 for(int m=0; m < nEquation; m++)
                 {
                     fN[m] = primitiveVariable[m][neighborIndex];
                 }
-    
+
                 gas->dPrimitive2dConservative(fN,gama[neighborIndex],dqdcvN);
     
                 gas->dGradient2dPrimitive(fN,sign,dgraddqx, 'x', nxs, nys,nzs,ns,volume);
                 gas->dGradient2dPrimitive(fN,sign,dgraddqy, 'y', nxs, nys,nzs,ns,volume);
                 gas->dGradient2dPrimitive(fN,sign,dgraddqz, 'z', nxs, nys,nzs,ns,volume);
-    
+
                 for(int indexI=0; indexI < nEquation; indexI++)
                 {
                     for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -10021,8 +10158,8 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                     }
                 }
     
-                int indexf  = le * nEquation; // first index
-                int indexs  = neighborIndex * nEquation; // second index
+                int indexf  = le * nEquation;    //! first index
+                int indexs  = neighborIndex * nEquation;    //! second index
                 int indexf2 = re * nEquation; 
                 for(int indexI=0; indexI < nEquation; indexI++)
                 {
@@ -10031,11 +10168,9 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                     
                         for(int indexK=0; indexK < nEquation; indexK++)
                         {
-                            
                             // dRL/dqRNeighbors += dRL/dGradR*dGradR/dqRNeighbors ===> dFluxdgradR*dgraddq
                             dRdq[indexf+indexI][indexs+indexJ] += dGradtmp[indexI][indexK]*
                                                                      dqdcvN[indexK][indexJ];
-
 
                             // dRR/dqRNeighbors -= dRR/dGradR*dGradR/dqRNeighbors ===> dFluxdgradR*dgraddq
                             dRdq[indexf2+indexI][indexs+indexJ] -= dGradtmp[indexI][indexK]*
@@ -10047,8 +10182,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
         }
     }
 
-
-    // interior faces
+    //! interior faces
     for (int iFace = nMid; iFace < localEnd; ++ iFace)
     {
         int le = leftCellofFace [iFace];
@@ -10057,28 +10191,28 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nEquation; ++ m)
         {
-            fL[m]       = primitiveVariable[m][le];
-            fR[m]       = primitiveVariable[m][re];
-            fMid[m]     = primitiveVariableFace[m][jFace];
-            dqdxL[m]    = dqdx[m][le];
-            dqdyL[m]    = dqdy[m][le];
-            dqdzL[m]    = dqdz[m][le];
-            dqdxR[m]    = dqdx[m][re];
-            dqdyR[m]    = dqdy[m][re];
-            dqdzR[m]    = dqdz[m][re];
+            fL[m]    = primitiveVariable[m][le];
+            fR[m]    = primitiveVariable[m][re];
+            fMid[m]  = primitiveVariableFace[m][jFace];
+            dqdxL[m] = dqdx[m][le];
+            dqdyL[m] = dqdy[m][le];
+            dqdzL[m] = dqdz[m][le];
+            dqdxR[m] = dqdx[m][re];
+            dqdyR[m] = dqdy[m][re];
+            dqdzR[m] = dqdz[m][re];
         }
-        fL[nEquation]           = t[ITT][le];
-        fLpert[nEquation]       = t[ITT][le];
-        fR[nEquation]           = t[ITT][re];
-        fRpert[nEquation]       = t[ITT][re];
-        fMid[nEquation]         = tm[ITT][jFace];
-        fMidpert[nEquation]     = tm[ITT][jFace];
-        dqdxL[nEquation]        = dtdx[ITT][le];
-        dqdyL[nEquation]        = dtdy[ITT][le];
-        dqdzL[nEquation]        = dtdz[ITT][le];
-        dqdxR[nEquation]        = dtdx[ITT][re];
-        dqdyR[nEquation]        = dtdy[ITT][re];
-        dqdzR[nEquation]        = dtdz[ITT][re];
+        fL[nEquation]       = t[ITT][le];
+        fLpert[nEquation]   = t[ITT][le];
+        fR[nEquation]       = t[ITT][re];
+        fRpert[nEquation]   = t[ITT][re];
+        fMid[nEquation]     = tm[ITT][jFace];
+        fMidpert[nEquation] = tm[ITT][jFace];
+        dqdxL[nEquation]    = dtdx[ITT][le];
+        dqdyL[nEquation]    = dtdy[ITT][le];
+        dqdzL[nEquation]    = dtdz[ITT][le];
+        dqdxR[nEquation]    = dtdx[ITT][re];
+        dqdyR[nEquation]    = dtdy[ITT][re];
+        dqdzR[nEquation]    = dtdz[ITT][re];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10089,18 +10223,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             flux[m][jFace] = fluxp[m];
         }
 
-
-        // perturb the density of the left cell of the face
+        //! perturb the density of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             fLpert[index]   = fL[index];
             fMidpert[index] = fMid[index];  
         }
-        fLpert[IR]          *=  (1.0 + perturbScale);
-        fLpert[nEquation]   =   fLpert[IP]/(coefficientofStateEquation * fLpert[IR]);
-        dfpert              =   fLpert[IR] - fL[IR];
-        fMidpert[IR]        =   half * (fLpert[IR]+fR[IR]);
-        fMidpert[nEquation] =   half * (fLpert[nEquation]+fR[nEquation]);
+        fLpert[IR]          *= (1.0 + perturbScale);
+        fLpert[nEquation]   =  fLpert[IP]/(coefficientofStateEquation * fLpert[IR]);
+        dfpert              =  fLpert[IR] - fL[IR];
+        fMidpert[IR]        =  half * (fLpert[IR]+fR[IR]);
+        fMidpert[nEquation] =  half * (fLpert[nEquation]+fR[nEquation]);
         
         Cal_GMRES_Visflux(fLpert, fR, fMidpert, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10108,31 +10241,31 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdpL[m][IR] = (fluxp[m] - flux[m][jFace])/dfpert;
+            dFluxdpL[m][IR] = (fluxp[m] - flux[m][jFace]) / dfpert;
         }
 
-        // perturb the u of the left cell of the face
+        //! perturb the u of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             fLpert[index]   = fL[index];
             fMidpert[index] = fMid[index];  
         }
-        fLpert[nEquation]   =   fL[nEquation];
-        fMidpert[nEquation] =   half * (fLpert[nEquation]+fR[nEquation]);
-        fLpert[IU]          +=  perturbScale;
-        dfpert              =   fLpert[IU] - fL[IU];
-        fMidpert[IU]        =   half * (fLpert[IU]+fR[IU]);
-        
+        fLpert[nEquation]   =  fL[nEquation];
+        fMidpert[nEquation] =  half * (fLpert[nEquation]+fR[nEquation]);
+        fLpert[IU]          += perturbScale;
+        dfpert              =  fLpert[IU] - fL[IU];
+        fMidpert[IU]        =  half * (fLpert[IU]+fR[IU]);
+
         Cal_GMRES_Visflux(fLpert, fR, fMidpert, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
                           gridIn, faceProxy);
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdpL[m][IU] = (fluxp[m] - flux[m][jFace])/dfpert;
+            dFluxdpL[m][IU] = (fluxp[m] - flux[m][jFace]) / dfpert;
         }
 
-        // perturb the v of the left cell of the face
+        //! perturb the v of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             fLpert[index]   = fL[index];
@@ -10143,27 +10276,27 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
         fLpert[IV]          +=  perturbScale;
         dfpert              =   fLpert[IV] - fL[IV];
         fMidpert[IV]        =   half * (fLpert[IV]+fR[IV]);
-        
+
         Cal_GMRES_Visflux(fLpert, fR, fMidpert, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
                           gridIn, faceProxy);
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdpL[m][IV] = (fluxp[m] - flux[m][jFace])/dfpert;
+            dFluxdpL[m][IV] = (fluxp[m] - flux[m][jFace]) / dfpert;
         }
 
-        // perturb the w of the left cell of the face
+        //! perturb the w of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             fLpert[index]   = fL[index];
             fMidpert[index] = fMid[index];  
         }
-        fLpert[nEquation]   =   fL[nEquation];
-        fMidpert[nEquation] =   half * (fLpert[nEquation]+fR[nEquation]);
-        fLpert[IW]          +=  perturbScale;
-        dfpert              =   fLpert[IW] - fL[IW];
-        fMidpert[IW]        =   half * (fLpert[IW]+fR[IW]);
+        fLpert[nEquation]   =  fL[nEquation];
+        fMidpert[nEquation] =  half * (fLpert[nEquation]+fR[nEquation]);
+        fLpert[IW]          += perturbScale;
+        dfpert              =  fLpert[IW] - fL[IW];
+        fMidpert[IW]        =  half * (fLpert[IW]+fR[IW]);
         
         Cal_GMRES_Visflux(fLpert, fR, fMidpert, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10171,43 +10304,41 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdpL[m][IW] = (fluxp[m] - flux[m][jFace])/dfpert;
+            dFluxdpL[m][IW] = (fluxp[m] - flux[m][jFace]) / dfpert;
         }
 
-
-        // perturb the pressure of the left cell of the face
+        //! perturb the pressure of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             fLpert[index]   = fL[index];
             fMidpert[index] = fMid[index];  
         }
-        fLpert[IP]          *=  (1.0 + perturbScale);
-        fLpert[nEquation]   =   fLpert[IP]/(coefficientofStateEquation * fLpert[IR]);
-        dfpert              =   fLpert[IP] - fL[IP];
-        fMidpert[IP]        =   half * (fLpert[IP]+fR[IP]);
-        fMidpert[nEquation] =   half * (fLpert[nEquation]+fR[nEquation]);
-        
+        fLpert[IP]          *= (1.0 + perturbScale);
+        fLpert[nEquation]   =  fLpert[IP]/(coefficientofStateEquation * fLpert[IR]);
+        dfpert              =  fLpert[IP] - fL[IP];
+        fMidpert[IP]        =  half * (fLpert[IP]+fR[IP]);
+        fMidpert[nEquation] =  half * (fLpert[nEquation]+fR[nEquation]);
+
         Cal_GMRES_Visflux(fLpert, fR, fMidpert, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
                           gridIn, faceProxy);
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdpL[m][IP] = (fluxp[m] - flux[m][jFace])/dfpert;
+            dFluxdpL[m][IP] = (fluxp[m] - flux[m][jFace]) / dfpert;
         }
 
-
-        // perturb the density of the right cell of the face
+        //! perturb the density of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             fRpert[index]   = fR[index];
             fMidpert[index] = fMid[index];  
         }
-        fRpert[IR]          *=  (1.0 + perturbScale);
-        fRpert[nEquation]   =   fRpert[IP]/(coefficientofStateEquation * fRpert[IR]);
-        dfpert              =   fRpert[IR] - fR[IR];
-        fMidpert[IR]        =   half * (fL[IR]+fRpert[IR]);
-        fMidpert[nEquation] =   half * (fL[nEquation]+fRpert[nEquation]);
+        fRpert[IR]          *= (1.0 + perturbScale);
+        fRpert[nEquation]   =  fRpert[IP]/(coefficientofStateEquation * fRpert[IR]);
+        dfpert              =  fRpert[IR] - fR[IR];
+        fMidpert[IR]        =  half * (fL[IR]+fRpert[IR]);
+        fMidpert[nEquation] =  half * (fL[nEquation]+fRpert[nEquation]);
         
         Cal_GMRES_Visflux(fL, fRpert, fMidpert, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10215,20 +10346,20 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdpR[m][IR] = (fluxp[m] - flux[m][jFace])/dfpert;
+            dFluxdpR[m][IR] = (fluxp[m] - flux[m][jFace]) / dfpert;
         }
 
-        // perturb the u of the right cell of the face
+        //! perturb the u of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             fRpert[index]   = fR[index];
             fMidpert[index] = fMid[index];  
         }
-        fRpert[nEquation]   =   fR[nEquation];
-        fMidpert[nEquation] =   half * (fL[nEquation]+fRpert[nEquation]);
-        fRpert[IU]          +=  perturbScale;
-        dfpert              =   fRpert[IU] - fR[IU];
-        fMidpert[IU]        =   half * (fL[IU]+fRpert[IU]);
+        fRpert[nEquation]   =  fR[nEquation];
+        fMidpert[nEquation] =  half * (fL[nEquation]+fRpert[nEquation]);
+        fRpert[IU]          += perturbScale;
+        dfpert              =  fRpert[IU] - fR[IU];
+        fMidpert[IU]        =  half * (fL[IU]+fRpert[IU]);
         
         Cal_GMRES_Visflux(fL, fRpert, fMidpert, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10236,20 +10367,20 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdpR[m][IU] = (fluxp[m] - flux[m][jFace])/dfpert;
+            dFluxdpR[m][IU] = (fluxp[m] - flux[m][jFace]) / dfpert;
         }
 
-        // perturb the v of the right cell of the face
+        //! perturb the v of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             fRpert[index]   = fR[index];
             fMidpert[index] = fMid[index];  
         }
-        fRpert[nEquation]   =   fR[nEquation];
-        fMidpert[nEquation] =   half * (fL[nEquation]+fRpert[nEquation]);
-        fRpert[IV]          +=  perturbScale;
-        dfpert              =   fRpert[IV] - fR[IV];
-        fMidpert[IV]        =   half * (fL[IV]+fRpert[IV]);
+        fRpert[nEquation]   =  fR[nEquation];
+        fMidpert[nEquation] =  half * (fL[nEquation]+fRpert[nEquation]);
+        fRpert[IV]          += perturbScale;
+        dfpert              =  fRpert[IV] - fR[IV];
+        fMidpert[IV]        =  half * (fL[IV]+fRpert[IV]);
         
         Cal_GMRES_Visflux(fL, fRpert, fMidpert, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10260,40 +10391,39 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             dFluxdpR[m][IV] = (fluxp[m] - flux[m][jFace])/dfpert;
         }
 
-        // perturb the w of the right cell of the face
+        //! perturb the w of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             fRpert[index]   = fR[index];
             fMidpert[index] = fMid[index];  
         }
-        fRpert[nEquation]   =   fR[nEquation];
-        fMidpert[nEquation] =   half * (fL[nEquation]+fRpert[nEquation]);
-        fRpert[IW]          +=  perturbScale;
-        dfpert              =   fRpert[IW] - fR[IW];
-        fMidpert[IW]        =   half * (fL[IW]+fRpert[IW]);
-        
+        fRpert[nEquation]   =  fR[nEquation];
+        fMidpert[nEquation] =  half * (fL[nEquation]+fRpert[nEquation]);
+        fRpert[IW]          += perturbScale;
+        dfpert              =  fRpert[IW] - fR[IW];
+        fMidpert[IW]        =  half * (fL[IW]+fRpert[IW]);
+
         Cal_GMRES_Visflux(fL, fRpert, fMidpert, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
                           gridIn, faceProxy);
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdpR[m][IW] = (fluxp[m] - flux[m][jFace])/dfpert;
+            dFluxdpR[m][IW] = (fluxp[m] - flux[m][jFace]) / dfpert;
         }
 
-
-        // perturb the pressure of the right cell of the face
+        //! perturb the pressure of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             fRpert[index]   = fR[index];
             fMidpert[index] = fMid[index];  
         }
-        fRpert[IP]          *=  (1.0 + perturbScale);
-        fRpert[nEquation]   =   fRpert[IP]/(coefficientofStateEquation * fRpert[IR]);
-        dfpert              =   fRpert[IP] - fR[IP];
-        fMidpert[IP]        =   half * (fL[IP]+fRpert[IP]);
-        fMidpert[nEquation] =   half * (fL[nEquation]+fRpert[nEquation]);
-        
+        fRpert[IP]          *= (1.0 + perturbScale);
+        fRpert[nEquation]   =  fRpert[IP] / (coefficientofStateEquation * fRpert[IR]);
+        dfpert              =  fRpert[IP] - fR[IP];
+        fMidpert[IP]        =  half * (fL[IP]+fRpert[IP]);
+        fMidpert[nEquation] =  half * (fL[nEquation]+fRpert[nEquation]);
+
         Cal_GMRES_Visflux(fL, fRpert, fMidpert, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
                           gridIn, faceProxy);
@@ -10303,14 +10433,13 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             dFluxdpR[m][IP] = (fluxp[m] - flux[m][jFace])/dfpert;
         }
 
-        
-        // GMRESPV , obtain the dqdcv for the left cell
+        //! GMRESPV , obtain the dqdcv for the left cell
         gas->dPrimitive2dConservative(fL,gama[le],dqdcvL);
 
-        // convert dFluxdpL to dFluxdcvL by right multiplying the dqdcvL,
-        // then minus to the corresponding location in dRdq.
-        int indexf = re * nEquation; // first index
-        int indexs = le * nEquation; // second index
+        //! convert dFluxdpL to dFluxdcvL by right multiplying the dqdcvL,
+        //! then minus to the corresponding location in dRdq.
+        int indexf = re * nEquation;    //! first index
+        int indexs = le * nEquation;    //! second index
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -10324,11 +10453,10 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-        
-        // convert dFluxdpL to dFluxdcvL by right multiplying the dqdcvL,
-        // then add to the corresponding location in dRdq.
-        indexf = le * nEquation; // first index
-        indexs = le * nEquation; // second index
+        //! convert dFluxdpL to dFluxdcvL by right multiplying the dqdcvL,
+        //! then add to the corresponding location in dRdq.
+        indexf = le * nEquation;    //! first index
+        indexs = le * nEquation;    //! second index
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -10342,18 +10470,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-         // GMRESPV , obtain the dqdcv for the right cell
+         //! GMRESPV , obtain the dqdcv for the right cell
         gas->dPrimitive2dConservative(fR,gama[re],dqdcvR);
 
-        // convert dFluxdpR to dFluxdcvR by right multiplying the dqdcvR,
-        // then minus to the corresponding location in dRdq.
-        indexf = re * nEquation; // first index
-        indexs = re * nEquation; // second index
+        //! convert dFluxdpR to dFluxdcvR by right multiplying the dqdcvR,
+        //! then minus to the corresponding location in dRdq.
+        indexf = re * nEquation;    //! first index
+        indexs = re * nEquation;    //! second index
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
             {
-                
                 for(int indexK=0; indexK < nEquation; indexK++)
                 {
                     dRdq[indexf+indexI][indexs+indexJ] -= dFluxdpR[indexI][indexK]*
@@ -10362,8 +10489,8 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-        // convert dFluxdpR to dFluxdcvR by right multiplying the dqdcvR,
-        // then add to the corresponding location in dRdq.
+        //! convert dFluxdpR to dFluxdcvR by right multiplying the dqdcvR,
+        //! then add to the corresponding location in dRdq.
         indexf = le * nEquation; // first index
         indexs = re * nEquation; // second index
         for(int indexI=0; indexI < nEquation; indexI++)
@@ -10379,17 +10506,15 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-        
-        // considering the perturbation of the gradient in the flux calculation
-
-        // perturb the drhodx of the left cell of the face
+        //! considering the perturbation of the gradient in the flux calculation
+        //! perturb the drhodx of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxL[index];
+            dgrad[index] = dqdxL[index];
         }
-        dgrad[nEquation]    =   dqdxL[nEquation];
-        dgrad[IR]           +=  perturbScale;
-        dgradpert           =   dgrad[IR] - dqdxL[IR];
+        dgrad[nEquation] =  dqdxL[nEquation];
+        dgrad[IR]        += perturbScale;
+        dgradpert        =  dgrad[IR] - dqdxL[IR];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dgrad, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10397,18 +10522,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxL[m][IR] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxL[m][IR] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        
-        // perturb the dudx of the left cell of the face
+        //! perturb the dudx of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxL[index];
+            dgrad[index] = dqdxL[index];
         }
-        dgrad[nEquation]    =   dqdxL[nEquation];
-        dgrad[IU]           +=  perturbScale;
-        dgradpert           =   dgrad[IU] - dqdxL[IU];
+        dgrad[nEquation] =  dqdxL[nEquation];
+        dgrad[IU]        += perturbScale;
+        dgradpert        =  dgrad[IU] - dqdxL[IU];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dgrad, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10416,18 +10540,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxL[m][IU] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxL[m][IU] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dvdx of the left cell of the face
+        //! perturb the dvdx of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxL[index];
+            dgrad[index] = dqdxL[index];
         }
-        dgrad[nEquation]    =   dqdxL[nEquation];
-        dgrad[IV]           +=  perturbScale;
-        dgradpert           =   dgrad[IV] - dqdxL[IV];
+        dgrad[nEquation] =  dqdxL[nEquation];
+        dgrad[IV]        += perturbScale;
+        dgradpert        =  dgrad[IV] - dqdxL[IV];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dgrad, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10438,15 +10561,14 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             dFluxdgradxL[m][IV] = (fluxp[m] - flux[m][jFace])/dgradpert;
         }
 
-
-        // perturb the dwdx of the left cell of the face
+        //! perturb the dwdx of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxL[index];
+            dgrad[index] = dqdxL[index];
         }
-        dgrad[nEquation]    =   dqdxL[nEquation];
-        dgrad[IW]           +=  perturbScale;
-        dgradpert           =   dgrad[IW] - dqdxL[IW];
+        dgrad[nEquation] =  dqdxL[nEquation];
+        dgrad[IW]        += perturbScale;
+        dgradpert        =  dgrad[IW] - dqdxL[IW];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dgrad, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10454,17 +10576,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxL[m][IW] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxL[m][IW] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dPdx of the left cell of the face
+        //! perturb the dPdx of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxL[index];
+            dgrad[index] = dqdxL[index];
         }
-        dgrad[nEquation]    =   dqdxL[nEquation];
-        dgrad[IP]           +=  perturbScale;
-        dgradpert           =   dgrad[IP] - dqdxL[IP];
+        dgrad[nEquation] =  dqdxL[nEquation];
+        dgrad[IP]        += perturbScale;
+        dgradpert        =  dgrad[IP] - dqdxL[IP];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dgrad, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10472,18 +10594,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxL[m][IP] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxL[m][IP] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dTdx of the left cell of the face
+        //! perturb the dTdx of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxL[index];
+            dgrad[index] = dqdxL[index];
         }
-        dgrad[nEquation]   =   dqdxL[nEquation];
-        dgrad[nEquation]   +=  perturbScale;
-        dgradpert          =   dgrad[nEquation] - dqdxL[nEquation];
+        dgrad[nEquation] =  dqdxL[nEquation];
+        dgrad[nEquation] += perturbScale;
+        dgradpert        =  dgrad[nEquation] - dqdxL[nEquation];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dgrad, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10491,18 +10612,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxL[m][nEquation] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxL[m][nEquation] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the drhody of the left cell of the face
+        //! perturb the drhody of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyL[index];
+            dgrad[index] = dqdyL[index];
         }
-        dgrad[nEquation]    =   dqdyL[nEquation];
-        dgrad[IR]           +=  perturbScale;
-        dgradpert           =   dgrad[IR] - dqdyL[IR];
+        dgrad[nEquation] =  dqdyL[nEquation];
+        dgrad[IR]        += perturbScale;
+        dgradpert        =  dgrad[IR] - dqdyL[IR];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dgrad, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10510,18 +10630,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyL[m][IR] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyL[m][IR] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dudy of the left cell of the face
+        //! perturb the dudy of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyL[index];
+            dgrad[index] = dqdyL[index];
         }
-        dgrad[nEquation]    =   dqdyL[nEquation];
-        dgrad[IU]           +=  perturbScale;
-        dgradpert           =   dgrad[IU] - dqdyL[IU];
+        dgrad[nEquation] =  dqdyL[nEquation];
+        dgrad[IU]        += perturbScale;
+        dgradpert        =  dgrad[IU] - dqdyL[IU];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dgrad, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10529,17 +10648,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyL[m][IU] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyL[m][IU] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dvdy of the left cell of the face
+        //! perturb the dvdy of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyL[index];
+            dgrad[index] = dqdyL[index];
         }
-        dgrad[nEquation]    =   dqdyL[nEquation];
-        dgrad[IV]           +=  perturbScale;
-        dgradpert           =   dgrad[IV] - dqdyL[IV];
+        dgrad[nEquation] =  dqdyL[nEquation];
+        dgrad[IV]        += perturbScale;
+        dgradpert        =  dgrad[IV] - dqdyL[IV];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dgrad, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10547,17 +10666,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyL[m][IV] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyL[m][IV] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dwdy of the left cell of the face
+        //! perturb the dwdy of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyL[index];
+            dgrad[index] = dqdyL[index];
         }
-        dgrad[nEquation]    =   dqdyL[nEquation];
-        dgrad[IW]           +=  perturbScale;
-        dgradpert           =   dgrad[IW] - dqdyL[IW];
+        dgrad[nEquation] =  dqdyL[nEquation];
+        dgrad[IW]        += perturbScale;
+        dgradpert        =  dgrad[IW] - dqdyL[IW];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dgrad, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10565,18 +10684,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyL[m][IW] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyL[m][IW] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        
-        // perturb the dPdy of the left cell of the face
+        //! perturb the dPdy of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyL[index];
+            dgrad[index] = dqdyL[index];
         }
-        dgrad[nEquation]    =   dqdyL[nEquation];
-        dgrad[IP]           +=  perturbScale;
-        dgradpert           =   dgrad[IP] - dqdyL[IP];
+        dgrad[nEquation] =  dqdyL[nEquation];
+        dgrad[IP]        += perturbScale;
+        dgradpert        =  dgrad[IP] - dqdyL[IP];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dgrad, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10584,17 +10702,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyL[m][IP] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyL[m][IP] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dTdy of the left cell of the face
+        //! perturb the dTdy of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyL[index];
+            dgrad[index] = dqdyL[index];
         }
-        dgrad[nEquation]    =   dqdyL[nEquation];
-        dgrad[nEquation]    +=  perturbScale;
-        dgradpert           =   dgrad[nEquation] - dqdyL[nEquation];
+        dgrad[nEquation] =  dqdyL[nEquation];
+        dgrad[nEquation] += perturbScale;
+        dgradpert        =  dgrad[nEquation] - dqdyL[nEquation];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dgrad, dqdzL, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10605,15 +10723,14 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             dFluxdgradyL[m][nEquation] = (fluxp[m] - flux[m][jFace])/dgradpert;
         }
 
-
-        // perturb the drhodz of the left cell of the face
+        //! perturb the drhodz of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzL[index];
+            dgrad[index] = dqdzL[index];
         }
-        dgrad[nEquation]    =   dqdzL[nEquation];
-        dgrad[IR]           +=  perturbScale;
-        dgradpert           =   dgrad[IR] - dqdzL[IR];
+        dgrad[nEquation] =  dqdzL[nEquation];
+        dgrad[IR]        += perturbScale;
+        dgradpert        =  dgrad[IR] - dqdzL[IR];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dgrad, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10624,8 +10741,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             dFluxdgradzL[m][IR] = (fluxp[m] - flux[m][jFace])/dgradpert;
         }
 
-
-        // perturb the dudz of the left cell of the face
+        //! perturb the dudz of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             dgrad[index]   = dqdzL[index];
@@ -10643,14 +10759,14 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             dFluxdgradzL[m][IU] = (fluxp[m] - flux[m][jFace])/dgradpert;
         }
 
-        // perturb the dvdz of the left cell of the face
+        //! perturb the dvdz of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzL[index];
+            dgrad[index] = dqdzL[index];
         }
-        dgrad[nEquation]    =   dqdzL[nEquation];
-        dgrad[IV]           +=  perturbScale;
-        dgradpert           =   dgrad[IV] - dqdzL[IV];
+        dgrad[nEquation] =  dqdzL[nEquation];
+        dgrad[IV]        += perturbScale;
+        dgradpert        =  dgrad[IV] - dqdzL[IV];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dgrad, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10661,14 +10777,14 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             dFluxdgradzL[m][IV] = (fluxp[m] - flux[m][jFace])/dgradpert;
         }
 
-        // perturb the dwdz of the left cell of the face
+        //! perturb the dwdz of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzL[index];
+            dgrad[index] = dqdzL[index];
         }
-        dgrad[nEquation]    =   dqdzL[nEquation];
-        dgrad[IW]           +=  perturbScale;
-        dgradpert           =   dgrad[IW] - dqdzL[IW];
+        dgrad[nEquation] =  dqdzL[nEquation];
+        dgrad[IW]        += perturbScale;
+        dgradpert        =  dgrad[IW] - dqdzL[IW];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dgrad, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10679,15 +10795,14 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             dFluxdgradzL[m][IW] = (fluxp[m] - flux[m][jFace])/dgradpert;
         }
 
-
-        // perturb the dPdz of the left cell of the face
+        //! perturb the dPdz of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzL[index];
+            dgrad[index] = dqdzL[index];
         }
-        dgrad[nEquation]    =   dqdzL[nEquation];
-        dgrad[IP]           +=  perturbScale;
-        dgradpert           =   dgrad[IP] - dqdzL[IP];
+        dgrad[nEquation] =  dqdzL[nEquation];
+        dgrad[IP]        += perturbScale;
+        dgradpert        =  dgrad[IP] - dqdzL[IP];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dgrad, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10698,14 +10813,14 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             dFluxdgradzL[m][IP] = (fluxp[m] - flux[m][jFace])/dgradpert;
         }
 
-        // perturb the dTdz of the left cell of the face
+        //! perturb the dTdz of the left cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzL[index];
+            dgrad[index] = dqdzL[index];
         }
-        dgrad[nEquation]    =   dqdzL[nEquation];
-        dgrad[nEquation]    +=  perturbScale;
-        dgradpert           =   dgrad[nEquation] - dqdzL[nEquation];
+        dgrad[nEquation] =  dqdzL[nEquation];
+        dgrad[nEquation] += perturbScale;
+        dgradpert        =  dgrad[nEquation] - dqdzL[nEquation];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dgrad, 
                           dqdxR, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10713,18 +10828,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzL[m][nEquation] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzL[m][nEquation] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the drhodx of the right cell of the face
+        //! perturb the drhodx of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxR[index];
+            dgrad[index] = dqdxR[index];
         }
-        dgrad[nEquation]    =   dqdxR[nEquation];
-        dgrad[IR]           +=  perturbScale;
-        dgradpert           =   dgrad[IR] - dqdxR[IR];
+        dgrad[nEquation] =  dqdxR[nEquation];
+        dgrad[IR]        += perturbScale;
+        dgradpert        =  dgrad[IR] - dqdxR[IR];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dgrad, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10732,18 +10846,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxR[m][IR] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxR[m][IR] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dudx of the right cell of the face
+        //! perturb the dudx of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxR[index];
+            dgrad[index] = dqdxR[index];
         }
-        dgrad[nEquation]    =   dqdxR[nEquation];
-        dgrad[IU]           +=  perturbScale;
-        dgradpert           =   dgrad[IU] - dqdxR[IU];
+        dgrad[nEquation] =  dqdxR[nEquation];
+        dgrad[IU]        += perturbScale;
+        dgradpert        =  dgrad[IU] - dqdxR[IU];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dgrad, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10751,10 +10864,10 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxR[m][IU] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxR[m][IU] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dvdx of the right cell of the face
+        //! perturb the dvdx of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
             dgrad[index]   = dqdxR[index];
@@ -10769,18 +10882,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxR[m][IV] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxR[m][IV] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        
-        // perturb the dwdx of the right cell of the face
+        //! perturb the dwdx of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxR[index];
+            dgrad[index] = dqdxR[index];
         }
-        dgrad[nEquation]    =   dqdxR[nEquation];
-        dgrad[IW]           +=  perturbScale;
-        dgradpert           =   dgrad[IW] - dqdxR[IW];
+        dgrad[nEquation] =  dqdxR[nEquation];
+        dgrad[IW]        += perturbScale;
+        dgradpert        =  dgrad[IW] - dqdxR[IW];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dgrad, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10788,18 +10900,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxR[m][IW] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxR[m][IW] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dPdx of the right cell of the face
+        //! perturb the dPdx of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxR[index];
+            dgrad[index] = dqdxR[index];
         }
-        dgrad[nEquation]    =   dqdxR[nEquation];
-        dgrad[IP]           +=  perturbScale;
-        dgradpert           =   dgrad[IP] - dqdxR[IP];
+        dgrad[nEquation] =  dqdxR[nEquation];
+        dgrad[IP]        += perturbScale;
+        dgradpert        =  dgrad[IP] - dqdxR[IP];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dgrad, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10807,18 +10918,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxR[m][IP] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxR[m][IP] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dTdx of the right cell of the face
+        //! perturb the dTdx of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdxR[index];
+            dgrad[index] = dqdxR[index];
         }
-        dgrad[nEquation]    =   dqdxR[nEquation];
-        dgrad[nEquation]    +=  perturbScale;
-        dgradpert           =   dgrad[nEquation] - dqdxR[nEquation];
+        dgrad[nEquation] =  dqdxR[nEquation];
+        dgrad[nEquation] += perturbScale;
+        dgradpert        =  dgrad[nEquation] - dqdxR[nEquation];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dgrad, dqdyR, dqdzR, iFace, jFace, fluxp, 
@@ -10826,17 +10936,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradxR[m][nEquation] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradxR[m][nEquation] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the drhody of the right cell of the face
+        //! perturb the drhody of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyR[index];
+            dgrad[index] = dqdyR[index];
         }
-        dgrad[nEquation]    =   dqdyR[nEquation];
-        dgrad[IR]           +=  perturbScale;
-        dgradpert           =   dgrad[IR] - dqdyR[IR];
+        dgrad[nEquation] =  dqdyR[nEquation];
+        dgrad[IR]        += perturbScale;
+        dgradpert        =  dgrad[IR] - dqdyR[IR];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dgrad, dqdzR, iFace, jFace, fluxp, 
@@ -10844,17 +10954,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyR[m][IR] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyR[m][IR] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dudy of the right cell of the face
+        //! perturb the dudy of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyR[index];
+            dgrad[index] = dqdyR[index];
         }
-        dgrad[nEquation]    =   dqdyR[nEquation];
-        dgrad[IU]           +=  perturbScale;
-        dgradpert           =   dgrad[IU] - dqdyR[IU];
+        dgrad[nEquation] =  dqdyR[nEquation];
+        dgrad[IU]        += perturbScale;
+        dgradpert        =  dgrad[IU] - dqdyR[IU];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dgrad, dqdzR, iFace, jFace, fluxp, 
@@ -10865,14 +10975,14 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             dFluxdgradyR[m][IU] = (fluxp[m] - flux[m][jFace])/dgradpert;
         }
 
-        // perturb the dvdy of the right cell of the face
+        //! perturb the dvdy of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyR[index];
+            dgrad[index] = dqdyR[index];
         }
-        dgrad[nEquation]    =   dqdyR[nEquation];
-        dgrad[IV]           +=  perturbScale;
-        dgradpert           =   dgrad[IV] - dqdyR[IV];
+        dgrad[nEquation] =  dqdyR[nEquation];
+        dgrad[IV]        += perturbScale;
+        dgradpert        =  dgrad[IV] - dqdyR[IV];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dgrad, dqdzR, iFace, jFace, fluxp, 
@@ -10880,17 +10990,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyR[m][IV] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyR[m][IV] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dwdy of the right cell of the face
+        //! perturb the dwdy of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyR[index];
+            dgrad[index] = dqdyR[index];
         }
-        dgrad[nEquation]    =   dqdyR[nEquation];
-        dgrad[IW]           +=  perturbScale;
-        dgradpert           =   dgrad[IW] - dqdyR[IW];
+        dgrad[nEquation] =  dqdyR[nEquation];
+        dgrad[IW]        += perturbScale;
+        dgradpert        =  dgrad[IW] - dqdyR[IW];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dgrad, dqdzR, iFace, jFace, fluxp, 
@@ -10898,18 +11008,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyR[m][IW] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyR[m][IW] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-
-        // perturb the dPdy of the right cell of the face
+        //! perturb the dPdy of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyR[index];
+            dgrad[index] = dqdyR[index];
         }
-        dgrad[nEquation]    =   dqdyR[nEquation];
-        dgrad[IP]           +=  perturbScale;
-        dgradpert           =   dgrad[IP] - dqdyR[IP];
+        dgrad[nEquation] =  dqdyR[nEquation];
+        dgrad[IP]        += perturbScale;
+        dgradpert        =  dgrad[IP] - dqdyR[IP];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dgrad, dqdzR, iFace, jFace, fluxp, 
@@ -10917,18 +11026,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyR[m][IP] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyR[m][IP] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        
-        // perturb the dTdy of the right cell of the face
+        //! perturb the dTdy of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdyR[index];
+            dgrad[index] = dqdyR[index];
         }
-        dgrad[nEquation]    =   dqdyR[nEquation];
-        dgrad[nEquation]    +=  perturbScale;
-        dgradpert           =   dgrad[nEquation] - dqdyR[nEquation];
+        dgrad[nEquation] =  dqdyR[nEquation];
+        dgrad[nEquation] += perturbScale;
+        dgradpert        =  dgrad[nEquation] - dqdyR[nEquation];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dgrad, dqdzR, iFace, jFace, fluxp, 
@@ -10936,17 +11044,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradyR[m][nEquation] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradyR[m][nEquation] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the drhodz of the right cell of the face
+        //! perturb the drhodz of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzR[index];
+            dgrad[index] = dqdzR[index];
         }
-        dgrad[nEquation]    =   dqdzR[nEquation];
-        dgrad[IR]           +=  perturbScale;
-        dgradpert           =   dgrad[IR] - dqdzR[IR];
+        dgrad[nEquation] =  dqdzR[nEquation];
+        dgrad[IR]        += perturbScale;
+        dgradpert        =  dgrad[IR] - dqdzR[IR];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dgrad, iFace, jFace, fluxp, 
@@ -10954,18 +11062,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzR[m][IR] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzR[m][IR] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        
-        // perturb the dudz of the right cell of the face
+        //! perturb the dudz of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzR[index];
+            dgrad[index] = dqdzR[index];
         }
-        dgrad[nEquation]    =   dqdzR[nEquation];
-        dgrad[IU]           +=  perturbScale;
-        dgradpert           =   dgrad[IU] - dqdzR[IU];
+        dgrad[nEquation] =  dqdzR[nEquation];
+        dgrad[IU]        += perturbScale;
+        dgradpert        =  dgrad[IU] - dqdzR[IU];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dgrad, iFace, jFace, fluxp, 
@@ -10973,17 +11080,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzR[m][IU] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzR[m][IU] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dvdz of the right cell of the face
+        //! perturb the dvdz of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzR[index];
+            dgrad[index] = dqdzR[index];
         }
-        dgrad[nEquation]    =   dqdzR[nEquation];
-        dgrad[IV]           +=  perturbScale;
-        dgradpert           =   dgrad[IV] - dqdzR[IV];
+        dgrad[nEquation] =  dqdzR[nEquation];
+        dgrad[IV]        += perturbScale;
+        dgradpert        =  dgrad[IV] - dqdzR[IV];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dgrad, iFace, jFace, fluxp, 
@@ -10991,17 +11098,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzR[m][IV] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzR[m][IV] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dwdz of the right cell of the face
+        //! perturb the dwdz of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzR[index];
+            dgrad[index] = dqdzR[index];
         }
-        dgrad[nEquation]    =   dqdzR[nEquation];
-        dgrad[IW]           +=  perturbScale;
-        dgradpert           =   dgrad[IW] - dqdzR[IW];
+        dgrad[nEquation] =  dqdzR[nEquation];
+        dgrad[IW]        += perturbScale;
+        dgradpert        =  dgrad[IW] - dqdzR[IW];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dgrad, iFace, jFace, fluxp, 
@@ -11009,17 +11116,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzR[m][IW] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzR[m][IW] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dPdz of the right cell of the face
+        //! perturb the dPdz of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzR[index];
+            dgrad[index] = dqdzR[index];
         }
-        dgrad[nEquation]    =   dqdzR[nEquation];
-        dgrad[IP]           +=  perturbScale;
-        dgradpert           =   dgrad[IP] - dqdzR[IP];
+        dgrad[nEquation] =  dqdzR[nEquation];
+        dgrad[IP]        += perturbScale;
+        dgradpert        =  dgrad[IP] - dqdzR[IP];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dgrad, iFace, jFace, fluxp, 
@@ -11027,17 +11134,17 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzR[m][IP] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzR[m][IP] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
 
-        // perturb the dTdz of the right cell of the face
+        //! perturb the dTdz of the right cell of the face
         for(int index = 0; index < nEquation; index++)
         {
-            dgrad[index]   = dqdzR[index];
+            dgrad[index] = dqdzR[index];
         }
-        dgrad[nEquation]    =   dqdzR[nEquation];
-        dgrad[nEquation]    +=  perturbScale;
-        dgradpert           =   dgrad[nEquation] - dqdzR[nEquation];
+        dgrad[nEquation] =  dqdzR[nEquation];
+        dgrad[nEquation] += perturbScale;
+        dgradpert        =  dgrad[nEquation] - dqdzR[nEquation];
 
         Cal_GMRES_Visflux(fL, fR, fMid, dqdxL, dqdyL, dqdzL, 
                           dqdxR, dqdyR, dgrad, iFace, jFace, fluxp, 
@@ -11045,15 +11152,14 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
         for (int m = 0; m < nLaminar; ++ m)
         {
-            dFluxdgradzR[m][nEquation] = (fluxp[m] - flux[m][jFace])/dgradpert;
+            dFluxdgradzR[m][nEquation] = (fluxp[m] - flux[m][jFace]) / dgradpert;
         }
-        
-        
-        RDouble nxs         = xfn[iFace];
-        RDouble nys         = yfn[iFace];
-        RDouble nzs         = zfn[iFace];
-        RDouble ns          = area[iFace];
-        RDouble volume      = vol[re];
+
+        RDouble nxs    = xfn[iFace];
+        RDouble nys    = yfn[iFace];
+        RDouble nzs    = zfn[iFace];
+        RDouble ns     = area[iFace];
+        RDouble volume = vol[re];
         // dgradtmp = dfluxdgradxR*dgradRdqLx + dfluxdgradyR*dgradRdqLy + dfluxdgradzR*dgraddqLz
         // dRdq[le][le] += dgradtmp*dqdcvL
         gas->dGradient2dPrimitive(fL,-1,dgraddqx, 'x', nxs, nys,nzs,ns,volume);
@@ -11065,7 +11171,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             for(int indexJ=0; indexJ < nEquation; indexJ++)
             {
                 dGradtmp[indexI][indexJ] = 0;
-                
+
                 for(int indexK=0; indexK < (nEquation+1); indexK++)
                 {
                     dGradtmp[indexI][indexJ] += dFluxdgradxR[indexI][indexK]*
@@ -11078,10 +11184,10 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-        // convert dGradtmp by right multiplying the dqdcvL,
-        // then add to the corresponding location in dRdq.
-        indexf = le * nEquation; // first index
-        indexs = le * nEquation; // second index
+        //! convert dGradtmp by right multiplying the dqdcvL,
+        //! then add to the corresponding location in dRdq.
+        indexf = le * nEquation;    //! first index
+        indexs = le * nEquation;    //! second index
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -11095,16 +11201,14 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-
         // dgradtmp = dfluxdgradxR*dgradRdqLx + dfluxdgradyR*dgradRdqLy + dfluxdgradzR*dgraddqLz
         // dRdq[re][le] += dgradtmp*dqdcvL
-        indexf = re * nEquation; // first index
-        indexs = le * nEquation; // second index
+        indexf = re * nEquation;    //! first index
+        indexs = le * nEquation;    //! second index
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
             {
-                
                 for(int indexK=0; indexK < nEquation; indexK++)
                 {
                     dRdq[indexf+indexI][indexs+indexJ] -= dGradtmp[indexI][indexK]*
@@ -11114,11 +11218,11 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
         }
 
 
-        nxs         = xfn[iFace];
-        nys         = yfn[iFace];
-        nzs         = zfn[iFace];
-        ns          = area[iFace];
-        volume      = vol[le];
+        nxs    = xfn[iFace];
+        nys    = yfn[iFace];
+        nzs    = zfn[iFace];
+        ns     = area[iFace];
+        volume = vol[le];
         // dgradtmp = dfluxdgradxL*dgradLdqRx + dfluxdgradyL*dgradLdqRy + dfluxdgradzL*dgradLdqRz
         // dRdq[le][re] += dgradtmp*dqdcvL
         gas->dGradient2dPrimitive(fR,1,dgraddqx, 'x', nxs, nys,nzs,ns,volume);
@@ -11130,7 +11234,7 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             for(int indexJ=0; indexJ < nEquation; indexJ++)
             {
                 dGradtmp[indexI][indexJ] = 0;
-                
+
                 for(int indexK=0; indexK < (nEquation+1); indexK++)
                 {
                     dGradtmp[indexI][indexJ] += dFluxdgradxL[indexI][indexK]*
@@ -11143,15 +11247,14 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-        // convert dGradtmp by right multiplying the dqdcvL,
-        // then add to the corresponding location in dRdq.
-        indexf = le * nEquation; // first index
-        indexs = re * nEquation; // second index
+        //! convert dGradtmp by right multiplying the dqdcvL,
+        //! then add to the corresponding location in dRdq.
+        indexf = le * nEquation;    //! first index
+        indexs = re * nEquation;    //! second index
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
             {
-                
                 for(int indexK=0; indexK < nEquation; indexK++)
                 {
                     dRdq[indexf+indexI][indexs+indexJ] += dGradtmp[indexI][indexK]*
@@ -11160,11 +11263,10 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-
         // dgradtmp = dfluxdgradxL*dgradLdqRx + dfluxdgradyL*dgradLdqRy + dfluxdgradzL*dgradLdqRz
         // dRdq[re][re] += dgradtmp*dqdcvL
-        indexf = re * nEquation; // first index
-        indexs = re * nEquation; // second index
+        indexf = re * nEquation;    //! first index
+        indexs = re * nEquation;    //! second index
         for(int indexI=0; indexI < nEquation; indexI++)
         {
             for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -11178,21 +11280,20 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
             }
         }
 
-        
-        // the neighbors of the left cells
+        //! the neighbors of the left cells
         for(int index = 0; index < neighborCells[le].size(); index++)
         {
             int neighborIndex = neighborCells[le][index];
 
             if(neighborIndex != re)
             {
-                int Faceindex   = neighborFaces[le][index];
-                int sign        = neighborLR[le][index];
-                RDouble nxs     = xfn[Faceindex];
-                RDouble nys     = yfn[Faceindex];
-                RDouble nzs     = zfn[Faceindex];
-                RDouble ns      = area[Faceindex];
-                RDouble volume  = vol[le];
+                int Faceindex  = neighborFaces[le][index];
+                int sign       = neighborLR[le][index];
+                RDouble nxs    = xfn[Faceindex];
+                RDouble nys    = yfn[Faceindex];
+                RDouble nzs    = zfn[Faceindex];
+                RDouble ns     = area[Faceindex];
+                RDouble volume = vol[le];
 
                 for(int m =0; m < nEquation; m++)
                 {
@@ -11223,14 +11324,13 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                     }
                 }
 
-                int indexf  = le * nEquation; // first index
-                int indexs  = neighborIndex * nEquation; // second index
+                int indexf  = le * nEquation;    //! first index
+                int indexs  = neighborIndex * nEquation;    //! second index
                 int indexf2 = re * nEquation; 
                 for(int indexI=0; indexI < nEquation; indexI++)
                 {
                     for(int indexJ=0; indexJ < nEquation; indexJ++)
                     {
-
                         for(int indexK=0; indexK < nEquation; indexK++)
                         {
                             // dRL/dqLNeighbors += dRL/dGradL*dGradL/dqLNeighbors ===> dFluxdgradL*dgraddq
@@ -11242,13 +11342,11 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                                                                      dqdcvN[indexK][indexJ];
                         }
                     }
-                }            
+                }
             }
         }
 
-
-        // the neighbors of the right cells
-        
+        //! the neighbors of the right cells
         for(int index = 0; index < neighborCells[re].size(); index++)
         {
             int neighborIndex = neighborCells[re][index];
@@ -11262,18 +11360,18 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                 RDouble nzs         = zfn[Faceindex];
                 RDouble ns          = area[Faceindex];
                 RDouble volume      = vol[re];
-    
+
                 for(int m=0; m < nEquation; m++)
                 {
                     fN[m] = primitiveVariable[m][neighborIndex];
                 }
-    
+
                 gas->dPrimitive2dConservative(fN,gama[neighborIndex],dqdcvN);
-    
+
                 gas->dGradient2dPrimitive(fN,sign,dgraddqx, 'x', nxs, nys,nzs,ns,volume);
                 gas->dGradient2dPrimitive(fN,sign,dgraddqy, 'y', nxs, nys,nzs,ns,volume);
                 gas->dGradient2dPrimitive(fN,sign,dgraddqz, 'z', nxs, nys,nzs,ns,volume);
-    
+
                 for(int indexI=0; indexI < nEquation; indexI++)
                 {
                     for(int indexJ=0; indexJ < nEquation; indexJ++)
@@ -11290,22 +11388,19 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                         }
                     }
                 }
-    
-                int indexf  = le * nEquation; // first index
-                int indexs  = neighborIndex * nEquation; // second index
+
+                int indexf  = le * nEquation;    //! first index
+                int indexs  = neighborIndex * nEquation;    //! second index
                 int indexf2 = re * nEquation; 
                 for(int indexI=0; indexI < nEquation; indexI++)
                 {
                     for(int indexJ=0; indexJ < nEquation; indexJ++)
                     {
-                    
                         for(int indexK=0; indexK < nEquation; indexK++)
                         {
-                            
                             // dRL/dqRNeighbors += dRL/dGradR*dGradR/dqRNeighbors ===> dFluxdgradR*dgraddq
                             dRdq[indexf+indexI][indexs+indexJ] += dGradtmp[indexI][indexK]*
                                                                      dqdcvN[indexK][indexJ];
-
 
                             // dRR/dqRNeighbors -= dRR/dGradR*dGradR/dqRNeighbors ===> dFluxdgradR*dgraddq
                             dRdq[indexf2+indexI][indexs+indexJ] -= dGradtmp[indexI][indexK]*
@@ -11313,10 +11408,8 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
                         }
                     }
                 }
-            }   
+            }
         }
-        
-        
 
         // output convert matrix
         // std::cout << "===================dgraddqx===========================\n";
@@ -11373,62 +11466,60 @@ void NSSolverUnstruct::ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int
 
     }
 
-    delete []dqdxL;    dqdxL = NULL;
-    delete []dqdyL;    dqdyL = NULL;
-    delete []dqdzL;    dqdzL = NULL;
+    delete [] dqdxL;    dqdxL = nullptr;
+    delete [] dqdyL;    dqdyL = nullptr;
+    delete [] dqdzL;    dqdzL = nullptr;
 
-    delete []dqdxR;    dqdxR = NULL;
-    delete []dqdyR;    dqdyR = NULL;
-    delete []dqdzR;    dqdzR = NULL;
-    delete []dgrad;    dgrad = NULL;
+    delete [] dqdxR;    dqdxR = nullptr;
+    delete [] dqdyR;    dqdyR = nullptr;
+    delete [] dqdzR;    dqdzR = nullptr;
+    delete [] dgrad;    dgrad = nullptr;
 
-    delete []fL;        fL = NULL;
-    delete []fR;        fR = NULL;
-    delete []fN;        fN = NULL;
-    delete []fMid;      fMid = NULL;
-    delete []fluxp;     fluxp = NULL;
+    delete [] fL;       fL = nullptr;
+    delete [] fR;       fR = nullptr;
+    delete [] fN;       fN = nullptr;
+    delete [] fMid;     fMid = nullptr;
+    delete [] fluxp;    fluxp = nullptr;
 
-    delete []fLpert;    fLpert = NULL;
-    delete []fRpert;    fRpert = NULL;
-    delete []fMidpert;  fMidpert = NULL;
+    delete [] fLpert;   fLpert = nullptr;
+    delete [] fRpert;   fRpert = nullptr;
+    delete [] fMidpert; fMidpert = nullptr;
 
     for(int index = 0; index < nEquation; index++)
     {
-        delete[] dqdcvL[index];
-        delete[] dqdcvR[index];
-        delete[] dqdcvN[index];
-        delete[] dgraddqx[index];
-        delete[] dgraddqy[index];
-        delete[] dgraddqz[index];
+        delete [] dqdcvL[index];
+        delete [] dqdcvR[index];
+        delete [] dqdcvN[index];
+        delete [] dgraddqx[index];
+        delete [] dgraddqy[index];
+        delete [] dgraddqz[index];
     }
-    delete[]    dgraddqx[nEquation];
-    delete[]    dgraddqy[nEquation];
-    delete[]    dgraddqz[nEquation];
-    delete[]    dqdcvL;
-    delete[]    dqdcvR;
-    delete[]    dqdcvN;
-    delete[]    dgraddqx;
-    delete[]    dgraddqy;
-    delete[]    dgraddqz;
-
+    delete [] dgraddqx[nEquation];
+    delete [] dgraddqy[nEquation];
+    delete [] dgraddqz[nEquation];
+    delete [] dqdcvL;    dqdcvL = nullptr;
+    delete [] dqdcvR;    dqdcvR = nullptr;
+    delete [] dqdcvN;    dqdcvN = nullptr;
+    delete [] dgraddqx;    dgraddqx = nullptr;
+    delete [] dgraddqy;    dgraddqy = nullptr;
+    delete [] dgraddqz;    dgraddqz = nullptr;
 }
 
-// GMRESCoupled
+//! GMRESCoupled
 template <typename T>
 void NSSolverUnstruct::Cal_GMRES_Visflux_AD_Coupled(T* fL, T* fR, T fLturb, T fRturb, T* dqdxL,T* dqdyL, T* dqdzL, 
                                                     T* dqdxR, T* dqdyR, T* dqdzR, int iFace,
                                                     int jFace, T* flux, Grid *gridIn, 
                                                     FaceProxy *faceProxy, Param_NSSolverUnstruct *parameters)
 {
-        
         UnstructGrid *grid = UnstructGridCast(gridIn);
         int nBoundFace = grid->GetNBoundFace();
 
-        int *leftCellofFace     = grid->GetLeftCellOfFace();
-        int *rightCellofFace    = grid->GetRightCellOfFace();
-        int nTotalCell          = grid->GetNTotalCell();
+        int *leftCellofFace  = grid->GetLeftCellOfFace();
+        int *rightCellofFace = grid->GetRightCellOfFace();
+        int nTotalCell       = grid->GetNTotalCell();
 
-        RDouble **dDdP_turb     = reinterpret_cast<RDouble **>(grid->GetDataPtr("dDdP_turb"));
+        RDouble **dDdP_turb = reinterpret_cast<RDouble **>(grid->GetDataPtr("dDdP_turb"));
 
         UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
         int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
@@ -11445,7 +11536,6 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD_Coupled(T* fL, T* fR, T fLturb, T fR
         RDouble *xfc  = grid->GetFaceCenterX();
         RDouble *yfc  = grid->GetFaceCenterY();
         RDouble *zfc  = grid->GetFaceCenterZ();
-
 
         // Param_NSSolverUnstruct *parameters = GetControlParameters();
         int numberOfSpecies = parameters->GetNumberOfSpecies();
@@ -11469,7 +11559,6 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD_Coupled(T* fL, T* fR, T fLturb, T fR
         RDouble refReNumber  = parameters->GetRefReNumber();
         RDouble oRefReNumber = parameters->GetoRefReNumber();
         RDouble nonDimensionalSutherlandTemperature = parameters->GetNonDimensionalSutherlandTemperature();
-
 
         int nolstress = GlobalDataBase::GetIntParaFromDB("nolstress");
         int nrokplus  = GlobalDataBase::GetIntParaFromDB("nrokplus");
@@ -11507,8 +11596,8 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD_Coupled(T* fL, T* fR, T fLturb, T fR
         RDouble nzs = zfn[iFace];
 
         RDouble t1x, t1y, t1z, t2x, t2y, t2z;
-        T txx,tyy,tzz;
-        T txy,txz,tyz;
+        T txx, tyy, tzz;
+        T txy, txz, tyz;
 
         T viscousLaminarMin,viscousLaminarL,viscousLaminarR,viscousLaminarFace;
         T viscousTurbulenceL, viscousTurbulenceR, viscousTurbulenceFace,ld,ld3,fv1;
@@ -11596,14 +11685,14 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD_Coupled(T* fL, T* fR, T fLturb, T fR
             f2[m] = fR[m];
         }
 
-        T tL      = fL[IP]/(coefficientofStateEquation*fL[IR]);
-        T tR      = fR[IP]/(coefficientofStateEquation*fR[IR]);
-        T dtdxL   = dqdxL[nEquation];
-        T dtdyL   = dqdyL[nEquation];
-        T dtdzL   = dqdzL[nEquation];
-        T dtdxR   = dqdxR[nEquation];
-        T dtdyR   = dqdyR[nEquation];
-        T dtdzR   = dqdzR[nEquation];
+        T tL    = fL[IP]/(coefficientofStateEquation*fL[IR]);
+        T tR    = fR[IP]/(coefficientofStateEquation*fR[IR]);
+        T dtdxL = dqdxL[nEquation];
+        T dtdyL = dqdyL[nEquation];
+        T dtdzL = dqdzL[nEquation];
+        T dtdxR = dqdxR[nEquation];
+        T dtdyR = dqdyR[nEquation];
+        T dtdzR = dqdzR[nEquation];
 
         for (int m = 0; m < nEquation; ++ m)
         {
@@ -11613,21 +11702,21 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD_Coupled(T* fL, T* fR, T fLturb, T fR
         T tMid = half * (tL + tR);
         primitiveVariableFace[nEquation] = tMid;
 
-         // calculate the viscousLaminar here
+         //! calculate the viscousLaminar here
         viscousLaminarL     = tL * sqrt(tL) * (1.0 + nonDimensionalSutherlandTemperature) / (tL + nonDimensionalSutherlandTemperature);
         viscousLaminarL     = MAX(viscousLaminarMin, viscousLaminarL);
         viscousLaminarR     = tR * sqrt(tR) * (1.0 + nonDimensionalSutherlandTemperature) / (tR + nonDimensionalSutherlandTemperature);
         viscousLaminarR     = MAX(viscousLaminarMin, viscousLaminarR);
 
-        // calculate the viscousTurbulence here
-        RDouble nuoo  = 1.0;        
+        //! calculate the viscousTurbulence here
+        RDouble nuoo  = 1.0;
         RDouble nuMin = 1.0e-5 * nuoo;
         RDouble nuMax = 1.0e10 * nuoo;
         RDouble SA_cv1_cube = GlobalDataBase::GetDoubleParaFromDB("SA_cv1_cube");
 
-        ld      = fLturb * fL[0] / (viscousLaminarL + SMALL);
-        ld3     = ld * ld * ld;
-        fv1     = ld3 / (ld3 + SA_cv1_cube);
+        ld  = fLturb * fL[0] / (viscousLaminarL + SMALL);
+        ld3 = ld * ld * ld;
+        fv1 = ld3 / (ld3 + SA_cv1_cube);
         viscousTurbulenceL = fL[0] * fv1 * fLturb;
         viscousTurbulenceL = min(nuMax, viscousTurbulenceL);
         viscousTurbulenceL = max(nuMin, viscousTurbulenceL);
@@ -11639,13 +11728,12 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD_Coupled(T* fL, T* fR, T fLturb, T fR
         viscousTurbulenceR = min(nuMax, viscousTurbulenceR);
         viscousTurbulenceR = max(nuMin, viscousTurbulenceR);
 
-
         if(iFace < nBoundFace)
         {
             UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
             int bcType = bcRegion->GetBCType();
 
-            // for solid walls, primitiveVariableFace[IU,IV,IW][jFace] = 0
+            //! for solid walls, primitiveVariableFace[IU,IV,IW][jFace] = 0
             if (bcType == PHENGLEI::SOLID_SURFACE)
             {
                 RDouble uWall = 0.0;
@@ -11677,11 +11765,9 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD_Coupled(T* fL, T* fR, T fLturb, T fR
             }
         }
 
-
-
-         // calculate the viscousLaminarFace 
-        viscousLaminarFace      = half*(viscousLaminarL     + viscousLaminarR);
-        viscousTurbulenceFace   = half*(viscousTurbulenceL  + viscousTurbulenceR);
+         //! calculate the viscousLaminarFace 
+        viscousLaminarFace    = half*(viscousLaminarL    + viscousLaminarR);
+        viscousTurbulenceFace = half*(viscousTurbulenceL + viscousTurbulenceR);
 
         RDouble cp = 1.0 / ((refGama - 1.0) * referenceMachNumberSquare);
         kCpFace = (viscousLaminarFace * oPrandtlLaminar + viscousTurbulenceFace * oPrandtlTurbulence) * cp;
@@ -11792,7 +11878,7 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD_Coupled(T* fL, T* fR, T fLturb, T fR
             dfdy[m] = nys * dfdn[m] + t1y * dfdt1[m] + t2y * dfdt2[m];
             dfdz[m] = nzs * dfdn[m] + t1z * dfdt1[m] + t2z * dfdt2[m];
         }
-        
+
         T dudx = dfdx[IU];
         T dudy = dfdy[IU];
         T dudz = dfdz[IU];
@@ -11805,7 +11891,7 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD_Coupled(T* fL, T* fR, T fLturb, T fR
         T dwdy = dfdy[IW];
         T dwdz = dfdz[IW];
 
-        T qNorm = 0.0;         
+        T qNorm = 0.0;
         // if (nChemical == 1)
         // {
         //     for (int iSpecies = 0; iSpecies < numberOfSpecies; ++ iSpecies)
@@ -11863,8 +11949,6 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD_Coupled(T* fL, T* fR, T fLturb, T fR
             }
         }
 
-
-
         fvis[IR ] = 0.0;
         fvis[IRU] = nxs * txx + nys * txy + nzs * txz;
         fvis[IRV] = nxs * txy + nys * tyy + nzs * tyz;
@@ -11876,32 +11960,29 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD_Coupled(T* fL, T* fR, T fLturb, T fR
             flux[m] = - oRefReNumber * area[iFace] * fvis[m];
         }
 
-         delete []fvis;    fvis = NULL;
-         delete []f1;    f1 = NULL;
-         delete []f2;    f2 = NULL;
-         delete []fMid;    fMid = NULL;
-         delete []dfdx;    dfdx = NULL;
-         delete []dfdy;    dfdy = NULL;
-         delete []dfdz;    dfdz = NULL;
+         delete [] fvis;    fvis = nullptr;
+         delete [] f1;    f1 = nullptr;
+         delete [] f2;    f2 = nullptr;
+         delete [] fMid;    fMid = nullptr;
+         delete [] dfdx;    dfdx = nullptr;
+         delete [] dfdy;    dfdy = nullptr;
+         delete [] dfdz;    dfdz = nullptr;
      
-         delete []dfd1;    dfd1 = NULL;
-         delete []dfd2;    dfd2 = NULL;
-         delete []dfdn;    dfdn = NULL;
-         delete []dfdt1;    dfdt1 = NULL;
-         delete []dfdt2;    dfdt2 = NULL;
-         delete []primitiveVariableFace; primitiveVariableFace = NULL;
+         delete [] dfd1;    dfd1 = nullptr;
+         delete [] dfd2;    dfd2 = nullptr;
+         delete [] dfdn;    dfdn = nullptr;
+         delete [] dfdt1;    dfdt1 = nullptr;
+         delete [] dfdt2;    dfdt2 = nullptr;
+         delete [] primitiveVariableFace;    primitiveVariableFace = nullptr;
 }
 
-
-
-// GMRESAD 
+//! GMRESAD 
 template <typename T>
 void NSSolverUnstruct::Cal_GMRES_Visflux_AD(T* fL, T* fR, T* dqdxL,T* dqdyL, T* dqdzL, 
                           T* dqdxR, T* dqdyR, T* dqdzR, int iFace,
                           int jFace, T* flux, Grid *gridIn, 
                           FaceProxy *faceProxy, Param_NSSolverUnstruct *parameters)
 {
-        
         UnstructGrid *grid = UnstructGridCast(gridIn);
         int nBoundFace = grid->GetNBoundFace();
 
@@ -11915,7 +11996,7 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD(T* fL, T* fR, T* dqdxL,T* dqdyL, T* 
         RDouble *yfn  = grid->GetFaceNormalY();
         RDouble *zfn  = grid->GetFaceNormalZ();
         RDouble *area = grid->GetFaceArea();
-    
+
         RDouble *xcc  = grid->GetCellCenterX();
         RDouble *ycc  = grid->GetCellCenterY();
         RDouble *zcc  = grid->GetCellCenterZ();
@@ -11923,7 +12004,6 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD(T* fL, T* fR, T* dqdxL,T* dqdyL, T* 
         RDouble *xfc  = grid->GetFaceCenterX();
         RDouble *yfc  = grid->GetFaceCenterY();
         RDouble *zfc  = grid->GetFaceCenterZ();
-
 
         // Param_NSSolverUnstruct *parameters = GetControlParameters();
         int numberOfSpecies = parameters->GetNumberOfSpecies();
@@ -11947,7 +12027,6 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD(T* fL, T* fR, T* dqdxL,T* dqdyL, T* 
         RDouble refReNumber  = parameters->GetRefReNumber();
         RDouble oRefReNumber = parameters->GetoRefReNumber();
         RDouble nonDimensionalSutherlandTemperature = parameters->GetNonDimensionalSutherlandTemperature();
-
 
         int nolstress = GlobalDataBase::GetIntParaFromDB("nolstress");
         int nrokplus  = GlobalDataBase::GetIntParaFromDB("nrokplus");
@@ -11987,17 +12066,17 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD(T* fL, T* fR, T* dqdxL,T* dqdyL, T* 
         RDouble nzs = zfn[iFace];
 
         RDouble t1x, t1y, t1z, t2x, t2y, t2z;
-        T txx,tyy,tzz;
-        T txy,txz,tyz;
+        T txx, tyy, tzz;
+        T txy, txz, tyz;
 
         T viscousLaminarMin,viscousLaminarL,viscousLaminarR,viscousLaminarFace;
         GlobalDataBase::GetData("visl_min", &viscousLaminarMin, PHDOUBLE, 1);
 
         RDouble refGama = 1.4;
-        RDouble referenceMachNumber         = parameters->GetRefMachNumber();
-        RDouble referenceMachNumberSquare   = referenceMachNumber * referenceMachNumber;
-        RDouble oPrandtlLaminar             = parameters->GetoPrandtlLaminar();
-        RDouble oPrandtlTurbulence          = parameters->GetoPrandtlTurbulence();
+        RDouble referenceMachNumber       = parameters->GetRefMachNumber();
+        RDouble referenceMachNumberSquare = referenceMachNumber * referenceMachNumber;
+        RDouble oPrandtlLaminar           = parameters->GetoPrandtlLaminar();
+        RDouble oPrandtlTurbulence        = parameters->GetoPrandtlTurbulence();
         T kCpFace;
         RDouble coefficientofStateEquation = gas->GetCoefficientOfStateEquation();
 
@@ -12075,20 +12154,20 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD(T* fL, T* fR, T* dqdxL,T* dqdyL, T* 
             f2[m] = fR[m];
         }
 
-        T tL      = fL[IP]/(coefficientofStateEquation*fL[IR]);
-        T tR      = fR[IP]/(coefficientofStateEquation*fR[IR]);
-        T dtdxL   = dqdxL[nEquation];
-        T dtdyL   = dqdyL[nEquation];
-        T dtdzL   = dqdzL[nEquation];
-        T dtdxR   = dqdxR[nEquation];
-        T dtdyR   = dqdyR[nEquation];
-        T dtdzR   = dqdzR[nEquation];
-        // calculate the viscousLaminar here
-        viscousLaminarL     = tL * sqrt(tL) * (1.0 + nonDimensionalSutherlandTemperature) / (tL + nonDimensionalSutherlandTemperature);
-        viscousLaminarL     = MAX(viscousLaminarMin, viscousLaminarL);
-        viscousLaminarR     = tR * sqrt(tR) * (1.0 + nonDimensionalSutherlandTemperature) / (tR + nonDimensionalSutherlandTemperature);
-        viscousLaminarR     = MAX(viscousLaminarMin, viscousLaminarR);
-        viscousLaminarFace  = half*(viscousLaminarL + viscousLaminarR);
+        T tL    = fL[IP] / (coefficientofStateEquation*fL[IR]);
+        T tR    = fR[IP] / (coefficientofStateEquation*fR[IR]);
+        T dtdxL = dqdxL[nEquation];
+        T dtdyL = dqdyL[nEquation];
+        T dtdzL = dqdzL[nEquation];
+        T dtdxR = dqdxR[nEquation];
+        T dtdyR = dqdyR[nEquation];
+        T dtdzR = dqdzR[nEquation];
+        //! calculate the viscousLaminar here
+        viscousLaminarL    = tL * sqrt(tL) * (1.0 + nonDimensionalSutherlandTemperature) / (tL + nonDimensionalSutherlandTemperature);
+        viscousLaminarL    = MAX(viscousLaminarMin, viscousLaminarL);
+        viscousLaminarR    = tR * sqrt(tR) * (1.0 + nonDimensionalSutherlandTemperature) / (tR + nonDimensionalSutherlandTemperature);
+        viscousLaminarR    = MAX(viscousLaminarMin, viscousLaminarR);
+        viscousLaminarFace = half*(viscousLaminarL + viscousLaminarR);
 
         RDouble cp = 1.0 / ((refGama - 1.0) * referenceMachNumberSquare);
         kCpFace = (viscousLaminarFace * oPrandtlLaminar + viscousTurbulenceFace[jFace] * oPrandtlTurbulence) * cp;
@@ -12106,7 +12185,7 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD(T* fL, T* fR, T* dqdxL,T* dqdyL, T* 
             UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
             int bcType = bcRegion->GetBCType();
 
-            // for solid walls, primitiveVariableFace[IU,IV,IW][jFace] = 0
+            //! for solid walls, primitiveVariableFace[IU,IV,IW][jFace] = 0
             if (bcType == PHENGLEI::SOLID_SURFACE)
             {
                 RDouble uWall = 0.0;
@@ -12130,11 +12209,11 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD(T* fL, T* fR, T* dqdxL,T* dqdyL, T* 
                 primitiveVariableFace[IV] = velocityYWall;
                 primitiveVariableFace[IW] = velocityZWall;
 
-                // GMRES3D
+                //! GMRES3D
                 if( wallTemperature > 0.0 )
                 {
-                    tMid                                = wallTemperature/refDimensionalTemperature;
-                    primitiveVariableFace[nEquation]    = tMid;
+                    tMid                             = wallTemperature/refDimensionalTemperature;
+                    primitiveVariableFace[nEquation] = tMid;
                 }
             }
         }
@@ -12258,7 +12337,7 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD(T* fL, T* fR, T* dqdxL,T* dqdyL, T* 
         T dwdy = dfdy[IW];
         T dwdz = dfdz[IW];
 
-        T qNorm = 0.0;         
+        T qNorm = 0.0;
         // if (nChemical == 1)
         // {
         //     for (int iSpecies = 0; iSpecies < numberOfSpecies; ++ iSpecies)
@@ -12271,7 +12350,7 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD(T* fL, T* fR, T* dqdxL,T* dqdyL, T* 
         //         fvis[m] = rhoDiffusion[m - nm][jFace] * dfdn[m];
         //     }
         // }
-        
+
         qNorm += kCpFace * dtdn;
         T divv2p3 = two3rd * (dudx + dvdy + dwdz);
 
@@ -12316,8 +12395,6 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD(T* fL, T* fR, T* dqdxL,T* dqdyL, T* 
             }
         }
 
-
-
         fvis[IR ] = 0.0;
         fvis[IRU] = nxs * txx + nys * txy + nzs * txz;
         fvis[IRV] = nxs * txy + nys * tyy + nzs * tyz;
@@ -12329,28 +12406,27 @@ void NSSolverUnstruct::Cal_GMRES_Visflux_AD(T* fL, T* fR, T* dqdxL,T* dqdyL, T* 
             flux[m] = - oRefReNumber * area[iFace] * fvis[m];
         }
 
-         delete []fvis;    fvis = NULL;
-         delete []f1;    f1 = NULL;
-         delete []f2;    f2 = NULL;
-         delete []fMid;    fMid = NULL;
-         delete []dfdx;    dfdx = NULL;
-         delete []dfdy;    dfdy = NULL;
-         delete []dfdz;    dfdz = NULL;
+         delete [] fvis;    fvis = nullptr;
+         delete [] f1;    f1 = nullptr;
+         delete [] f2;    f2 = nullptr;
+         delete [] fMid;    fMid = nullptr;
+         delete [] dfdx;    dfdx = nullptr;
+         delete [] dfdy;    dfdy = nullptr;
+         delete [] dfdz;    dfdz = nullptr;
      
-         delete []dfd1;    dfd1 = NULL;
-         delete []dfd2;    dfd2 = NULL;
-         delete []dfdn;    dfdn = NULL;
-         delete []dfdt1;    dfdt1 = NULL;
-         delete []dfdt2;    dfdt2 = NULL;
-         delete []primitiveVariableFace; primitiveVariableFace = NULL;
+         delete [] dfd1;    dfd1 = nullptr;
+         delete [] dfd2;    dfd2 = nullptr;
+         delete [] dfdn;    dfdn = nullptr;
+         delete [] dfdt1;    dfdt1 = nullptr;
+         delete [] dfdt2;    dfdt2 = nullptr;
+         delete [] primitiveVariableFace;    primitiveVariableFace = nullptr;
 }
 
-// GMRESVis  GMRESVisFD
+//! GMRESVis  GMRESVisFD
 void NSSolverUnstruct::Cal_GMRES_Visflux(RDouble* fL, RDouble* fR, RDouble* primitiveVariableFace, RDouble* dqdxL,
                            RDouble* dqdyL, RDouble* dqdzL, RDouble* dqdxR, RDouble* dqdyR, RDouble* dqdzR, int iFace,
                            int jFace, RDouble* flux, Grid *gridIn, FaceProxy *faceProxy)
 {
-
         UnstructGrid *grid = UnstructGridCast(gridIn);
         int nBoundFace = grid->GetNBoundFace();
 
@@ -12372,7 +12448,6 @@ void NSSolverUnstruct::Cal_GMRES_Visflux(RDouble* fL, RDouble* fR, RDouble* prim
         RDouble *xfc  = grid->GetFaceCenterX();
         RDouble *yfc  = grid->GetFaceCenterY();
         RDouble *zfc  = grid->GetFaceCenterZ();
-
 
         Param_NSSolverUnstruct *parameters = GetControlParameters();
         int numberOfSpecies = parameters->GetNumberOfSpecies();
@@ -12396,7 +12471,6 @@ void NSSolverUnstruct::Cal_GMRES_Visflux(RDouble* fL, RDouble* fR, RDouble* prim
         RDouble refReNumber  = parameters->GetRefReNumber();
         RDouble oRefReNumber = parameters->GetoRefReNumber();
         RDouble nonDimensionalSutherlandTemperature = parameters->GetNonDimensionalSutherlandTemperature();
-
 
         int nolstress = GlobalDataBase::GetIntParaFromDB("nolstress");
         int nrokplus  = GlobalDataBase::GetIntParaFromDB("nrokplus");
@@ -12433,17 +12507,17 @@ void NSSolverUnstruct::Cal_GMRES_Visflux(RDouble* fL, RDouble* fR, RDouble* prim
         RDouble nzs = zfn[iFace];
 
         RDouble t1x, t1y, t1z, t2x, t2y, t2z;
-        RDouble txx,tyy,tzz;
-        RDouble txy,txz,tyz;
+        RDouble txx, tyy, tzz;
+        RDouble txy, txz, tyz;
 
         RDouble viscousLaminarMin,viscousLaminarL,viscousLaminarR,viscousLaminarFace;
         GlobalDataBase::GetData("visl_min", &viscousLaminarMin, PHDOUBLE, 1);
 
         RDouble refGama = 1.4;
-        RDouble referenceMachNumber         = parameters->GetRefMachNumber();
-        RDouble referenceMachNumberSquare   = referenceMachNumber * referenceMachNumber;
-        RDouble oPrandtlLaminar             = parameters->GetoPrandtlLaminar();
-        RDouble oPrandtlTurbulence          = parameters->GetoPrandtlTurbulence();
+        RDouble referenceMachNumber       = parameters->GetRefMachNumber();
+        RDouble referenceMachNumberSquare = referenceMachNumber * referenceMachNumber;
+        RDouble oPrandtlLaminar           = parameters->GetoPrandtlLaminar();
+        RDouble oPrandtlTurbulence        = parameters->GetoPrandtlTurbulence();
         RDouble kCpFace;
 
         //! Get first tangential vector on the face.
@@ -12521,21 +12595,21 @@ void NSSolverUnstruct::Cal_GMRES_Visflux(RDouble* fL, RDouble* fR, RDouble* prim
             f2[m] = fR[m];
         }
 
-        RDouble tL      = fL[nEquation];
-        RDouble tR      = fR[nEquation];
-        RDouble dtdxL   = dqdxL[nEquation];
-        RDouble dtdyL   = dqdyL[nEquation];
-        RDouble dtdzL   = dqdzL[nEquation];
-        RDouble dtdxR   = dqdxR[nEquation];
-        RDouble dtdyR   = dqdyR[nEquation];
-        RDouble dtdzR   = dqdzR[nEquation];
+        RDouble tL    = fL[nEquation];
+        RDouble tR    = fR[nEquation];
+        RDouble dtdxL = dqdxL[nEquation];
+        RDouble dtdyL = dqdyL[nEquation];
+        RDouble dtdzL = dqdzL[nEquation];
+        RDouble dtdxR = dqdxR[nEquation];
+        RDouble dtdyR = dqdyR[nEquation];
+        RDouble dtdzR = dqdzR[nEquation];
 
-        // calculate the viscousLaminar here
-        viscousLaminarL     = tL * sqrt(tL) * (1.0 + nonDimensionalSutherlandTemperature) / (tL + nonDimensionalSutherlandTemperature);
-        viscousLaminarL     = MAX(viscousLaminarMin, viscousLaminarL);
-        viscousLaminarR     = tR * sqrt(tR) * (1.0 + nonDimensionalSutherlandTemperature) / (tR + nonDimensionalSutherlandTemperature);
-        viscousLaminarR     = MAX(viscousLaminarMin, viscousLaminarR);
-        viscousLaminarFace  = half*(viscousLaminarL + viscousLaminarR);
+        //! calculate the viscousLaminar here
+        viscousLaminarL    = tL * sqrt(tL) * (1.0 + nonDimensionalSutherlandTemperature) / (tL + nonDimensionalSutherlandTemperature);
+        viscousLaminarL    = MAX(viscousLaminarMin, viscousLaminarL);
+        viscousLaminarR    = tR * sqrt(tR) * (1.0 + nonDimensionalSutherlandTemperature) / (tR + nonDimensionalSutherlandTemperature);
+        viscousLaminarR    = MAX(viscousLaminarMin, viscousLaminarR);
+        viscousLaminarFace = half*(viscousLaminarL + viscousLaminarR);
 
         RDouble cp = 1.0 / ((refGama - 1.0) * referenceMachNumberSquare);
         kCpFace = (viscousLaminarFace * oPrandtlLaminar + viscousTurbulenceFace[jFace] * oPrandtlTurbulence) * cp;
@@ -12653,7 +12727,7 @@ void NSSolverUnstruct::Cal_GMRES_Visflux(RDouble* fL, RDouble* fR, RDouble* prim
             dfdy[m] = nys * dfdn[m] + t1y * dfdt1[m] + t2y * dfdt2[m];
             dfdz[m] = nzs * dfdn[m] + t1z * dfdt1[m] + t2z * dfdt2[m];
         }
-        
+
         RDouble dudx = dfdx[IU];
         RDouble dudy = dfdy[IU];
         RDouble dudz = dfdz[IU];
@@ -12666,7 +12740,7 @@ void NSSolverUnstruct::Cal_GMRES_Visflux(RDouble* fL, RDouble* fR, RDouble* prim
         RDouble dwdy = dfdy[IW];
         RDouble dwdz = dfdz[IW];
 
-        RDouble qNorm = 0.0;         
+        RDouble qNorm = 0.0;
         // if (nChemical == 1)
         // {
         //     for (int iSpecies = 0; iSpecies < numberOfSpecies; ++ iSpecies)
@@ -12679,7 +12753,7 @@ void NSSolverUnstruct::Cal_GMRES_Visflux(RDouble* fL, RDouble* fR, RDouble* prim
         //         fvis[m] = rhoDiffusion[m - nm][jFace] * dfdn[m];
         //     }
         // }
-        
+
         qNorm += kCpFace * dtdn;
         RDouble divv2p3 = two3rd * (dudx + dvdy + dwdz);
 
@@ -12735,24 +12809,30 @@ void NSSolverUnstruct::Cal_GMRES_Visflux(RDouble* fL, RDouble* fR, RDouble* prim
             flux[m] = - oRefReNumber * area[iFace] * fvis[m];
         }
 
-         delete []fvis;    fvis = NULL;
-         delete []f1;    f1 = NULL;
-         delete []f2;    f2 = NULL;
-         delete []fMid;    fMid = NULL;
-         delete []dfdx;    dfdx = NULL;
-         delete []dfdy;    dfdy = NULL;
-         delete []dfdz;    dfdz = NULL;
-     
-         delete []dfd1;    dfd1 = NULL;
-         delete []dfd2;    dfd2 = NULL;
-         delete []dfdn;    dfdn = NULL;
-         delete []dfdt1;    dfdt1 = NULL;
-         delete []dfdt2;    dfdt2 = NULL;
+         delete [] fvis;    fvis = nullptr;
+         delete [] f1;    f1 = nullptr;
+         delete [] f2;    f2 = nullptr;
+         delete [] fMid;    fMid = nullptr;
+         delete [] dfdx;    dfdx = nullptr;
+         delete [] dfdy;    dfdy = nullptr;
+         delete [] dfdz;    dfdz = nullptr;
+
+         delete [] dfd1;    dfd1 = nullptr;
+         delete [] dfd2;    dfd2 = nullptr;
+         delete [] dfdn;    dfdn = nullptr;
+         delete [] dfdt1;    dfdt1 = nullptr;
+         delete [] dfdt2;    dfdt2 = nullptr;
 }
 #endif
 
 void NSSolverUnstruct::ComputeVisflux(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd)
 {
+#ifdef USE_CUDA
+    Param_NSSolverUnstruct *parameters_gpu = GetControlParameters();
+    int nEquation_gpu = GetNumberOfEquations();
+    CallGPUComputeVisflux(gridIn, parameters_gpu, nEquation_gpu, localStart, localEnd);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nBoundFace = grid->GetNBoundFace();
 
@@ -12821,7 +12901,7 @@ void NSSolverUnstruct::ComputeVisflux(Grid *gridIn, FaceProxy *faceProxy, int lo
     RDouble **primitiveVariable = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
 
     RDouble **qTurb = 0;
-    RDouble ** aniss  = 0;
+    RDouble **aniss  = 0;
 
     if (nrokplus > 0)
     {
@@ -13174,6 +13254,13 @@ void NSSolverUnstruct::CalculateBoundaryData()
 
 void NSSolverUnstruct::Boundary(Grid *gridIn)
 {
+#ifdef USE_CUDA
+    using namespace GPUMemory;
+    using namespace GPUControlVariables;
+    Param_NSSolverUnstruct *parameters_gpu = GetControlParameters();
+    CallGPUBoundary(gridIn, parameters_gpu);
+    return;
+#endif   
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
     Param_NSSolverUnstruct *parameters = GetControlParameters();
@@ -13388,7 +13475,7 @@ void NSSolverUnstruct::CornerPoint(Grid *gridIn)
         nodepos += node_number_of_each_face[iFace];
     }
 
-    delete[] corner_point;
+    delete [] corner_point;    corner_point = nullptr;
 }
 
 void NSSolverUnstruct::ComputeMassFlow(Grid *gridIn)
@@ -13558,7 +13645,6 @@ void NSSolverUnstruct::BoundaryQlQrFix(Grid *gridIn, FaceProxy *faceProxy, int l
     int *node_number_of_each_face = grid->GetNodeNumberOfEachFace();
     int *face2node = grid->GetFace2Node();
 
-
     using namespace IDX;
 
 #ifdef USE_GMRESSOLVER
@@ -13623,7 +13709,7 @@ void NSSolverUnstruct::BoundaryQlQrFix(Grid *gridIn, FaceProxy *faceProxy, int l
         {
             RDouble uWall = 0.0;
             RDouble vWall = 0.0;
-            RDouble wWall = 0.0;                
+            RDouble wWall = 0.0;
             Data_Param *bcData  = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace])->GetBCParamDataBase();
             if(bcData)
             {
@@ -13716,6 +13802,16 @@ void NSSolverUnstruct::BoundaryQlQrFix(Grid *gridIn, FaceProxy *faceProxy, int l
 
 void NSSolverUnstruct::GetInviscidFaceValue(Grid *gridIn, FaceProxy *faceProxy, Limiter * limiter, int localStart, int localEnd)
 {
+#ifdef USE_CUDA
+    Param_NSSolverUnstruct *parameters_gpu = GetControlParameters();
+    CallGPUGetQlQr(gridIn, localStart, localEnd, SEGCTION_LENGTH);
+    CallGPUGetGamaLR(localStart, localEnd);
+    //! PressureFactorLR is not use in GPU code at present. 
+    CallGPUReConstructFaceValue(gridIn, limiter, localStart, localEnd, SEGCTION_LENGTH, parameters_gpu);
+    CallGPUBoundaryQlQrFix(gridIn, faceProxy, parameters_gpu, localStart, localEnd, SEGCTION_LENGTH);
+    return;
+#endif
+
     UnstructGrid *grid = UnstructGridCast(gridIn);
     Param_NSSolverUnstruct *parameters = GetControlParameters();
     int isUnsteady = parameters->GetIsUnsteady();
@@ -13780,8 +13876,8 @@ void NSSolverUnstruct::ReConstructFaceValue(Grid *gridIn, FaceProxy *faceProxy, 
     }
 
     //! GMRESnolim GMRESSign
-    int* qlsign = faceProxy->GetQLSign();
-    int* qrsign = faceProxy->GetQRSign();
+    int *qlsign = faceProxy->GetQLSign();
+    int *qrsign = faceProxy->GetQRSign();
 
     int nLaminar  = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
@@ -13810,6 +13906,7 @@ void NSSolverUnstruct::ReConstructFaceValue(Grid *gridIn, FaceProxy *faceProxy, 
 
     int reconstructMethod = GlobalDataBase::GetIntParaFromDB("reconmeth");
     const int RECONSTRUCT_USING_RESPECTIVE_LIMITER = 0;
+
     if (reconstructMethod == RECONSTRUCT_USING_RESPECTIVE_LIMITER)
     {
         //! Q+, Q- reconstructing using their self limiters.
@@ -13941,6 +14038,7 @@ void NSSolverUnstruct::ReConstructFaceValue(Grid *gridIn, FaceProxy *faceProxy, 
             }
         }
     }
+
     delete [] qTry;    qTry = nullptr;
 }
 
@@ -13956,14 +14054,14 @@ void NSSolverUnstruct::ComputeInviscidFlux(Grid *grid, FaceProxy *faceProxy, int
     INVScheme inviscidScheme = GetINVScheme(unstructScheme);
 
 #ifdef USE_GMRESSOLVER
-    // GMRESInit
+    //1 GMRESInit
     if( 3 == flowInitMethod )
     {
         int originaltscheme       = GlobalDataBase::GetIntParaFromDB("OriginalTscheme");
         int newIterStep           = GlobalDataBase::GetIntParaFromDB("newnstep");
         int flowInitStep          = GlobalDataBase::GetIntParaFromDB("flowInitStep");
         // string uns_scheme_name    = GlobalDataBase::GetStrParaFromDB("uns_scheme_name");
-            
+
         if( originaltscheme == GMRES && newIterStep <= flowInitStep )
         {
             if( unstructScheme == ISCHEME_GMRES_ROE )
@@ -14012,6 +14110,10 @@ void NSSolverUnstruct::GetResidual(ActionKey *actkey)
     int level = actkey->level;
     UnstructGrid *grid = UnstructGridCast(GetGrid(level));
 
+#ifdef USE_CUDA
+    GPUResCopyBack(grid);	
+#endif
+
     RDouble **res = reinterpret_cast< RDouble ** > (grid->GetDataPtr("res"));
 
     int nEquation = GetNumberOfEquations();
@@ -14047,46 +14149,46 @@ void NSSolverUnstruct::InviscidFluxWrap(Grid *gridIn, FaceProxy *faceProxy, INVS
 
 #ifdef USE_GMRESSOLVER 
     // GMRESnolim
-    int limiterType     =   parameters->GetLimiterType();
-    int limitVariables  =   parameters->GetLimitVariables();
-    int limitVector     =   parameters->GetLimitVector();
+    int limiterType    =   parameters->GetLimiterType();
+    int limitVariables =   parameters->GetLimitVariables();
+    int limitVector    =   parameters->GetLimitVector();
     inviscidSchemeParameterProxy.SetLimiterType(limiterType);
-    inviscidSchemeParameterProxy.SetLimitModel(limitVariables); // GMRESVenkat
+    inviscidSchemeParameterProxy.SetLimitModel(limitVariables);    //! GMRESVenkat
     inviscidSchemeParameterProxy.SetLimitVector(limitVector);
 
     // GMRESnolim
-    RDouble *xfc  = grid->GetFaceCenterX();
-    RDouble *yfc  = grid->GetFaceCenterY();
-    RDouble *zfc  = grid->GetFaceCenterZ();
+    RDouble *xfc = grid->GetFaceCenterX();
+    RDouble *yfc = grid->GetFaceCenterY();
+    RDouble *zfc = grid->GetFaceCenterZ();
 
-    RDouble *xcc  = grid->GetCellCenterX();
-    RDouble *ycc  = grid->GetCellCenterY();
-    RDouble *zcc  = grid->GetCellCenterZ();
+    RDouble *xcc = grid->GetCellCenterX();
+    RDouble *ycc = grid->GetCellCenterY();
+    RDouble *zcc = grid->GetCellCenterZ();
 
     RDouble **dqdx = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarX"));
     RDouble **dqdy = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarY"));
     RDouble **dqdz = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarZ"));
 
-    RDouble *nsx            = grid->GetFaceNormalX();
-    RDouble *nsy            = grid->GetFaceNormalY();
-    RDouble *nsz            = grid->GetFaceNormalZ();
-    RDouble *ns             = grid->GetFaceArea();
-    RDouble *vol            = grid->GetCellVolume();
-    RDouble **prim          = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
-    RDouble *gama           = reinterpret_cast<RDouble *> (grid->GetDataPtr("gama"));
-    RDouble averageVolume   = grid->GetAverageVolume(); // GMRESVenkat
+    RDouble *nsx          = grid->GetFaceNormalX();
+    RDouble *nsy          = grid->GetFaceNormalY();
+    RDouble *nsz          = grid->GetFaceNormalZ();
+    RDouble *ns           = grid->GetFaceArea();
+    RDouble *vol          = grid->GetCellVolume();
+    RDouble **prim        = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
+    RDouble *gama         = reinterpret_cast<RDouble *> (grid->GetDataPtr("gama"));
+    RDouble averageVolume = grid->GetAverageVolume();    //! GMRESVenkat
 
-    vector<int>* neighborCells  = grid->GMRESGetNeighborCells();
-    vector<int>* neighborFaces  = grid->GMRESGetNeighborFaces();
-    vector<int>* neighborLR     = grid->GMRESGetNeighborLR();
+    vector<int> *neighborCells = grid->GMRESGetNeighborCells();
+    vector<int> *neighborFaces = grid->GMRESGetNeighborFaces();
+    vector<int> *neighborLR    = grid->GMRESGetNeighborLR();
 
-    // GMRES2ndCorrection
-    vector<int> BCLeftCells     = grid->GetBCLeftCells();
-    vector<int> BCRightCells    = grid->GetBCRightCells();
-    vector<int> BCFaces         = grid->GetBCFaces();
+    //! GMRES2ndCorrection
+    vector<int> BCLeftCells  = grid->GetBCLeftCells();
+    vector<int> BCRightCells = grid->GetBCRightCells();
+    vector<int> BCFaces      = grid->GetBCFaces();
 
-    // GMRES3D
-    UnstructBCSet* unstructBCSet = grid->GetUnstructBCSet();
+    //! GMRES3D
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
 
     inviscidSchemeParameterProxy.SetFaceCenter(xfc,yfc,zfc);
     inviscidSchemeParameterProxy.SetCellCenter(xcc,ycc,zcc);
@@ -14100,18 +14202,24 @@ void NSSolverUnstruct::InviscidFluxWrap(Grid *gridIn, FaceProxy *faceProxy, INVS
     inviscidSchemeParameterProxy.SetNeighborFaces(neighborFaces);
     inviscidSchemeParameterProxy.SetNeighborLR(neighborLR);
 
-    inviscidSchemeParameterProxy.SetAverageVolume(averageVolume);  // GMRESVenkat
+    inviscidSchemeParameterProxy.SetAverageVolume(averageVolume);    //! GMRESVenkat
 
-    // GMRES2ndCorrection
+    //! GMRES2ndCorrection
     inviscidSchemeParameterProxy.SetBCLeftCells(BCLeftCells);
     inviscidSchemeParameterProxy.SetBCRightCells(BCRightCells);
     inviscidSchemeParameterProxy.SetBCFaces(BCFaces);
 
-    // GMRES3D
+    //! GMRES3D
     inviscidSchemeParameterProxy.SetUnstructBCSet(unstructBCSet);
 #endif
 
     SetInviscidSchemeParameters(&inviscidSchemeParameterProxy, faceProxy, parameters);
+
+#ifdef USE_CUDA
+    CallGPUinviscidScheme(faceProxy, &inviscidSchemeParameterProxy, localStart, localEnd);
+    CallGPUInviscidFluxWrapLoop1(nLaminar, localStart, localEnd, SEGCTION_LENGTH);
+    return;
+#endif
 
     //! The flux is actually computed here!
     inviscidScheme(faceProxy, &inviscidSchemeParameterProxy);
@@ -14166,7 +14274,6 @@ void NSSolverUnstruct::SolutionFix(Grid *gridIn, RDouble *primitiveVariable, int
     using namespace GAS_SPACE;
     using namespace IDX;
 
-
     for (int m = 0; m < nEquation; ++ m)
     {
         primitiveVariable[m] = zero;
@@ -14210,6 +14317,12 @@ void NSSolverUnstruct::SolutionFix(Grid *gridIn, RDouble *primitiveVariable, int
 
 void NSSolverUnstruct::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy)
 {
+#ifdef USE_CUDA
+    Param_NSSolverUnstruct *parameters_gpu = GetControlParameters();
+    int nEquation_gpu = GetNumberOfEquations();
+    CallGPUUpdateFlowField(gridIn, parameters_gpu, nEquation_gpu);
+    return;
+#endif
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
 
@@ -15015,7 +15128,7 @@ void NSSolverUnstruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Fiel
         {
             //! dq = { (b - Ux) - Lx } / D.
             //! Note: the 'dq' has actually initialized by the residual at the beginning of this function.
-            //! the 'rhs0' is the total Delta Flux of the neighbors.            
+            //! the 'rhs0' is the total Delta Flux of the neighbors.
             //! rhs0: Lx    diagonal: D.
             dqTry[m] = (dq[m][iCell] - Ux[m] - rhs0[m]) / diagonal[iCell];
 
@@ -15249,7 +15362,6 @@ void NSSolverUnstruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, Fie
                 else
                 {
                     MXDQ_STD(qNeighbor, nxyz[0], nxyz[1], nxyz[2], nxyz[3], nxyz[4], gama, dqNeighbor, df, nm, nLaminar, rad, -1);
-
                 }
             }
             else
@@ -15327,7 +15439,6 @@ void NSSolverUnstruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, Fie
             {
                 dq[m][iCell] = dqTry[m];
             }
-
         }
 
         for (int m = 0; m < nLaminar; ++ m)
@@ -15467,8 +15578,8 @@ void NSSolverUnstruct::ConservativePreconMatrix(Grid *gridIn, int sign)
 
     grid->SetGhostCell(preconMatrix,nElement);
 
-    delete []qPrecondition;
-    delete []MG;
+    delete [] qPrecondition;    qPrecondition = nullptr;
+    delete [] MG;    MG = nullptr;
 }
 
 void NSSolverUnstruct::Diagonal(Grid *gridIn)
@@ -15607,6 +15718,12 @@ void NSSolverUnstruct::ModifyDensity(RDouble *dq, int nNSEquation,int nLaminar,i
 
 void NSSolverUnstruct::AirForceCoef(ActionKey *actkey)
 {
+#ifdef USE_CUDA
+    // conduct after main loop
+    int level = actkey->level;
+    UnstructGrid *grid = UnstructGridCast(GetGrid(level));
+    CallGPUFlowVariablesCopyBack(grid);
+#endif
     const int ALL_PART = -1;
     AirForceCoefParts(actkey, ALL_PART);
 
@@ -15913,7 +16030,7 @@ void NSSolverUnstruct::AirForceCoefBodies(ActionKey *actkey)
     TorqueRefYGlobal = GlobalDataBase::GetDoubleParaFromDB("TorqueRefY");
     TorqueRefZGlobal = GlobalDataBase::GetDoubleParaFromDB("TorqueRefZ");
 
-    //! Used to compute hinge moment:
+    //! Used to compute hinge moment.
 
     int vis_run = 0;
     if (viscousType != INVISCID)
@@ -15922,23 +16039,23 @@ void NSSolverUnstruct::AirForceCoefBodies(ActionKey *actkey)
     }
 
     using namespace IDX;
-    RDouble* primitiveVarFarfield = parameters->GetPrimitiveVarFarfield();
+    RDouble *primitiveVarFarfield = parameters->GetPrimitiveVarFarfield();
     RDouble poo = primitiveVarFarfield[IP];
 
-    RDouble* xfn = grid->GetFaceNormalX();
-    RDouble* yfn = grid->GetFaceNormalY();
-    RDouble* zfn = grid->GetFaceNormalZ();
-    RDouble* area = grid->GetFaceArea();
+    RDouble *xfn = grid->GetFaceNormalX();
+    RDouble *yfn = grid->GetFaceNormalY();
+    RDouble *zfn = grid->GetFaceNormalZ();
+    RDouble *area = grid->GetFaceArea();
 
-    RDouble* xfc = grid->GetFaceCenterX();
-    RDouble* yfc = grid->GetFaceCenterY();
-    RDouble* zfc = grid->GetFaceCenterZ();
-    RDouble* xcc = grid->GetCellCenterX();
-    RDouble* ycc = grid->GetCellCenterY();
-    RDouble* zcc = grid->GetCellCenterZ();
+    RDouble *xfc = grid->GetFaceCenterX();
+    RDouble *yfc = grid->GetFaceCenterY();
+    RDouble *zfc = grid->GetFaceCenterZ();
+    RDouble *xcc = grid->GetCellCenterX();
+    RDouble *ycc = grid->GetCellCenterY();
+    RDouble *zcc = grid->GetCellCenterZ();
 
-    int* leftCellofFace = grid->GetLeftCellOfFace();
-    int* rightCellofFace = grid->GetRightCellOfFace();
+    int *leftCellofFace = grid->GetLeftCellOfFace();
+    int *rightCellofFace = grid->GetRightCellOfFace();
 
     RDouble cpx, cpy, cpz;
     cpx = 0.0;
@@ -15975,7 +16092,7 @@ void NSSolverUnstruct::AirForceCoefBodies(ActionKey *actkey)
             int bcType = bcRegion->GetBCType();
 
             BasicAerodynamicForce tmpBasicAerodynamicForce;
-            // if the bc type is wall, calculate the wall coefficient.
+            //! if the bc type is wall, calculate the wall coefficient.
             if (bcType == PHENGLEI::SOLID_SURFACE)
             {
                 string bodyName = bcRegion->GetBodyName();
@@ -15999,7 +16116,7 @@ void NSSolverUnstruct::AirForceCoefBodies(ActionKey *actkey)
                         dy = yfc[iFace] - ycc[le];
                         dz = zfc[iFace] - zcc[le];
 
-                        //pressure drag
+                        //! pressure drag
                         pw = q[IP][le];
                         cp = two * (pw - poo);
 
@@ -16110,6 +16227,7 @@ void NSSolverUnstruct::CpDistriCoef(ActionKey *actkey)
     Param_NSSolverUnstruct *parameters = GetControlParameters();
     RDouble **q   = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
     RDouble *visl = reinterpret_cast< RDouble * > (grid->GetDataPtr("visl"));
+    RDouble *vist = reinterpret_cast< RDouble* >  (grid->GetDataPtr("vist"));
 
     RDouble *primitiveVarFarfield = parameters->GetPrimitiveVarFarfield();
     RDouble poo = primitiveVarFarfield[IP];
@@ -16118,6 +16236,7 @@ void NSSolverUnstruct::CpDistriCoef(ActionKey *actkey)
     RDouble refReNumber = parameters->GetRefReNumber();
     RDouble refMachNumber = parameters->GetRefMachNumber();
 
+    int wallFunctionType = GlobalDataBase::GetIntParaFromDB("wallFunctionType");
     int viscousType = parameters->GetViscousType();
 
     //! To obtain the reference values.
@@ -16192,7 +16311,7 @@ void NSSolverUnstruct::CpDistriCoef(ActionKey *actkey)
     RDouble dfx = 0, dfy = 0, dfz = 0, dpx = 0, dpy = 0, dpz = 0, dmx = 0, dmy = 0, dmz = 0, fvsx = 0, fvsy = 0, fvsz = 0;
     RDouble nx = 0, ny = 0, nz = 0;
     RDouble normalComponetX = 0, normalComponetY = 0, normalComponetZ = 0;
-    RDouble vis = 0, txx = 0, txy = 0, txz = 0, tyx = 0, tyy = 0, tyz = 0, tzx = 0, tzy = 0, tzz = 0;
+    RDouble visLaminar = 0.0, visTurbulence = 0.0, txx = 0, txy = 0, txz = 0, tyx = 0, tyy = 0, tyz = 0, tzx = 0, tzy = 0, tzz = 0;
     RDouble dudx = 0, dudy = 0, dudz = 0, dvdx = 0, dvdy = 0, dvdz = 0, dwdx = 0, dwdy = 0, dwdz = 0;
     RDouble xc = 0, yc = 0, zc = 0, dx = 0, dy = 0, dz = 0, ods = 0;
     RDouble StantonNumber = 0.0, wallTotalEnthalpy = 0.0, deltaH = 0.0, absVelocity = 0.0;
@@ -16276,6 +16395,7 @@ void NSSolverUnstruct::CpDistriCoef(ActionKey *actkey)
                 fvsx = 0.0;
                 fvsy = 0.0;
                 fvsz = 0.0;
+                RDouble heatCoeff = 0.0, vis = 0.0;
 
                 if (viscousType > INVISCID)
                 {
@@ -16305,7 +16425,13 @@ void NSSolverUnstruct::CpDistriCoef(ActionKey *actkey)
                     CorrectGradient(q[IW][le],q[IW][re],dwdx,dwdy,dwdz,dx,dy,dz,ods);
 
                     //! It is unnecessary to consider because the turbulence viscosity coefficient is 0.
-                    vis = visl[le];
+                    visLaminar = half * (visl[le] + visl[re]);
+                    visTurbulence = 0.0;
+                    if (wallFunctionType != WALLFUNCTION::NONE)
+                    {
+                        visTurbulence = half * (vist[le] + vist[re]);      
+                    }
+                    vis = visLaminar + visTurbulence;
 
                     txx = vis * two3rd * (2.0 * dudx - dvdy - dwdz);
                     tyy = vis * two3rd * (2.0 * dvdy - dwdz - dudx);
@@ -16364,7 +16490,7 @@ void NSSolverUnstruct::CpDistriCoef(ActionKey *actkey)
                 RDouble yPlus = 0.0;
                 if (viscousType > INVISCID)
                 {
-                    yPlus = refReNumber * sqrt(taoWall * density) * wallDistance[le] / vis;
+                    yPlus = refReNumber * sqrt(taoWall * density) * wallDistance[le] / visLaminar;
 
                     //! Compute the mean free path.
                     meanFreePath = ((vis * refVicosity) / pw_Dim) * sqrt(0.5 * PI * rjmk * massReciprocal * wallTemperature / refDimensionalMolecular);
@@ -16760,7 +16886,7 @@ void NSSolverUnstruct::CpDistriCoef(ActionKey *actkey)
             cfFaceCenter[iFace]    = valueCF    / node_number_of_each_face[iFace];
             qFaceCenter [iFace]    = valueQ     / node_number_of_each_face[iFace];
             yPlusFaceCenter[iFace] = valueYPlus / node_number_of_each_face[iFace];
-            PWFaceCenter[iFace] = valuePW / node_number_of_each_face[iFace];
+            PWFaceCenter[iFace]    = valuePW / node_number_of_each_face[iFace];
             STFaceCenter[iFace]    = valueST    / node_number_of_each_face[iFace];
             KNFaceCenter[iFace]    = valueKN    / node_number_of_each_face[iFace];
         }
@@ -16949,7 +17075,7 @@ void NSSolverUnstruct::Turbulence_Flat_Plate_Output_NASA(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalNode = grid->GetNTotalNode();
-    RDouble ** qVist;
+    RDouble **qVist;
 
     //! 100.000 kPa = 1 bar = 14.504 psi
     //! Condition for calculation
@@ -16984,25 +17110,25 @@ void NSSolverUnstruct::Turbulence_Flat_Plate_Output_NASA(Grid *gridIn)
 
     int wordwidth = 20;
 
-    RDouble * vist = reinterpret_cast< RDouble * > (grid->GetDataPtr("vist"));
+    RDouble *vist = reinterpret_cast< RDouble * > (grid->GetDataPtr("vist"));
 
     int nline = 2;
 
     vector<RDouble> xPositionList(nline);
     xPositionList[0] = 0.97008;
-    xPositionList[1] = 1.90334;    
+    xPositionList[1] = 1.90334;
 
     for (std::size_t i = 0; i < title_tecplot.size(); ++ i)
     {
         file << title_tecplot[i] << "\n";
     }
 
-    RDouble ** nodevar = NewPointer2<RDouble>(nEquation + 1, nTotalNode);
+    RDouble **nodevar = NewPointer2<RDouble>(nEquation + 1, nTotalNode);
     CreateNodeVariable(grid, nodevar);
 
     for (int m = 0; m < nline; ++ m)
     {
-        PHCutPlane * cutpl = new PHCutPlane();
+        PHCutPlane *cutpl = new PHCutPlane();
         CutPlane(grid, nodevar, nEquation, xPositionList[m], cutpl, X_DIR);
 
         cutpl->SortData(cutpl->y);
@@ -17040,24 +17166,24 @@ void NSSolverUnstruct::Turbulence_Flat_Plate_Output_NASA(Grid *gridIn)
         {
             RDouble rm,um,vm,wm,pm,tm,xm,ym,zm,mu,muw,dudy,tauw,utau,up,yp,rw;
             RDouble uw,vw,ww,pw,yw,tw;
-            xm   = cutpl->x[i];
-            ym   = cutpl->y[i];
-            zm   = cutpl->z[i];
+            xm = cutpl->x[i];
+            ym = cutpl->y[i];
+            zm = cutpl->z[i];
 
-            rm   = cutpl->data[0][i];
-            um   = cutpl->data[1][i];
-            vm   = cutpl->data[2][i];
-            wm   = cutpl->data[3][i];
-            pm   = cutpl->data[4][i];
-            tm   = refGama * reference_mach_number * reference_mach_number * pm / rm;
-            mu   = tm * sqrt(tm) * (1.0 + tsuth) / (tm + tsuth);
+            rm = cutpl->data[0][i];
+            um = cutpl->data[1][i];
+            vm = cutpl->data[2][i];
+            wm = cutpl->data[3][i];
+            pm = cutpl->data[4][i];
+            tm = refGama * reference_mach_number * reference_mach_number * pm / rm;
+            mu = tm * sqrt(tm) * (1.0 + tsuth) / (tm + tsuth);
 
-            rw   = cutpl->data[0][yindex];
-            uw   = cutpl->data[1][yindex];
-            vw   = cutpl->data[2][yindex];
-            ww   = cutpl->data[3][yindex];
-            pw   = cutpl->data[4][yindex];
-            tw   = refGama * reference_mach_number * reference_mach_number * pm / rm;
+            rw = cutpl->data[0][yindex];
+            uw = cutpl->data[1][yindex];
+            vw = cutpl->data[2][yindex];
+            ww = cutpl->data[3][yindex];
+            pw = cutpl->data[4][yindex];
+            tw = refGama * reference_mach_number * reference_mach_number * pm / rm;
 
             muw  = tm * sqrt(tm) * (1.0 + tsuth) / (tm + tsuth);
             yw   = cutpl->y[yindex];
@@ -17103,10 +17229,10 @@ void NSSolverUnstruct::Turbulence_Flat_Plate_Output_NASA(Grid *gridIn)
         file << "zone  i = " << nT  << " \n";
         for (int i = 0; i < nT; ++ i)
         {
-            RDouble rm,um,vm,wm,pm,tm,xm,ym,zm,mu,dudy;
-            xm   = cutpl->x[i];
-            ym   = cutpl->y[i];
-            zm   = cutpl->z[i];
+            RDouble rm, um, vm, wm, pm, tm, xm, ym, zm, mu, dudy;
+            xm = cutpl->x[i];
+            ym = cutpl->y[i];
+            zm = cutpl->z[i];
 
             rm   = cutpl->data[0][i];
             um   = cutpl->data[1][i];
@@ -17126,11 +17252,11 @@ void NSSolverUnstruct::Turbulence_Flat_Plate_Output_NASA(Grid *gridIn)
         }
 
         frictionFileName.clear();
-        
+
         PHSPACE::CloseFile(file);
     }
 
-    delete cutpl;
+    delete cutpl;    cutpl = nullptr;
 
     //! Dump out the turbulent viscosity of x = 0.97
     qVist = new RDouble *[1];    //! Tempal 2D array for vist, to dump both x and y value.
@@ -17166,8 +17292,8 @@ void NSSolverUnstruct::Turbulence_Flat_Plate_Output_NASA(Grid *gridIn)
         PHSPACE::CloseFile(file);
     }
 
-    delete cutpl;
-    delete [] qVist;
+    delete cutpl;    cutpl = nullptr;
+    delete [] qVist;    qVist = nullptr;
 
     //! Dump out the the MAXIMUM eddy viscosity as a function of x
     using namespace PHMPI;
@@ -17207,14 +17333,14 @@ void NSSolverUnstruct::Turbulence_Flat_Plate_Output_NASA(Grid *gridIn)
     }
 
     //! Get the x stand position.
-    RDouble* xOfStand = new RDouble [nXStand];
+    RDouble *xOfStand = new RDouble [nXStand];
     nXStand = 0;
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
         int bcType = bcRegion->GetBCType();
-        vector<int>* faceIndex = bcRegion->GetFaceIndex();
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
         if (bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::SYMMETRY)
         {
             for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
@@ -17231,11 +17357,11 @@ void NSSolverUnstruct::Turbulence_Flat_Plate_Output_NASA(Grid *gridIn)
     vector < RDouble > var(1);
     cutpl = new PHCutPlane();    //! Store the maximum viscosity of each xcut stand.
 
-    RDouble* maxVistOfStandX = new RDouble [nXStand];
+    RDouble *maxVistOfStandX = new RDouble [nXStand];
     for (int iStand = 0; iStand < nXStand; ++ iStand)
     {
         RDouble xCut = xOfStand[iStand];
-        PHCutPlane* cutpX = new PHCutPlane();    //! Store the viscosity of ONE x stand, x = xcut.
+        PHCutPlane *cutpX = new PHCutPlane();    //! Store the viscosity of ONE x stand, x = xcut.
 
         RDouble maxVist = -LARGE;
         CutPlaneCellCenter(grid,qVist,1,xCut,cutpX,X_DIR);
@@ -17250,7 +17376,7 @@ void NSSolverUnstruct::Turbulence_Flat_Plate_Output_NASA(Grid *gridIn)
         var_list.push_back(var);
         x_list.push_back(xCut);
 
-        delete cutpX;
+        delete cutpX;    cutpX = nullptr;
     }
 
     cutpl->neqn   = 1;
@@ -17293,12 +17419,12 @@ void NSSolverUnstruct::Turbulence_Flat_Plate_Output_NASA(Grid *gridIn)
             << setw(wordwidth) << vist3
             << "\n";
     }
-    
+
     PHSPACE::CloseFile(file);
-    delete cutpl;
-    delete [] xOfStand;
-    delete [] maxVistOfStandX;
-    delete [] qVist;
+    delete cutpl;    cutpl = nullptr;
+    delete [] xOfStand;    xOfStand = nullptr;
+    delete [] maxVistOfStandX;    maxVistOfStandX = nullptr;
+    delete [] qVist;    qVist = nullptr;
 }
 
 void NSSolverUnstruct::CreateNodeVariable(Grid *gridIn, RDouble **nodevar)
@@ -17327,22 +17453,22 @@ void NSSolverUnstruct::ComputeAverageVisualNodeField(Grid *gridIn, RDouble **qn)
     CompNodeVarForVisual(grid, qn[varCount ++], qAverage[IW]);
     CompNodeVar(grid, qn[varCount ++], qAverage[IP]);
 
-    RDouble * cp = ComputeCpAverage(gridIn);
+    RDouble *cp = ComputeCpAverage(gridIn);
     CompNodeVar(grid, qn[varCount ++], cp);
-    delete[] cp;    cp = nullptr;
+    delete [] cp;    cp = nullptr;
 }
 
 void NSSolverUnstruct::SliceVisualization(Grid *gridIn, ActionKey *actkey, RDouble **qn, int nvarplot)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
-    DataContainer * cdata = actkey->GetTecData();
+    DataContainer *cdata = actkey->GetTecData();
 
-    int * node_number_of_each_face = grid->GetNodeNumberOfEachFace();
-    int * face2node = grid->GetFace2Node();
+    int *node_number_of_each_face = grid->GetNodeNumberOfEachFace();
+    int *face2node = grid->GetFace2Node();
 
-    RDouble * x = grid->GetX();
-    RDouble * y = grid->GetY();
-    RDouble * z = grid->GetZ();
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
 
     vector < RDouble > xSlice;
     vector < RDouble > ySlice;
@@ -17505,13 +17631,13 @@ void NSSolverUnstruct::SliceVisualization(Grid *gridIn, ActionKey *actkey, RDoub
 void NSSolverUnstruct::BoundaryVisualization(Grid *gridIn, ActionKey *actkey, RDouble **qn, int nvarplot)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
-    DataContainer * cdata = actkey->GetTecData();
+    DataContainer *cdata = actkey->GetTecData();
 
     int nBoundFace = grid->GetNBoundFace();
 
-    RDouble * x = grid->GetX();
-    RDouble * y = grid->GetY();
-    RDouble * z = grid->GetZ();
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
 
     using namespace PHENGLEI;
     vector < vector < int > > face2nodelist(nBoundFace);
@@ -17587,9 +17713,9 @@ void NSSolverUnstruct::BoundaryVisualization(Grid *gridIn, ActionKey *actkey, RD
 
         PHWrite(cdata, &NumPts, 1);
 
-        RDouble * xx = new RDouble [NumPts];
-        RDouble * yy = new RDouble [NumPts];
-        RDouble * zz = new RDouble [NumPts];
+        RDouble *xx = new RDouble [NumPts];
+        RDouble *yy = new RDouble [NumPts];
+        RDouble *zz = new RDouble [NumPts];
 
         for (std::size_t i = 0; i < linkmap.size(); ++ i)
         {
@@ -17603,11 +17729,9 @@ void NSSolverUnstruct::BoundaryVisualization(Grid *gridIn, ActionKey *actkey, RD
         PHWrite(cdata, yy, NumPts);
         PHWrite(cdata, zz, NumPts);
 
-
         for (int m = 0; m < nvarplot; ++ m)
         {
-
-            RDouble * qq = new RDouble [NumPts];
+            RDouble *qq = new RDouble [NumPts];
 
             for (std::size_t i = 0; i < linkmap.size(); ++ i)
             {
@@ -17632,13 +17756,13 @@ void NSSolverUnstruct::BoundaryVisualization(Grid *gridIn, ActionKey *actkey, RD
 void NSSolverUnstruct::VisualizationAverageFlow(ActionKey *actkey)
 {
     int level = actkey->level;
-    UnstructGrid * grid = UnstructGridCast(GetGrid(level));
+    UnstructGrid *grid = UnstructGridCast(GetGrid(level));
     int nTotalNode = grid->GetNTotalNode();
 
     //! Average flow of DES statistics.
     int nvarplot = 6;
 
-    RDouble ** qn = NewPointer2<RDouble>(nvarplot, nTotalNode);
+    RDouble **qn = NewPointer2<RDouble>(nvarplot, nTotalNode);
     ComputeAverageVisualNodeField(grid, qn);
 
     int gridID = grid->GetGridID()->GetIndex();
@@ -17829,7 +17953,7 @@ void NSSolverUnstruct::ComputeLimiter(Grid *gridIn)
                 SetField(limit2D[m], limiter->GetLimiter(0), nTotal);
             }
         }
-        delete limiter;
+        delete limiter;    limiter = nullptr;
     }
 
     //PHSPACE::CommunicateInterfaceValue(grid, limit2D, "limit2D", nEquation);
@@ -17929,7 +18053,7 @@ void NSSolverUnstruct::GetGradientField(Grid *gridIn)
         }
     }
 
-    delete qProxy;
+    delete qProxy;    qProxy = nullptr;
 }
 
 void NSSolverUnstruct::InitiallimiterOnlyForMixGrid(Grid *gridIn)
@@ -18079,8 +18203,6 @@ void NSSolverUnstruct::ComputelimiterOnlyForMixGrid(Grid *gridIn)
     }
 }
 
-
-
 LIB_EXPORT void NSSolverUnstruct::ComputePostVisualVariables(Post_Visual * postVisualization)
 {
     UnstructGrid *grid = UnstructGridCast(postVisualization->GetGrid());
@@ -18106,6 +18228,11 @@ LIB_EXPORT void NSSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
 
         varName = postVisualization->GetVariableName(PHSPACE::VISUAL_PRESSURE);
         postVisualization->UpdateVisualNodeVarPtr(varName, qAverage[IDX::IP]);
+
+        varName = postVisualization->GetVariableName(PHSPACE::VISUAL_CP);
+        RDouble *cp = ComputeCpAverage(grid);
+        postVisualization->UpdateVisualNodeVarPtr(varName, cp);
+        delete [] cp;    cp = nullptr;
 
         return;
     }
@@ -18138,8 +18265,8 @@ LIB_EXPORT void NSSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
 
     if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_IBLANK))
     {
-        int    *iBlank  = grid->GetBlankIndex();
-        string  varName = postVisualization->GetVariableName(PHSPACE::VISUAL_IBLANK);
+        int    *iBlank = grid->GetBlankIndex();
+        string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_IBLANK);
         postVisualization->UpdateVisualNodeNotInterpolation(varName, iBlank);
     }
 
@@ -18179,7 +18306,7 @@ LIB_EXPORT void NSSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
     if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_MACH))
     {
         string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_MACH);
-        RDouble * mach  = CompMachNumber(grid);
+        RDouble *mach  = CompMachNumber(grid);
         postVisualization->UpdateVisualNodeVarPtr(varName, mach);
         delete [] mach;    mach = nullptr;
     }
@@ -18205,19 +18332,19 @@ LIB_EXPORT void NSSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
     if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_TIME_STEP))
     {
         string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_TIME_STEP);
-        RDouble * dt  = reinterpret_cast< RDouble * > (grid->GetDataPtr("dt" ));
+        RDouble *dt = reinterpret_cast< RDouble * > (grid->GetDataPtr("dt" ));
         postVisualization->UpdateVisualNodeVarPtr(varName, dt);
     }
     if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VOLUME))
     {
         string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_VOLUME);
-        RDouble *vol  = grid->GetCellVolume();
+        RDouble *vol = grid->GetCellVolume();
         postVisualization->UpdateVisualNodeVarPtr(varName, vol);
     }
     if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_WALL_DIST))
     {
         string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_WALL_DIST);
-        RDouble* wallDistance = grid->GetWallDist();
+        RDouble *wallDistance = grid->GetWallDist();
         postVisualization->UpdateVisualNodeVarPtr(varName, wallDistance);
     }
 
@@ -18253,7 +18380,7 @@ LIB_EXPORT void NSSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
 
         if (viscousName.substr(0,6) == "2eq-kw")
         {
-            RDouble ** q_turb    = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q_turb" ));
+            RDouble **q_turb = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q_turb" ));
             if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_MODELED_TKE))
             {
                 string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_MODELED_TKE);
@@ -18264,18 +18391,18 @@ LIB_EXPORT void NSSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
                 string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_MODELED_DISSIPATION);
                 postVisualization->UpdateVisualNodeVarPtr(varName, q_turb[IDX::IKW]);
             }
-            if (viscousName.substr(0,17) == "2eq-kw-menter-sst")   //! For blending function F1 and F2
+            if (viscousName.substr(0,17) == "2eq-kw-menter-sst")    //! For blending function F1 and F2
             {
-                RDouble ** q_transition    = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q_transition" ));
+                RDouble **q_transition = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q_transition" ));
                 if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_SST_F1))
                 {
-                    RDouble * blend = reinterpret_cast< RDouble * > (grid->GetDataPtr("blend" ));   //! For blengding function F1
+                    RDouble *blend = reinterpret_cast< RDouble * > (grid->GetDataPtr("blend" ));    //! For blengding function F1
                     string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_SST_F1);
                     postVisualization->UpdateVisualNodeVarPtr(varName, blend);
                 }
                 if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_SST_F2))
                 {
-                    RDouble * SST_F2 = reinterpret_cast< RDouble * > (grid->GetDataPtr("SST_F2" ));   //! For blengding function F2
+                    RDouble *SST_F2 = reinterpret_cast< RDouble * > (grid->GetDataPtr("SST_F2" ));   //! For blengding function F2
                     string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_SST_F2);
                     postVisualization->UpdateVisualNodeVarPtr(varName, SST_F2);
                 }
@@ -18300,7 +18427,7 @@ LIB_EXPORT void NSSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
     int visualField = parameters->GetPlotFieldType();
     if(WantVisualField(grid) || visualField == TEC_SPACE::BlockVisual)
     {
-        RDouble * vorticity_x, * vorticity_y, * vorticity_z, * vorticityMagnitude, * strain_rate, * Q_criteria;
+        RDouble *vorticity_x, *vorticity_y, *vorticity_z, *vorticityMagnitude, *strain_rate, *Q_criteria;
 
         int nTotalCell = grid->GetNTotalCell();
         int nBoundFace = grid->GetNBoundFace();
@@ -18361,7 +18488,7 @@ LIB_EXPORT void NSSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
     if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_CP))
     {
         string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_CP);
-        RDouble * cp = ComputeCp(grid);
+        RDouble *cp = ComputeCp(grid);
         postVisualization->UpdateVisualNodeVarPtr(varName, cp);
         delete [] cp;    cp = nullptr;
     }
@@ -18449,7 +18576,7 @@ LIB_EXPORT void NSSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
         int nEquation = GetNumberOfEquations();
         int nSpeciesNumber = parameters->GetNumberOfSpecies();
 
-        string * varname = gas->GetNameOfSpecies();
+        string *varname = gas->GetNameOfSpecies();
         for (int m = nm; m < nEquation; ++ m)
         {
             string varName = "massfraction-" + varname[m-nm];
@@ -18509,9 +18636,9 @@ LIB_EXPORT void NSSolverUnstruct::ComputePostProbesVariables(Post_Probes * postP
     if(postProbesVar->IsNeedMonitoring(PHSPACE::PROBE_MACH))
     {
         string varName = postProbesVar->GetProbesVariableName(PHSPACE::PROBE_MACH);
-        RDouble * mach  = CompMachNumber(grid);
+        RDouble *mach  = CompMachNumber(grid);
         postProbesVar->UpdateProbesVarPtr(varName, mach);
-        delete [] mach;
+        delete [] mach;    mach = nullptr;
     }
     if (postProbesVar->IsNeedMonitoring(PHSPACE::PROBE_DIMENSIONAL_DENSITY)
         || postProbesVar->IsNeedMonitoring(PHSPACE::PROBE_DIMENSIONAL_U)
@@ -18617,7 +18744,7 @@ LIB_EXPORT void NSSolverUnstruct::ComputePostProbesVariables(Post_Probes * postP
 
         if (viscousName.substr(0,6) == "2eq-kw")
         {
-            RDouble ** q_turb    = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q_turb" ));
+            RDouble **q_turb = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q_turb" ));
             if(postProbesVar->IsNeedMonitoring(PHSPACE::PROBE_MODELED_TKE))
             {
                 string varName = postProbesVar->GetProbesVariableName(PHSPACE::PROBE_MODELED_TKE);
@@ -19054,7 +19181,7 @@ void NSSolverUnstruct::SymmetryBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstru
 }
 
 #ifdef USE_GMRESSOLVER
-// GMRESBoundary AD   GMRESAD
+//! GMRESBoundary AD   GMRESAD
 void NSSolverUnstruct::GMRES_SymmetryBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct)
 {
     //! Get the basic variables for boundary calculating.
@@ -19079,7 +19206,7 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion(Grid *gridIn, UnstructBC *bcRegion
 
     int iFace, le, re;
 
-    // Sacado
+    //! Sacado
     ADReal *ql = new ADReal[nEquation]();
     ADReal *qr = new ADReal[nEquation]();
 
@@ -19092,7 +19219,7 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion(Grid *gridIn, UnstructBC *bcRegion
         le = leftCellofFace[iFace];
         re = rightCellofFace[iFace];
 
-        // init and define the sequence order of independent variables
+        //! init and define the sequence order of independent variables
         for (int m = 0; m < nEquation; m++)
         {
             ql[m] = q[m][le];
@@ -19124,11 +19251,11 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion(Grid *gridIn, UnstructBC *bcRegion
         }
     }
 
-    delete[] ql; ql = NULL;
-    delete[] qr; qr = NULL;
+    delete [] ql; ql = nullptr;
+    delete [] qr; qr = nullptr;
 }
 
-// GMRESPV GMRESBoundary
+//! GMRESPV GMRESBoundary
 void NSSolverUnstruct::GMRES_SymmetryBCRegion_FD(Grid * gridIn, UnstructBC *bcRegionUnstruct)
 {
     //! Get the basic variables for boundary calculating.
@@ -19148,8 +19275,8 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_FD(Grid * gridIn, UnstructBC *bcRe
     int nTotalCells = grid->GetNTotalCell();
 
     RDouble dqpert;
-    RDouble* primL    = new RDouble[nEquation]();
-    RDouble* primR    = new RDouble[nEquation]();
+    RDouble *primL = new RDouble[nEquation]();
+    RDouble *primR = new RDouble[nEquation]();
     RDouble temperaturesL[3] = { 0 }, temperaturesR[3] = { 0 };
     RDouble perturbScale = 0.000001;
 
@@ -19164,7 +19291,7 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_FD(Grid * gridIn, UnstructBC *bcRe
         le = leftCellofFace[iFace];
         re = rightCellofFace[iFace];
 
-        // firstly, update the boundary, q[m][le] and q[m][re] are the standard
+        //! firstly, update the boundary, q[m][le] and q[m][re] are the standard
         for (int m = 0; m < nEquation; m++)
         {
             primL[m] = q[m][le];
@@ -19175,8 +19302,8 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_FD(Grid * gridIn, UnstructBC *bcRe
             q[m][re] = primR[m];
         }
 
-        // then perturb the primative variables at the left cell
-        // perturb rho
+        //! then perturb the primative variables at the left cell
+        //! perturb rho
         int idx = (re - nTotalCells) * nEquation;
 
         for (int m = 0; m < nEquation; m++)
@@ -19191,7 +19318,7 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_FD(Grid * gridIn, UnstructBC *bcRe
             dDdP[m][idx] = (primR[m] - q[m][re]) / dqpert;
         }
 
-        // perturb u
+        //! perturb u
         idx++;
         for (int m = 0; m < nEquation; m++)
         {
@@ -19205,7 +19332,7 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_FD(Grid * gridIn, UnstructBC *bcRe
             dDdP[m][idx] = (primR[m] - q[m][re]) / dqpert;
         }
 
-        // perturb v
+        //! perturb v
         idx++;
         for (int m = 0; m < nEquation; m++)
         {
@@ -19219,7 +19346,7 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_FD(Grid * gridIn, UnstructBC *bcRe
             dDdP[m][idx] = (primR[m] - q[m][re]) / dqpert;
         }
 
-        // perturb w
+        //! perturb w
         idx++;
         for (int m = 0; m < nEquation; m++)
         {
@@ -19233,8 +19360,7 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_FD(Grid * gridIn, UnstructBC *bcRe
             dDdP[m][idx] = (primR[m] - q[m][re]) / dqpert;
         }
 
-
-        // perturb p
+        //! perturb p
         idx++;
         for (int m = 0; m < nEquation; m++)
         {
@@ -19248,22 +19374,21 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_FD(Grid * gridIn, UnstructBC *bcRe
             dDdP[m][idx] = (primR[m] - q[m][re]) / dqpert;
         }
     }
-    delete[] primL;
-    primL = NULL;
-    delete[] primR;     primR    = NULL;
+    delete [] primL;    primL = nullptr;
+    delete [] primR;    primR    = nullptr;
 }
 
-// GMRESBoundary
+//! GMRESBoundary
 void NSSolverUnstruct::GMRES_SymmetryBCRegion_CV(Grid * gridIn, UnstructBC *bcRegionUnstruct)
 {
     //! Get the basic variables for boundary calculating.
     UnstructGrid *grid   = UnstructGridCast(gridIn);
     int *leftCellofFace  = grid->GetLeftCellOfFace();
     int *rightCellofFace = grid->GetRightCellOfFace();
-    RDouble   *xfn       = grid->GetFaceNormalX();
-    RDouble   *yfn       = grid->GetFaceNormalY();
-    RDouble   *zfn       = grid->GetFaceNormalZ();
-    RDouble   *vgn       = grid->GetFaceNormalVelocity();
+    RDouble *xfn         = grid->GetFaceNormalX();
+    RDouble *yfn         = grid->GetFaceNormalY();
+    RDouble *zfn         = grid->GetFaceNormalZ();
+    RDouble *vgn         = grid->GetFaceNormalVelocity();
     RDouble **q = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
     RDouble **dDdP = reinterpret_cast<RDouble **>(grid->GetDataPtr("dDdP"));
     RDouble *gama = reinterpret_cast<RDouble *>(grid->GetDataPtr("gama"));
@@ -19278,12 +19403,12 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_CV(Grid * gridIn, UnstructBC *bcRe
     int nTotalCells = grid->GetNTotalCell();
 
     RDouble dCvpert;
-    RDouble* primL    = new RDouble[nEquation]();
-    RDouble* primR    = new RDouble[nEquation]();
-    RDouble* qCvL     = new RDouble[nEquation]();
-    RDouble* qCvR     = new RDouble[nEquation]();
-    RDouble* qCvLpert = new RDouble[nEquation]();
-    RDouble* qCvRpert = new RDouble[nEquation]();
+    RDouble *primL    = new RDouble[nEquation]();
+    RDouble *primR    = new RDouble[nEquation]();
+    RDouble *qCvL     = new RDouble[nEquation]();
+    RDouble *qCvR     = new RDouble[nEquation]();
+    RDouble *qCvLpert = new RDouble[nEquation]();
+    RDouble *qCvRpert = new RDouble[nEquation]();
     RDouble temperaturesL[3] = { 0 }, temperaturesR[3] = { 0 };
     RDouble perturbScale = 0.001;
 
@@ -19301,7 +19426,7 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_CV(Grid * gridIn, UnstructBC *bcRe
         RDouble gmL = gama[le];
         RDouble gmR = gama[re];
 
-        // firstly, update the boundary
+        //! firstly, update the boundary
         for (int m = 0; m < nEquation; m++)
         {
             primL[m] = q[m][le];
@@ -19315,10 +19440,10 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_CV(Grid * gridIn, UnstructBC *bcRe
         {
             q[m][re] = primR[m];
         }
-        gas->Primitive2Conservative(primR, gmR, temperaturesR[ITV], temperaturesR[ITE], qCvR); // Set standard
+        gas->Primitive2Conservative(primR, gmR, temperaturesR[ITV], temperaturesR[ITE], qCvR);    //! Set standard
 
-                                                                                               // then perturb the conservative variables at the left cell
-                                                                                               // perturb rho
+        //! then perturb the conservative variables at the left cell
+        //! perturb rho
         int idx = (re - nTotalCells) * nEquation;
 
         for (int m = 0; m < nEquation; m++)
@@ -19326,8 +19451,8 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_CV(Grid * gridIn, UnstructBC *bcRe
             qCvLpert[m] = qCvL[m];
         }
         qCvLpert[IR] *= (1.0+perturbScale);
-        dCvpert      = qCvLpert[IR] - qCvL[IR];
-        gas->Conservative2Primitive(qCvLpert, gmL, primL, temperaturesL); // now [primL] becomes a new value
+        dCvpert       = qCvLpert[IR] - qCvL[IR];
+        gas->Conservative2Primitive(qCvLpert, gmL, primL, temperaturesL);    //! now [primL] becomes a new value
         Cal_GMRES_SymmetryBCRegion(gridIn,primL,primR,iFace);
         gas->Primitive2Conservative(primR, gmR, temperaturesR[ITV], temperaturesR[ITE], qCvRpert);
         for (int m = 0; m < nEquation; m++)
@@ -19335,15 +19460,15 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_CV(Grid * gridIn, UnstructBC *bcRe
             dDdP[m][idx] = (qCvRpert[m] - qCvR[m]) / dCvpert;
         }
 
-        // perturb rhou
+        //! perturb rhou
         idx++;
         for (int m = 0; m < nEquation; m++)
         {
             qCvLpert[m] = qCvL[m];
         }
         qCvLpert[IU] += (perturbScale);
-        dCvpert      = qCvLpert[IU] - qCvL[IU];
-        gas->Conservative2Primitive(qCvLpert, gmL, primL, temperaturesL); // now [primL] becomes a new value
+        dCvpert       = qCvLpert[IU] - qCvL[IU];
+        gas->Conservative2Primitive(qCvLpert, gmL, primL, temperaturesL);    //! now [primL] becomes a new value
         Cal_GMRES_SymmetryBCRegion(gridIn,primL,primR,iFace);
         gas->Primitive2Conservative(primR, gmR, temperaturesR[ITV], temperaturesR[ITE], qCvRpert);
         for (int m = 0; m < nEquation; m++)
@@ -19351,15 +19476,15 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_CV(Grid * gridIn, UnstructBC *bcRe
             dDdP[m][idx] = (qCvRpert[m] - qCvR[m]) / dCvpert;
         }
 
-        // perturb rhov
+        //! perturb rhov
         idx++;
         for (int m = 0; m < nEquation; m++)
         {
             qCvLpert[m] = qCvL[m];
         }
         qCvLpert[IV] += (perturbScale);
-        dCvpert      = qCvLpert[IV] - qCvL[IV];
-        gas->Conservative2Primitive(qCvLpert, gmL, primL, temperaturesL); // now [primL] becomes a new value
+        dCvpert       = qCvLpert[IV] - qCvL[IV];
+        gas->Conservative2Primitive(qCvLpert, gmL, primL, temperaturesL);    //! now [primL] becomes a new value
         Cal_GMRES_SymmetryBCRegion(gridIn,primL,primR,iFace);
         gas->Primitive2Conservative(primR, gmR, temperaturesR[ITV], temperaturesR[ITE], qCvRpert);
         for (int m = 0; m < nEquation; m++)
@@ -19367,15 +19492,15 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_CV(Grid * gridIn, UnstructBC *bcRe
             dDdP[m][idx] = (qCvRpert[m] - qCvR[m]) / dCvpert;
         }
 
-        // perturb rhow
+        //! perturb rhow
         idx++;
         for (int m = 0; m < nEquation; m++)
         {
             qCvLpert[m] = qCvL[m];
         }
         qCvLpert[IW] += (perturbScale);
-        dCvpert      = qCvLpert[IW] - qCvL[IW];
-        gas->Conservative2Primitive(qCvLpert, gmL, primL, temperaturesL); // now [primL] becomes a new value
+        dCvpert       = qCvLpert[IW] - qCvL[IW];
+        gas->Conservative2Primitive(qCvLpert, gmL, primL, temperaturesL);    //! now [primL] becomes a new value
         Cal_GMRES_SymmetryBCRegion(gridIn,primL,primR,iFace);
         gas->Primitive2Conservative(primR, gmR, temperaturesR[ITV], temperaturesR[ITE], qCvRpert);
         for (int m = 0; m < nEquation; m++)
@@ -19383,15 +19508,15 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_CV(Grid * gridIn, UnstructBC *bcRe
             dDdP[m][idx] = (qCvRpert[m] - qCvR[m]) / dCvpert;
         }
 
-        // perturb rhoe
+        //! perturb rhoe
         idx++;
         for (int m = 0; m < nEquation; m++)
         {
             qCvLpert[m] = qCvL[m];
         }
         qCvLpert[IP] *= (1.0+perturbScale);
-        dCvpert      = qCvLpert[IP] - qCvL[IP];
-        gas->Conservative2Primitive(qCvLpert, gmL, primL, temperaturesL); // now [primL] becomes a new value
+        dCvpert       = qCvLpert[IP] - qCvL[IP];
+        gas->Conservative2Primitive(qCvLpert, gmL, primL, temperaturesL);    //! now [primL] becomes a new value
         Cal_GMRES_SymmetryBCRegion(gridIn,primL,primR,iFace);
         gas->Primitive2Conservative(primR, gmR, temperaturesR[ITV], temperaturesR[ITE], qCvRpert);
         for (int m = 0; m < nEquation; m++)
@@ -19400,22 +19525,22 @@ void NSSolverUnstruct::GMRES_SymmetryBCRegion_CV(Grid * gridIn, UnstructBC *bcRe
         }
     }
 
-    delete[] primL;         primL       = NULL;             
-    delete[] primR;         primR       = NULL;
-    delete[] qCvL;          qCvL        = NULL;
-    delete[] qCvR;          qCvR        = NULL; 
-    delete[] qCvLpert;      qCvLpert    = NULL;
-    delete[] qCvRpert;      qCvRpert    = NULL;
+    delete [] primL;       primL    = nullptr;
+    delete [] primR;       primR    = nullptr;
+    delete [] qCvL;        qCvL     = nullptr;
+    delete [] qCvR;        qCvR     = nullptr;
+    delete [] qCvLpert;    qCvLpert = nullptr;
+    delete [] qCvRpert;    qCvRpert = nullptr;
 }
 
 void NSSolverUnstruct::Cal_GMRES_SymmetryBCRegion(Grid *gridIn, RDouble *PrimL, RDouble *PrimR, const int &iFace)
 {
     //! Get the basic variables for boundary calculating.
-    UnstructGrid *grid   = UnstructGridCast(gridIn);
-    RDouble   *xfn       = grid->GetFaceNormalX();
-    RDouble   *yfn       = grid->GetFaceNormalY();
-    RDouble   *zfn       = grid->GetFaceNormalZ();
-    RDouble   *vgn       = grid->GetFaceNormalVelocity();
+    UnstructGrid *grid = UnstructGridCast(gridIn);
+    RDouble *xfn       = grid->GetFaceNormalX();
+    RDouble *yfn       = grid->GetFaceNormalY();
+    RDouble *zfn       = grid->GetFaceNormalZ();
+    RDouble *vgn       = grid->GetFaceNormalVelocity();
 
     //! Get the number of equations.
     Param_NSSolverUnstruct *parameters = GetControlParameters();
@@ -19494,7 +19619,6 @@ void NSSolverUnstruct::GMRES_ViscousIsotropicWallBCRegion(Grid *gridIn, Unstruct
         wallTempArray = reinterpret_cast <RDouble *> (bcRegionUnstruct->GetFieldDataPtr("wallTempArray"));
     }
 
-
     int iFace, le, re;
     //! Get the face indexes of this boundary condition region.
     vector<int> *faceIndex = bcRegionUnstruct->GetFaceIndex();
@@ -19504,7 +19628,7 @@ void NSSolverUnstruct::GMRES_ViscousIsotropicWallBCRegion(Grid *gridIn, Unstruct
     RDouble coefficientofstateEquation = gas->GetCoefficientOfStateEquation();
 
     ADReal rGhost = 0.0, pGhost = 0.0, tGhost = 0.0;    //! rho/pressure/temprature on ghost cell.
-    RDouble *qL = NULL;
+    RDouble *qL = nullptr;
     if (nChemical == 1)
     {
         // qL = new RDouble [nEquation];
@@ -19585,16 +19709,14 @@ void NSSolverUnstruct::GMRES_ViscousIsotropicWallBCRegion(Grid *gridIn, Unstruct
     {
         // delete [] qL;
     }
-    delete[] qleft;
-    qleft = NULL;
-    delete[] qright;
-    qright = NULL;
+    delete [] qleft;    qleft = nullptr;
+    delete [] qright;    qright = nullptr;
 }
 
-// GMRESVis GMRESBoundary
+//! GMRESVis GMRESBoundary
 void NSSolverUnstruct::GMRES_ViscousAdiabaticWallBCRegion_FD(Grid *gridIn, UnstructBC *bcRegionUnstruct)
 {
-    // Get the basic variables for boundary calculating.
+    //! Get the basic variables for boundary calculating.
     UnstructGrid *grid   = UnstructGridCast(gridIn);
     int *leftCellofFace  = grid->GetLeftCellOfFace();
     int *rightCellofFace = grid->GetRightCellOfFace();
@@ -19605,7 +19727,6 @@ void NSSolverUnstruct::GMRES_ViscousAdiabaticWallBCRegion_FD(Grid *gridIn, Unstr
     RDouble **q = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
     RDouble **t   = reinterpret_cast< RDouble ** > (grid->GetDataPtr("t"));
     RDouble **dDdP = reinterpret_cast<RDouble **>(grid->GetDataPtr("dDdP"));
-
 
     //! Get the number of equations.
     Param_NSSolverUnstruct *parameters = GetControlParameters();
@@ -19642,13 +19763,13 @@ void NSSolverUnstruct::GMRES_ViscousAdiabaticWallBCRegion_FD(Grid *gridIn, Unstr
     using namespace GAS_SPACE;
     RDouble coefficientofstateEquation = gas->GetCoefficientOfStateEquation();
     RDouble rGhost = 0.0, pGhost = 0.0, tGhost = 0.0;
-    RDouble *qL = NULL;
+    RDouble *qL = nullptr;
     if (nChemical == 1)
     {
         qL = new RDouble [nEquation];
     }
-    RDouble* primL = new RDouble [nEquation];
-    RDouble* primR = new RDouble [nEquation];
+    RDouble *primL = new RDouble [nEquation];
+    RDouble *primR = new RDouble [nEquation];
     RDouble dqpert;
     RDouble perturbScale = 1e-6;
 
@@ -19670,8 +19791,8 @@ void NSSolverUnstruct::GMRES_ViscousAdiabaticWallBCRegion_FD(Grid *gridIn, Unstr
             q[m][re] = primR[m];
         }
 
-        // then perturb the primative variables at the left cell
-        // perturb rho
+        //! then perturb the primative variables at the left cell
+        //! perturb rho
         int idx = (re - nTotalCells) * nEquation;
 
         for (int m = 0; m < nEquation; m++)
@@ -19686,7 +19807,7 @@ void NSSolverUnstruct::GMRES_ViscousAdiabaticWallBCRegion_FD(Grid *gridIn, Unstr
             dDdP[m][idx] = (primR[m] - q[m][re]) / dqpert;
         }
 
-        // perturb u
+        //! perturb u
         idx++;
         for (int m = 0; m < nEquation; m++)
         {
@@ -19700,7 +19821,7 @@ void NSSolverUnstruct::GMRES_ViscousAdiabaticWallBCRegion_FD(Grid *gridIn, Unstr
             dDdP[m][idx] = (primR[m] - q[m][re]) / dqpert;
         }
 
-        // perturb v
+        //! perturb v
         idx++;
         for (int m = 0; m < nEquation; m++)
         {
@@ -19714,7 +19835,7 @@ void NSSolverUnstruct::GMRES_ViscousAdiabaticWallBCRegion_FD(Grid *gridIn, Unstr
             dDdP[m][idx] = (primR[m] - q[m][re]) / dqpert;
         }
 
-        // perturb w
+        //! perturb w
         idx++;
         for (int m = 0; m < nEquation; m++)
         {
@@ -19728,8 +19849,7 @@ void NSSolverUnstruct::GMRES_ViscousAdiabaticWallBCRegion_FD(Grid *gridIn, Unstr
             dDdP[m][idx] = (primR[m] - q[m][re]) / dqpert;
         }
 
-
-        // perturb p
+        //! perturb p
         idx++;
         for (int m = 0; m < nEquation; m++)
         {
@@ -19742,7 +19862,6 @@ void NSSolverUnstruct::GMRES_ViscousAdiabaticWallBCRegion_FD(Grid *gridIn, Unstr
         {
             dDdP[m][idx] = (primR[m] - q[m][re]) / dqpert;
         }
-
     }
     if (nChemical == 1)
     {
@@ -19761,10 +19880,10 @@ void NSSolverUnstruct::GMRES_ViscousAdiabaticWallBCRegion_FD(Grid *gridIn, Unstr
         q[IP][re] = pGhost;
     }
 
-    delete[] primL;  primL = NULL;
-    delete[] primR;  primR = NULL;
+    delete [] primL;  primL = nullptr;
+    delete [] primR;  primR = nullptr;
 }
-// GMRESVis GMRESBoundary
+//! GMRESVis GMRESBoundary
 void NSSolverUnstruct::Cal_GMRES_ViscousAdiabaticWallBCRegion(Grid *gridIn, RDouble *PrimL, RDouble *PrimR, int iFace, RDouble uWall, RDouble vWall, RDouble wWall)
 {
     UnstructGrid *grid   = UnstructGridCast(gridIn);
@@ -19785,7 +19904,6 @@ void NSSolverUnstruct::Cal_GMRES_ViscousAdiabaticWallBCRegion(Grid *gridIn, RDou
     RDouble velocityZWall = wWall;
 
     if (isUnsteady && isAle)
-
     {
         velocityXWall = faceVelocityX[iFace] + uWall;
         velocityYWall = faceVelocityY[iFace] + vWall;
@@ -19796,10 +19914,10 @@ void NSSolverUnstruct::Cal_GMRES_ViscousAdiabaticWallBCRegion(Grid *gridIn, RDou
     PrimR[IV] = - PrimL[IV] + two * velocityYWall;
     PrimR[IW] = - PrimL[IW] + two * velocityZWall;
 }
-// AD  GMRESAD
+//! AD  GMRESAD
 void NSSolverUnstruct::GMRES_ViscousAdiabaticWallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct)
 {
-    // Get the basic variables for boundary calculating.
+    //! Get the basic variables for boundary calculating.
     UnstructGrid *grid   = UnstructGridCast(gridIn);
     int *leftCellofFace  = grid->GetLeftCellOfFace();
     int *rightCellofFace = grid->GetRightCellOfFace();
@@ -19809,7 +19927,7 @@ void NSSolverUnstruct::GMRES_ViscousAdiabaticWallBCRegion(Grid *gridIn, Unstruct
     RDouble *faceVelocityZ = grid->GetFaceVelocityZ();
     RDouble **q = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
     RDouble **t   = reinterpret_cast< RDouble ** > (grid->GetDataPtr("t"));
-    RDouble** dDdP = reinterpret_cast <RDouble**> (grid->GetDataPtr("dDdP"));
+    RDouble **dDdP = reinterpret_cast <RDouble**> (grid->GetDataPtr("dDdP"));
 
     //! Get the number of equations.
     Param_NSSolverUnstruct *parameters = GetControlParameters();
@@ -19833,7 +19951,7 @@ void NSSolverUnstruct::GMRES_ViscousAdiabaticWallBCRegion(Grid *gridIn, Unstruct
             bcData->GetData("vWall", &vWall, PHDOUBLE, 1);
             bcData->GetData("wWall", &wWall, PHDOUBLE, 1);
         }
-    }    
+    }
 
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
@@ -19855,7 +19973,7 @@ void NSSolverUnstruct::GMRES_ViscousAdiabaticWallBCRegion(Grid *gridIn, Unstruct
         le = leftCellofFace[iFace];
         re = rightCellofFace[iFace];
 
-        // init for q[m][le] and define the independent variabels
+        //! init for q[m][le] and define the independent variabels
         for (int m = 0; m < nEquation; m++)
         {
             qL[m] = q[m][le];
@@ -19881,7 +19999,7 @@ void NSSolverUnstruct::GMRES_ViscousAdiabaticWallBCRegion(Grid *gridIn, Unstruct
         qR[IV] = - qL[IV] + two * velocityYWall;
         qR[IW] = - qL[IW] + two * velocityZWall;
 
-        // assign to qr and dqr/dql
+        //! assign to qr and dqr/dql
         int idx = (re - nTotalCell) * nEquation;
         for (int m = 0; m < nEquation; m++)
         {
@@ -19895,14 +20013,12 @@ void NSSolverUnstruct::GMRES_ViscousAdiabaticWallBCRegion(Grid *gridIn, Unstruct
 
     if (nChemical == 1)
     {
-        
+
     }
-    delete[] qL;
-    qL = NULL;
-    delete[] qR;
-    qR = NULL;
+    delete [] qL;    qL = nullptr;
+    delete [] qR;    qR = nullptr;
 }
-// GMRESPV GMRESBoundary FD
+//! GMRESPV GMRESBoundary FD
 void NSSolverUnstruct::GMRES_FarfieldBCRegion_FD(Grid *gridIn, UnstructBC *bcRegionUnstruct)
 {
     //! Get the basic variables for boundary calculating.
@@ -19912,7 +20028,7 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion_FD(Grid *gridIn, UnstructBC *bcReg
     int nTotalCell = grid->GetNTotalCell();
     RDouble **q = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
     RDouble *gama = reinterpret_cast< RDouble *  > (grid->GetDataPtr("gama"));
-    RDouble** dDdP = reinterpret_cast <RDouble**> (grid->GetDataPtr("dDdP"));
+    RDouble **dDdP = reinterpret_cast <RDouble**> (grid->GetDataPtr("dDdP"));
     int nEquation = GetNumberOfEquations();
     int iFace, le, re;
     //! Get the face indexes of this boundary condition region.
@@ -19921,8 +20037,8 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion_FD(Grid *gridIn, UnstructBC *bcReg
 
     using namespace GAS_SPACE;
 
-    RDouble* qL          = new RDouble[nEquation]();
-    RDouble* qR          = new RDouble[nEquation]();
+    RDouble *qL = new RDouble[nEquation]();
+    RDouble *qR = new RDouble[nEquation]();
     RDouble dqpert;
     RDouble temperaturesL[3] = { 0 }, temperaturesR[3] = { 0 };
     RDouble perturbScale = 0.000001;
@@ -19943,7 +20059,7 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion_FD(Grid *gridIn, UnstructBC *bcReg
             q[m][re] = qR[m];
         }
 
-        // perturb rho of the left cell
+        //! perturb rho of the left cell
         qL[IR] = q[IR][le];
         qL[IU] = q[IU][le];
         qL[IV] = q[IV][le];
@@ -19958,7 +20074,7 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion_FD(Grid *gridIn, UnstructBC *bcReg
         dDdP[IW][nEquation * (re - nTotalCell) + IR] = (qR[IW] - q[IW][re]) / dqpert;
         dDdP[IP][nEquation * (re - nTotalCell) + IR] = (qR[IP] - q[IP][re]) / dqpert;
 
-        // perturb u of the left cell
+        //! perturb u of the left cell
         qL[IR] = q[IR][le];
         qL[IU] = q[IU][le];
         qL[IV] = q[IV][le];
@@ -19973,7 +20089,7 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion_FD(Grid *gridIn, UnstructBC *bcReg
         dDdP[IW][nEquation * (re - nTotalCell) + IU] = (qR[IW] - q[IW][re]) / dqpert;
         dDdP[IP][nEquation * (re - nTotalCell) + IU] = (qR[IP] - q[IP][re]) / dqpert;
 
-        // perturb v of the left cell
+        //! perturb v of the left cell
         qL[IR] = q[IR][le];
         qL[IU] = q[IU][le];
         qL[IV] = q[IV][le];
@@ -19988,7 +20104,7 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion_FD(Grid *gridIn, UnstructBC *bcReg
         dDdP[IW][nEquation * (re - nTotalCell) + IV] = (qR[IW] - q[IW][re]) / dqpert;
         dDdP[IP][nEquation * (re - nTotalCell) + IV] = (qR[IP] - q[IP][re]) / dqpert;
 
-        // perturb w of the left cell
+        //! perturb w of the left cell
         qL[IR] = q[IR][le];
         qL[IU] = q[IU][le];
         qL[IV] = q[IV][le];
@@ -20003,7 +20119,7 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion_FD(Grid *gridIn, UnstructBC *bcReg
         dDdP[IW][nEquation * (re - nTotalCell) + IW] = (qR[IW] - q[IW][re]) / dqpert;
         dDdP[IP][nEquation * (re - nTotalCell) + IW] = (qR[IP] - q[IP][re]) / dqpert;
 
-        // perturb p of the left cell
+        //! perturb p of the left cell
         qL[IR] = q[IR][le];
         qL[IU] = q[IU][le];
         qL[IV] = q[IV][le];
@@ -20018,12 +20134,11 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion_FD(Grid *gridIn, UnstructBC *bcReg
         dDdP[IW][nEquation * (re - nTotalCell) + IP] = (qR[IW] - q[IW][re]) / dqpert;
         dDdP[IP][nEquation * (re - nTotalCell) + IP] = (qR[IP] - q[IP][re]) / dqpert;     
     }
-    delete[] qL;
-    qL = NULL;
-    delete[] qR;        qR       = NULL;
+    delete [] qL;    qL = nullptr;
+    delete [] qR;    qR = nullptr;
 }
 
-// GMRESBoundary
+//! GMRESBoundary
 void NSSolverUnstruct::GMRES_FarfieldBCRegion_CV(Grid *gridIn, UnstructBC *bcRegionUnstruct)
 {
     //! Get the basic variables for boundary calculating.
@@ -20033,21 +20148,20 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion_CV(Grid *gridIn, UnstructBC *bcReg
     int nTotalCell = grid->GetNTotalCell();
     RDouble **q = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
     RDouble *gama = reinterpret_cast< RDouble *  > (grid->GetDataPtr("gama"));
-    RDouble** dDdP = reinterpret_cast <RDouble**> (grid->GetDataPtr("dDdP"));
+    RDouble **dDdP = reinterpret_cast <RDouble**> (grid->GetDataPtr("dDdP"));
     int nEquation = GetNumberOfEquations();
     int iFace, le, re;
     //! Get the face indexes of this boundary condition region.
     vector<int> *faceIndex = bcRegionUnstruct->GetFaceIndex();
 
-
     using namespace GAS_SPACE;
 
-    RDouble* qL          = new RDouble[nEquation]();
-    RDouble* qCvL        = new RDouble[nEquation]();
-    RDouble* qCvLpert    = new RDouble[nEquation]();
-    RDouble* qR          = new RDouble[nEquation]();
-    RDouble* qCvR        = new RDouble[nEquation]();
-    RDouble* qCvRpert    = new RDouble[nEquation]();
+    RDouble *qL       = new RDouble[nEquation]();
+    RDouble *qCvL     = new RDouble[nEquation]();
+    RDouble *qCvLpert = new RDouble[nEquation]();
+    RDouble *qR       = new RDouble[nEquation]();
+    RDouble *qCvR     = new RDouble[nEquation]();
+    RDouble *qCvRpert = new RDouble[nEquation]();
     RDouble dCvpert;
     RDouble temperaturesL[3] = { 0 }, temperaturesR[3] = { 0 };
     RDouble perturbScale = 0.001;
@@ -20057,7 +20171,6 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion_CV(Grid *gridIn, UnstructBC *bcReg
         iFace = *iter;
         le = leftCellofFace[iFace];
         re = rightCellofFace[iFace];
-
 
         for (int m = 0; m < nEquation; ++ m)
         {
@@ -20075,7 +20188,7 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion_CV(Grid *gridIn, UnstructBC *bcReg
 
         gas->Primitive2Conservative(qR, gama[le], temperaturesR[ITV], temperaturesR[ITE], qCvR);
 
-        // perturb the density of the left cell
+        //! perturb the density of the left cell
         qCvLpert[IR] = qCvL[IR];
         qCvLpert[IU] = qCvL[IU];
         qCvLpert[IV] = qCvL[IV];
@@ -20092,8 +20205,7 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion_CV(Grid *gridIn, UnstructBC *bcReg
         dDdP[IW][nEquation*(re-nTotalCell)+IR] = (qCvRpert[IW] - qCvR[IW])/dCvpert;
         dDdP[IP][nEquation*(re-nTotalCell)+IR] = (qCvRpert[IP] - qCvR[IP])/dCvpert;
 
-
-        // perturb the momentum rhou of the left cell
+        //! perturb the momentum rhou of the left cell
         qCvLpert[IR] = qCvL[IR];
         qCvLpert[IU] = qCvL[IU];
         qCvLpert[IV] = qCvL[IV];
@@ -20110,7 +20222,7 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion_CV(Grid *gridIn, UnstructBC *bcReg
         dDdP[IW][nEquation*(re-nTotalCell)+IU] = (qCvRpert[IW] - qCvR[IW])/dCvpert;
         dDdP[IP][nEquation*(re-nTotalCell)+IU] = (qCvRpert[IP] - qCvR[IP])/dCvpert;
 
-        // perturb the momentum rhov of the left cell
+        //! perturb the momentum rhov of the left cell
         qCvLpert[IR] = qCvL[IR];
         qCvLpert[IU] = qCvL[IU];
         qCvLpert[IV] = qCvL[IV];
@@ -20127,7 +20239,7 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion_CV(Grid *gridIn, UnstructBC *bcReg
         dDdP[IW][nEquation*(re-nTotalCell)+IV] = (qCvRpert[IW] - qCvR[IW])/dCvpert;
         dDdP[IP][nEquation*(re-nTotalCell)+IV] = (qCvRpert[IP] - qCvR[IP])/dCvpert;
 
-        // perturb the momentum rhow of the left cell
+        //! perturb the momentum rhow of the left cell
         qCvLpert[IR] = qCvL[IR];
         qCvLpert[IU] = qCvL[IU];
         qCvLpert[IV] = qCvL[IV];
@@ -20144,8 +20256,7 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion_CV(Grid *gridIn, UnstructBC *bcReg
         dDdP[IW][nEquation*(re-nTotalCell)+IW] = (qCvRpert[IW] - qCvR[IW])/dCvpert;
         dDdP[IP][nEquation*(re-nTotalCell)+IW] = (qCvRpert[IP] - qCvR[IP])/dCvpert;
 
-
-        // perturb the momentum rhoE of the left cell
+        //! perturb the momentum rhoE of the left cell
         qCvLpert[IR] = qCvL[IR];
         qCvLpert[IU] = qCvL[IU];
         qCvLpert[IV] = qCvL[IV];
@@ -20163,12 +20274,12 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion_CV(Grid *gridIn, UnstructBC *bcReg
         dDdP[IP][nEquation*(re-nTotalCell)+IP] = (qCvRpert[IP] - qCvR[IP])/dCvpert;
 
     }
-    delete[] qL;        qL       = NULL; 
-    delete[] qCvL;      qCvL     = NULL; 
-    delete[] qCvLpert;  qCvLpert = NULL; 
-    delete[] qR;        qR       = NULL; 
-    delete[] qCvR;      qCvR     = NULL; 
-    delete[] qCvRpert;  qCvRpert = NULL; 
+    delete [] qL;        qL       = nullptr; 
+    delete [] qCvL;      qCvL     = nullptr;
+    delete [] qCvLpert;  qCvLpert = nullptr;
+    delete [] qR;        qR       = nullptr;
+    delete [] qCvR;      qCvR     = nullptr;
+    delete [] qCvRpert;  qCvRpert = nullptr;
 }
 
 // GMRESBoundary
@@ -20179,10 +20290,10 @@ void NSSolverUnstruct::Cal_GMRES_FarfieldBCRegion(T* qL,T* qR,int le,int iFace, 
     UnstructGrid *grid   = UnstructGridCast(gridIn);
     int *leftCelCal_GMRES_FarfieldBCRegionlofFace  = grid->GetLeftCellOfFace();
     int *rightCellofFace = grid->GetRightCellOfFace();
-    RDouble   *xfn       = grid->GetFaceNormalX();
-    RDouble   *yfn       = grid->GetFaceNormalY();
-    RDouble   *zfn       = grid->GetFaceNormalZ();
-    RDouble   *vgn       = grid->GetFaceNormalVelocity();
+    RDouble *xfn         = grid->GetFaceNormalX();
+    RDouble *yfn         = grid->GetFaceNormalY();
+    RDouble *zfn         = grid->GetFaceNormalZ();
+    RDouble *vgn         = grid->GetFaceNormalVelocity();
     RDouble *gama = reinterpret_cast< RDouble *  > (grid->GetDataPtr("gama"));
     //! Get the number of equations.
     Param_NSSolverUnstruct *parameters = GetControlParameters();
@@ -20256,7 +20367,7 @@ void NSSolverUnstruct::Cal_GMRES_FarfieldBCRegion(T* qL,T* qR,int le,int iFace, 
     vNormalBC =  half * (R_Plus + R_Minus);
     cBC =  0.25 * (R_Plus - R_Minus) * gamm1;
 
-    // GMRESFarFieldCorrection
+    //! GMRESFarFieldCorrection
     T bf,vNth;
     vNth = 1e-4;
     bf  = cos((vNormalBC - vNth) / (2.0 * vNth)*PI);
@@ -20288,7 +20399,6 @@ void NSSolverUnstruct::Cal_GMRES_FarfieldBCRegion(T* qL,T* qR,int le,int iFace, 
         vTangentX = vTangentX *bf + (1 - bf)*(uOutside - xfn[iFace] * vNormalOutside);
         vTangentY = vTangentY *bf + (1 - bf)*(vOutside - yfn[iFace] * vNormalOutside);
         vTangentZ = vTangentZ *bf + (1 - bf)*(wOutside - zfn[iFace] * vNormalOutside);
-
     }
 
     rBC = pow((cBC * cBC / (entropyS * gamale)), one / gamm1);
@@ -20303,7 +20413,7 @@ void NSSolverUnstruct::Cal_GMRES_FarfieldBCRegion(T* qL,T* qR,int le,int iFace, 
     qR[IP] = pBC;
 }
 
-// GMRESBoundary GMRESAD
+//! GMRESBoundary GMRESAD
 void NSSolverUnstruct::GMRES_FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct)
 {
     //! Get the basic variables for boundary calculating.
@@ -20313,17 +20423,16 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegion
     int nTotalCell = grid->GetNTotalCell();
     RDouble **q = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
     RDouble *gama = reinterpret_cast< RDouble *  > (grid->GetDataPtr("gama"));
-    RDouble** dDdP = reinterpret_cast <RDouble**> (grid->GetDataPtr("dDdP"));
+    RDouble **dDdP = reinterpret_cast <RDouble**> (grid->GetDataPtr("dDdP"));
     int nEquation = GetNumberOfEquations();
     int iFace, le, re;
     //! Get the face indexes of this boundary condition region.
     vector<int> *faceIndex = bcRegionUnstruct->GetFaceIndex();
 
-
     using namespace GAS_SPACE;
 
-    ADReal* qL          = new ADReal[nEquation]();
-    ADReal* qR          = new ADReal[nEquation]();
+    ADReal *qL = new ADReal[nEquation]();
+    ADReal *qR = new ADReal[nEquation]();
 
     for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
     {
@@ -20348,8 +20457,8 @@ void NSSolverUnstruct::GMRES_FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegion
             }
         }
     }
-    delete[] qL;  qL = NULL;
-    delete[] qR;  qR = NULL;
+    delete [] qL;  qL = nullptr;
+    delete [] qR;  qR = nullptr;
 }
 #endif
 
@@ -20415,7 +20524,6 @@ void NSSolverUnstruct::ViscousIsotropicWallBCRegion(Grid *gridIn, UnstructBC *bc
     RDouble molecularWeight = one;
     using namespace GAS_SPACE;
     RDouble coefficientofstateEquation = gas->GetCoefficientOfStateEquation();
-
 
     if (tscheme != GMRES)
     {
@@ -20486,7 +20594,7 @@ void NSSolverUnstruct::ViscousIsotropicWallBCRegion(Grid *gridIn, UnstructBC *bc
     {
 #ifdef USE_GMRESSOLVER
 
-        ADReal rGhost = 0.0, pGhost = 0.0, tGhost = 0.0;    //! rho/pressure/temprature on ghost cell.
+        ADReal rGhost  = 0.0, pGhost = 0.0, tGhost = 0.0;    //! rho/pressure/temprature on ghost cell.
         ADReal *qleft  = new ADReal [nEquation]();
         ADReal *qright = new ADReal [nEquation]();
 
@@ -20762,14 +20870,15 @@ void NSSolverUnstruct::FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstru
 {
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme"); 
     //! Get the basic variables for boundary calculating.
-    UnstructGrid *grid   = UnstructGridCast(gridIn);
-    int *leftCellofFace  = grid->GetLeftCellOfFace();
-    int *rightCellofFace = grid->GetRightCellOfFace();
-    int nTotalCell       = grid->GetNTotalCell();
-    RDouble *xfn         = grid->GetFaceNormalX();
-    RDouble *yfn         = grid->GetFaceNormalY();
-    RDouble *zfn         = grid->GetFaceNormalZ();
-    RDouble *vgn         = grid->GetFaceNormalVelocity();
+    UnstructGrid *grid    = UnstructGridCast(gridIn);
+    int *leftCellofFace   = grid->GetLeftCellOfFace();
+    int *rightCellofFace  = grid->GetRightCellOfFace();
+    RDouble *wallDistance = grid->GetWallDist();
+    int nTotalCell        = grid->GetNTotalCell();
+    RDouble *xfn          = grid->GetFaceNormalX();
+    RDouble *yfn          = grid->GetFaceNormalY();
+    RDouble *zfn          = grid->GetFaceNormalZ();
+    RDouble *vgn          = grid->GetFaceNormalVelocity();
     RDouble **q = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
     RDouble *gama = reinterpret_cast< RDouble *  > (grid->GetDataPtr("gama"));
     RDouble **dDdP = reinterpret_cast <RDouble**> (grid->GetDataPtr("dDdP"));
@@ -20796,6 +20905,35 @@ void NSSolverUnstruct::FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstru
     Data_Param *bcData = bcRegionUnstruct->GetBCParamDataBase();
     bcData->GetData("primitiveVarFarfield", primitiveVarFarfield, PHDOUBLE, nEquation);
 
+    int localInflowParaType = 0;
+    if (bcData->IsExist("localInflowParaType", PHINT, 1))
+    {
+        bcData->GetData("localInflowParaType", &localInflowParaType, PHINT, 1);
+    }
+    else
+    {
+        localInflowParaType = GlobalDataBase::GetIntParaFromDB("inflowParaType");
+    }
+    RDouble localNonDimensionalVelocity, localDimensionalHeight = 0, localPowerLawCoefficient = 0;
+    if (localInflowParaType == WINDSPEEDPROFILE)
+    {
+        if (bcData->IsExist("localDimensionalHeight", PHDOUBLE, 1))
+        {
+            bcData->GetData("localDimensionalHeight", &localDimensionalHeight, PHDOUBLE, 1);
+        }
+        else
+        {
+            localDimensionalHeight = GlobalDataBase::GetDoubleParaFromDB("refDimensionalHeight");
+        }
+        if (bcData->IsExist("localPowerLawCoefficient", PHDOUBLE, 1))
+        {
+            bcData->GetData("localPowerLawCoefficient", &localPowerLawCoefficient, PHDOUBLE, 1);
+        }
+        else
+        {
+            localPowerLawCoefficient = GlobalDataBase::GetDoubleParaFromDB("powerLawCoefficient");
+        }
+    }
     int iFace, le, re;
     //! get the face indexes of this boundary condition region.
     vector<int> *faceIndex = bcRegionUnstruct->GetFaceIndex();
@@ -20827,6 +20965,13 @@ void NSSolverUnstruct::FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstru
                 q[m][re] = q[m][le];
             }
 
+        if (localInflowParaType == WINDSPEEDPROFILE)
+        {
+            RDouble height = wallDistance[le];
+            uOutside = primitiveVarFarfield[IU] * pow(height / localDimensionalHeight, localPowerLawCoefficient);
+            vOutside = primitiveVarFarfield[IV] * pow(height / localDimensionalHeight, localPowerLawCoefficient);
+            wOutside = primitiveVarFarfield[IW] * pow(height / localDimensionalHeight, localPowerLawCoefficient);
+        }
             //! Inner point variables.
             rInside = q[IR][le];
             uInside = q[IU][le];
@@ -21015,14 +21160,16 @@ void NSSolverUnstruct::FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstru
     delete [] qR;    qR = nullptr;
 #endif
     }
-    delete [] primitiveVarFarfield;     primitiveVarFarfield = nullptr;
+    delete [] primitiveVarFarfield;    primitiveVarFarfield = nullptr;
 }
 
 void NSSolverUnstruct::InflowBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct)
 {
     //! Get the basic variables for boundary calculating.
     UnstructGrid *grid   = UnstructGridCast(gridIn);
+    int *leftCellofFace = grid->GetLeftCellOfFace();
     int *rightCellofFace = grid->GetRightCellOfFace();
+    RDouble *wallDistance = grid->GetWallDist();
 
     RDouble *xfn = grid->GetFaceNormalX();
     RDouble *yfn = grid->GetFaceNormalY();
@@ -21054,13 +21201,43 @@ void NSSolverUnstruct::InflowBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct
         localNonDimVelocity = localDimensionalVelocity / refDimensionalVelocity;
     }
 
-    int iFace, re;
+    int localInflowParaType = 0;
+    if (bcData->IsExist("localInflowParaType", PHINT, 1))
+    {
+        bcData->GetData("localInflowParaType", &localInflowParaType, PHINT, 1);
+    }
+    else
+    {
+        localInflowParaType = GlobalDataBase::GetIntParaFromDB("inflowParaType");
+    }
+    RDouble localNonDimensionalVelocity, localDimensionalHeight = 0, localPowerLawCoefficient = 0;
+    if (localInflowParaType == WINDSPEEDPROFILE)
+    {
+        if (bcData->IsExist("localDimensionalHeight", PHDOUBLE, 1))
+        {
+            bcData->GetData("localDimensionalHeight", &localDimensionalHeight, PHDOUBLE, 1);
+        }
+        else
+        {
+            localDimensionalHeight = GlobalDataBase::GetDoubleParaFromDB("refDimensionalHeight");
+        }
+        if (bcData->IsExist("localPowerLawCoefficient", PHDOUBLE, 1))
+        {
+            bcData->GetData("localPowerLawCoefficient", &localPowerLawCoefficient, PHDOUBLE, 1);
+        }
+        else
+        {
+            localPowerLawCoefficient = GlobalDataBase::GetDoubleParaFromDB("powerLawCoefficient");
+        }
+    }
+    int iFace, le, re;
     //! get the face indexes of this boundary condition region.
     vector<int> *faceIndex = bcRegionUnstruct->GetFaceIndex();
 
     for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
     {
         iFace = *iter;
+        le = leftCellofFace[iFace];
         re = rightCellofFace[iFace];
         for (int m = 0; m < nEquation; ++ m)
         {
@@ -21072,6 +21249,14 @@ void NSSolverUnstruct::InflowBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct
             q[IV][re] = -1.0 * localNonDimVelocity * yfn[iFace];
             q[IW][re] = -1.0 * localNonDimVelocity * zfn[iFace];
         }
+        if (localInflowParaType == WINDSPEEDPROFILE)
+        {
+            RDouble height = wallDistance[le];
+            q[IU][re] = primitiveVarFarfield[IU] * pow(height / localDimensionalHeight, localPowerLawCoefficient);
+            q[IV][re] = primitiveVarFarfield[IV] * pow(height / localDimensionalHeight, localPowerLawCoefficient);
+            q[IW][re] = primitiveVarFarfield[IW] * pow(height / localDimensionalHeight, localPowerLawCoefficient);
+    }
+
     }
 
     delete [] primitiveVarFarfield;    primitiveVarFarfield = nullptr;
@@ -21237,7 +21422,7 @@ void NSSolverUnstruct::calculateBCArea(Grid *gridIn, UnstructBC *bcRegionUnstruc
 {
     Data_Param *bcData = bcRegionUnstruct->GetBCParamDataBase();
 
-    //BC total area does not change with calculating, so it only calculates once.
+    //! BC total area does not change with calculating, so it only calculates once.
     if (bcData->IsExist("BCTotalArea", PHDOUBLE, 1))
     {
         return;
@@ -21302,8 +21487,8 @@ void NSSolverUnstruct::calculateBCArea(Grid *gridIn, UnstructBC *bcRegionUnstruc
                 Data_Param *bcDataTmp = bcRegion->GetBCParamDataBase();
                 bcDataTmp->UpdateData("BCTotalArea", &BCTotalArea, PHDOUBLE, 1);
             }
-        }                       
-    }   
+        }
+    }
 }
 
 void NSSolverUnstruct::CalculateMassFluxRatio()
@@ -21827,7 +22012,6 @@ void NSSolverUnstruct::CompressGradientandLimitToInterfaceOnlyForMixGrid(DataCon
         PHWrite(dataContainer, dtdy[0][sourceCell]);
         PHWrite(dataContainer, dtdz[0][sourceCell]);
 
-        
         PHWrite(dataContainer, limit2D[0][sourceCell]);
         PHWrite(dataContainer, limit2D[1][sourceCell]);
         PHWrite(dataContainer, limit2D[2][sourceCell]);
@@ -21877,7 +22061,6 @@ void NSSolverUnstruct::DecompressGradientandLimitToInterfaceOnlyForMixGrid(DataC
         PHRead(dataContainer, dtdy[0][targetCell]);
         PHRead(dataContainer, dtdz[0][targetCell]);
 
-        
         PHRead(dataContainer, limit2D[0][targetCell]);
         PHRead(dataContainer, limit2D[1][targetCell]);
         PHRead(dataContainer, limit2D[2][targetCell]);
@@ -22091,12 +22274,12 @@ void NSSolverUnstruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer
 //! GMRES solver -- a linear system solver
 void NSSolverUnstruct::GMRESSolverSingle(Grid *gridIn, FieldProxy *dqProxy)
 {
-    // GMRESCoupled
+    //! GMRESCoupled
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     if ( viscousType == ONE_EQU )
     {
         return;
-}
+    }
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
     //! Memory allocating
@@ -22108,15 +22291,15 @@ void NSSolverUnstruct::GMRESSolverSingle(Grid *gridIn, FieldProxy *dqProxy)
     int nEquations = GetNumberOfEquations(); 
         
     RDouble **res = reinterpret_cast<RDouble **>(grid->GetDataPtr("res"));
-    RDouble* vol = grid->GetCellVolume();
-    RDouble* dt = reinterpret_cast<RDouble*> (grid->GetDataPtr("dt"));
-    vector<int> AI = grid->GetJacobianAI4GMRES();  // GMRESSparse GMRESCSR
-    vector<int> AJ = grid->GetJacobianAJ4GMRES();  // GMRESSparse GMRESCSR
+    RDouble *vol = grid->GetCellVolume();
+    RDouble *dt = reinterpret_cast<RDouble*> (grid->GetDataPtr("dt"));
+    vector<int> AI = grid->GetJacobianAI4GMRES();    //! GMRESSparse GMRESCSR
+    vector<int> AJ = grid->GetJacobianAJ4GMRES();    //! GMRESSparse GMRESCSR
 
-    // GMRESCSR
+    //! GMRESCSR
     for (int iCell = 0; iCell < nTotalCells; iCell++)
     {
-        vector<int>::iterator result = find(AJ.begin() + AI[iCell], AJ.begin() + AI[iCell + 1], iCell); // find qcell
+        vector<int>::iterator result = find(AJ.begin() + AI[iCell], AJ.begin() + AI[iCell + 1], iCell);    //! find qcell
         int index = distance(AJ.begin(), result);
         index *= nEquations;
         for (int iEquation = 0; iEquation < nEquations; iEquation++)
@@ -22125,7 +22308,7 @@ void NSSolverUnstruct::GMRESSolverSingle(Grid *gridIn, FieldProxy *dqProxy)
         }
     }
 
-    // GMRESJac1st
+    //! GMRESJac1st
     vector<int> AI1st = grid->GetJacobianAI1st4GMRES(); 
     vector<int> AJ1st = grid->GetJacobianAJ1st4GMRES();
     RDouble **dRdq1st = reinterpret_cast<RDouble**>(grid->GetDataPtr("dRdq1st"));
@@ -22147,15 +22330,15 @@ void NSSolverUnstruct::GMRESSolverSingle(Grid *gridIn, FieldProxy *dqProxy)
     //! Entry to PETSc for NS equations.
     Vec x, b;
     Mat A;
-    Mat A1st;                       // GMRESJac1st
-    KSP ksp;                        // define solver
-    PC pc;                          // define matrix
-    PetscInt nTotalSize;            // dimension size of matrix and vector
-    PetscInt nLevels = 3;           // define number of levels used by preconditioner ILU
-    PetscInt maxStepsRestart = 500;  // define maximum steps required by [restart]
-    PetscInt maxSteps = 500;        // define maximum steps
-    PetscReal rTolerance = 1.e-1;   // define tolerance of relative error // -1
-    PetscReal dropTolerance = 1.e5; // define tolerance of drop error
+    Mat A1st;                       //! GMRESJac1st
+    KSP ksp;                        //! define solver
+    PC pc;                          //! define matrix
+    PetscInt nTotalSize;            //! dimension size of matrix and vector
+    PetscInt nLevels = 3;           //! define number of levels used by preconditioner ILU
+    PetscInt maxStepsRestart = 500; //! define maximum steps required by [restart]
+    PetscInt maxSteps = 500;        //! define maximum steps
+    PetscReal rTolerance = 1.e-1;   //! define tolerance of relative error // -1
+    PetscReal dropTolerance = 1.e5; //! define tolerance of drop error
 
     nTotalSize = nEquations * nTotalCells;
 
@@ -22227,7 +22410,7 @@ void NSSolverUnstruct::GMRESSolverSingle(Grid *gridIn, FieldProxy *dqProxy)
         int rowidx = rcell * nEquations;
         for (j = AI[rcell]; j < AI[rcell + 1]; j++)
         {
-            int qcell = AJ[j]; //! get qcell (colume index of matrix)
+            int qcell = AJ[j];    //! get qcell (colume index of matrix)
             //! start to insert values: limited to dimension of nTotalSize
             if(qcell < nTotalCells)
             {
@@ -22260,7 +22443,7 @@ void NSSolverUnstruct::GMRESSolverSingle(Grid *gridIn, FieldProxy *dqProxy)
             int rowidx = rcell * nEquations;
             for (j = AI1st[rcell]; j < AI1st[rcell + 1]; j++)
             {
-                int qcell = AJ1st[j]; //! get qcell (colume index of matrix)
+                int qcell = AJ1st[j];    //! get qcell (colume index of matrix)
                 //! start to insert values: limited to dimension of nTotalSize
                 if(qcell < nTotalCells)
                 {
@@ -22278,7 +22461,7 @@ void NSSolverUnstruct::GMRESSolverSingle(Grid *gridIn, FieldProxy *dqProxy)
                     }
                 }
             }
-            rcell++; //! update rcell, go to the next row index of matrix
+            rcell++;    //! update rcell, go to the next row index of matrix
         } while (j < jmax);
         MatAssemblyBegin(A1st, MAT_FINAL_ASSEMBLY);
         MatAssemblyEnd(A1st, MAT_FINAL_ASSEMBLY);
@@ -22346,17 +22529,17 @@ void NSSolverUnstruct::GMRESSolverSingle(Grid *gridIn, FieldProxy *dqProxy)
     return;
 }
 
-// GMRESParallel
+//! GMRESParallel
 //! GMRES solver -- a linear system solver for parallel
 void NSSolverUnstruct::GMRESSolverRow(Grid *gridIn, FieldProxy *dqProxy)
 {
-    // GMRESCoupled
+    //! GMRESCoupled
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     if ( viscousType == ONE_EQU )
     {
         return;
     }
-    
+
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int globalCellIndexShift = grid->GetGlobalCellIndexShift();
     InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
@@ -22369,17 +22552,17 @@ void NSSolverUnstruct::GMRESSolverRow(Grid *gridIn, FieldProxy *dqProxy)
     int nTotalCells = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
     int nEquations = GetNumberOfEquations(); 
-        
+
     RDouble **res = reinterpret_cast<RDouble **>(grid->GetDataPtr("res"));
-    RDouble* vol = grid->GetCellVolume();
-    RDouble* dt = reinterpret_cast<RDouble*> (grid->GetDataPtr("dt"));
-    vector<int> AI = grid->GetJacobianAI4GMRES();  // GMRESSparse GMRESCSR
-    vector<int> AJ = grid->GetJacobianAJ4GMRES();  // GMRESSparse GMRESCSR
-    vector<int> AK = grid->GetJacobianAK4GMRES();  // GMRES Parallel
+    RDouble *vol = grid->GetCellVolume();
+    RDouble *dt = reinterpret_cast<RDouble*> (grid->GetDataPtr("dt"));
+    vector<int> AI = grid->GetJacobianAI4GMRES();    //! GMRESSparse GMRESCSR
+    vector<int> AJ = grid->GetJacobianAJ4GMRES();    //! GMRESSparse GMRESCSR
+    vector<int> AK = grid->GetJacobianAK4GMRES();    //! GMRES Parallel
 
     for (int iCell = 0; iCell < nTotalCells; iCell++)
     {
-        vector<int>::iterator result = find(AJ.begin() + AI[iCell], AJ.begin() + AI[iCell + 1], iCell); // find qcell
+        vector<int>::iterator result = find(AJ.begin() + AI[iCell], AJ.begin() + AI[iCell + 1], iCell);    //! find qcell
         int index = distance(AJ.begin(), result);
         index *= nEquations;
         for (int iEquation = 0; iEquation < nEquations; iEquation++){
@@ -22387,7 +22570,7 @@ void NSSolverUnstruct::GMRESSolverRow(Grid *gridIn, FieldProxy *dqProxy)
         }
     }
 
-    // GMRESJac1st
+    //! GMRESJac1st
     vector<int> AI1st = grid->GetJacobianAI1st4GMRES(); 
     vector<int> AJ1st = grid->GetJacobianAJ1st4GMRES();
     RDouble **dRdq1st = reinterpret_cast<RDouble**>(grid->GetDataPtr("dRdq1st"));
@@ -22408,15 +22591,15 @@ void NSSolverUnstruct::GMRESSolverRow(Grid *gridIn, FieldProxy *dqProxy)
     //! entry to PETSc for NS equations
     Vec x, b;
     Mat A;
-    Mat APC;  // GMRES Parallel
-    KSP ksp;                        // define solver
-    PC pc;                          // define matrix
-    PetscInt nTotalSize;            // dimension size of matrix and vector
-    PetscInt nLevels = 3;           // define number of levels used by preconditioner ILU
-    PetscInt maxStepsRestart = 500; // define maximum steps required by [restart]
-    PetscInt maxSteps = 500;        // define maximum steps
-    PetscReal rTolerance = 1.e-6;   // define tolerance of relative error // -1
-    PetscReal dropTolerance = 1.e5; // define tolerance of drop error    
+    Mat APC;    //! GMRES Parallel
+    KSP ksp;                        //! define solver
+    PC pc;                          //! define matrix
+    PetscInt nTotalSize;            //! dimension size of matrix and vector
+    PetscInt nLevels = 3;           //! define number of levels used by preconditioner ILU
+    PetscInt maxStepsRestart = 500; //! define maximum steps required by [restart]
+    PetscInt maxSteps = 500;        //! define maximum steps
+    PetscReal rTolerance = 1.e-6;   //! define tolerance of relative error // -1
+    PetscReal dropTolerance = 1.e5; //! define tolerance of drop error    
     PetscMPIInt size;
 
     int globalTotalCells;
@@ -22477,7 +22660,7 @@ void NSSolverUnstruct::GMRESSolverRow(Grid *gridIn, FieldProxy *dqProxy)
     MatSetType(APC, MATMPIBAIJ);
     MatSetBlockSize(APC, nEquations);
 
-    // GMRES Precond GMRESJac1st
+    //! GMRES Precond GMRESJac1st
     if( jacOrder == 2)
     {
         PetscInt nnz1st[nTotalCells];
@@ -22510,7 +22693,7 @@ void NSSolverUnstruct::GMRESSolverRow(Grid *gridIn, FieldProxy *dqProxy)
     int jmax = AI[nTotalCells];
     int rcell = 0;
     int j = AI[rcell];
-   
+
     //! consider the second order template for 2nd order Jacobian matrix for domain decomposition strategy
     // BUG
     if(interfaceInfo != nullptr)
@@ -22524,7 +22707,7 @@ void NSSolverUnstruct::GMRESSolverRow(Grid *gridIn, FieldProxy *dqProxy)
         do
         {
             int rowidx = interfaceInfo->MatchedGlobalNeighborCellIndex(rcell) * nEquations;
-            if (rowidx > 0) //! rcell is the ghost cell, rowidx > 0 means this cell locates on the interface boundary
+            if (rowidx > 0)    //! rcell is the ghost cell, rowidx > 0 means this cell locates on the interface boundary
             {
                 int leftcell = interfaceInfo->MatchedLocalPhysicalCellIndex(rcell);
                 for (int index = 0; index < neighborCells[leftcell].size(); index++)
@@ -22554,7 +22737,7 @@ void NSSolverUnstruct::GMRESSolverRow(Grid *gridIn, FieldProxy *dqProxy)
             int rowidx = (rcell + globalCellIndexShift) * nEquations;
             for (j = AI1st[rcell]; j < AI1st[rcell + 1]; j++)
             {
-                int qcell = AJ1st[j]; //! get qcell (colume index of matrix)
+                int qcell = AJ1st[j];    //! get qcell (colume index of matrix)
                 //! start to insert values: limited to dimension of nTotalSize
                 if(qcell < nTotalCells)
                 {
@@ -22571,7 +22754,7 @@ void NSSolverUnstruct::GMRESSolverRow(Grid *gridIn, FieldProxy *dqProxy)
                     }
                 }
             }
-            rcell++; //! update rcell, go to the next row index of matrix
+            rcell++;    //! update rcell, go to the next row index of matrix
         } while (j < jmax);
     }
     else
@@ -22585,7 +22768,7 @@ void NSSolverUnstruct::GMRESSolverRow(Grid *gridIn, FieldProxy *dqProxy)
             int interfaceProcess = 0;
             for (j = AI[rcell]; j < AI[rcell + 1]; j++)
             {
-                int qcell = AJ[j]; //! get qcell (colume index of matrix)
+                int qcell = AJ[j];    //! get qcell (colume index of matrix)
                 //! start to insert values: limited to dimension of nTotalSize
                 if(qcell < nTotalCells)
                 {
@@ -22602,7 +22785,7 @@ void NSSolverUnstruct::GMRESSolverRow(Grid *gridIn, FieldProxy *dqProxy)
                     }
                 }
             }
-            rcell++; //! update rcell, go to the next row index of matrix
+            rcell++;    //! update rcell, go to the next row index of matrix
         } while (j < jmax);
     }
     MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);
@@ -22677,37 +22860,37 @@ void NSSolverUnstruct::GMRESSolverRow(Grid *gridIn, FieldProxy *dqProxy)
 
 void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
 {
-    // GMRESCoupled
+    //! GMRESCoupled
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     if (viscousType == ONE_EQU)
     {
         return;
     }
 
-    UnstructGrid* grid = UnstructGridCast(gridIn);
+    UnstructGrid *grid = UnstructGridCast(gridIn);
     int globalCellIndexShift = grid->GetGlobalCellIndexShift();
-    InterfaceInfo* interfaceInfo = grid->GetInterfaceInfo();
+    InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
 
     //! Memory allocating
-    RDouble** dRdq = reinterpret_cast<RDouble**>(grid->GetDataPtr("dRdq"));
-    RDouble** dDdP = reinterpret_cast<RDouble**>(grid->GetDataPtr("dDdP"));
+    RDouble **dRdq = reinterpret_cast<RDouble**>(grid->GetDataPtr("dRdq"));
+    RDouble **dDdP = reinterpret_cast<RDouble**>(grid->GetDataPtr("dDdP"));
 
     int nTotalCells = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
     int nEquations = GetNumberOfEquations();
 
-    RDouble** res = reinterpret_cast<RDouble**>(grid->GetDataPtr("res"));
-    RDouble* vol = grid->GetCellVolume();
-    RDouble* dt = reinterpret_cast<RDouble*> (grid->GetDataPtr("dt"));
+    RDouble **res = reinterpret_cast<RDouble**>(grid->GetDataPtr("res"));
+    RDouble *vol = grid->GetCellVolume();
+    RDouble *dt = reinterpret_cast<RDouble*> (grid->GetDataPtr("dt"));
 
-    vector<int> AI = grid->GetJacobianAI4GMRES();  // GMRESSparse GMRESCSR
-    vector<int> AJ = grid->GetJacobianAJ4GMRES();  // GMRESSparse GMRESCSR
-    vector<int> AK = grid->GetJacobianAK4GMRES();  // GMRES Parallel
+    vector<int> AI = grid->GetJacobianAI4GMRES();    //! GMRESSparse GMRESCSR
+    vector<int> AJ = grid->GetJacobianAJ4GMRES();    //! GMRESSparse GMRESCSR
+    vector<int> AK = grid->GetJacobianAK4GMRES();    //! GMRES Parallel
 
     //! GMRESCSR
     for (int iCell = 0; iCell < nTotalCells; iCell++)
     {
-        vector<int>::iterator result = find(AJ.begin() + AI[iCell], AJ.begin() + AI[iCell + 1], iCell); // find qcell
+        vector<int>::iterator result = find(AJ.begin() + AI[iCell], AJ.begin() + AI[iCell + 1], iCell);    //! find qcell
         int index = distance(AJ.begin(), result);
         index *= nEquations;
         for (int iEquation = 0; iEquation < nEquations; iEquation++)
@@ -22719,7 +22902,7 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
     //! GMRESJac1st
     vector<int> AI1st = grid->GetJacobianAI1st4GMRES();
     vector<int> AJ1st = grid->GetJacobianAJ1st4GMRES();
-    RDouble** dRdq1st = reinterpret_cast<RDouble**>(grid->GetDataPtr("dRdq1st"));
+    RDouble **dRdq1st = reinterpret_cast<RDouble**>(grid->GetDataPtr("dRdq1st"));
     int jacOrder = grid->GetJacobianOrder();
     if (jacOrder == 2)
     {
@@ -22738,15 +22921,15 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
     //! entry to PETSc solve Ax = b equation for NS equations.
     Vec x, b;
     Mat A;
-    Mat APC;                        // GMRES Parallel
-    KSP ksp;                        // define solver
-    PC pc;                          // define matrix
-    PetscInt nTotalSize;            // dimension size of matrix and vector
-    PetscInt nLevels = 3;           // define number of levels used by preconditioner ILU
-    PetscInt maxStepsRestart = 500;  // define maximum steps required by [restart]
-    PetscInt maxSteps = 500;        // define maximum steps
-    PetscReal rTolerance = 1.e-1;   // define tolerance of relative error // -1
-    PetscReal dropTolerance = 1.e5; // define tolerance of drop error    
+    Mat APC;                        //! GMRES Parallel
+    KSP ksp;                        //! define solver
+    PC pc;                          //! define matrix
+    PetscInt nTotalSize;            //! dimension size of matrix and vector
+    PetscInt nLevels = 3;           //! define number of levels used by preconditioner ILU
+    PetscInt maxStepsRestart = 500; //! define maximum steps required by [restart]
+    PetscInt maxSteps = 500;        //! define maximum steps
+    PetscReal rTolerance = 1.e-1;   //! define tolerance of relative error // -1
+    PetscReal dropTolerance = 1.e5; //! define tolerance of drop error    
     PetscMPIInt size;
 
     int globalTotalCells = (int)GlobalDataBase::GetDoubleParaFromDB("GlobalTotalCells");
@@ -22803,7 +22986,7 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
     MatSetType(APC, MATMPIBAIJ);
     MatSetBlockSize(APC, nEquations);
 
-    // GMRES Precond GMRESJac1st
+    //! GMRES Precond GMRESJac1st
     if (jacOrder == 2)
     {
         PetscInt nnz1st[nTotalCells];
@@ -22830,7 +23013,7 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
     MatSetUp(APC);
     MatZeroEntries(APC);
 
-    // improved approach to assemble matrix CSR
+    //! improved approach to assemble matrix CSR
     PetscInt petsccol[nEquations];
     PetscInt petscrow;
     int jmax = AI[nTotalCells];
@@ -22842,8 +23025,8 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
         int interfaceProcess = 0;
         for (j = AI[rcell]; j < AI[rcell + 1]; j++)
         {
-            int qcell = AJ[j]; // get qcell (colume index of matrix)
-            // start to insert values: limited to dimension of nTotalSize
+            int qcell = AJ[j];    //! get qcell (colume index of matrix)
+            //! start to insert values: limited to dimension of nTotalSize
             if (qcell < nTotalCells)
             {
                 int colidx = (qcell + globalCellIndexShift) * nEquations;
@@ -22859,14 +23042,14 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
                 }
             }
         }
-        rcell++; // update rcell, go to the next row index of matrix
+        rcell++;    //! update rcell, go to the next row index of matrix
     } while (j < jmax);
 
     //! consider the second order template for 2nd order Jacobian matrix for domain decomposition strategy
     if (interfaceInfo != nullptr && jacOrder == 2)
     {
-        vector<int>* neighborCells = grid->GMRESGetNeighborCells();
-        int* localInterfacePhysicalCellIndex;
+        vector<int> *neighborCells = grid->GMRESGetNeighborCells();
+        int *localInterfacePhysicalCellIndex;
         // localInterfacePhysicalCellIndex = interfaceInfo->GetLocalInterfacePhysicalCellIndex();
         rcell = nTotalCells;
         jmax = AI[nTotalCells + nBoundFace];
@@ -22874,7 +23057,7 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
         do
         {
             int rowidx = interfaceInfo->MatchedGlobalNeighborCellIndex(rcell) * nEquations;
-            if (rowidx >= 0) //! rcell is the ghost cell, rowidx > 0 means this cell locates on the interface boundary
+            if (rowidx >= 0)    //! rcell is the ghost cell, rowidx > 0 means this cell locates on the interface boundary
             {
                 int leftcell = interfaceInfo->MatchedLocalPhysicalCellIndex(rcell); // return its corresponding physical cell index
                 int colidx = (leftcell + globalCellIndexShift) * nEquations;
@@ -22903,8 +23086,7 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
                     MatSetValues(A, 1, &petscrow, nEquations, petsccol, &dRdq[irow][index], ADD_VALUES);
                 }
 
-
-                // obtain the list of the neighbor physical cell for the left cell
+                //! obtain the list of the neighbor physical cell for the left cell
                 for (int id = 0; id < neighborCells[leftcell].size(); id++)
                 {
                     int neighborIndex = neighborCells[leftcell][id];
@@ -22938,7 +23120,7 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
                     }
                 }
 
-                // obtain the R_physical/q_ghost caused by the neighbor cell at interface bc
+                //! obtain the R_physical/q_ghost caused by the neighbor cell at interface bc
                 result = find(AJ.begin() + AI[leftcell], AJ.begin() + AI[leftcell + 1], rcell); // find rcell
                 index = distance(AJ.begin(), result);
                 index *= nEquations;
@@ -22962,7 +23144,7 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
                     MatSetValues(A, 1, &petscrow, nEquations, petsccol, &dRdq[irow][index], ADD_VALUES);
                 }
 
-                // obtain the list of the neighbor physical cell for the left cell
+                //! obtain the list of the neighbor physical cell for the left cell
                 for (int id = 0; id < neighborCells[leftcell].size(); id++)
                 {
                     int neighborIndex = neighborCells[leftcell][id];
@@ -23000,8 +23182,8 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
     }
     else if (interfaceInfo != nullptr && jacOrder != 2)
     {
-        vector<int>* neighborCells = grid->GMRESGetNeighborCells();
-        int* localInterfacePhysicalCellIndex;
+        vector<int> *neighborCells = grid->GMRESGetNeighborCells();
+        int *localInterfacePhysicalCellIndex;
         localInterfacePhysicalCellIndex = interfaceInfo->GetLocalInterfacePhysicalCellIndex();
         rcell = nTotalCells;
         jmax = AI[nTotalCells + nBoundFace];
@@ -23043,7 +23225,6 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
         } while (rcell < nTotalCells + nBoundFace);
     }
 
-
     if (jacOrder == 2)
     {
         int jmax = AI1st[nTotalCells];
@@ -23054,8 +23235,8 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
             int rowidx = (rcell + globalCellIndexShift) * nEquations;
             for (j = AI1st[rcell]; j < AI1st[rcell + 1]; j++)
             {
-                int qcell = AJ1st[j]; // get qcell (colume index of matrix)
-                // start to insert values: limited to dimension of nTotalSize
+                int qcell = AJ1st[j];    //! get qcell (colume index of matrix)
+                //! start to insert values: limited to dimension of nTotalSize
                 if (qcell < nTotalCells)
                 {
                     int colidx = (qcell + globalCellIndexShift) * nEquations;
@@ -23085,8 +23266,8 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
             int interfaceProcess = 0;
             for (j = AI[rcell]; j < AI[rcell + 1]; j++)
             {
-                int qcell = AJ[j]; // get qcell (colume index of matrix)
-                // start to insert values: limited to dimension of nTotalSize
+                int qcell = AJ[j];    //! get qcell (colume index of matrix)
+                //! start to insert values: limited to dimension of nTotalSize
                 if (qcell < nTotalCells)
                 {
                     int colidx = (qcell + globalCellIndexShift) * nEquations;
@@ -23102,7 +23283,7 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
                     }
                 }
             }
-            rcell++; // update rcell, go to the next row index of matrix
+            rcell++;    //! update rcell, go to the next row index of matrix
         } while (j < jmax);
     }
     MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);
@@ -23110,7 +23291,7 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
     MatAssemblyBegin(APC, MAT_FINAL_ASSEMBLY);
     MatAssemblyEnd(APC, MAT_FINAL_ASSEMBLY);
 
-    // assemble vector
+    //! assemble vector
     VecSet(b, zero);
     for (PetscInt iCell = 0; iCell < nTotalCells; iCell++)
     {
@@ -23123,7 +23304,7 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
     VecAssemblyBegin(b);
     VecAssemblyEnd(b);
 
-    // define solver
+    //! define solver
     KSPCreate(PETSC_COMM_WORLD, &ksp);
     KSPSetType(ksp, KSPGMRES);
 
@@ -23149,13 +23330,13 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
     KSPGMRESSetOrthogonalization(ksp, KSPGMRESModifiedGramSchmidtOrthogonalization);
     KSPSetTolerances(ksp, rTolerance, 1.e-20, dropTolerance, maxSteps);
 
-    // solution
+    //! solution
     KSPSolve(ksp, b, x);
 
     //! GMRESResidual
     RDouble** dq = dqProxy->GetField_UNS();
 
-    // convert x to dqProxy
+    //! convert x to dqProxy
     for (PetscInt iCell = 0; iCell < nTotalCells; iCell++)
     {
         for (PetscInt iEquation = 0; iEquation < nEquations; iEquation++)
@@ -23165,7 +23346,7 @@ void NSSolverUnstruct::GMRESSolver(Grid *gridIn, FieldProxy *dqProxy)
         }
     }
 
-    // free work space
+    //! free work space
     VecDestroy(&x);
     VecDestroy(&b);
     MatDestroy(&A);

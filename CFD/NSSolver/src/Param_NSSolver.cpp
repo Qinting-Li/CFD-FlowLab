@@ -51,6 +51,7 @@ LIB_EXPORT void Param_NSSolver::Init()
     nTurblenceForChemical = GlobalDataBase::GetIntParaFromDB("nTurblenceForChemical");
 
     nViscosityFluxSublevelModified = GlobalDataBase::GetIntParaFromDB("nViscosityFluxSublevelModified");
+    isPorousZone = GlobalDataBase::GetIntParaFromDB("isPorousZone");
 
     if (nChemical == 0)
     {
@@ -206,6 +207,18 @@ LIB_EXPORT void Param_NSSolver::Init()
     {
         isUseNoneqCond = GlobalDataBase::GetIntParaFromDB("isUseNoneqCond");
     }
+
+    if (isPorousZone != 0)
+    {
+        GlobalDataBase::GetData("viscousResistanceCoeff", &viscousResistanceCoeff, PHDOUBLE, 3);
+        GlobalDataBase::GetData("inertialResistanceCoeff", &inertialResistanceCoeff, PHDOUBLE, 3);
+        GlobalDataBase::GetData("porosity", &porosity, PHDOUBLE, 1);
+        GlobalDataBase::GetData("densitySolid", &densitySolid, PHDOUBLE, 1);
+        GlobalDataBase::GetData("cpSolid", &cpSolid, PHDOUBLE, 1);
+        GlobalDataBase::GetData("kSolid", &kSolid, PHDOUBLE, 1);
+
+    }
+
 }
 
 void Param_NSSolver::SetEntropyFixCoefficients()
