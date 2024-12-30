@@ -1191,6 +1191,7 @@ void TurbSolverUnstr::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldPro
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
     int viscoueType = parameters->GetViscousType();
+    int DESType = parameters->GetDESType();
 
     using namespace IDX;
 
@@ -1201,6 +1202,7 @@ void TurbSolverUnstr::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldPro
         //! Spalart-allmaras model.
 
         RDouble nuoo  = 1.0;    //!Nondimensional inflow laminar viscosity / rho.
+        RDouble nuMin = 1.0e-5 * nuoo;
         RDouble nuMax = 1.0e10 * nuoo;
         int newNstep = GlobalDataBase::GetIntParaFromDB("newnstep");
         if(newNstep < 1000)
@@ -1208,9 +1210,21 @@ void TurbSolverUnstr::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldPro
             nuMax = 1.0e5 * nuoo;
         }
 
-        for (int iCell = 0; iCell < numberOfTotalCell; ++ iCell)
+        if(DESType == RANS)
         {
-            qTurbulence[ISA][iCell] += dqTurbulence[ISA][iCell]; 
+            for (int iCell = 0; iCell < numberOfTotalCell; ++iCell)
+            {
+                qTurbulence[ISA][iCell] += dqTurbulence[ISA][iCell];
+            }
+        }
+        else
+        {
+            for (int iCell = 0; iCell < numberOfTotalCell; ++iCell)
+            {
+                qTurbulence[ISA][iCell] += dqTurbulence[ISA][iCell];
+                qTurbulence[ISA][iCell] = MAX(qTurbulence[ISA][iCell], nuMin);
+                qTurbulence[ISA][iCell] = MIN(qTurbulence[ISA][iCell], nuMax);
+            }
         }
     }
     else if (viscoueType == 4)
@@ -5901,8 +5915,10 @@ void TurbSolverUnstr::DecompressArrayFromInterface(DataContainer *&dataContainer
 void TurbSolverUnstr::Boundary(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
+    Param_TurbSolverUnstruct *parameters = GetControlParameters();
 
     using namespace PHENGLEI;
+    int wallFunctionType = parameters->GetWallFunctionType();
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int nBCRegion = unstructBCSet->GetnBCRegion();
     int referenceFrame = PHSPACE::GlobalDataBase::GetIntParaFromDB("referenceFrame");
@@ -5964,7 +5980,22 @@ void TurbSolverUnstr::Boundary(Grid *gridIn)
         }
         else if(IsWall(bcType))
         {
-            WallBCRegion(grid, bcRegion);
+            if (wallFunctionType == WALLFUNCTION::NONE)
+            {
+               WallBCRegion(grid, bcRegion);
+            }
+            else if (wallFunctionType == WALLFUNCTION::STANDARD)
+            {
+                VisWallWithWallFunctionStandard(grid, bcRegion);
+            }
+            else if (wallFunctionType == WALLFUNCTION::PAB3D)
+            {
+                VisWallWithWallFunctionPAB3D(grid, bcRegion);
+            }
+            else
+            {
+                TK_Exit::UnexpectedVarValue("wallFunctionType", wallFunctionType);
+            }
         }
         else if (bcType == FARFIELD)
         {
@@ -6131,6 +6162,7 @@ void TurbSolverUnstr::WallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct)
 #endif
     }
 }
+
 #ifdef USE_GMRESSOLVER
 //! GMRESturb
 void TurbSolverUnstr::GMRES_WallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct)
@@ -6191,13 +6223,13 @@ void TurbSolverUnstr::GMRES_WallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstr
             /* printf("turbulence wall bc: %d\n", le);
             for (int m = 0; m < nTurbulenceEquation; m++)
             {
-                for (int n = 0; n < nTurbulenceEquation; n++)
-                {
-                    int index;
-                    index = (re - nTotalCell) * nTurbulenceEquation;
-                    printf("%lf  ", dDdP_turb[m][index + n]);
-                }
-                printf("\n");
+            for (int n = 0; n < nTurbulenceEquation; n++)
+            {
+            int index;
+            index = (re - nTotalCell) * nTurbulenceEquation;
+            printf("%lf  ", dDdP_turb[m][index + n]);
+            }
+            printf("\n");
             }
             printf("-------------------------------------------------\n"); */
         }
@@ -6211,6 +6243,255 @@ void TurbSolverUnstr::GMRES_WallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstr
     delete[] turbQr; turbQr = nullptr;
 }
 #endif
+
+void TurbSolverUnstr::VisWallWithWallFunctionStandard(Grid *gridIn, UnstructBC *bcRegionUnstruct)
+{
+    UnstructGrid *grid = UnstructGridCast(gridIn);
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
+
+    RDouble *faceNormalX = grid->GetFaceNormalX();
+    RDouble *faceNormalY = grid->GetFaceNormalY();
+    RDouble *faceNormalZ = grid->GetFaceNormalZ();
+    RDouble *wallDistance = grid->GetWallDist();
+
+    Param_TurbSolverUnstruct *parameters = GetControlParameters();
+    int viscoueType = parameters->GetViscousType();
+    RDouble refReNumber = parameters->GetRefReNumber();
+    RDouble **qTurbulence = reinterpret_cast<RDouble**> (grid->GetDataPtr("q_turb"));
+    RDouble **qLaminar = reinterpret_cast<RDouble**> (grid->GetDataPtr("q"));
+    RDouble *viscousLaminar = reinterpret_cast<RDouble*> (grid->GetDataPtr("visl"));
+    RDouble *viscousTurbulence = reinterpret_cast<RDouble*> (grid->GetDataPtr("vist"));
+
+    RDouble prandtlLaminar = GlobalDataBase::GetDoubleParaFromDB("prl");
+    RDouble prandtlTurbulence = GlobalDataBase::GetDoubleParaFromDB("prt");
+
+    RDouble jayatillekeP = 9.24 * (pow((prandtlLaminar / prandtlTurbulence), 0.75) - 1.0)
+        * (1.0 + 0.28 * exp(-0.007 * prandtlLaminar / prandtlTurbulence));
+    RDouble refGama = parameters->GetRefGama();
+    RDouble refMachNumber = parameters->GetRefMachNumber();
+
+    const RDouble E_ = 9.793;
+    const RDouble beta1 = 0.075;
+    const RDouble yPluslimit = 11.225;
+    const RDouble kappa1 = 0.4178;
+    const RDouble CMu = 0.09;
+
+    using namespace IDX;
+    vector<int> *faceIndex = bcRegionUnstruct->GetFaceIndex();
+    for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+    {
+        //! iFace is the face number in the set of faceIndex.
+        int iFace = *iter;
+        int le = leftCellOfFace[iFace];
+        int re = rightCellOfFace[iFace];
+
+        RDouble densityWall = qLaminar[IR][le];
+        RDouble up = qLaminar[IU][le];
+        RDouble vp = qLaminar[IV][le];
+        RDouble wp = qLaminar[IW][le];
+        RDouble laminarViscosity = viscousLaminar[le];
+        RDouble turbulentViscosity = viscousTurbulence[le];
+
+        RDouble xfn = faceNormalX[iFace];
+        RDouble yfn = faceNormalY[iFace];
+        RDouble zfn = faceNormalZ[iFace];
+
+        RDouble vpn = up * xfn + vp * yfn + wp * zfn;
+        RDouble vpt = sqrt(up * up + vp * vp + wp * wp - vpn * vpn);
+        RDouble small = 1.0e-15;
+        RDouble uvw = max(vpt, small);
+
+        RDouble wallDist = wallDistance[le];
+
+        //! Obtain the reynold number.
+        RDouble refReNumber = parameters->GetRefReNumber();
+
+        RDouble taow = (laminarViscosity + turbulentViscosity) * uvw / wallDist / refReNumber;
+        RDouble utao = sqrt(taow / densityWall);
+
+        RDouble yPlus = refReNumber * wallDist * densityWall * utao / laminarViscosity;
+        RDouble epslon = 1.0;
+        RDouble viscousTurbulenceWall;
+        RDouble tempturePlus = 1.0;
+        int iterStep = 0;
+        while (epslon > 0.001 && ++iterStep < 10)
+        {
+            RDouble utemp = utao;
+
+            if (yPlus > yPluslimit)
+            {
+                utao = kappa1 * uvw / (log(E_ * yPlus));
+                tempturePlus = prandtlTurbulence * (log(E_ * yPlus) / kappa1 + jayatillekeP);
+            }
+            else
+            {
+                utao = uvw / yPlus;
+                tempturePlus = prandtlLaminar * yPlus;
+            }
+            yPlus = refReNumber * wallDist * densityWall * utao / laminarViscosity;
+            taow = densityWall * utao * utao;
+
+            epslon = abs(utao - utemp) / (abs(utemp) + 1.0e-20);
+        }
+
+        viscousTurbulenceWall = laminarViscosity * (taow / (uvw + small) / laminarViscosity * wallDist * refReNumber - 1.0);
+        viscousTurbulenceWall = MAX(viscousTurbulenceWall, 0.0);
+        viscousTurbulence[re] = 2.0 * viscousTurbulenceWall - viscousTurbulence[le];
+
+        if (viscoueType == ONE_EQU)
+        {
+            qTurbulence[ISA][re] = -qTurbulence[ISA][le];
+        }
+        else if (viscoueType == TWO_EQU)
+        {
+            RDouble distanceSquare = wallDist * wallDist;
+
+            RDouble omgi = 6.0 * laminarViscosity / (densityWall * beta1 * distanceSquare * refReNumber * refReNumber);
+            RDouble omgo = utao / (0.126 * wallDist * refReNumber);
+            RDouble kwWall = sqrt(omgi * omgi + omgo * omgo);
+
+            if (yPlus > 11.225)
+            {
+                qTurbulence[IKW][le] = kwWall;
+                qTurbulence[IKW][re] = 20.0 * kwWall - qTurbulence[IKW][le];
+
+                qTurbulence[IKE][le] = qTurbulence[IKW][le] * viscousTurbulence[le] / densityWall;
+                qTurbulence[IKE][re] = -qTurbulence[IKE][le];
+            }
+            else
+            {
+                omgi = MAX(omgi, 0.0);
+                qTurbulence[IKW][re] = 20.0 * omgi - qTurbulence[IKW][le];
+                qTurbulence[IKE][re] = -qTurbulence[IKE][le];
+            }
+        }
+    }
+}
+
+void TurbSolverUnstr::VisWallWithWallFunctionPAB3D(Grid *gridIn, UnstructBC *bcRegionUnstruct)
+{
+    UnstructGrid *grid = UnstructGridCast(gridIn);
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
+
+    RDouble *faceNormalX = grid->GetFaceNormalX();
+    RDouble *faceNormalY = grid->GetFaceNormalY();
+    RDouble *faceNormalZ = grid->GetFaceNormalZ();
+    RDouble *wallDistance = grid->GetWallDist();
+
+    Param_TurbSolverUnstruct *parameters = GetControlParameters();
+    int viscoueType = parameters->GetViscousType();
+    RDouble refReNumber = parameters->GetRefReNumber();
+    RDouble **qTurbulence = reinterpret_cast<RDouble**> (grid->GetDataPtr("q_turb"));
+    RDouble **qLaminar = reinterpret_cast<RDouble**> (grid->GetDataPtr("q"));
+    RDouble *viscousLaminar = reinterpret_cast<RDouble*> (grid->GetDataPtr("visl"));
+    RDouble *viscousTurbulence = reinterpret_cast<RDouble*> (grid->GetDataPtr("vist"));
+    RDouble **heatTransferCoeff = reinterpret_cast<RDouble**> (grid->GetDataPtr("heatTransferCoeff"));
+
+    RDouble prandtlLaminar = GlobalDataBase::GetDoubleParaFromDB("prl");
+    RDouble prandtlTurbulence = GlobalDataBase::GetDoubleParaFromDB("prt");
+
+    RDouble paba10[7] = { 2.354039, 0.1179840, -4.2899192e-04, 2.0404148e-06,-5.1775775e-09, 6.2687308e-12, -2.916958e-15 };
+    RDouble paba11[5] = { 5.777191, 6.8756983e-02, -7.1582745e-06, 1.5594904e-09, -1.4865778e-13 };
+    RDouble paba12[5] = { 31.08654, 5.0429072e-02, -2.0072314e-8 };
+    RDouble beta1 = 0.075;
+
+    using namespace IDX;
+    vector<int> *faceIndex = bcRegionUnstruct->GetFaceIndex();
+    for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+    {
+        //! iFace is the face number in the set of faceIndex.
+        int iFace = *iter;
+        int le = leftCellOfFace[iFace];
+        int re = rightCellOfFace[iFace];
+
+        RDouble rhoInside = qLaminar[IR][le];
+        RDouble rhoGhost = qLaminar[IR][re];
+        RDouble densityWall = half * (rhoInside + rhoGhost);
+        RDouble up = qLaminar[IU][le];
+        RDouble vp = qLaminar[IV][le];
+        RDouble wp = qLaminar[IW][le];
+        RDouble laminarViscosity = viscousLaminar[le];
+
+
+        RDouble xfn = faceNormalX[iFace];
+        RDouble yfn = faceNormalY[iFace];
+        RDouble zfn = faceNormalZ[iFace];
+
+        RDouble vpn = up * xfn + vp * yfn + wp * zfn;
+        RDouble vpt = sqrt(up * up + vp * vp + wp * wp - vpn * vpn);
+        RDouble small = 1.0e-15;
+        RDouble uvw = max(vpt, small);
+
+        RDouble wallDist = wallDistance[le];
+        RDouble refReNumber = parameters->GetRefReNumber(); //! Obtain the reynold number.
+
+        RDouble rc = rhoInside * refReNumber * wallDist * uvw / laminarViscosity;
+        RDouble xnplus = 0.0;
+
+        //! The original one here is yPlus.
+        if (rc <= 20.24)
+        {
+            xnplus = sqrt(rc);
+        }
+        else if (rc <= 435.0)
+        {
+            xnplus = paba10[0] + paba10[1] * rc + paba10[2] * rc * rc + paba10[3] * rc * rc * rc + paba10[4] * rc * rc * rc * rc + paba10[5] * rc * rc * rc * rc * rc + paba10[6] * rc * rc * rc * rc * rc * rc;
+        }
+        else if (rc <= 4000.0)
+        {
+            xnplus = paba11[0] + paba11[1] * rc + paba11[2] * rc * rc + paba11[3] * rc * rc * rc + paba11[4] * rc * rc * rc * rc;
+        }
+        else
+        {
+            xnplus = paba12[0] + paba12[1] * rc + paba12[2] * rc * rc;
+        }
+        RDouble xnplussav = xnplus;
+
+        //! Newton iteration to solve for nplus, assuming it is in log region:
+        for (int iterStep = 0; ; ++iterStep)
+        {
+            RDouble f = rc / xnplus - 2.44 * (log(xnplus)) - 5.2;
+            RDouble dfdn = -rc / (xnplus * xnplus) - 2.44 / xnplus;
+            RDouble delta = -f / dfdn;
+            xnplus = fabs(xnplus + delta);
+            if (iterStep > 10)
+            {
+                //! Revert back to approx series soln if Newton iteration fails.
+                xnplus = xnplussav;
+                break;
+            }
+            else if (abs(delta) < 1.e-3)
+            {
+                break;
+            }
+        }
+
+        RDouble viscousTurbulenceWall = laminarViscosity * (laminarViscosity * xnplus * xnplus / (wallDist * rhoInside * uvw * refReNumber) - 1.0);
+        viscousTurbulenceWall = MAX(viscousTurbulenceWall, 0.0);
+        viscousTurbulence[re] = 2.0 * viscousTurbulenceWall - viscousTurbulence[le];
+        if (viscoueType == ONE_EQU)
+        {
+            qTurbulence[ISA][re] = -qTurbulence[ISA][le];
+        }
+        else if (viscoueType == TWO_EQU)
+        {
+            RDouble distanceSquare = wallDist * wallDist;
+
+            RDouble omgi = 6.0 * laminarViscosity / (rhoInside * beta1 * distanceSquare * refReNumber * refReNumber);
+            RDouble taow = laminarViscosity * uvw / wallDist / refReNumber;
+            RDouble utao = sqrt(taow / rhoInside);
+            RDouble omgo = utao / (0.126 * wallDist * refReNumber);
+            RDouble kwWall = sqrt(omgi * omgi + omgo * omgo);
+
+            qTurbulence[IKW][re] = 20.0 * kwWall - qTurbulence[IKW][le];
+
+            qTurbulence[IKE][re] = qTurbulence[IKW][re] * viscousTurbulence[re] / rhoGhost;
+        }
+    }
+}
+
 void TurbSolverUnstr::FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct)
 {
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
@@ -6425,6 +6706,7 @@ void TurbSolverUnstr::FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruc
 #endif
     }
 }
+
 #ifdef USE_GMRESSOLVER
 //! GMRESturb
 void TurbSolverUnstr::GMRES_FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct)

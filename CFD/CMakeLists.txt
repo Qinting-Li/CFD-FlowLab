@@ -140,8 +140,34 @@ link_directories("${THIRDPARTY_LIB_DIR}")
 
 includeHeadFiles()
 
-set(HDF5_H_PATH    ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/include)
+# select HDF5 H file path with corresponding environment
+if(WIN32)
+  if(USE_VS2019)
+    set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/windows/vs19/win-x64/include)
+    add_definitions(-DUSE_VS2019)
+  else(USE_VS2019)
+    set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/windows/vs12/win-x64/include)
+  endif()
+else(WIN32)
+  if(USE_INTEL_COMPILER)
+    set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/linux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/intel/include)
+  else(USE_INTEL_COMPILER)
+    set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/linux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/gcc/include)
+  endif()
+endif(WIN32)
 include_directories("${HDF5_H_PATH}")
+if(BUILD_GPU) 
+  add_definitions(-DUSE_CUDA)
+  #add_definitions(-DCUDAUNITTEST)
+  #add_definitions(-DUNITTESTOUTPUT)
+
+  set(GPU_H_PATH   
+  ${PROJECT_SOURCE_DIR}/../GPU/Manage/include
+  ${PROJECT_SOURCE_DIR}/../GPU/Kernels/include
+  )
+  include_directories("${GPU_H_PATH}")
+endif(BUILD_GPU)
+
 if(USE_TecplotLib)
 set(TECIO_H_PATH   ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/TECIO/include)
 include_directories("${TECIO_H_PATH}")
@@ -149,7 +175,20 @@ endif(USE_TecplotLib)
 
 set(MEITIS_H_PATH  ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/metis/include)
 include_directories("${MEITIS_H_PATH}")
-set(CGNS_H_PATH    ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/include)
+# select CGNS H file path with corresponding environment
+if(WIN32)
+  if(USE_VS2019)
+    set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/windows/vs19/win-x64/include)
+  else(USE_VS2019)
+    set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/windows/vs12/win-x64/include)
+  endif()
+else(WIN32)
+  if(USE_INTEL_COMPILER)
+    set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/linux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/intel/include)
+  else(USE_INTEL_COMPILER)
+    set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/linux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/gcc/include)
+  endif()
+endif(WIN32)
 include_directories("${CGNS_H_PATH}")
 set(MGRID_H_PATH    ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/mgrid/include)
 include_directories("${MGRID_H_PATH}")
@@ -469,6 +508,23 @@ ${LBMSolverOMP_CPP_PATH}/vector3.cpp
 ${LBMSolverOMP_CPP_PATH}/write.cpp
 )
 source_group(LBMSolverOMP\\src FILES ${LBMSolverOMP_CPP_LIST})
+
+set(IBFSI_H_PATH IBFSI/include)
+set(IBFSI_H_LIST
+${IBFSI_H_PATH}/IB.hpp
+${IBFSI_H_PATH}/vector.hpp
+)
+source_group(IBFSI\\include FILES ${IBFSI_H_LIST})
+include_directories(${IBFSI_H_PATH})
+
+set(IBFSI_CPP_PATH IBFSI/src)
+set(IBFSI_CPP_LIST
+${IBFSI_CPP_PATH}/IBFSI.cpp
+${IBFSI_CPP_PATH}/vector.cpp
+${IBFSI_CPP_PATH}/deployPart.cpp
+${IBFSI_CPP_PATH}/structrueSolver.cpp
+)
+source_group(IBFSI\\src FILES ${IBFSI_CPP_LIST})
 endif(BUILD_LBMSolverOMP)
 
 
@@ -504,6 +560,7 @@ endif()
 # add LBMSolverOMP_H_LIST
 if(BUILD_LBMSolverOMP)
 list(APPEND CFD_HEAD_LIST ${LBMSolverOMP_H_LIST})
+list(APPEND CFD_HEAD_LIST ${IBFSI_H_LIST})
 endif()
 #20.2 set source file list:
 set(CFD_CPP_LIST 
@@ -532,6 +589,7 @@ endif()
 # add LBMSolverOMP_CPP_LIST
 if(BUILD_LBMSolverOMP)
 list(APPEND CFD_CPP_LIST ${LBMSolverOMP_CPP_LIST})
+list(APPEND CFD_CPP_LIST ${IBFSI_CPP_LIST})
 endif()
 
 # add INCOMSOLVER_CPP_LIST
@@ -605,7 +663,16 @@ endif()
 
 # link API library:
 set(API_TARGET_NAME "PHAPI")
+
+if(WIN32)
+  if(USE_VS2019)
+    list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME} metis parmetis cgns libhdf5 libhdf5_hl)
+  else(USE_VS2019)
 list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME} metis parmetis cgns hdf5)
+  endif()
+else(WIN32)
+  list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME} metis parmetis cgns hdf5 hdf5_hl)
+endif(WIN32)
 
 if(USE_HypreLib)
   list(APPEND LINK_LIBRARY_LIST hypre)

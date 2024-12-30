@@ -15,6 +15,8 @@
 
 #pragma once
 #include "DataContainer.h"
+#include "cstdint"
+#pragma warning( disable : 26495 )
 using namespace std;
 
 namespace PHSPACE
@@ -76,7 +78,7 @@ public:
     int level;
     int ipos;
     int kind;    //! 0 solver, 1 grid.
-    int filepos;
+    int64_t filepos;    //! new version of HDF5 library requires int64_t type of hid_t, instead of int type.
     int format;
     fstream *file;
     bool del_file;

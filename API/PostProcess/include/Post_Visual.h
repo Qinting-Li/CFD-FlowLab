@@ -98,6 +98,8 @@ public:
     int GetFlowType() { return this->flowType; }
     void UpdateVisualNodeVarPtr(const string &name, void *data);
 
+    void UpdateDataPtr(const string &name, void *data);
+
 private:
     //! Geometry information.
     Grid *grid;

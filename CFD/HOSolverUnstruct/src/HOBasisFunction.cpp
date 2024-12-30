@@ -18,44 +18,44 @@ RDouble MonomialBasis(const PHSPACE::RDouble * refCoord, unsigned int i)
 
     //(i < ((order)+1)*((order)+2)*((order)+3)/6);
 
-    // monomials. since they are hierarchic we only need one case block.
+    //! monomials. since they are hierarchic we only need one case block.
     switch (i)
     {
-    // constant
-    case 0:
-        return 1.0;
-
-    // linears
-    case 1:
-        return xi;
-
-    case 2:
-        return et;
-
-    case 3:
-        return zt;
-
-    // quadratics
-    case 4:
-        return xi*xi;
-
-    case 5:
-        return xi*et;
-
-    case 6:
-        return et*et;
-
-    case 7:
-        return xi*zt;
-
-    case 8:
-        return zt*et;
-
-    case 9:
-        return zt*zt;
-
-    default:
-        return 0.0;
+        //! constant
+        case 0:
+            return 1.0;
+        
+        //! linears
+        case 1:
+            return xi;
+        
+        case 2:
+            return et;
+        
+        case 3:
+            return zt;
+        
+        //! quadratics
+        case 4:
+            return xi*xi;
+        
+        case 5:
+            return xi*et;
+        
+        case 6:
+            return et*et;
+        
+        case 7:
+            return xi*zt;
+        
+        case 8:
+            return zt*et;
+        
+        case 9:
+            return zt*zt;
+        
+        default:
+            return 0.0;
     }
 }
 
@@ -71,140 +71,140 @@ RDouble MonomialBasisGrad(const PHSPACE::RDouble * refCoord, const unsigned int 
     const RDouble et = refCoord[1];
     const RDouble zt = refCoord[2];
 
-    // monomials. since they are hierarchic we only need one case block.
+    //! monomials. since they are hierarchic we only need one case block.
     switch (j)
     {
-    // d()/dxi
-    case 0:
-        {
-            switch (i)
+        //! d()/dxi
+        case 0:
             {
-                // constant
-            case 0:
-                return 0.;
+                switch (i)
+                {
+                    //! constant
+                    case 0:
+                        return 0.;
 
-            // linear
-            case 1:
-                return 1.;
+                    //! linear
+                    case 1:
+                        return 1.;
 
-            case 2:
-                return 0.;
+                    case 2:
+                        return 0.;
 
-            case 3:
-                return 0.;
+                    case 3:
+                        return 0.;
 
-            // quadratic
-            case 4:
-                return 2.*xi;
+                    //! quadratic
+                    case 4:
+                        return 2.*xi;
 
-            case 5:
-                return et;
+                    case 5:
+                        return et;
 
-            case 6:
-                return 0.;
+                    case 6:
+                        return 0.;
 
-            case 7:
-                return zt;
+                    case 7:
+                        return zt;
 
-            case 8:
-                return 0.;
+                    case 8:
+                        return 0.;
 
-            case 9:
-                return 0.;
+                    case 9:
+                        return 0.;
 
-            default:
-                return 0.0;
+                    default:
+                        return 0.0;
+                }
             }
-        }
-
-    // d()/deta
-    case 1:
-        {
-            switch (i)
+        
+        //! d()/deta
+        case 1:
             {
-                // constant
-            case 0:
-                return 0.;
+                switch (i)
+                {
+                    //! constant
+                    case 0:
+                        return 0.;
 
-                // linear
-            case 1:
-                return 0.;
+                    //! linear
+                    case 1:
+                        return 0.;
 
-            case 2:
-                return 1.;
+                    case 2:
+                        return 1.;
 
-            case 3:
-                return 0.;
+                    case 3:
+                        return 0.;
 
-                // quadratic
-            case 4:
-                return 0.;
+                    //! quadratic
+                    case 4:
+                        return 0.;
 
-            case 5:
-                return xi;
+                    case 5:
+                        return xi;
 
-            case 6:
-                return 2.*et;
+                    case 6:
+                        return 2.*et;
 
-            case 7:
-                return 0.;
+                    case 7:
+                        return 0.;
 
-            case 8:
-                return zt;
+                    case 8:
+                        return zt;
 
-            case 9:
-                return 0.;
+                    case 9:
+                        return 0.;
 
-            default:
-                return 0.0;
+                    default:
+                        return 0.0;
+                }
             }
-        }
 
-    // d()/dzeta
-    case 2:
-        {
-            switch (i)
+        //! d()/dzeta
+        case 2:
             {
-                // constant
-            case 0:
-                return 0.;
+                switch (i)
+                {
+                    //! constant
+                    case 0:
+                        return 0.;
 
-                // linear
-            case 1:
-                return 0.;
+                    //! linear
+                    case 1:
+                        return 0.;
 
-            case 2:
-                return 0.;
+                    case 2:
+                        return 0.;
 
-            case 3:
-                return 1.;
+                    case 3:
+                        return 1.;
 
-                // quadratic
-            case 4:
-                return 0.;
+                    //! quadratic
+                    case 4:
+                        return 0.;
 
-            case 5:
-                return 0.;
+                    case 5:
+                        return 0.;
 
-            case 6:
-                return 0.;
+                    case 6:
+                        return 0.;
 
-            case 7:
-                return xi;
+                    case 7:
+                        return xi;
 
-            case 8:
-                return et;
+                    case 8:
+                        return et;
+ 
+                    case 9:
+                        return 2.*zt;
 
-            case 9:
-                return 2.*zt;
-
-            default:
-                return 0.0;
+                    default:
+                        return 0.0;
+                }
             }
-        }
 
-    default:
-        return 0.0;//("Invalid shape function derivative j = " << j);
+        default:
+            return 0.0;    //! ("Invalid shape function derivative j = " << j);
     }
 }
 
@@ -223,18 +223,18 @@ RDouble MonomialBasis2d(const PHSPACE::RDouble * refCoord, const unsigned int i)
     // monomials. since they are hierarchic we only need one case block.
     switch (i)
     {
-    // constant
+    //! constant
     case 0:
         return 1.0;
 
-    // linears
+    //! linears
     case 1:
         return xi;
 
     case 2:
         return et;
 
-    // quadratics
+    //! quadratics
     case 3:
         return xi*xi;
 
@@ -244,7 +244,7 @@ RDouble MonomialBasis2d(const PHSPACE::RDouble * refCoord, const unsigned int i)
     case 5:
         return et*et;
 
-    // cubics
+    //! cubics
     case 6:
         return xi*xi*xi;
 

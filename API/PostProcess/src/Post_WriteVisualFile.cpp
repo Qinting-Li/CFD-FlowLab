@@ -1028,6 +1028,15 @@ bool WantVisualField(Grid *grid)
 
 void WriteVisualFile(int flowTypeIn)
 {
+    int dumpFlowOnOriginalGrid = 0;
+    GlobalDataBase::GetData("dumpFlowOnOriginalGrid", &dumpFlowOnOriginalGrid, PHINT, 1);
+    if (dumpFlowOnOriginalGrid)
+    {
+        Post_WriteTecplotByOriginalGrid *writeTecplotByOriginalGrid = GetWriteTecplotByOriginalGrid();
+        writeTecplotByOriginalGrid->Run();
+    }
+    else
+    {
     if (!generateVisualFile)
     {
         int visualfileType = GlobalDataBase::GetIntParaFromDB("visualfileType");
@@ -1055,6 +1064,8 @@ void WriteVisualFile(int flowTypeIn)
         generateVisualFile->BoundaryGridNeedConstruct();
     }
     generateVisualFile->Run(flowTypeIn);
+}
+
 }
 
 }

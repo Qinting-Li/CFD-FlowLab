@@ -39,11 +39,15 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
         visualVariablesMap.insert(pair<int, string>(VISUAL_V       , "v_Average"));
         visualVariablesMap.insert(pair<int, string>(VISUAL_W       , "w_Average"));
         visualVariablesMap.insert(pair<int, string>(VISUAL_PRESSURE, "pressure_Average"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_CP      , "cp_Average"));
 
-        nVisualVariables = 5;
-        for (int iVar = 0; iVar < nVisualVariables; ++ iVar)
+        nVisualVariables = 0;
+        map<int, string>::iterator varIter;
+        for (varIter = visualVariablesMap.begin(); varIter != visualVariablesMap.end(); ++ varIter)
         {
-            visualVariables.insert(iVar);
+            int varTemp = varIter->first;
+            visualVariables.insert(varTemp);
+            nVisualVariables ++;
         }
         return;
     }
@@ -339,9 +343,11 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, RDouble4
     int nj = grid_str->GetNJ();
     int nk = grid_str->GetNK();
 
-    Range I(-1, ni+1);
-    Range J(-1, nj+1);
-    Range K(-1, nk+1);
+    int nLayer = GetNumberOfGhostCellLayers();
+
+    Range I(1 - nLayer, ni + nLayer - 1);
+    Range J(1 - nLayer, nj + nLayer - 1);
+    Range K(1 - nLayer, nk + nLayer - 1);
     if (nk == 1) K.setRange(1, 1);
     Range M(0, 0);
 
@@ -356,7 +362,7 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, RDouble4
     CompNodeVar(grid_str, *qn, 0, cellCenterData, index, isVelocityForPostVisual);
 
     int isWennScheme = GlobalDataBase::GetIntParaFromDB("isWennScheme");
-    if (!isVelocityForPostVisual && isWennScheme == 0)
+    if (!isVelocityForPostVisual)
     {
         ModifyBoundaryNodeValue(name, grid_str, *qn, cellCenterData, index, PHENGLEI::SOLID_SURFACE);
     }
@@ -379,9 +385,12 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, RDouble3
     int nj = grid_str->GetNJ();
     int nk = grid_str->GetNK();
 
-    Range I(-1, ni+1);
-    Range J(-1, nj+1);
-    Range K(-1, nk+1);
+    int nLayer = GetNumberOfGhostCellLayers();
+
+    Range I(1 - nLayer, ni + nLayer - 1);
+    Range J(1 - nLayer, nj + nLayer - 1);
+    Range K(1 - nLayer, nk + nLayer - 1);
+
     if (nk == 1) K.setRange(1, 1);
     Range M(0, 0);
 
@@ -607,6 +616,11 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, Int3D &o
 }
 
 void Post_Visual::UpdateVisualNodeVarPtr(const string &name, void *data)
+{
+    visualVariablesPtr->UpdateDataPtr(name, data);
+}
+
+void Post_Visual::UpdateDataPtr(const string &name, void *data)
 {
     visualVariablesPtr->UpdateDataPtr(name, data);
 }

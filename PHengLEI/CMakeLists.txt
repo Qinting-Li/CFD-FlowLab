@@ -10,25 +10,32 @@ set(EXEC_WORKING_DIR PHengLEIv3d0)
 if(WIN32)
   if(CMAKE_GENERATOR MATCHES "Visual Studio 11 2012")
     SET(THIRD_PARTY_COMPILER_FLAG "libwindows/libvs12")
+    SET(IS_VS2019 OFF)
     add_definitions(-DVS12)
   elseif(CMAKE_GENERATOR MATCHES "Visual Studio 12 2013")
     SET(THIRD_PARTY_COMPILER_FLAG "libwindows/libvs12")
+    SET(IS_VS2019 OFF)
     add_definitions(-DVS13)
   elseif(CMAKE_GENERATOR MATCHES "Visual Studio 14 2015")
     SET(THIRD_PARTY_COMPILER_FLAG "libwindows/libvs19")
+    SET(IS_VS2019 ON)
   elseif(CMAKE_GENERATOR MATCHES "Visual Studio 15 2017")
     SET(THIRD_PARTY_COMPILER_FLAG "libwindows/libvs19")
+    SET(IS_VS2019 ON)
   elseif(CMAKE_GENERATOR MATCHES "Visual Studio 16 2019")
     SET(THIRD_PARTY_COMPILER_FLAG "libwindows/libvs19")
+    SET(IS_VS2019 ON)
   elseif(CMAKE_GENERATOR MATCHES "Visual Studio 17 2022")
     SET(THIRD_PARTY_COMPILER_FLAG "libwindows/libvs19")
+    SET(IS_VS2019 ON)
   endif()
 else(WIN32)
   SET(THIRD_PARTY_COMPILER_FLAG "Unix")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ldl")
   include(CheckCXXCompilerFlag)
   CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
   if(COMPILER_SUPPORTS_CXX11)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -ldl")
   endif()
 endif()
 
@@ -56,7 +63,7 @@ opt_build(API "Build PHengLEI framework or not" ON) #Build API or not.
 opt_build(CFD "Build CFD module or not" ON) #Build CFD or not.
 opt_build(MESH "Build Mesh module or not" ON) #Build Mesh or not.
 opt_build(DemoSolver "Build Solver Template or not" OFF)# Build Solver Template option.
-opt_build(IncomSolver "Build Pressure Based Solver or not" OFF)# Build IncomSolver option.
+opt_build(IncomSolver "Build Pressure Based Solver or not" ON)# Build IncomSolver option.
 if(BUILD_IncomSolver)
   opt(HypreLib "Build Pressure Based Solver or not" ON)# Build IncomSolver option.
   opt(UnapLib "Build Pressure Based Solver or not" OFF)# Build IncomSolver option.
@@ -72,8 +79,11 @@ opt(SMARTARRAY "Use smart array more efficenet than origial array" ON) #Use smar
 opt(TecplotLib "Use tecplot lib to dump binary flow file" ON) #Use tecplotlib or not.
 opt_build(LBMSolverMPI "Build LBM-MPI module or not" OFF) #Build LBM-MPI or not.
 opt_build(LBMSolverOMP "Build LBM-OMP module or not" OFF) #Build LBM-OMP or not.
+opt_build(GPU "Build GPU module or not" OFF) #Build GPU or not.
 opt(Windows_X64 "Compile PHengLEI X64 on Windows platform" ON) ###
+opt(AI_RandomForestRegressor "Compile data generation interface for AI predictions of RandomForestRegressor " OFF) ###
 if(WIN32)
+  opt(VS2019 "Compile PHengLEI X64 with Microsoft Visual Studio 16 2019 generator" ${IS_VS2019}) # Choose VS2019 or VS2012 to build this project.
   opt(INTELMPI "Use INTELMPI module or not" OFF) #Use INTELMPI or not.
   if(USE_INTELMPI)
     set(mpiname impi)
@@ -87,7 +97,7 @@ endif(WIN32)
 
 set(GPROF OFF)
 if(GPROF)
-  set(CMAKE_CXX_FLAGS "$ENV{CMAKE_CXX_FLAGS} -pg")
+  set(CMAKE_CXX_FLAGS "$ENV{CMAKE_CXX_FLAGS} -pg -ldl")
   set(CMAKE_C_FLAGS "$ENV{CMAKE_C_FLAGS} -pg")
   set(CMAKE_EXE_LINKER_FLAGS "$ENV{CMAKE_EXE_LINKER_FLAGS} -pg")
   set(CMAKE_SHARED_LINKER_FLAGS "$ENV{CMAKE_SHARED_LINKER_FLAGS} -pg")
@@ -240,9 +250,29 @@ endif(BUILD_LBMSolverOMP)
 # Add subdirectory or link library PHAPI.
 set(API_TARGET_NAME "PHAPI")
 
+if(WIN32)
+  if(USE_AI_RandomForestRegressor)
+    add_definitions(-DAI_RandomForestRegressor)
+  endif(USE_AI_RandomForestRegressor)
+endif()
+
 includeHeadFiles()
 
-set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/include)
+# select HDF5 H file path with corresponding environment
+if(WIN32)
+  if(IS_VS2019)
+    set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/windows/vs19/win-x64/include)
+    add_definitions(-DUSE_VS2019)
+  else(IS_VS2019)
+    set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/windows/vs12/win-x64/include)
+  endif()
+else(WIN32)
+  if(USE_INTEL_COMPILER)
+    set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/linux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/intel/include)
+  else(USE_INTEL_COMPILER)
+    set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/linux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/gcc/include)
+  endif()
+endif(WIN32)
 include_directories("${HDF5_H_PATH}")
 set(GMSH_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/Gmsh/include)
 include_directories("${GMSH_H_PATH}")
@@ -255,7 +285,20 @@ endif(USE_TecplotLib)
 
 set(MEITIS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/metis/include)
 include_directories("${MEITIS_H_PATH}")
-set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/include)
+# select CGNS H file path with corresponding environment
+if(WIN32)
+  if(IS_VS2019)
+    set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/windows/vs19/win-x64/include)
+  else(IS_VS2019)
+    set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/windows/vs12/win-x64/include)
+  endif()
+else(WIN32)
+  if(USE_INTEL_COMPILER)
+    set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/linux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/intel/include)
+  else(USE_INTEL_COMPILER)
+    set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/linux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/gcc/include)
+  endif()
+endif(WIN32)
 include_directories("${CGNS_H_PATH}")
 set(MGRID_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/mgrid/include)
 include_directories("${MGRID_H_PATH}")
@@ -347,6 +390,7 @@ include_directories(${CFD_H_PATH}/LBMSolverMPI/include)
 endif(BUILD_LBMSolverMPI)
 if(BUILD_LBMSolverOMP)
 include_directories(${CFD_H_PATH}/LBMSolverOMP/include)
+include_directories(${CFD_H_PATH}/IBFSI/include)
 endif(BUILD_LBMSolverOMP)
 
 if(BUILD_SpecDiffHybSolver)
@@ -368,6 +412,118 @@ else(BUILD_CFD)
   message(STATUS "Link CFD!") 
   link_directories("${LIB_CFD_EXPORT_PATH}")  
 endif(BUILD_CFD)
+
+# Add subdirectory or link library PHGPU.
+
+SET(CUDA_SEPARABLE_COMPILATION ON)
+set(GPU_TARGET_NAME "PHGPU")
+if(WIN32)
+  if(USE_Windows_X64)
+    set(LIB_GPU_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../GPU/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
+  else(USE_Windows_X64)
+    set(LIB_GPU_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../GPU/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
+  endif(USE_Windows_X64)
+else(WIN32)
+  set(LIB_GPU_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../GPU/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+endif(WIN32)
+
+set(GPU_H_PATH   ${PROJECT_SOURCE_DIR}/../GPU)
+include_directories(${GPU_H_PATH}/Manage/include)
+include_directories(${GPU_H_PATH}/Kernels/include)
+
+if(BUILD_GPU)
+  message(STATUS "Build GPU!")
+  add_definitions(-DUSE_CUDA)
+  add_subdirectory(../GPU ${EXEC_WORKING_DIR}/GPU)
+  set(GPUMODE ON)
+  if(WIN32)
+    set_target_properties(${GPU_TARGET_NAME} PROPERTIES COMPILE_FLAGS "/MP")
+  endif(WIN32)
+endif()
+
+# define compile macro for nvcc, open only one mode
+set(UNITTESTMODE OFF)
+
+if (GPUMODE)
+  	message(STATUS "GPUMODE is turned on!")
+	#define architecture
+	set(V100MODE ON) #for Nvidia Tesla V100, else for Nvidia Tesla K80
+	set(ORGMPIMODE ON)
+	set(NEWMPIMODE OFF)
+	set(TESTMPIMODE OFF)
+	add_definitions(-DUSE_CUDA)
+	add_definitions(-DLOOPMODEOPT) #loop mode optimization for NSSolverUnstruct::ComputeNodeValue and Limiter::MinMaxDiff
+	add_definitions(-DNESTLOOPOPT) # split nested loop into separate loops
+  add_definitions(-DCUDADEBUGATOMIC)
+	add_definitions(-DCUDACOPYBACK)
+
+	#define compile macro for multi-color LU-SGS
+	set(MCLUSGS OFF)
+	if (MCLUSGS)
+		add_definitions(-DMCLUSGS) #Just for multi-color LU-SGS, only works at tscheme=4
+		add_definitions(-DMCLUSEPSGS) #L-SGS and U-SGS are separated
+	else(MCLUSGS) #MCLUSGS is OFF
+		add_definitions(-DGPUCPURUN) #only works in LU-SGS scheme, right hand side is calculated by GPU. LU-SGS part is calculated by CPU.
+	endif(MCLUSGS)
+
+	#define compile macro for gprof
+	set(GPROF OFF)
+	if (GPROF)
+		set(CMAKE_CXX_FLAGS "$ENV{CMAKE_CXX_FLAGS} -pg")
+		set(CMAKE_C_FLAGS "$ENV{CMAKE_C_FLAGS} -pg")
+		set(CMAKE_EXE_LINKER_FLAGS "$ENV{CMAKE_EXE_LINKER_FLAGS} -pg")
+		set(CMAKE_SHARED_LINKER_FLAGS "$ENV{CMAKE_SHARED_LINKER_FLAGS} -pg")
+	endif()
+
+	if (ORGMPIMODE)
+		add_definitions(-DORGMPI) #for large MPI buffer
+		add_definitions(-DMPIBUFFERLARGE) #for large MPI buffer
+		add_definitions(-DREPLACEBUFFER) #Use only with MPIBUFFERLARGE
+  endif()
+
+	if (NEWMPIMODE)
+		add_definitions(-DNEWMPI)
+		add_definitions(-DMPIBUFFERLARGE) #for large Host MPI buffer
+		add_definitions(-DISENDIRECVMPI) #MPI_Isend and MPI_Irecv are used. Otherwise, MPI_Sendrecv is used.
+	endif()
+
+	if (TESTMPIMODE)
+		add_definitions(-DORGMPI) #for large MPI buffer
+		add_definitions(-DNEWMPI)
+		add_definitions(-DMPIBUFFERLARGE) #for large MPI buffer
+		add_definitions(-DGPUBUFFERSMALL) #for small GPU buffer, every variable owns ngbZone's buffer. Only used with ISENDIRECVMPI and MPIOVERLAP. In the future, CUDA_AWARE_MPI may be considered.
+		add_definitions(-DISENDIRECVMPI) #MPI_Isend and MPI_Irecv are used. Otherwise, MPI_Sendrecv is used.
+		add_definitions(-DMPIOVERLAP) #MPIOVERLAP mode cannot be test correctly, because test function consumes a lot time that MPI message may be passed.
+		add_definitions(-DHDCOVERLAP) # HtoD, DtoH and Computing can be overlapped together.
+		add_definitions(-DTESTNEWORGMPI) #Test CUDA_AWARE_MPI.
+	endif()
+endif()
+
+if (UNITTESTMODE)
+  message(STATUS "UNITTESTMODE is turned on!")
+	add_definitions(-DCPURUN)
+	add_definitions(-DUSE_CUDA)
+	set(V100MODE ON) #for Nvidia Tesla V100, else for Nvidia Tesla K80
+	add_definitions(-DCUDAUNITTEST)
+	add_definitions(-DDEBUGPOW) #FOR DEBUG, cancel all of pow operations, even cpu code is modified.
+	add_definitions(-DUNITTESTOUTPUT) #Most are the successfull information in unit test.
+	add_definitions(-DDEBUGSolution) #SolutionFix makes GPUUpdateFlowFieldM1_S1 execute series.
+  set(ORGMPIMODE OFF)
+	if (ORGMPIMODE)
+		add_definitions(-DORGMPI) #for large MPI buffer
+		add_definitions(-DMPIBUFFERLARGE) #for large MPI buffer
+		add_definitions(-DREPLACEBUFFER) #Use only with MPIBUFFERLARGE
+  endif()
+
+	#define compile macro for multi-color LU-SGS
+	set(MCLUSGS OFF)
+	if (MCLUSGS)
+		add_definitions(-DMCLUSGS) #Just for multi-color LU-SGS, only works at tscheme=4
+		add_definitions(-DMCLUSEPSGS) #L-SGS and U-SGS are separated
+	else(MCLUSGS) #MCLUSGS is OFF
+		add_definitions(-DGPUCPURUN) #only works in LU-SGS scheme, right hand side is calculated by GPU. LU-SGS part is calculated by CPU.
+	endif(MCLUSGS)
+endif()
 
 if(WIN32)
   if(USE_Windows_X64)

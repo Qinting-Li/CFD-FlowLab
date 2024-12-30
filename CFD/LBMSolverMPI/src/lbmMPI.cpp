@@ -14,64 +14,76 @@ void LBM::mpi_ini(int mpi_rank)
     y_id = int((mpi_rank % (x_np * y_np)) / x_np);
     x_id = (mpi_rank % (x_np * y_np)) % x_np;
 
-    n_myid[0] = mpi_rank + 1;//x+1节点
-    if (x_id == (x_np - 1)) {
+    n_myid[0] = mpi_rank + 1;    //! x+1节点
+    if (x_id == (x_np - 1))
+    {
         n_myid[0] = mpi_rank - x_np + 1;
     }
 
-    n_myid[1] = mpi_rank - 1;//x-1节点
-    if (x_id == (0)) {
+    n_myid[1] = mpi_rank - 1;    //! x-1节点
+    if (x_id == (0))
+    {
         n_myid[1] = mpi_rank + x_np - 1;
     }
 
-    n_myid[2] = mpi_rank + x_np;//y+1节点
-    if (y_id == (y_np - 1)) {
+    n_myid[2] = mpi_rank + x_np;    //! y+1节点
+    if (y_id == (y_np - 1))
+    {
         n_myid[2] = mpi_rank - x_np * (y_np - 1);
     }
 
-    n_myid[3] = mpi_rank - x_np;//y-1节点
-    if (y_id == (0)) {
+    n_myid[3] = mpi_rank - x_np;    //! y-1节点
+    if (y_id == (0))
+    {
         n_myid[3] = mpi_rank + x_np * (y_np - 1);
     }
 
-    n_myid[4] = mpi_rank + y_np * x_np;//z+1节点
-    if (z_id == (z_np - 1)) {
+    n_myid[4] = mpi_rank + y_np * x_np;    //! z+1节点
+    if (z_id == (z_np - 1))
+    {
         n_myid[4] = mpi_rank - x_np * y_np * (z_np - 1);
     }
 
-    n_myid[5] = mpi_rank - y_np * x_np;//z-1节点
-    if (z_id == (0)) {
+    n_myid[5] = mpi_rank - y_np * x_np;    //! z-1节点
+    if (z_id == (0))
+    {
         n_myid[5] = mpi_rank + x_np * y_np * (z_np - 1);
     }
     Xori = x_id * NX;
     Yori = y_id * NY;
     Zori = z_id * NZ;
 
-    if (mpi_rank == (x_np * y_np * z_np - 1)) {
+    if (mpi_rank == (x_np * y_np * z_np - 1))
+    {
         int NumNodes = total_NX * total_NY * total_NZ;
         rhoTotal = new double[NumNodes] {};
         obstTotal = new int[NumNodes] {};
         velTotal = new vector3<double>[NumNodes] {};
-        if (CONV == 1) {
+        if (CONV == 1)
+        {
             velTotalConv = new vector3<double>[NumNodes] {};
         }
     }
 }
 
-void LBM::mpi_send() {
+void LBM::mpi_send()
+{
     int num;
     MPI_Request r1, r2;
     MPI_Status  status;
-    //MPI传值 x方向
+    //! MPI传值 x方向
     int send_numx = NZ * NY * direction_size;
-    double* send_fx = new double[send_numx] {};
-    double* recv_fx = new double[send_numx] {};
+    double *send_fx = new double[send_numx] {};
+    double *recv_fx = new double[send_numx] {};
 
     int x = NX - 1;
     num = 0;
-    for (int z = 0; z < NZ; z++) {
-        for (int y = 0; y < NY; y++) {
-            for (int i = 0; i < direction_size; i++) {
+    for (int z = 0; z < NZ; z++)
+    {
+        for (int y = 0; y < NY; y++)
+        {
+            for (int i = 0; i < direction_size; i++)
+            {
                 send_fx[num] = pdf2[index(x, y, z, i)];
                 num++;
             }
@@ -86,9 +98,12 @@ void LBM::mpi_send() {
 
     x = -1;
     num = 0;
-    for (int z = 0; z < NZ; z++) {
-        for (int y = 0; y < NY; y++) {
-            for (int i = 0; i < direction_size; i++) {
+    for (int z = 0; z < NZ; z++)
+    {
+        for (int y = 0; y < NY; y++)
+        {
+            for (int i = 0; i < direction_size; i++)
+            {
                 pdf2[index(x, y, z, i)] = recv_fx[num];
                 num++;
             }
@@ -97,12 +112,13 @@ void LBM::mpi_send() {
 
     x = 0;
     num = 0;
-    for (int z = 0; z < NZ; z++) {
+    for (int z = 0; z < NZ; z++)
+    {
         for (int y = 0; y < NY; y++) {
-            for (int i = 0; i < direction_size; i++) {
+            for (int i = 0; i < direction_size; i++)
+            {
                 send_fx[num] = pdf2[index(x, y, z, i)];
                 num++;
-
             }
         }
     }
@@ -115,21 +131,28 @@ void LBM::mpi_send() {
 
     x = NX;
     num = 0;
-    for (int z = 0; z < NZ; z++) {
-        for (int y = 0; y < NY; y++) {
-            for (int i = 0; i < direction_size; i++) {
+    for (int z = 0; z < NZ; z++)
+    {
+        for (int y = 0; y < NY; y++)
+        {
+            for (int i = 0; i < direction_size; i++)
+            {
                 pdf2[index(x, y, z, i)] = recv_fx[num];
                 num++;
             }
         }
     }
+
     MPI_Barrier(MPI_COMM_WORLD);
-    //
+
     x = NX - 2;
     num = 0;
-    for (int z = 0; z < NZ; z++) {
-        for (int y = 0; y < NY; y++) {
-            for (int i = 0; i < direction_size; i++) {
+    for (int z = 0; z < NZ; z++)
+    {
+        for (int y = 0; y < NY; y++)
+        {
+            for (int i = 0; i < direction_size; i++)
+            {
                 send_fx[num] = pdf2[index(x, y, z, i)];
                 num++;
             }
@@ -144,9 +167,12 @@ void LBM::mpi_send() {
 
     x = -2;
     num = 0;
-    for (int z = 0; z < NZ; z++) {
-        for (int y = 0; y < NY; y++) {
-            for (int i = 0; i < direction_size; i++) {
+    for (int z = 0; z < NZ; z++)
+    {
+        for (int y = 0; y < NY; y++)
+        {
+            for (int i = 0; i < direction_size; i++)
+            {
                 pdf2[index(x, y, z, i)] = recv_fx[num];
                 num++;
             }
@@ -155,12 +181,14 @@ void LBM::mpi_send() {
 
     x = 1;
     num = 0;
-    for (int z = 0; z < NZ; z++) {
-        for (int y = 0; y < NY; y++) {
-            for (int i = 0; i < direction_size; i++) {
+    for (int z = 0; z < NZ; z++)
+    {
+        for (int y = 0; y < NY; y++)
+        {
+            for (int i = 0; i < direction_size; i++)
+            {
                 send_fx[num] = pdf2[index(x, y, z, i)];
                 num++;
-
             }
         }
     }
@@ -173,29 +201,35 @@ void LBM::mpi_send() {
 
     x = NX + 1;
     num = 0;
-    for (int z = 0; z < NZ; z++) {
-        for (int y = 0; y < NY; y++) {
-            for (int i = 0; i < direction_size; i++) {
+    for (int z = 0; z < NZ; z++)
+    {
+        for (int y = 0; y < NY; y++)
+        {
+            for (int i = 0; i < direction_size; i++)
+            {
                 pdf2[index(x, y, z, i)] = recv_fx[num];
                 num++;
             }
         }
     }
 
-    delete[] send_fx;
-    delete[] recv_fx;
+    delete [] send_fx;    send_fx = nullptr;
+    delete [] recv_fx;    recv_fx = nullptr;
     MPI_Barrier(MPI_COMM_WORLD);
 
-    //MPI传值 y方向
+    //! MPI传值 y方向
     int send_numy = (NX + 4) * NZ * direction_size;
-    double* send_fy = new double[send_numy] {};
-    double* recv_fy = new double[send_numy] {};
+    double *send_fy = new double[send_numy] {};
+    double *recv_fy = new double[send_numy] {};
 
     int y = NY - 1;
     num = 0;
-    for (int z = 0; z < NZ; z++) {
-        for (int x = -2; x < NX + 2; x++) {
-            for (int i = 0; i < direction_size; i++) {
+    for (int z = 0; z < NZ; z++)
+    {
+        for (int x = -2; x < NX + 2; x++)
+        {
+            for (int i = 0; i < direction_size; i++)
+            {
                 send_fy[num] = pdf2[index(x, y, z, i)];
                 num++;
             }
@@ -210,9 +244,12 @@ void LBM::mpi_send() {
 
     y = -1;
     num = 0;
-    for (int z = 0; z < NZ; z++) {
-        for (int x = -2; x < NX + 2; x++) {
-            for (int i = 0; i < direction_size; i++) {
+    for (int z = 0; z < NZ; z++)
+    {
+        for (int x = -2; x < NX + 2; x++)
+        {
+            for (int i = 0; i < direction_size; i++)
+            {
                 pdf2[index(x, y, z, i)] = recv_fy[num];
                 num++;
             }
@@ -221,14 +258,18 @@ void LBM::mpi_send() {
 
     y = 0;
     num = 0;
-    for (int z = 0; z < NZ; z++) {
-        for (int x = -2; x < NX + 2; x++) {
-            for (int i = 0; i < direction_size; i++) {
+    for (int z = 0; z < NZ; z++)
+    {
+        for (int x = -2; x < NX + 2; x++)
+        {
+            for (int i = 0; i < direction_size; i++)
+            {
                 send_fy[num] = pdf2[index(x, y, z, i)];
                 num++;
             }
         }
     }
+
     MPI_Isend(send_fy, send_numy, MPI_DOUBLE_PRECISION, n_myid[3], 203, MPI_COMM_WORLD, &r1);
     MPI_Irecv(recv_fy, send_numy, MPI_DOUBLE_PRECISION, n_myid[2], 203, MPI_COMM_WORLD, &r2);
 
@@ -237,9 +278,12 @@ void LBM::mpi_send() {
 
     y = NY;
     num = 0;
-    for (int z = 0; z < NZ; z++) {
-        for (int x = -2; x < NX + 2; x++) {
-            for (int i = 0; i < direction_size; i++) {
+    for (int z = 0; z < NZ; z++)
+    {
+        for (int x = -2; x < NX + 2; x++)
+        {
+            for (int i = 0; i < direction_size; i++)
+            {
                 pdf2[index(x, y, z, i)] = recv_fy[num];
                 num++;
             }
@@ -247,12 +291,15 @@ void LBM::mpi_send() {
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
-    //
+
     y = NY - 2;
     num = 0;
-    for (int z = 0; z < NZ; z++) {
-        for (int x = -2; x < NX + 2; x++) {
-            for (int i = 0; i < direction_size; i++) {
+    for (int z = 0; z < NZ; z++)
+    {
+        for (int x = -2; x < NX + 2; x++)
+        {
+            for (int i = 0; i < direction_size; i++)
+            {
                 send_fy[num] = pdf2[index(x, y, z, i)];
                 num++;
             }
@@ -267,9 +314,12 @@ void LBM::mpi_send() {
 
     y = -2;
     num = 0;
-    for (int z = 0; z < NZ; z++) {
-        for (int x = -2; x < NX + 2; x++) {
-            for (int i = 0; i < direction_size; i++) {
+    for (int z = 0; z < NZ; z++)
+    {
+        for (int x = -2; x < NX + 2; x++)
+        {
+            for (int i = 0; i < direction_size; i++)
+            {
                 pdf2[index(x, y, z, i)] = recv_fy[num];
                 num++;
             }
@@ -278,14 +328,18 @@ void LBM::mpi_send() {
 
     y = 1;
     num = 0;
-    for (int z = 0; z < NZ; z++) {
-        for (int x = -2; x < NX + 2; x++) {
-            for (int i = 0; i < direction_size; i++) {
+    for (int z = 0; z < NZ; z++)
+    {
+        for (int x = -2; x < NX + 2; x++)
+        {
+            for (int i = 0; i < direction_size; i++)
+            {
                 send_fy[num] = pdf2[index(x, y, z, i)];
                 num++;
             }
         }
     }
+
     MPI_Isend(send_fy, send_numy, MPI_DOUBLE_PRECISION, n_myid[3], 203, MPI_COMM_WORLD, &r1);
     MPI_Irecv(recv_fy, send_numy, MPI_DOUBLE_PRECISION, n_myid[2], 203, MPI_COMM_WORLD, &r2);
 
@@ -294,30 +348,37 @@ void LBM::mpi_send() {
 
     y = NY + 1;
     num = 0;
-    for (int z = 0; z < NZ; z++) {
-        for (int x = -2; x < NX + 2; x++) {
-            for (int i = 0; i < direction_size; i++) {
+    for (int z = 0; z < NZ; z++)
+    {
+        for (int x = -2; x < NX + 2; x++)
+        {
+            for (int i = 0; i < direction_size; i++)
+            {
                 pdf2[index(x, y, z, i)] = recv_fy[num];
                 num++;
             }
         }
     }
-    delete[] send_fy;
-    delete[] recv_fy;
+    delete [] send_fy;    send_fy = nullptr;
+    delete [] recv_fy;    recv_fy = nullptr;
     MPI_Barrier(MPI_COMM_WORLD);
 
-    //MPI传值 z方向
+    //! MPI传值 z方向
 
-    if (direction_size != 9) {
+    if (direction_size != 9)
+    {
         int send_numz = (NX + 4) * (NY + 4) * direction_size;
         double* send_fz = new double[send_numz] {};
         double* recv_fz = new double[send_numz] {};
 
         int z = NZ - 1;
         num = 0;
-        for (int y = -2; y < NY + 2; y++) {
-            for (int x = -2; x < NX + 2; x++) {
-                for (int i = 0; i < direction_size; i++) {
+        for (int y = -2; y < NY + 2; y++)
+        {
+            for (int x = -2; x < NX + 2; x++)
+            {
+                for (int i = 0; i < direction_size; i++)
+                {
                     send_fz[num] = pdf2[index(x, y, z, i)];
                     num++;
                 }
@@ -332,9 +393,12 @@ void LBM::mpi_send() {
 
         z = -1;
         num = 0;
-        for (int y = -2; y < NY + 2; y++) {
-            for (int x = -2; x < NX + 2; x++) {
-                for (int i = 0; i < direction_size; i++) {
+        for (int y = -2; y < NY + 2; y++)
+        {
+            for (int x = -2; x < NX + 2; x++)
+            {
+                for (int i = 0; i < direction_size; i++)
+                {
                     pdf2[index(x, y, z, i)] = recv_fz[num];
                     num++;
                 }
@@ -343,14 +407,18 @@ void LBM::mpi_send() {
 
         z = 0;
         num = 0;
-        for (int y = -2; y < NY + 2; y++) {
-            for (int x = -2; x < NX + 2; x++) {
-                for (int i = 0; i < direction_size; i++) {
+        for (int y = -2; y < NY + 2; y++)
+        {
+            for (int x = -2; x < NX + 2; x++)
+            {
+                for (int i = 0; i < direction_size; i++)
+                {
                     send_fz[num] = pdf2[index(x, y, z, i)];
                     num++;
                 }
             }
         }
+
         MPI_Isend(send_fz, send_numz, MPI_DOUBLE_PRECISION, n_myid[5], 205, MPI_COMM_WORLD, &r1);
         MPI_Irecv(recv_fz, send_numz, MPI_DOUBLE_PRECISION, n_myid[4], 205, MPI_COMM_WORLD, &r2);
 
@@ -359,9 +427,12 @@ void LBM::mpi_send() {
 
         z = NZ;
         num = 0;
-        for (int y = -2; y < NY + 2; y++) {
-            for (int x = -2; x < NX + 2; x++) {
-                for (int i = 0; i < direction_size; i++) {
+        for (int y = -2; y < NY + 2; y++)
+        {
+            for (int x = -2; x < NX + 2; x++)
+            {
+                for (int i = 0; i < direction_size; i++)
+                {
                     pdf2[index(x, y, z, i)] = recv_fz[num];
                     num++;
                 }
@@ -369,12 +440,15 @@ void LBM::mpi_send() {
         }
 
         MPI_Barrier(MPI_COMM_WORLD);
-        //
+
         z = NZ - 2;
         num = 0;
-        for (int y = -2; y < NY + 2; y++) {
-            for (int x = -2; x < NX + 2; x++) {
-                for (int i = 0; i < direction_size; i++) {
+        for (int y = -2; y < NY + 2; y++)
+        {
+            for (int x = -2; x < NX + 2; x++)
+            {
+                for (int i = 0; i < direction_size; i++)
+                {
                     send_fz[num] = pdf2[index(x, y, z, i)];
                     num++;
                 }
@@ -389,9 +463,12 @@ void LBM::mpi_send() {
 
         z = -2;
         num = 0;
-        for (int y = -2; y < NY + 2; y++) {
-            for (int x = -2; x < NX + 2; x++) {
-                for (int i = 0; i < direction_size; i++) {
+        for (int y = -2; y < NY + 2; y++)
+        {
+            for (int x = -2; x < NX + 2; x++)
+            {
+                for (int i = 0; i < direction_size; i++)
+                {
                     pdf2[index(x, y, z, i)] = recv_fz[num];
                     num++;
                 }
@@ -400,14 +477,18 @@ void LBM::mpi_send() {
 
         z = 1;
         num = 0;
-        for (int y = -2; y < NY + 2; y++) {
-            for (int x = -2; x < NX + 2; x++) {
-                for (int i = 0; i < direction_size; i++) {
+        for (int y = -2; y < NY + 2; y++)
+        {
+            for (int x = -2; x < NX + 2; x++)
+            {
+                for (int i = 0; i < direction_size; i++)
+                {
                     send_fz[num] = pdf2[index(x, y, z, i)];
                     num++;
                 }
             }
         }
+
         MPI_Isend(send_fz, send_numz, MPI_DOUBLE_PRECISION, n_myid[5], 205, MPI_COMM_WORLD, &r1);
         MPI_Irecv(recv_fz, send_numz, MPI_DOUBLE_PRECISION, n_myid[4], 205, MPI_COMM_WORLD, &r2);
 
@@ -416,39 +497,46 @@ void LBM::mpi_send() {
 
         z = NZ + 1;
         num = 0;
-        for (int y = -2; y < NY + 2; y++) {
-            for (int x = -2; x < NX + 2; x++) {
-                for (int i = 0; i < direction_size; i++) {
+        for (int y = -2; y < NY + 2; y++)
+        {
+            for (int x = -2; x < NX + 2; x++)
+            {
+                for (int i = 0; i < direction_size; i++)
+                {
                     pdf2[index(x, y, z, i)] = recv_fz[num];
                     num++;
                 }
             }
         }
-        delete[] send_fz;
-        delete[] recv_fz;
+        delete [] send_fz;    send_fz = nullptr;
+        delete [] recv_fz;    recv_fz = nullptr;
         MPI_Barrier(MPI_COMM_WORLD);
     }
 
 }
 
-void LBM::mpi_total(int mpi_rank) {
+void LBM::mpi_total(int mpi_rank)
+{
     int send_num = NX * NZ * NY * 5 + 6;
     int np = x_np * y_np * z_np;
     int recv_num;
     int num;
-    double* send_all{}, * recv_all{};
-    int* recv_Count{}, * displs{};;
+    double *send_all{}, *recv_all{};
+    int *recv_Count{}, *displs{};
 
-    if (mpi_rank == (np - 1)) {
+    if (mpi_rank == (np - 1))
+    {
         recv_Count = new int[np] {};
         displs = new int[np] {};
     }
 
     MPI_Gather(&send_num, 1, MPI_INT, recv_Count, 1, MPI_INT, np - 1, MPI_COMM_WORLD);
 
-    if (mpi_rank == (np - 1)) {
+    if (mpi_rank == (np - 1))
+    {
         displs[0] = 0;
-        for (int i = 0; i < np - 1; i++) {
+        for (int i = 0; i < np - 1; i++)
+        {
             displs[i + 1] = displs[i] + recv_Count[i];
         }
         recv_num = displs[np - 1] + recv_Count[np - 1];
@@ -458,9 +546,12 @@ void LBM::mpi_total(int mpi_rank) {
 
     send_all = new double[send_num] {};
     num = 0;
-    for (int z = 0; z < NZ; z++) {
-        for (int y = 0; y < NY; y++) {
-            for (int x = 0; x < NX; x++) {
+    for (int z = 0; z < NZ; z++)
+    {
+        for (int y = 0; y < NY; y++)
+        {
+            for (int x = 0; x < NX; x++)
+            {
                 send_all[num] = vel[index(x, y, z)].x;
                 send_all[num + NX * NZ * NY] = vel[index(x, y, z)].y;
                 send_all[num + NX * NZ * NY * 2] = vel[index(x, y, z)].z;
@@ -477,14 +568,17 @@ void LBM::mpi_total(int mpi_rank) {
         send_all[NX * NZ * NY * 5 + 5] = static_cast<double>(NZ);
     }
 
-    if (mpi_rank == (np - 1)) {
+    if (mpi_rank == (np - 1))
+    {
         recv_all = new double[recv_num] {};
     }
 
     MPI_Gatherv(send_all, send_num, MPI_DOUBLE, recv_all, recv_Count, displs, MPI_DOUBLE, np - 1, MPI_COMM_WORLD);
 
-    if (mpi_rank == (np - 1)) {
-        for (int i = 0; i < np; i++) {
+    if (mpi_rank == (np - 1))
+    {
+        for (int i = 0; i < np; i++)
+        {
             int num_n = displs[i];
             int num_m = recv_Count[i];
             int x0, y0, z0;
@@ -496,9 +590,12 @@ void LBM::mpi_total(int mpi_rank) {
             NY1 = static_cast<int>(recv_all[num_n + num_m - 2]);
             NZ1 = static_cast<int>(recv_all[num_n + num_m - 1]);
             num = 0;
-            for (int z = 0; z < NZ1; z++) {
-                for (int y = 0; y < NY1; y++) {
-                    for (int x = 0; x < NX1; x++) {
+            for (int z = 0; z < NZ1; z++)
+            {
+                for (int y = 0; y < NY1; y++)
+                {
+                    for (int x = 0; x < NX1; x++)
+                    {
                         velTotal[total_index(x + x0, y + y0, z + z0)].x = recv_all[num_n + num];
                         velTotal[total_index(x + x0, y + y0, z + z0)].y = recv_all[num_n + num + NX1 * NZ1 * NY1];
                         velTotal[total_index(x + x0, y + y0, z + z0)].z = recv_all[num_n + num + NX1 * NZ1 * NY1 * 2];
@@ -509,14 +606,14 @@ void LBM::mpi_total(int mpi_rank) {
                 }
             }
         }
-        delete[]recv_all;
-        delete[]recv_Count;
-        delete[]displs;
-        if (CONV == 1) {
+        delete [] recv_all;     recv_all = nullptr;
+        delete [] recv_Count;    recv_Count = nullptr;
+        delete [] displs;    displs = nullptr;
+        if (CONV == 1)
+        {
             check_converge();
         }
     }
-    delete[]send_all;
+    delete [] send_all;    send_all = nullptr;
     MPI_Barrier(MPI_COMM_WORLD);
 }
-

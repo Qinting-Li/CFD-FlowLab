@@ -294,6 +294,20 @@ void PerfectGas::Primitive2Conservative(RDouble *prim, RDouble gama, RDouble Tv,
     q[IRV] = prim[IR] * prim[IV];
     q[IRW] = prim[IR] * prim[IW];
     q[IRE] = prim[IR] * em;
+
+    int isPorousZone = GlobalDataBase::GetIntParaFromDB("isPorousZone");
+    if (isPorousZone != 0)
+    {
+        RDouble porosity = GlobalDataBase::GetDoubleParaFromDB("porosity");
+        RDouble densitySolid = GlobalDataBase::GetDoubleParaFromDB("densitySolid");
+        RDouble cpSolid = GlobalDataBase::GetDoubleParaFromDB("cpSolid");
+        RDouble refMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
+        RDouble refVelocity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalVelocity");
+        RDouble refTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
+        RDouble referenceEnergy = refVelocity * refVelocity;
+        RDouble tm = gama * refMachNumber * refMachNumber * prim[IP] / prim[IR];
+        q[IRE] = q[IRE] * porosity + densitySolid * cpSolid * tm * refTemperature / referenceEnergy * (1.0 - porosity);
+    }
 }
 
 void PerfectGas::ComputeInternalEnergy(RDouble *primitiveVariables, RDouble gama, RDouble vibrationTemperature, RDouble electronTemperature, RDouble &totalEnergy)
@@ -597,7 +611,7 @@ void PerfectGas::InitReferenceParameter()
         referenceParameterDimensional.SetTemperature(refDimensionalTemperature);
         referenceParameterDimensional.SetDensity(refDimensionalDensity);
     }
-    else if (inflowParaType == TEMPERATURE_PRESSURE)    //! where temperature and pressure are fixed.
+    else if (inflowParaType == TEMPERATURE_PRESSURE || inflowParaType == WINDSPEEDPROFILE)    //! where temperature and pressure are fixed.
     {
         RDouble refDimensionalVelocity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalVelocity");
         RDouble refDimensionalTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
@@ -1310,7 +1324,7 @@ void PerfectGas::ComputeReferenceGasInformation()
 
         ComputeReferenceReynoldsNumber();
     }
-    else if (inflowParaType == TEMPERATURE_PRESSURE || inflowParaType == MACH_TEMP_PRE || inflowParaType == WEATHERCONDITION)
+    else if (inflowParaType == TEMPERATURE_PRESSURE || inflowParaType == MACH_TEMP_PRE || inflowParaType == WEATHERCONDITION || inflowParaType == WINDSPEEDPROFILE)
     {
         NormalizeAirInformation();
         ComputeReferenceReynoldsNumber();
@@ -1388,7 +1402,7 @@ void PerfectGas::ComputeReferenceVelocity()
 
     int inflowParaType = GlobalDataBase::GetIntParaFromDB("inflowParaType");
 
-    if (inflowParaType == TEMPERATURE_DENSITY || inflowParaType == TEMPERATURE_PRESSURE)
+    if (inflowParaType == TEMPERATURE_DENSITY || inflowParaType == TEMPERATURE_PRESSURE || inflowParaType == WINDSPEEDPROFILE)
     {
         RDouble refDimensionalVelocity = referenceParameterDimensional.GetVelocity();
         RDouble refMachNumber = refDimensionalVelocity / refDimensionalSonicSpeed;

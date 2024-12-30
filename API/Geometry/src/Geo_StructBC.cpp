@@ -3,38 +3,275 @@
 #include "Math_BasisFunction.h"
 #include "OversetGridFactory.h"
 #include "Geo_SimpleBC.h"
-
 namespace PHSPACE
 {
 StructBC::StructBC(int zoneID, uint_t regionID)
-{ 
+{
     this->nbs = zoneID; 
     this->nr = regionID; 
 
     for (int i = 0; i < 3; i ++)
     {
-        t_st[i] = 0;
-        t_ed[i] = 0;
-        stam[i] = 0;
-        rate[i] = 0;
-        s_lr3d[i] = 0;
-        t_lr3d[i] = 0;
-        s_st[i] = 0;
-        s_ed[i] = 0;
+        t_st[i]    = 0;
+        t_ed[i]    = 0;
+        stam[i]    = 0;
+        rate[i]    = 0;
+        s_lr3d[i]  = 0;
+        t_lr3d[i]  = 0;
+        s_st[i]    = 0;
+        s_ed[i]    = 0;
         s_dir3d[i] = 0;
     }
-    s_nd = -1;
-    t_nd = -1;
+    s_nd           = -1;
+    t_nd           = -1;
     //s_nd = 0;
     //t_nd = 0;
-    s_lr = 0;
-    t_lr = 0;
-    nbs = 0;
-    nbt = 0;
+    s_lr           = 0;
+    t_lr           = 0;
+    //nbs = 0;
+    nbt            = 0;
+    WhetherMerge   = 0;
 }
 
 StructBC::~StructBC()
 {
+
+}
+
+void StructBC::SetWhetherMerge(int WhetherMerge)
+{
+    this->WhetherMerge = WhetherMerge;
+    if (MERGED == WhetherMerge)
+    {
+        if (0 == s_nd && -1 == s_lr)
+        {
+            s_st[1] = stOrignal[1];
+            s_st[2] = stOrignal[2];
+            s_st[0] = stOrignal[0];
+            s_ed[1] = edOrignal[1] - 1;
+            s_ed[2] = edOrignal[2] - 1;
+            s_ed[0] = edOrignal[0];
+        }
+        else if (0 == s_nd && 1 == s_lr)
+        {
+            s_st[1] = stOrignal[1];
+            s_st[2] = stOrignal[2];
+            s_st[0] = stOrignal[0] - 1;
+            s_ed[1] = edOrignal[1] - 1;
+            s_ed[2] = edOrignal[2] - 1;
+            s_ed[0] = edOrignal[0] - 1;
+        }
+        else if (1 == s_nd && -1 == s_lr)
+        {
+            s_st[0] = stOrignal[0];
+            s_st[1] = stOrignal[1];
+            s_st[2] = stOrignal[2];
+            s_ed[0] = edOrignal[0] - 1;
+            s_ed[1] = edOrignal[1];
+            s_ed[2] = edOrignal[2] - 1;
+        }
+        else if (1 == s_nd && 1 == s_lr)
+        {
+            s_st[0] = stOrignal[0];
+            s_st[1] = stOrignal[1] - 1;
+            s_st[2] = stOrignal[2];
+            s_ed[0] = edOrignal[0] - 1;
+            s_ed[1] = edOrignal[1] - 1;
+            s_ed[2] = edOrignal[2] - 1;
+        }
+        else if (2 == s_nd && -1 == s_lr)
+        {
+            s_st[0] = stOrignal[0];
+            s_st[1] = stOrignal[1];
+            s_st[2] = stOrignal[2];
+            s_ed[0] = edOrignal[0] - 1;
+            s_ed[1] = edOrignal[1] - 1;
+            s_ed[2] = edOrignal[2];
+        }
+        else if (2 == s_nd && 1 == s_lr)
+        {
+            s_st[0] = stOrignal[0];
+            s_st[1] = stOrignal[1];
+            s_st[2] = stOrignal[2] - 1;
+            s_ed[0] = edOrignal[0] - 1;
+            s_ed[1] = edOrignal[1] - 1;
+            s_ed[2] = edOrignal[2] - 1;
+        }
+    }
+}
+
+int StructBC::GetWhetherMerge()
+{
+    return WhetherMerge;
+}
+
+void StructBC::SetStartOrignal(int *st)
+{
+    stOrignal[0] = st[0];
+    stOrignal[1] = st[1];
+    stOrignal[2] = st[2];
+}
+
+void StructBC::SetEndOrignal(int *end)
+{
+    edOrignal[0] = end[0];
+    edOrignal[1] = end[1];
+    edOrignal[2] = end[2];
+}
+
+int StructBC::GetStartOrignal(int st)
+{
+    return stOrignal[st];
+}
+
+int StructBC::GetEndOrignal(int ed)
+{
+    return edOrignal[ed];
+}
+
+void StructBC::ComputeOriginal()
+{
+    StructGrid *extra;
+    int x0, y0, z0;
+
+    if (WhetherMerge != MERGED)
+    {
+        if (0 == s_nd && -1 == s_lr)
+        {
+            extra        = StructGridCast(GetGrid(nbs, 0));
+            x0           = (extra->GetOrdinaryDimStartIndex())[0];
+            y0           = (extra->GetOrdinaryDimStartIndex())[1];
+            z0           = (extra->GetOrdinaryDimStartIndex())[2];
+            stOrignal[0] = x0 + s_st[0] - 1;
+            stOrignal[1] = y0 + s_st[1] - 1;
+            stOrignal[2] = z0 + s_st[2] - 1;
+            edOrignal[0] = x0 + s_ed[0] - 1;
+            edOrignal[1] = y0 + s_ed[1];
+            edOrignal[2] = z0 + s_ed[2];
+        }
+        else if (0 == s_nd && 1 == s_lr)
+        {
+            extra        = StructGridCast(GetGrid(nbs, 0));
+            x0           = (extra->GetOrdinaryDimStartIndex())[0];
+            y0           = (extra->GetOrdinaryDimStartIndex())[1];
+            z0           = (extra->GetOrdinaryDimStartIndex())[2];
+            stOrignal[0] = x0 + s_st[0];
+            stOrignal[1] = y0 + s_st[1] - 1;
+            stOrignal[2] = z0 + s_st[2] - 1;
+            edOrignal[0] = x0 + s_ed[0];
+            edOrignal[1] = y0 + s_ed[1];
+            edOrignal[2] = z0 + s_ed[2];
+        }
+        else if (1 == s_nd && -1 == s_lr)
+        {
+            extra        = StructGridCast(GetGrid(nbs, 0));
+            x0           = (extra->GetOrdinaryDimStartIndex())[0];
+            y0           = (extra->GetOrdinaryDimStartIndex())[1];
+            z0           = (extra->GetOrdinaryDimStartIndex())[2];
+            stOrignal[0] = x0 + s_st[0] - 1;
+            stOrignal[1] = y0 + s_st[1] - 1;
+            stOrignal[2] = z0 + s_st[2] - 1;
+            edOrignal[0] = x0 + s_ed[0];
+            edOrignal[1] = y0 + s_ed[1] - 1;
+            edOrignal[2] = z0 + s_ed[2];
+        }
+        else if (1 == s_nd && 1 == s_lr)
+        {
+            extra        = StructGridCast(GetGrid(nbs, 0));
+            x0           = (extra->GetOrdinaryDimStartIndex())[0];
+            y0           = (extra->GetOrdinaryDimStartIndex())[1];
+            z0           = (extra->GetOrdinaryDimStartIndex())[2];
+            stOrignal[0] = x0 + s_st[0] - 1;
+            stOrignal[1] = y0 + s_st[1];
+            stOrignal[2] = z0 + s_st[2] - 1;
+            edOrignal[0] = x0 + s_ed[0];
+            edOrignal[1] = y0 + s_ed[1];
+            edOrignal[2] = z0 + s_ed[2];
+        }
+        else if (2 == s_nd && -1 == s_lr)
+        {
+            extra        = StructGridCast(GetGrid(nbs, 0));
+            x0           = (extra->GetOrdinaryDimStartIndex())[0];
+            y0           = (extra->GetOrdinaryDimStartIndex())[1];
+            z0           = (extra->GetOrdinaryDimStartIndex())[2];
+            stOrignal[0] = x0 + s_st[0] - 1;
+            stOrignal[1] = y0 + s_st[1] - 1;
+            stOrignal[2] = z0 + s_st[2] - 1;
+            edOrignal[0] = x0 + s_ed[0];
+            edOrignal[1] = y0 + s_ed[1];
+            edOrignal[2] = z0 + s_ed[2] - 1;
+        }
+        else if (2 == s_nd && 1 == s_lr)
+        {
+            extra        = StructGridCast(GetGrid(nbs, 0));
+            x0           = (extra->GetOrdinaryDimStartIndex())[0];
+            y0           = (extra->GetOrdinaryDimStartIndex())[1];
+            z0           = (extra->GetOrdinaryDimStartIndex())[2];
+            stOrignal[0] = x0 + s_st[0] - 1;
+            stOrignal[1] = y0 + s_st[1] - 1;
+            stOrignal[2] = z0 + s_st[2];
+            edOrignal[0] = x0 + s_ed[0];
+            edOrignal[1] = y0 + s_ed[1];
+            edOrignal[2] = z0 + s_ed[2];
+        }
+    }
+    else
+    {
+        if (0 == s_nd && -1 == s_lr)
+        {
+            stOrignal[1] = s_st[1];
+            stOrignal[2] = s_st[2];
+            stOrignal[0] = s_st[0];
+            edOrignal[1] = s_ed[1] + 1;
+            edOrignal[2] = s_ed[2] + 1;
+            edOrignal[0] = s_ed[0];
+        }
+        else if (0 == s_nd && 1 == s_lr)
+        {
+            stOrignal[1] = s_st[1];
+            stOrignal[2] = s_st[2];
+            stOrignal[0] = s_st[0] + 1;
+            edOrignal[1] = s_ed[1] + 1;
+            edOrignal[2] = s_ed[2] + 1;
+            edOrignal[0] = s_ed[0] + 1;
+        }
+        else if (1 == s_nd && -1 == s_lr)
+        {
+            stOrignal[0] = s_st[0];
+            stOrignal[1] = s_st[1];
+            stOrignal[2] = s_st[2];
+            edOrignal[0] = s_ed[0] + 1;
+            edOrignal[1] = s_ed[1];
+            edOrignal[2] = s_ed[2] + 1;
+        }
+        else if (1 == s_nd && 1 == s_lr)
+        {
+            stOrignal[0] = s_st[0];
+            stOrignal[1] = s_st[1] + 1;
+            stOrignal[2] = s_st[2];
+            edOrignal[0] = s_ed[0] + 1;
+            edOrignal[1] = s_ed[1] + 1;
+            edOrignal[2] = s_ed[2] + 1;
+        }
+        else if (2 == s_nd && -1 == s_lr)
+        {
+            stOrignal[0] = s_st[0];
+            stOrignal[1] = s_st[1];
+            stOrignal[2] = s_st[2];
+            edOrignal[0] = s_ed[0] + 1;
+            edOrignal[1] = s_ed[1] + 1;
+            edOrignal[2] = s_ed[2];
+        }
+        else if (2 == s_nd && 1 == s_lr)
+        {
+            stOrignal[0] = s_st[0];
+            stOrignal[1] = s_st[1];
+            stOrignal[2] = s_st[2] + 1;
+            edOrignal[0] = s_ed[0] + 1;
+            edOrignal[1] = s_ed[1] + 1;
+            edOrignal[2] = s_ed[2] + 1;
+        }
+    }
 }
 
 void StructBC::ComputeRelativeParameters()
@@ -230,6 +467,51 @@ StructBC & StructBC::operator = (const StructBC &rhs)
     this->SimpleBC::SetBCName (rhs.SimpleBC::GetBCName());
 
     return *this;
+}
+
+void StructBC::CopyBC(const StructBC* bcNew)
+{
+    this->s_st[0] = bcNew->s_st[0];
+    this->s_ed[0] = bcNew->s_ed[0];
+    this->s_st[1] = bcNew->s_st[1];
+    this->s_ed[1] = bcNew->s_ed[1];
+    this->s_st[2] = bcNew->s_st[2];
+    this->s_ed[2] = bcNew->s_ed[2];
+    this->SetBCType(bcNew->GetBCType());
+    this->SetFaceLeftOrRightIndex(bcNew->GetFaceLeftOrRightIndex());
+    this->SetFaceDirection(bcNew->GetFaceDirection());
+    this->s_lr3d[0] = bcNew->s_lr3d[0];
+    this->s_lr3d[1] = bcNew->s_lr3d[1];
+    this->s_lr3d[2] = bcNew->s_lr3d[2];
+
+    this->t_st[0] = bcNew->t_st[0];
+    this->t_ed[0] = bcNew->t_ed[0];
+    this->t_st[1] = bcNew->t_st[1];
+    this->t_ed[1] = bcNew->t_ed[1];
+    this->t_st[2] = bcNew->t_st[2];
+    this->t_ed[2] = bcNew->t_ed[2];
+
+    this->SetRegionBlock(bcNew->GetRegionBlock());
+    this->SetTargetRegionBlock(bcNew->GetTargetRegionBlock());
+    this->SetFaceDirectionOfTargetBlock(bcNew->GetFaceDirectionOfTargetBlock());
+    this->SetFaceLeftOrRightIndexOfTargetBlock(bcNew->GetFaceLeftOrRightIndexOfTargetBlock());
+    this->t_lr3d[0] = bcNew->t_lr3d[0];
+    this->t_lr3d[1] = bcNew->t_lr3d[1];
+    this->t_lr3d[2] = bcNew->t_lr3d[2];
+    this->stam[0] = bcNew->stam[0];
+    this->stam[1] = bcNew->stam[1];
+    this->stam[2] = bcNew->stam[2];
+    this->rate[0] = bcNew->rate[0];
+    this->rate[1] = bcNew->rate[1];
+    this->rate[2] = bcNew->rate[2];
+    this->SimpleBC::SetBCName(bcNew->SimpleBC::GetBCName());
+    this->stOrignal[0] = bcNew->stOrignal[0];
+    this->stOrignal[1] = bcNew->stOrignal[1];
+    this->stOrignal[2] = bcNew->stOrignal[2];
+    this->edOrignal[0] = bcNew->edOrignal[0];
+    this->edOrignal[1] = bcNew->edOrignal[2];
+    this->edOrignal[2] = bcNew->edOrignal[3];
+    this->WhetherMerge = bcNew->WhetherMerge;
 }
 
 void StructBC::GetNormalizeIJKRegion(int &ist, int &ied, int &jst, int &jed, int &kst, int &ked)
@@ -497,7 +779,7 @@ void StructBCSet::CopyStructBCSet(StructBCSet *rightHandSide)
         StructBC *bcregion = new StructBC(zoneID, iBCRegion);
 
         this->SetBCRegion(iBCRegion, bcregion);
-        *bcregion = * rightHandSide->GetBCRegion(iBCRegion);
+        *bcregion = *rightHandSide->GetBCRegion(iBCRegion);
     }
 }
 
@@ -508,16 +790,16 @@ StructBC * StructBCSet::GetBCRegion(uint_t iBCRegion) const
 
 void StructBCSet::DeleteIndex()
 {
-    delete [] iID;
-    delete [] jID;
-    delete [] kID;
-    delete [] bcRegionIDofIFace;
+    delete [] iID;    iID = nullptr;
+    delete [] jID;    jID = nullptr;
+    delete [] kID;    kID = nullptr;
+    delete [] bcRegionIDofIFace;    bcRegionIDofIFace = nullptr;
 
     //! The reason for setting zero is that DeleteIndex may be called many times.
-    iID = NULL;
-    jID = NULL;
-    kID = NULL;
-    bcRegionIDofIFace = NULL;
+    iID = nullptr;
+    jID = nullptr;
+    kID = nullptr;
+    bcRegionIDofIFace = nullptr;
 }
 
 void StructBCSet::DecodeIJK(int index, int &i, int &j, int &k)

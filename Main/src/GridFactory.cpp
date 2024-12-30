@@ -395,7 +395,16 @@ void Fantasy2Plot3D()
     }
 
     ReProcessBCInfo(Grids, nZones);
-    ReadLnkFile(fromGridFile, Grids, nZones);
+
+    int isOldGrid = GlobalDataBase::GetIntParaFromDB("isOldGrid");
+    if (isOldGrid)
+    {
+        ReadLnkFile(fromGridFile, Grids, nZones);
+    }
+    else
+    {
+        ReadLnkInfor(fromGridFile, Grids, nZones);
+    }
 
     cout << endl << "Writing grd file ...." << endl;
     FantasyWriteToGrd(cellFile, Grids, nZones);
@@ -434,33 +443,33 @@ Pre_GridConversion * GetConvertType(const string &gridFileName, int gridType, in
     {
         switch (fromGridType)
         {
-        case CGNS_TYPE:
-            gridConversion = new Pre_CGNSToPHengLEI_Unstruct(gridFileName);
-            break;
-        case FLUENT_TYPE:
-            gridConversion = new Pre_FluentToPHengLEI_Unstruct(gridFileName);
-            break;
-        case FIELDVIEW_TYPE:
-            gridConversion = new Pre_FieldViewToPHengLEI_Unstruct(gridFileName);
-            break;
-        default:
-            TK_Exit::UnexpectedVarValue("from_gtype", fromGridType);
-            break;
+            case CGNS_TYPE:
+                gridConversion = new Pre_CGNSToPHengLEI_Unstruct(gridFileName);
+                break;
+            case FLUENT_TYPE:
+                gridConversion = new Pre_FluentToPHengLEI_Unstruct(gridFileName);
+                break;
+            case FIELDVIEW_TYPE:
+                gridConversion = new Pre_FieldViewToPHengLEI_Unstruct(gridFileName);
+                break;
+            default:
+                TK_Exit::UnexpectedVarValue("from_gtype", fromGridType);
+                break;
         }
     }
     else if (gridType == STRUCTGRID)
     {
         switch (fromGridType)
         {
-        case CGNS_TYPE:
-            gridConversion = new Pre_CGNSToPHengLEI_Struct(gridFileName);
-            break;
-        case PLOT3D_TYPE:
-            gridConversion = new Pre_Plot3DToPHengLEI_Struct(gridFileName);
-            break;
-        default:
-            TK_Exit::UnexpectedVarValue("from_gtype", fromGridType);
-            break;
+            case CGNS_TYPE:
+                gridConversion = new Pre_CGNSToPHengLEI_Struct(gridFileName);
+                break;
+            case PLOT3D_TYPE:
+                gridConversion = new Pre_Plot3DToPHengLEI_Struct(gridFileName);
+                break;
+            default:
+                TK_Exit::UnexpectedVarValue("from_gtype", fromGridType);
+                break;
         }
     }
     else
@@ -704,33 +713,33 @@ void ConvertGrid()
     {
         switch (fromGridType)
         {
-        case PHENGLEI_TYPE:
-            FantasyGridProcess();
-            break;
-        case CGNS_TYPE:
-            CGNSGridProcess();
-            break;
-        case PLOT3D_TYPE:
-            Plot3DGridProcess();
-            break;
-        case FIELDVIEW_TYPE:
-            FieldViewGridProcess();
-            break;
-        case FLUENT_TYPE:
-            FluentGridProcess();
-            break;
-        case USTAR_TYPE:
-            UstarGridProcess();
-            break;
-        case GMSH_TYPE:
-            GmeshGridProcess();
-            break;
-        case GRIDGEN_TYPE:
-            GridgenGridProcess();
-            break;
-        default:
-            TK_Exit::UnexpectedVarValue("from_gtype", fromGridType);
-            break;
+            case PHENGLEI_TYPE:
+                FantasyGridProcess();
+                break;
+            case CGNS_TYPE:
+                CGNSGridProcess();
+                break;
+            case PLOT3D_TYPE:
+                Plot3DGridProcess();
+                break;
+            case FIELDVIEW_TYPE:
+                FieldViewGridProcess();
+                break;
+            case FLUENT_TYPE:
+                FluentGridProcess();
+                break;
+            case USTAR_TYPE:
+                UstarGridProcess();
+                break;
+            case GMSH_TYPE:
+                GmeshGridProcess();
+                break;
+            case GRIDGEN_TYPE:
+                GridgenGridProcess();
+                break;
+            default:
+                TK_Exit::UnexpectedVarValue("from_gtype", fromGridType);
+                break;
         }
     }
 }

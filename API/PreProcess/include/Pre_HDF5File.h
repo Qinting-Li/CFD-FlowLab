@@ -180,6 +180,154 @@ private:
     Region *region;
 };
 
+//! Different from class IO_HDF5Read, class IO_ReadHDF5Grid only provide function interface for grid information reading.
+class IO_ReadHDF5Grid
+{
+private:
+    //! Grid file name.
+    string gridFileName;
+
+    //! File identifier.
+    hid_t fileID;
+
+    //! Number of zones in this grid file
+    int numberOfZones;
+
+    //! Zone index in this grid file.
+    int *zoneIndexs;
+
+    //! Zone type in this grid file.
+    int *zoneTypes;
+
+    //! Default processor index of zone
+    int *zoneProcs;
+
+public:
+    //! @param[in] gridFileNameIn    Grid file name.
+    IO_ReadHDF5Grid(const string &gridFileNameIn);
+    ~IO_ReadHDF5Grid();
+
+public:
+    //! Open grid file.
+    void OpenFile();
+
+    //! Close grid file.
+    void CloseFile();
+
+    //! Get number of zones in this grid file.
+    //! @param[out] nZones    Number of zones.
+    void GetNumberOfZones(int &nZones);
+
+    //! Get zone index in this grid file.
+    //! @param[out] zoneIndexOut    Index of each zone, size = nZones.
+    void GetZoneIndex(int *zoneIndexOut);
+
+    //! Get zone type in this grid file.
+    //! @param[out] zoneTypeOut     Type of each zone, size = nZones.
+    void GetZoneType(int *zoneTypeOut);
+
+    //! Get default processor index of zone in this grid file.
+    //! @param[out] zoneProcOut     Default processor of each zone, size = nZones.
+    void GetZoneProc(int *zoneProcOut);
+
+    //! Get single grid information.
+    void GetGridInfo(Grid *gridOut);
+
+    //! Get single grid size.
+    //! @param[in]  zoneIndex          Index of zone.
+    //! @param[out] iDimensionsIn      Zone size.
+    //!             iDimensionsIn[0]   I(Structed grid) / Total node(Unstructed grid).
+    //!             iDimensionsIn[1]   J(Structed grid) / Total face(Unstructed grid).
+    //!             iDimensionsIn[2]   K(Structed grid) / Total cell(Unstructed grid).
+    void GetZoneSize(int zoneIndex, int *iDimensionsOut);
+
+    //! Get single grid coordinate.
+    //! @param[in]  zoneIndex      Index of zone.
+    //! @param[in]  iCoord         Coordinate index.
+    //!             iCoord = 0,    X coordinate.
+    //!             iCoord = 1,    Y coordinate.
+    //!             iCoord = 2,    Z coordinate.
+    //! @param[in]  dataSize       Total node(Unstructed grid) / I * J * K(Structed grid).
+    //! @param[out] coordOut       Coordinate of zone, size = total node(Unstructed grid) / I * J * K(Structed grid).
+    void GetZoneCoord(int zoneIndex, int iCoord, int dataSize, RDouble *coordOut);
+
+    //! Get number of interface.
+    //! @param[in]  zoneIndex      Index of zone.
+    //! @param[out] nIFaceOut      Number of interface.
+    void GetNIFace(int zoneIndex, int &nIFaceOut);
+
+    //! Get interface information.
+    //! @param[in]  zoneIndex        Index of zone.
+    //! @param[out] interfaceInfo    Interface information.
+    void GetInterfaceInfo(int zoneIndex, InterfaceInfo *interfaceInfo);
+
+    //! Get number of boundary(Structed grid).
+    //! @param[in]  zoneIndex      Index of zone.
+    //! @param[out] nBCRegionOut   Number of boundary.
+    void GetNBCRegion(int zoneIndex, int &nBCRegionOut);
+
+    //! Get boundary information(Structed grid).
+    //! @param[in]  zoneIndex           Index of zone.
+    //! @param[out] compositeBCRegion   Boundary information.
+    void GetBCRegion(int zoneIndex, StructBCSet *compositeBCRegion);
+    void GetBCName(int zoneIndex, StructBCSet *compositeBCRegion);
+
+    //! Get face topology(Unstructed grid)
+    //! @param[in]  zoneIndex                 Index of zone.
+    //! @param[in]  dataSize                  Number of total face.
+    //! @param[out] nodeNumberOfEachFaceOut   Number of nodes in each face.
+    void GetUnsNodeNumOfEachFace(int zoneIndex, int dataSize, int *nodeNumberOfEachFaceOut);
+
+    //! Get face topology(Unstructed grid)
+    //! @param[in]  zoneIndex         Index of zone.
+    //! @param[in]  dataSize          Sum of array nodeNumberOfEachFace.
+    //! @param[out] face2NodeOut      Index of nodes in each face.
+    void GetUnsFace2Node(int zoneIndex, int dataSize, int *face2NodeOut);
+
+    //! Get face topology(Unstructed grid)
+    //! @param[in]  zoneIndex            Index of zone.
+    //! @param[in]  dataSize             Number of total face.
+    //! @param[out] leftCellOfFaceOut    Index of cell on the left of each face.
+    //! @param[out] rightCellOfFaceOut   Index of cell on the right of each face.
+    void GetUnsLeftCellOfFace(int zoneIndex, int dataSize, int *leftCellOfFaceOut);
+    void GetUnsRightCellOfFace(int zoneIndex, int dataSize, int *rightCellOfFaceOut);
+
+    //! Get cell topology(Unstructed grid)
+    //! @param[in]  zoneIndex                   Index of zone.
+    //! @param[in]  dataSize                    Number of total cell.
+    //! @param[out] nodeNumberOfEachCellOut     Number of nodes in each cell.
+    void GetUnsNodeNumOfEachCell(int zoneIndex, int dataSize, int *nodeNumberOfEachCellOut);
+
+    //! Get cell topology(Unstructed grid)
+    //! @param[in]  zoneIndex           Index of zone.
+    //! @param[in]  dataSize            Sum of array nodeNumberOfEachCell.
+    //! @param[out] cell2NodeOut        Index of nodes in each cell.
+    void GetUnsCell2Node(int zoneIndex, int dataSize, int *cell2NodeOut);
+
+    //! Get number of boundary face(Unstructed grid).
+    //! @param[in]  zoneIndex           Index of zone.
+    //! @param[out] nBoundFaceOut       Number of boundary face.
+    void GetUnsNBoundFace(int zoneIndex, int &nBoundFaceOut);
+
+    //! Get boundary information(Unstructed grid).
+    //! @param[in]  zoneIndex           Index of zone.
+    //! @param[in]  dataSize            Number of boundary face.
+    //! @param[out] bcInfoOut           Boundary information.
+    void GetUnsBCInfo(int zoneIndex, int dataSize, UnstructBCSet **bcInfoOut);
+    void GetUnsBCName(int zoneIndex, int dataSize, UnstructBCSet **bcInfoOut);
+
+    void ReadStrOrdinaryGridIndex(int zoneIndex, int &ordinaryGridIndexOut);
+    void ReadStrOrdinaryDimStart(int zoneIndex, int *ordinaryDimStartOut);
+    void ReadStrOrdinaryDimEnd(int zoneIndex, int *ordinaryDimEndOut);
+
+private:
+    void GetStructGridInfo(Grid *gridOut);
+    void GetUnstructGridInfo(Grid *gridOut);
+
+private:
+    bool fileOpened;
+};
+
 LIB_EXPORT bool ReadHDF5File(Region *region_in, PHVectorString1D &gridGroupNameList);
 LIB_EXPORT void DumpHDF5Grid(const string &gridFileName, Grid **grids, int nBlocks);
 

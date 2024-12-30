@@ -311,7 +311,7 @@ void hypreCalculator::mathLibSolveInit(Grid *gridIn)
         {
             //! not complete.
             HYPRE_MGRCreate(solver);
-            
+
             if (precondID[iSolver] > 0)
             {
                 HYPRE_CGNRSetPrecond((*solver), SolvePtr[iSolver], SolvePtr[iSolver], 
@@ -327,7 +327,7 @@ void hypreCalculator::mathLibSolveInit(Grid *gridIn)
         }
         else if (linearSolver == AMGDDMethod)
         {
-        HYPRE_BoomerAMGDDCreate(solver);
+            HYPRE_BoomerAMGDDCreate(solver);
         }
         else if (linearSolver == HybridMethod)
         {

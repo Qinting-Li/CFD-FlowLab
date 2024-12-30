@@ -99,6 +99,18 @@ string bcName = "Farfield6";
   double primW = 0.0;
   double primPressure = 8.76743560;
 }
+
+string bcName = "Farfield7";
+{
+  int bcType = 4;
+  int inflowParaType = 8;
+  double refDimensionalVelocity = 15;
+  double refDimensionalHeight = 10;
+  double powerLawCoefficient = 0.25;
+  double refDimensionalPressure = 101325;
+  double refDimensionalTemperature = 271.97;
+}
+
 # If the boundary condition type is INFLOW, then the parameters should be set as follows:
 string bcName = "Inflow1";
 {
@@ -168,6 +180,16 @@ string bcName = "Inflow10";
   double pressure[] = [1271186,1505084,1733333,1967231,2574576];
   double velocity[] = [1075,1075,1075,1075,1075];
   double temperature[] = [3454,3454,3454,3454,3454];
+}
+string bcName = "Inflow11";
+{
+  int bcType = 5;
+  int inflowParaType = 8;
+  double refDimensionalVelocity = 15;
+  double refDimensionalHeight = 10;
+  double powerLawCoefficient = 0.25;
+  double refDimensionalPressure = 101325;
+  double refDimensionalTemperature = 271.97;
 }
 # If the boundary condition type is PRESSURE_INLET, then the parameters should be set as follows:
 string bcName = "PressureInlet";

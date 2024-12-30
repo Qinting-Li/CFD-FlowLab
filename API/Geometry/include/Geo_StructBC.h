@@ -20,6 +20,7 @@
 #include "Geo_SimpleBC.h"
 #include "PHMpi.h"
 #include "Constants.h"
+#include "TK_Log.h"
 using namespace std;
 
 namespace PHSPACE
@@ -73,10 +74,42 @@ private:
     //! s_dir3d: the i\j\k direction between the current face and matching target face if the face is a interface.
     int s_dir3d[3];
 
+    //! WhetherMerge:the symbol of whether has been merged.
+    int WhetherMerge;
+    
+    //! stOrignal: Start local point index in the current block. s - source, st - start.
+    //! edOrignal: End   local point index in the current block. s - source, ed - end.
+    int stOrignal[3], edOrignal[3];
+
 public:
     StructBC & operator = (const StructBC &rhs);
 
 public:
+    //! Copy struct boundary.
+    void CopyBC(const StructBC *bcNew);
+
+    //!Set the current  zone index of this BC region.
+    void SetCurrentZoneIndex(int nbs) { this->nbs = nbs; }
+
+    //! Set the symbol of whether has been merged.
+    void SetWhetherMerge(int WhetherMerge);
+
+    //! Get the symbol of whether has been merged.
+    int GetWhetherMerge();
+
+    //! Set the start local point index in the current block. s - source, st - start.
+    //! Set the end   local point index in the current block. s - source, ed - end.
+    void SetStartOrignal(int *st);
+    void SetEndOrignal(int *end);
+
+    //! Get the start local point index in the current block. s - source, st - start.
+    //! Get the end   local point index in the current block. s - source, ed - end.
+    int GetStartOrignal(int st);
+    int GetEndOrignal(int ed);
+
+    // Calculate stOrignal and edOrignal.
+    void ComputeOriginal();
+    
     void SetFaceMatchingTargetDirIndex(int *dir3dIn);
 
     //! Set the current source zone index.
@@ -229,6 +262,8 @@ public:
     ~StructBCSet();
 
 public:
+    void SetzoneID(int ZONEID) { zoneID = ZONEID; }
+    
     string GetBCName(int bcType) { return boundaryName[bcType]; }
 
     void CopyStructBCSet(StructBCSet *rightHandSide);
@@ -261,6 +296,8 @@ private:
     void DeleteIndex();
     void InitBoundaryName();
 };
+
+const int MERGED = 1;
 
 #include "Geo_StructBC.hxx"
 

@@ -46,7 +46,7 @@ void HighOrderCellSol::ComputeCoorOfIntegrationPoint(int nodenumber, const unsig
 
 void HighOrderCellSol::ComputeOriginalMassmatrix(HighOrderMatrix & taylorBasisMassMatrix, const RDouble *weightCoeff)
 {
-    //compute upper mass matrix
+    //! compute upper mass matrix
     RDouble volumJacobian = 0.0;
     for (int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
     {
@@ -66,7 +66,7 @@ void HighOrderCellSol::ComputeOriginalMassmatrix(HighOrderMatrix & taylorBasisMa
         }
     }
 
-    //Get lower mass matrix
+    //! Get lower mass matrix
     for (int idof = 1; idof < nDOFsSol; ++idof)
     {
         for (int jdof = 0; jdof < idof; ++jdof)
@@ -78,10 +78,10 @@ void HighOrderCellSol::ComputeOriginalMassmatrix(HighOrderMatrix & taylorBasisMa
 
 void HighOrderCellSol::ComputeOriginalBasisFunction(int currentOrder, RDouble lenScaleOfCell, const RDouble Xcc, const RDouble Ycc, const RDouble Zcc)
 {
-    //The dof of shape function is equal to the number of nodes;
+    //! The dof of shape function is equal to the number of nodes;
     RDouble refCoord[3];
     RDouble oneDLenScal = 1.0/lenScaleOfCell;
-    // currentOrder is the accurry of polynomial 
+    //! currentOrder is the accurry of polynomial 
     if (currentOrder == 0)
     {
         for (int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
@@ -161,20 +161,20 @@ void HighOrderCellSol::ComputeJacobianDeterminant(int iGaussPoint, int iCellVTKT
 
     switch(iCellVTKType)
     {
-    case HOUnstruct::TETRAHEDRON:
-        JacDetCellIntegration[iGaussPoint] /= 6.0;
-        break;
-    case HOUnstruct::PYRAMID:
-        JacDetCellIntegration[iGaussPoint] /= (9.0/5.0);
-        break;
-    case HOUnstruct::PRISM:
-        JacDetCellIntegration[iGaussPoint] /= 2.0;
-        break;
-    case HOUnstruct::HEXAHEDRON:
-        JacDetCellIntegration[iGaussPoint] *= 1.0;
-        break;
-    default:
-        break;
+        case HOUnstruct::TETRAHEDRON:
+            JacDetCellIntegration[iGaussPoint] /= 6.0;
+            break;
+        case HOUnstruct::PYRAMID:
+            JacDetCellIntegration[iGaussPoint] /= (9.0/5.0);
+            break;
+        case HOUnstruct::PRISM:
+            JacDetCellIntegration[iGaussPoint] /= 2.0;
+            break;
+        case HOUnstruct::HEXAHEDRON:
+            JacDetCellIntegration[iGaussPoint] *= 1.0;
+            break;
+        default:
+            break;
     }
 }
 
@@ -201,12 +201,12 @@ void HighOrderCellSol::ComputeOrthogonalBasisFunction(int degreeOfFreedom, HighO
         {
             basisFuncCellIntegration[iGaussPoint][idof] = tmpBasisFunction[idof];
         }
-    }        
+    }
 }
 
 void HighOrderCellSol::TestOrthogonalBasisFunction(const RDouble *weight)
 {
-    //20 is the dof for P3,if
+    //! 20 is the dof for P3,if
     RDouble tmpMatrix[10][10];
     for (int n=0;n<10;n++)
     {
@@ -220,15 +220,14 @@ void HighOrderCellSol::TestOrthogonalBasisFunction(const RDouble *weight)
             cout << "n:  " << n << "  m:   " << m << "    tmpMatrix[n][m]   " << tmpMatrix[n][m] << endl;
         }
     }
-           
 }
 
 void HighOrderCellSol::ComputeGradOfBasisFunctionIntegrationPoint(HighOrderMatrix & orthogonalizationMatrix, int iGaussPoint, 
     RDouble lenScaleOfCell)
 {
-    //dxBasisFuncCellIntegration;
+    //! dxBasisFuncCellIntegration;
     RDouble oneDLenScal = 1.0/lenScaleOfCell;
-    RDouble dxdBasis[35] = {0};  //number=10:P2,number=20:P3
+    RDouble dxdBasis[35] = {0};    //! number=10:P2,number=20:P3
     RDouble dydBasis[35] = {0};
     RDouble dzdBasis[35] = {0};
 
@@ -309,7 +308,7 @@ void HighOrderCellSol::ComputeGradOfBasisFunctionIntegrationPoint(HighOrderMatri
 void HighOrderFaceSol::ComputeCoorOfIntegrationPoint(int nodenumber, const unsigned long *nodeID, const RDouble *pointX, const RDouble *pointY, const RDouble *pointZ,
     const vector < vector < RDouble > > & shapeFunctionFacePoint)
 {
-    //The dof of shape function is equal to the number of nodes;
+    //! The dof of shape function is equal to the number of nodes;
     const int dofOfShapeFunction = nodenumber;
 
     for (int iGaussPoint = 0; iGaussPoint < integNumberOfGaussPoint; ++iGaussPoint)
@@ -331,10 +330,10 @@ void HighOrderFaceSol::ComputeBasisFunction(int iGaussPoint, int leftCell, int r
     RDouble lenScaleOfLeftCell, RDouble lenScaleOfRightCell, const RDouble *Xcc, const RDouble *Ycc, const RDouble *Zcc, 
     const RDouble *leftOrthMatrix, const RDouble *rightOrthMatrix)
 {
-    //leftBasisFuncFaceIntegration;
+    //! leftBasisFuncFaceIntegration;
     RDouble oneDLeftLenScal  = 1.0/lenScaleOfLeftCell;
     RDouble oneDRightLenScal = 1.0/lenScaleOfRightCell;
-    //10 if only for P1/P2, if accuracy is P3, 10 should be 20 
+    //! 10 if only for P1/P2, if accuracy is P3, 10 should be 20 
     RDouble refCoord[3],leftBasis[10], rightBasis[10], orthMatrix[10][10];
     int leftDof = 0, rightDof = 0, counter = 0;
     if (nPloyOfLeftCell == 0)
@@ -342,7 +341,7 @@ void HighOrderFaceSol::ComputeBasisFunction(int iGaussPoint, int leftCell, int r
         leftDof = 1;
 
         leftBasis[0] = 1.0;
-    }    
+    }
     else if (nPloyOfLeftCell == 1)
     {
         leftDof = 4;
@@ -372,7 +371,7 @@ void HighOrderFaceSol::ComputeBasisFunction(int iGaussPoint, int leftCell, int r
         leftBasis[9] = refCoord[1] * refCoord[2];
     }
 
-    //left side of face
+    //! left side of face
     counter = 0;
     for (int iDof = 0; iDof < leftDof; ++iDof)
     {
@@ -429,7 +428,7 @@ void HighOrderFaceSol::ComputeBasisFunction(int iGaussPoint, int leftCell, int r
             rightBasis[9] = refCoord[1] * refCoord[2];            
         }
 
-        //right side of face
+        //! right side of face
         counter = 0;
         for (int iDof = 0; iDof < rightDof; ++iDof)
         {
@@ -458,7 +457,7 @@ void HighOrderFaceSol::ComputeBasisFunction(int iGaussPoint, int leftCell, int r
 
 void HighOrderFaceSol::ComputeMetricNormalsFace(int iGaussPoint, int iFaceVTKType, int nodenumber, const unsigned long * nodeID, 
     const RDouble * pointX, const RDouble * pointY, const RDouble * pointZ, RDouble * gradXiShapeFunction, RDouble * gradEtShapeFunction)
-{   
+{
     RDouble dxDxi = 0.0;
     RDouble dxDet = 0.0;
     RDouble dyDxi = 0.0;
@@ -467,7 +466,7 @@ void HighOrderFaceSol::ComputeMetricNormalsFace(int iGaussPoint, int iFaceVTKTyp
     RDouble dzDet = 0.0;
     RDouble totalJacobin = 0.0;
 
-    //The dof of shape function is equal to the number of nodes;
+    //! The dof of shape function is equal to the number of nodes;
     metricNormalsFace[iGaussPoint][0] = 0.0;
     metricNormalsFace[iGaussPoint][1] = 0.0;
     metricNormalsFace[iGaussPoint][2] = 0.0;
@@ -495,14 +494,14 @@ void HighOrderFaceSol::ComputeMetricNormalsFace(int iGaussPoint, int iFaceVTKTyp
 
     switch(iFaceVTKType)
     {
-    case HOUnstruct::TRIANGLE:
-        JacDetFaceIntegration[iGaussPoint] = totalJacobin/2.0;
-        break;
-    case HOUnstruct::QUADRILATERAL:
-        JacDetFaceIntegration[iGaussPoint] = totalJacobin/1.0;
-        break;
-    default:
-        break;
+        case HOUnstruct::TRIANGLE:
+            JacDetFaceIntegration[iGaussPoint] = totalJacobin/2.0;
+            break;
+        case HOUnstruct::QUADRILATERAL:
+            JacDetFaceIntegration[iGaussPoint] = totalJacobin/1.0;
+            break;
+        default:
+            break;
     }
 }
 
@@ -517,11 +516,11 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderCell(UnstructGrid * grid)
 
     highOrderCells.resize(nTotal);
 
-    const int * pFaceNumberOfCells = grid->GetFaceNumberOfEachCell();
-    int ** ppFacesOfCells = grid->GetCell2Face();
-    int * pNodeNumberOfCell = grid->GetNodeNumberOfEachCell();
+    const int *pFaceNumberOfCells = grid->GetFaceNumberOfEachCell();
+    int **ppFacesOfCells = grid->GetCell2Face();
+    int *pNodeNumberOfCell = grid->GetNodeNumberOfEachCell();
     //int ** ppNodesOfCells = grid->GetCell2NodeArray();
-    int * pNodesOfCells = grid->GetCell2Node();
+    int *pNodesOfCells = grid->GetCell2Node();
     int cellToNodeIndex = 0;
 
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)

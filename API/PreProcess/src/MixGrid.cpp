@@ -11,6 +11,7 @@
 #include "GridType.h"
 #include "PHIO.h"
 #include "TK_Log.h"
+#include "Pre_HDF5File.h"
 
 using namespace std;
 
@@ -452,6 +453,96 @@ void ReadLnkFile(const string &fileName_in, Grid **grids, int nBlocks)
     delete LnkData;
 
     CloseFile(file);
+}
+
+void ReadLnkInfor(const string &fileName_in, Grid **grids, int nBlocks)
+{
+    hid_t file;
+
+    int fileID = PHMPI::GetFileIndexofCurrentProcessor();
+    string actualFileName = AddSymbolToFileName(fileName_in, "_", fileID);
+    file = OpenHDF5File(actualFileName);
+
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
+    {
+        StructGrid *grid = StructGridCast(grids[iZone]);
+        StructBCSet *structBCSet = grid->GetStructBCSet();
+
+        int nBCLnkTotal = 0;
+        int nBCRegion = structBCSet->GetnBCRegion();
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+        {
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
+
+            int bctype = structBC->GetBCType();
+            if (bctype == PHENGLEI::INTERFACE)
+            {
+                nBCLnkTotal ++;
+            }
+        }
+
+        if (!nBCLnkTotal)
+        {
+            continue;
+        }
+
+        hid_t grpGrid, grpData;
+        string grpName;
+
+        ostringstream oss;
+        oss << "Grid-" << iZone;
+        grpName = oss.str();
+        grpGrid = OpenGroup(file, grpName);
+
+        grpData = OpenGroup(grpGrid, "LnkInfo");
+        int **LnkInfor = ReadIntTwoRow(grpData, "LnkInfor");
+
+        int iMin, iMax, jMin, jMax, kMin, kMax, nbt;
+        int iLnkinfo = 0;
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+        {
+            int index = 0;
+            StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
+
+            int bctype = bcregion->GetBCType();
+            if (!IsInterface(bctype)) continue;
+
+            iMin = LnkInfor[iLnkinfo][index++];
+            iMax = LnkInfor[iLnkinfo][index++];
+            jMin = LnkInfor[iLnkinfo][index++];
+            jMax = LnkInfor[iLnkinfo][index++];
+            kMin = LnkInfor[iLnkinfo][index++];
+            kMax = LnkInfor[iLnkinfo][index++];
+            bcregion->SetIJKRegion(iMin, iMax, jMin, jMax, kMin, kMax);
+
+            iLnkinfo ++;
+            index = 0;
+
+            iMin = LnkInfor[iLnkinfo][index++];
+            iMax = LnkInfor[iLnkinfo][index++];
+            jMin = LnkInfor[iLnkinfo][index++];
+            jMax = LnkInfor[iLnkinfo][index++];
+            kMin = LnkInfor[iLnkinfo][index++];
+            kMax = LnkInfor[iLnkinfo][index++];
+
+            nbt = LnkInfor[iLnkinfo][index++];
+            bcregion->SetTargetIJKRegion(iMin, iMax, jMin, jMax, kMin, kMax);
+            bcregion->SetTargetRegionBlock(nbt - 1);
+            if (GetDim() == THREE_D)
+            {
+                bcregion->ComputeRelativeParameters();
+            }
+
+            iLnkinfo ++;
+        }
+
+        DelPointer2(LnkInfor);
+
+        H5Gclose(grpData);
+        H5Gclose(grpGrid);
+    }
+
+    H5Fclose(file);
 }
 
 void WriteLnkFile (const string &gridFileName, Grid **grids_in, int nBlocks)

@@ -4,9 +4,17 @@
 #include "Math_BasisFunction.h"
 #include "Task.h"
 #include "TK_Log.h"
-#ifdef USE_GMRESSOLVER
-#include "petscksp.h"
+
+#ifdef USE_CUDA
+#include "BasicDeviceVariables.h"
+#ifdef CUDAUNITTEST
+#include "OutputDebug.h"
 #endif
+#ifdef NEWMPI
+#include "GPUMPICommunication.h"
+#endif 
+#endif
+
 using namespace std;
 
 namespace PHSPACE
@@ -109,6 +117,20 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
         }
 
         PHSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+    #ifdef USE_CUDA
+        using namespace GPUMemory;
+        using namespace GPUGeomVariables;
+        using namespace GPUFlowVariables;
+        if (iSolver == 0)    //! NS solver
+        {
+            GPUFlowVarMemAlloc(iSolver);    //! for establish TransferBuffer, iSolver is required
+        }
+        else    //! Turb solver
+        {
+            GPUFlowVarTurbMemAlloc(iSolver);
+        }
+    #endif
 
         if (nProtectData == 0)
         {
@@ -547,22 +569,22 @@ void Controller::Relaxation(int iSolver, int level)
         //! LU-SGS implicit time integration method.
         if (!ifLowSpeedPrecon)
         {
-        LoadResiduals(iSolver, level);
+            LoadResiduals(iSolver, level);
 
-        UpdateResiduals(iSolver, level);
+            UpdateResiduals(iSolver, level);
 
-        SpectrumRadius(iSolver, level);
+            SpectrumRadius(iSolver, level);
 
-        TimeStep(iSolver, level);
+            TimeStep(iSolver, level);
 
-        if (isUseLocalCFL == 1)
-        {
-            DualTimeStepsLUSGS(iSolver, level);
-        }
-        else
-        {
-            LUSGS(iSolver, level);
-        }
+            if (isUseLocalCFL == 1)
+            {
+                DualTimeStepsLUSGS(iSolver, level);
+            }
+            else
+            {
+                LUSGS(iSolver, level);
+            }
         }
         else
         {
@@ -583,12 +605,6 @@ void Controller::Relaxation(int iSolver, int level)
                 LUSGS(iSolver, level);
             }
         }
-    }
-    else if (tscheme == MULTI_STAGE)
-    {
-        //! Explicit multi-stage time marching method.
-        SetBoundaryValueOfField(iSolver, level);
-        
     }
     else if (tscheme == GMRES)
     {
@@ -3569,7 +3585,6 @@ void Controller::MatrixLUSGS(int iSolver, int level)
             //! Get the global normal.
             PH_AllReduce(&sweepNormal, &globleNormal, 1, PH_SUM);
             sweepNormal = globleNormal;
-			
         }
 
         //! Check the convergence.

@@ -104,7 +104,21 @@ include_directories(${MESH_H_PATH})
 message(STATUS "The 3rdparty path is: ${THIRDPARTY_LIB_DIR}.") 
 link_directories("${THIRDPARTY_LIB_DIR}")
 
-set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/include)
+# select HDF5 H file path with corresponding environment
+if(WIN32)
+  if(USE_VS2019)
+    set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/windows/vs19/win-x64/include)
+    add_definitions(-DUSE_VS2019)
+  else(USE_VS2019)
+    set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/windows/vs12/win-x64/include)
+  endif()
+else(WIN32)
+  if(USE_INTEL_COMPILER)
+    set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/linux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/intel/include)
+  else(USE_INTEL_COMPILER)
+    set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/linux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/gcc/include)
+  endif()
+endif(WIN32)
 include_directories("${HDF5_H_PATH}")
 
 if(USE_TecplotLib)
@@ -118,7 +132,20 @@ include_directories("${PARMETIS_H_PATH}")
 set(MEITIS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/metis/include)
 include_directories("${MEITIS_H_PATH}")
 
-set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/include)
+# select CGNS H file path with corresponding environment
+if(WIN32)
+  if(USE_VS2019)
+    set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/windows/vs19/win-x64/include)
+  else(USE_VS2019)
+    set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/windows/vs12/win-x64/include)
+  endif()
+else(WIN32)
+  if(USE_INTEL_COMPILER)
+    set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/linux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/intel/include)
+  else(USE_INTEL_COMPILER)
+    set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/linux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/gcc/include)
+  endif()
+endif(WIN32)
 include_directories("${CGNS_H_PATH}")
 
 set(MGRID_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/mgrid/include)
@@ -322,6 +349,7 @@ ${Geometry_H_PATH}/FieldProxy.h
 ${Geometry_H_PATH}/GeneralFieldProxy.h
 ${Geometry_H_PATH}/FaceProxy.h
 ${Geometry_H_PATH}/Geo_SimpleVC.h
+${Geometry_H_PATH}/Geo_StructMerge.h
 )
 source_group(Geometry\\include FILES ${Geometry_H_LIST})
 include_directories(${Geometry_H_PATH})
@@ -372,7 +400,7 @@ ${Geometry_CPP_PATH}/FieldProxy.cpp
 ${Geometry_CPP_PATH}/GeneralFieldProxy.cpp
 ${Geometry_CPP_PATH}/FaceProxy.cpp
 ${Geometry_CPP_PATH}/Geo_SimpleVC.cpp
-)
+${Geometry_CPP_PATH}/Geo_StructMerge.cpp)
 source_group(Geometry\\src FILES ${Geometry_CPP_LIST})
 
 # set directory of Physics.
@@ -660,6 +688,15 @@ if(USE_OCC)
   endif(WIN32)
 endif()
 
+if(BUILD_GPU) 
+  add_definitions(-DUSE_CUDA)
+  set(GPU_H_PATH   
+  ${PROJECT_SOURCE_DIR}/../GPU/Manage/include
+  ${PROJECT_SOURCE_DIR}/../GPU/Kernels/include
+  )
+  include_directories("${GPU_H_PATH}")
+endif(BUILD_GPU)
+
 # Some pre-definitions that occ need.
 if(USE_OCC)
   #target_link_libraries(${EXECUTABLE_TARGET_NAME} ${OCC_LIBS})  
@@ -681,9 +718,13 @@ endif()
 # link API library:
 
 if(WIN32)
-  list(APPEND LINK_LIBRARY_LIST metis parmetis cgns hdf5 mgrid IMlib)
+  if(USE_VS2019)
+    list(APPEND LINK_LIBRARY_LIST metis parmetis cgns libhdf5 libhdf5_hl mgrid IMlib)
+  else(USE_VS2019)
+    list(APPEND LINK_LIBRARY_LIST metis parmetis cgns hdf5 mgrid IMlib)
+  endif()
 else(WIN32)
-  list(APPEND LINK_LIBRARY_LIST metis parmetis cgns hdf5 mgrid)
+  list(APPEND LINK_LIBRARY_LIST metis parmetis cgns hdf5 hdf5_hl mgrid)
 endif(WIN32)
 
 if(USE_TecplotLib)

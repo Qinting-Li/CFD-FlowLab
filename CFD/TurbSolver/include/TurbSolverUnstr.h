@@ -65,11 +65,17 @@ public:
     //! Wall Boundary condition.
     void WallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct);
 
+    //! Wall Boundary condition.
+    void VisWallWithWallFunctionStandard(Grid *gridIn, UnstructBC *bcRegionUnstruct);
+
+    //! Wall Boundary condition.
+    void VisWallWithWallFunctionPAB3D(Grid *gridIn, UnstructBC *bcRegionUnstruct);
+
 #ifdef USE_GMRESSOLVER
     //! GMRESturb Wall Boundary condition.
     void GMRES_WallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct);
-    
-     //! GMRESturb Farfield Boundary condition.
+
+    //! GMRESturb Farfield Boundary condition.
     void GMRES_FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct);
 #endif
 

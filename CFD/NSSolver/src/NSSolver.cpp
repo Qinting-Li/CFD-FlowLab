@@ -8,6 +8,11 @@
 #include "Gas.h"
 #include "TK_Log.h"
 
+#ifdef USE_CUDA
+#include "BasicDeviceVariables.h"
+#include "TemporaryOperations.h"
+#endif
+
 using namespace std;
 
 namespace PHSPACE
@@ -636,7 +641,7 @@ RDouble NSSolver::ComputeCFL(RDouble partialCFL)
     //! GMRES1st2nd
     if(tscheme != GMRES)
     {
-    if (partialCFL > 0)
+        if (partialCFL > 0)
         {
             cflEnd = partialCFL;
         }
@@ -691,6 +696,8 @@ void NSSolver::SourceFlux(Grid *grid)
     DualTimeSource(grid);
 
     gravitySource(grid);
+
+    PorousMediumSource(grid);
 }
 
 bool NSSolver::WantVisualField(Grid *grid)
@@ -757,6 +764,14 @@ void NSSolver::InitDependentVariables()
     Grid *fineGrid = GetGrid();
 
     Param_NSSolver *parameters = GetControlParameters();
+
+#ifdef USE_CUDA
+    using namespace GPUMemory;
+    using namespace GPUFlowVariables;
+    using namespace TemporaryOperations;
+    GPUQCopy(fineGrid);	
+    GPUPrim_infCopy();
+#endif
 
     //! These variables are need for boundary condition.
     ComputeGamaAndTemperature(fineGrid);
@@ -966,6 +981,42 @@ void NSSolver::RegisterCFDSolverInterpointField()
             CFDSolver::RegisterInterpointField(varName, PHDOUBLE, 1);
         }
     }
+
+    int ifStaticsFlowField = parameters->GetIfStaticsFlowField();
+    if (ifStaticsFlowField)
+    {
+        Post_Visual *postVisualizationAverageFlow = new Post_Visual(nVisualVariables, visualVariables, 0, AverageFlow);
+        set<int>::iterator varIter;
+        set<int> visualVariablesID = postVisualizationAverageFlow->GetVisualVariables();
+        for (varIter = visualVariablesID.begin(); varIter != visualVariablesID.end(); ++ varIter)
+        {
+            int varTemp = *varIter;
+            string varName = postVisualizationAverageFlow->GetVariableName(varTemp);
+            varName = varName + "_node";
+            CFDSolver::RegisterInterpointField(varName, PHDOUBLE, 1);
+        }
+
+        delete postVisualizationAverageFlow;    postVisualizationAverageFlow = nullptr;
+    }
+
+    int ifStaticsReynoldsStress = parameters->GetIfStaticsReynoldsStress();
+    if (ifStaticsReynoldsStress)
+    {
+        Post_Visual *postVisualizationAverageReynoldsStress = new Post_Visual(nVisualVariables, visualVariables, 0, AverageReynoldsStress);
+        set<int>::iterator varIter;
+        set<int> visualVariablesID = postVisualizationAverageReynoldsStress->GetVisualVariables();
+        for (varIter = visualVariablesID.begin(); varIter != visualVariablesID.end(); ++ varIter)
+        {
+            int varTemp = *varIter;
+            string varName = postVisualizationAverageReynoldsStress->GetVariableName(varTemp);
+            varName = varName + "_node";
+            CFDSolver::RegisterInterpointField(varName, PHDOUBLE, 1);
+        }
+
+        delete postVisualizationAverageReynoldsStress;    postVisualizationAverageReynoldsStress = nullptr;
+    }
+
+    delete postVisualization;    postVisualization = nullptr;
 }
 
 void NSSolver::RegisterOversetField()

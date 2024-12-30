@@ -96,7 +96,7 @@ void HOSolverUnstruct::AllocateGlobalVar(Grid * gridIn)
     //! Cell
     //std::vector< HighOrderCell > & highOrderCells = highOrderGrids[hLevel].highOrderCells;
     highOrderGrid.CopyGeometryInfoToHighOrderCell(grid);
-  
+
     //! Face
     //std::vector< HighOrderFace > & highOrderFaces = highOrderGrids[hLevel].highOrderFaces;
     highOrderGrid.CopyGeometryInfoToHighOrderFace(grid);
@@ -1502,15 +1502,15 @@ void HOSolverUnstruct::InviscidFluxForFace(Grid *gridIn)
 
     switch(uns_scheme)
     {
-    case ISCHEME_ROE:
-        break;
-    case ISCHEME_VANLEER:
-        Vanleer_Scheme(highOrderGrids[hLevel].totalFaceGaussPoint[pLevel], primL, primR, xNormal, yNormal, zNormal, HO_GAMA, flux);             
-        break;
-    case ISCHEME_HLLE:
-        break;
-    default:
-        break;
+        case ISCHEME_ROE:
+            break;
+        case ISCHEME_VANLEER:
+            Vanleer_Scheme(highOrderGrids[hLevel].totalFaceGaussPoint[pLevel], primL, primR, xNormal, yNormal, zNormal, HO_GAMA, flux);
+            break;
+        case ISCHEME_HLLE:
+            break;
+        default:
+            break;
     }
 
     RDouble fluxTmp = 0.0;

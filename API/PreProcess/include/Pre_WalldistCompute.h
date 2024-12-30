@@ -296,6 +296,12 @@ private:
 //! Process of generate wall distance.
 void GenerateWalldist();
 
+#ifdef AI_RandomForestRegressor
+void DumpCellToWallNormal(vector<vector<RDouble>> allcelltowallnormal);
+
+void DumpMaxBoundaryLayerWalldist();
+#endif
+
 //!
 void AllocateWalldist();
 

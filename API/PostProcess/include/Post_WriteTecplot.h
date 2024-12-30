@@ -48,4 +48,59 @@ private:
 
 };
 
+class Post_WriteTecplotByOriginalGrid 
+{
+private:
+    int  nOriginalGrids;
+    Grid **OriginalGrid;
+
+public:
+    Post_WriteTecplotByOriginalGrid();
+    ~Post_WriteTecplotByOriginalGrid();
+
+public:
+    void Run();
+
+private:
+    void ServerWrite(ActionKey *actKey);
+    void ComputerNodeDataOnPartitionGrid(int iZone, ActionKey *actKey);
+    void CollectNodeData(ActionKey *actKey);
+    void CollectStructedData(ActionKey *actKey, Post_Visual *postVisualization);
+    void CollectUnstructedData(ActionKey *actKey, Post_Visual *postVisualization);
+
+    void StoreVisualizationVar(ActionKey *actKey);
+    void BoundaryVTKVisualization(Grid *gridIn, DataContainer *cData, RDouble4D **qn, int nVarPlot);
+    void FieldVisualization(Grid *gridIn, DataContainer *cData, RDouble4D **qn, int nVarPlot);
+    void BoundaryVisualization(Grid *gridIn, DataContainer *cData, RDouble4D **qn, int nVarPlot);
+    void SaveDataForTecio(Grid *gridIn, DataContainer *cData, RDouble4D **qn, int nl);
+
+    void BoundaryVTKVisualization(Grid *gridIn, DataContainer *cData, RDouble **qn, int nVarPlot);
+    void FieldVisualization(Grid *gridIn, DataContainer *cData, RDouble **qn, int nVarPlot);
+    void FieldVisualizationForVTK(Grid *gridIn, DataContainer *cData, RDouble **qn, int nVarPlot);
+    void BoundaryVisualization(Grid *gridIn, DataContainer *cData, RDouble **qn, int nVarPlot);
+    void SaveDataForTecio(Grid *gridIn, DataContainer *cData, RDouble **qn, int nVarPlot);
+
+    void PostWrite(ActionKey *actKey);
+
+    void UpdataNodeData(ActionKey *actKey, Grid *grid, RDouble4D **qn, int nVisualVariables);
+    void UpdataNodeData(ActionKey *actKey, Grid *grid, RDouble **qn, int nVisualVariables);
+    int GetOriginalGridProc(int iZone);
+
+public:
+    void Initialize();
+    void SetOriginalGrid(Grid **gridsIn) { this->OriginalGrid = gridsIn; };
+    void SetOriginalGridProc(int nOriginalGridsIn, int *originalGridProcOut);
+
+private:
+    int *originalGridProc;
+    int *originalGridIndexOfEachGrid;
+    vector <Post_Visual* > originalGridData;
+    vector<DataContainer*> dataList;
+    vector<DataContainer*> vtkDataList;
+
+};
+
+Post_WriteTecplotByOriginalGrid *GetWriteTecplotByOriginalGrid();
+
+
 }

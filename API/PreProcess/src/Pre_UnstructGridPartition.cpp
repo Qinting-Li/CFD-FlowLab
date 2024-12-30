@@ -1127,6 +1127,7 @@ void Pre_UnstructGridPartition::SetPeriodInfo(Grid **grids, int iZone)
 
     UnstructBCSet *unstructBCSet = gridSource->GetUnstructBCSet();
     InterfaceInfo *GlobalInterfaceInfo = gridSource->GetInterfaceInfo();
+    if (!GlobalInterfaceInfo) return;
 
     int *GlobalinterFace2BoundaryFace = GlobalInterfaceInfo->GetInterFace2BoundaryFace();
     int *GlobalinterFace2ZoneID       = GlobalInterfaceInfo->GetInterFace2ZoneID();

@@ -24,8 +24,8 @@ Grid::Grid()
     zoneProbesLineID.resize(0);
     zoneProbesSurfaceID.resize(0);
     zoneProbesCoordinates.resize(0);
-    oversetInformationProxy = NULL;
-    volumeCondition = NULL;
+    oversetInformationProxy = nullptr;
+    volumeCondition = nullptr;
 }
 
 LIB_EXPORT void Grid::InitGrid(GridID *index, int level, int dim, int type)
@@ -35,36 +35,36 @@ LIB_EXPORT void Grid::InitGrid(GridID *index, int level, int dim, int type)
     this->level = level;
     this->index = index;
 
-    cGrid = NULL;
-    fGrid = NULL;
+    cGrid = nullptr;
+    fGrid = nullptr;
 
-    interfaceInfo = NULL;
-    interpointInformation = NULL;
-    interfaceFields = NULL;
-    interpointFields = NULL;
-    oversetInfoProxy = NULL;
-    oversetInformationProxy = NULL;
+    interfaceInfo = nullptr;
+    interpointInformation = nullptr;
+    interfaceFields = nullptr;
+    interpointFields = nullptr;
+    oversetInfoProxy = nullptr;
+    oversetInformationProxy = nullptr;
 
     own_database = 0;
     gField = new Data_Field();
-    gPara = NULL;
+    gPara = nullptr;
 
-    oldGrid = NULL;
+    oldGrid = nullptr;
     fileIndexCurrentGridBelong = 0;
 }
 
 Grid::~Grid()
 {
-    delete index;    index = NULL;
-    delete oversetInfoProxy;    oversetInfoProxy = NULL;
-    delete gField;    gField = NULL;
+    delete index;    index = nullptr;
+    delete oversetInfoProxy;    oversetInfoProxy = nullptr;
+    delete gField;    gField = nullptr;
 
     if (own_database)
     {
-        delete gPara;    gPara = NULL;
+        delete gPara;    gPara = nullptr;
     }
 
-    delete oldGrid;    oldGrid = NULL;
+    delete oldGrid;    oldGrid = nullptr;
 
     if (IsFinestGrid())
     {
@@ -72,16 +72,16 @@ Grid::~Grid()
     }
 
     //if (interfaceFields){delete interfaceFields;    interfaceFields = NULL;};
-    delete interpointFields;    interpointFields = NULL;
+    delete interpointFields;    interpointFields = nullptr;
 
-    delete oversetInformationProxy;    oversetInformationProxy = NULL;
+    delete oversetInformationProxy;    oversetInformationProxy = nullptr;
 
     //if (interfaceInfo){delete interfaceInfo;    interfaceInfo = NULL;};
-    delete interpointInformation;    interpointInformation = NULL;
+    delete interpointInformation;    interpointInformation = nullptr;
 
     if (IsFinestGrid())
     {
-        if (volumeCondition) { delete volumeCondition; volumeCondition = NULL; };
+        if (volumeCondition) { delete volumeCondition; volumeCondition = nullptr; };
     }
 
     zoneProbesGlobalID.clear();
@@ -200,10 +200,8 @@ LIB_EXPORT void Grid::RotTransVel(RDouble *xyzref, RDouble *dangle, RDouble *tco
 LIB_EXPORT void Grid::ComputeGDVel(RDouble *xt, RDouble *yt, RDouble *zt, RDouble **angle0, RDouble **coord0)
 {
     //! This subroutine calculates the grid velocity at the cell vertices.
-    
     //! angle0 = Euler's angles and their time derivatives.
     //! coord0 = position of the reference point abd their time derivatives.
-
     RDouble psip, theta, thetap, phi, phip, omega1, omega2, omega3;
 
     int nTotalNode = this->GetNTotalNode();
@@ -274,7 +272,7 @@ LIB_EXPORT void Grid::RotateAboutAxis()
         RDouble cosinTheta = cos(rotateAngle);
         RDouble sinTheta   = sin(rotateAngle);
         if (rotateAxis == AXIS_X)
-        {            
+        {
             for (int iNode = 0; iNode < nTotalNode; ++ iNode)
             {
                 RDouble oldY = y[iNode];
@@ -430,6 +428,7 @@ LIB_EXPORT void Grid::GridValidityCheck()
 
 void Grid::RotateTranslation()
 {
+
 }
 
 void Grid::ComputeCellBoundaryType()
@@ -459,12 +458,12 @@ void CheckGrid(Grid **grids, int nBlocks)
         int is, js, ks, nsurf, s_lr, it, jt, kt, t_lr;
         RDouble s_xfc, s_yfc, s_zfc, t_xfc, t_yfc, t_zfc;
         int il1, jl1, kl1;
-  
+
         for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             target_zone = interFace2ZoneID[iFace];
             if (target_zone < iZone) continue;
-            
+
             grid->GetSourceIndexIJK_Nsurf_LR(iFace, 1, is, js, ks, nsurf, s_lr);
             if (s_lr == 1)
             {
@@ -502,7 +501,7 @@ void CheckGrid(Grid **grids, int nBlocks)
                 }
                 tgrid->FaceCoor(it, jt, kt, nsurf, t_xfc, t_yfc, t_zfc);
             }
-            
+
             if ((fabs(s_xfc - t_xfc) > 1.0e-8) || (fabs(s_yfc - t_yfc) > 1.0e-8) || (fabs(s_zfc - t_zfc) > 1.0e-8))
             {
                 PHMPI::FreeBlockData();
@@ -520,34 +519,34 @@ int GetCellType(int dimension, int nodeNumberOfCell)
     {
         switch (nodeNumberOfCell)
         {
-        case 3:
-            cellType = TRI_3;
-            break;
-        case 4:
-            cellType = QUAD_4;
-            break;
-        default:
-            break;
+            case 3:
+                cellType = TRI_3;
+                break;
+            case 4:
+                cellType = QUAD_4;
+                break;
+            default:
+                break;
         }
     }
     else
     {
         switch (nodeNumberOfCell)
         {
-        case 4:
-            cellType = TETRA_4;
-            break;
-        case 5:
-            cellType = PYRA_5;
-            break;
-        case 6:
-            cellType = PENTA_6;
-            break;
-        case 8:
-            cellType = HEXA_8;
-            break;
-        default:
-            break;
+            case 4:
+                cellType = TETRA_4;
+                break;
+            case 5:
+                cellType = PYRA_5;
+                break;
+            case 6:
+                cellType = PENTA_6;
+                break;
+            case 8:
+                cellType = HEXA_8;
+                break;
+            default:
+                break;
         }
     }
 
@@ -566,28 +565,28 @@ int GetFaceType(int dimension, int nodeNumberOfFace)
     {
         switch (nodeNumberOfFace)
         {
-        case 2:
-            faceType = BAR_2;
-            break;
-        case 3:
-            faceType = BAR_3;
-            break;
-        default:
-            break;
+            case 2:
+                faceType = BAR_2;
+                break;
+            case 3:
+                faceType = BAR_3;
+                break;
+            default:
+                break;
         }
     }
     else
     {
         switch (nodeNumberOfFace)
         {
-        case 3:
-            faceType = TRI_3;
-            break;
-        case 4:
-            faceType = QUAD_4;
-            break;
-        default:
-            break;
+            case 3:
+                faceType = TRI_3;
+                break;
+            case 4:
+                faceType = QUAD_4;
+                break;
+            default:
+                break;
         }
     }
 

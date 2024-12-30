@@ -130,6 +130,10 @@ protected:
     //! @param[in]: gridIn denotes the current computational regions of the grids.
     virtual void gravitySource(Grid *grid) = 0;
 
+    //! Source flux: Compute the porous medium source terms.
+    //! @param[in]: gridIn denotes the current computational regions of the grids.
+    virtual void PorousMediumSource(Grid *grid) = 0;
+
     //! Source flux: compute the unsteady dual time source.
     virtual void DualTimeSource(Grid *grid) = 0;
 

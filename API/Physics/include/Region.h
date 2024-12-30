@@ -45,7 +45,6 @@ private:
     //! IMPORTANT: only the zones that belong to the current processor are NON-ZERO Entity,
     //! the zones that belong to other processors are set to be ZERO in this container.
     vector <Zone *> *zoneContainer;
-
 public:
     //! Return the iZone-th zone.
     Zone * GetZone(int iZone);
@@ -132,6 +131,10 @@ public:
     //!   3: Initialize moving grid.
     LIB_EXPORT void InitGrids();
 
+#ifdef AI_RandomForestRegressor
+    void DumpCellCenterMetrics();
+#endif
+
     void DumpWallFaceCenter();
 
     //! Update all of parameters in the running data base of each zones according to the global_para.
@@ -162,6 +165,8 @@ public:
     void AddZone(Zone *zone);
 
     void CommGridInfoOnlyforStructHighOrder(int mission);
+
+    void InitOriginalGrid();
 private:
     void DumpProcessorGridNumber();
     void CreateGridFileNameList(vector< string > &filenamelist);

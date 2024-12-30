@@ -20,6 +20,9 @@
 #include "Pre_StructToUnstruct.h"
 #include "PHIO.h"
 #include <omp.h>
+#include <Geo_StructMerge.h>
+#include <Post_WriteTecplot.h>
+#include <GridType.h>
 
 
 namespace PHSPACE
@@ -1012,6 +1015,96 @@ void Region::InitVariableWallTemperature()
     {
         wallTemperature = 288.0;
         GlobalDataBase::UpdateData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
+    }
+}
+
+void Region::InitOriginalGrid()
+{
+    int dumpFlowOnOriginalGrid = 0;
+    GlobalDataBase::GetData("dumpFlowOnOriginalGrid", &dumpFlowOnOriginalGrid, PHINT, 1);
+    if (!dumpFlowOnOriginalGrid)
+    {
+        return;
+    }
+
+    Post_WriteTecplotByOriginalGrid *writeTecplotByOriginalGrid = GetWriteTecplotByOriginalGrid();
+    int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
+    if (UNSTRUCTGRID == systemGridType)
+    {
+        cout << "this function has not yet been developed.";
+        TK_Exit::UnexpectedVarValue("systemGridType = ", systemGridType);
+    }
+    else if (STRUCTGRID == systemGridType)
+    {
+        int nTotalZone = PHMPI::GetNumberofGlobalZones();
+        int *ordinaryGridIndexOfEachZone = new int[nTotalZone];
+        for (int iZone = 0; iZone < nTotalZone; ++ iZone)
+        {
+            ordinaryGridIndexOfEachZone[iZone] = -1;
+        }
+        for (int iZone = 0; iZone < nTotalZone; ++ iZone)
+        {
+            if (!GetGrid(iZone, 0)) continue;
+            StructGrid *grid                   = StructGridCast(GetGrid(iZone, 0));
+            int        ordinaryGridIndex       = grid->GetOrdinaryGridIndex();
+            ordinaryGridIndexOfEachZone[iZone] = ordinaryGridIndex;
+        }
+        int *ordinaryGridIndexOfEachZoneGlobal = new int[nTotalZone];
+        PH_AllReduce(ordinaryGridIndexOfEachZone, ordinaryGridIndexOfEachZoneGlobal, nTotalZone, MPI_MAX);
+        delete [] ordinaryGridIndexOfEachZone;    ordinaryGridIndexOfEachZone = nullptr;
+
+        int nTotalblock = 0;
+        for (int iZone = 0; iZone < nTotalZone; ++ iZone)
+        {
+            nTotalblock = MAX(nTotalblock, ordinaryGridIndexOfEachZoneGlobal[iZone]);
+        }
+        ++ nTotalblock;
+
+        vector < vector < StructGrid* > > originalgridofBlock;
+        originalgridofBlock.resize(nTotalblock);
+        int    myid     = PHMPI::GetCurrentProcessorID();
+        string gridFile = GlobalDataBase::GetStrParaFromDB("gridfile");
+        IO_ReadHDF5Grid *gridReader = new IO_ReadHDF5Grid(AddSymbolToFileName(gridFile, "_", 0));
+        gridReader->OpenFile();
+        int *originalGridProc = new int[nTotalblock];
+        Post_WriteTecplotByOriginalGrid *writeTecplotByOriginalGrid = GetWriteTecplotByOriginalGrid();
+        writeTecplotByOriginalGrid->SetOriginalGridProc(nTotalblock, originalGridProc);
+
+        for (int iZone = 0; iZone < nTotalZone; ++ iZone)
+        {
+            int indexofBlock = ordinaryGridIndexOfEachZoneGlobal[iZone];
+            if (myid == originalGridProc[indexofBlock])
+            {
+                Grid *singleGrid = 0;
+                GridID *index = new GridID(iZone);
+                singleGrid = CreateGridGeneral(STRUCTGRID, index, 0, GetDim());
+                gridReader->GetGridInfo(singleGrid);
+                originalgridofBlock[indexofBlock].push_back(StructGridCast(singleGrid));
+            }
+        }
+        gridReader->CloseFile();
+        delete [] ordinaryGridIndexOfEachZoneGlobal;    ordinaryGridIndexOfEachZoneGlobal = nullptr;
+
+        OriginalStructGridMerge originalStructGridMerge;
+        originalStructGridMerge.Initial(originalgridofBlock, nTotalblock, nTotalZone);
+        originalStructGridMerge.Run();
+        int nBlocks = originalStructGridMerge.GetnTotalblock();
+        StructGrid **mergegrid = new StructGrid * [nBlocks];
+        originalStructGridMerge.GetMergeGrid(mergegrid);
+
+        Grid **grids = new Grid *[nBlocks];
+        for (int iBlock = 0; iBlock < nBlocks; ++ iBlock)
+        {
+            Grid *singleGrid = 0;
+            if (mergegrid[iBlock])
+            {
+                singleGrid = mergegrid[iBlock];
+            }
+            grids[iBlock] = singleGrid;
+        }
+        writeTecplotByOriginalGrid->SetOriginalGrid(grids);
+        writeTecplotByOriginalGrid->Initialize();
+        delete [] mergegrid;    mergegrid = nullptr;
     }
 }
 
@@ -2109,7 +2202,47 @@ LIB_EXPORT void Region::InitGrids()
     ComputeMetrics();
 
     InitCellBoundaryType();
+
+#ifdef AI_RandomForestRegressor
+    DumpCellCenterMetrics();
+#endif
 }
+
+#ifdef AI_RandomForestRegressor
+void Region::DumpCellCenterMetrics()
+{
+    ofstream dataFile;
+    dataFile.open("./grid/CellCenter.txt", ofstream::app);
+
+    using namespace PHMPI;
+    int nZones = GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        Grid *grid = GetGrid(iZone);
+        int nTotalCell = grid->GetNTotalCell();
+        UnstructGrid *unsGrid = UnstructGridCast(grid);
+        RDouble *xcc = unsGrid->GetCellCenterX();
+        RDouble *ycc = unsGrid->GetCellCenterY();
+        RDouble *zcc = unsGrid->GetCellCenterZ();
+
+        vector<int> *cell2cell = unsGrid->GetCell2Cell();
+
+        dataFile << iZone << " " << nTotalCell << endl;
+        using namespace std;
+        for(int i = 0; i<nTotalCell; ++i)
+        {
+            dataFile << xcc[i] << " " << ycc[i] << " " <<zcc[i] << "    ";
+
+            for(int j = 0; j<cell2cell[i].size(); ++j)
+            {
+                dataFile << cell2cell[i][j] << " ";
+            }
+            dataFile << endl;
+        }
+    }
+    dataFile.close();
+}
+#endif
 
 void Region::DumpWallFaceCenter()
 {
@@ -3593,6 +3726,8 @@ LIB_EXPORT void Region::InitGeometry()
 
     InitVariableWallTemperature();
 
+    InitOriginalGrid();
+
     WriteLogFile("Monitoring probes ...");
 }
 
@@ -3739,6 +3874,7 @@ void Region::GridValidityCheck()
     RDouble maxBox[3] = {-LARGE, -LARGE, -LARGE};
 
     int nLocalZones = PHMPI::GetNumberofLocalZones();
+    int myid = PHMPI::GetCurrentProcessorID();
 
     //! Check OpenMP threads information firstly.
 #ifdef USE_OMP
@@ -3752,7 +3888,6 @@ void Region::GridValidityCheck()
     omp_set_num_threads(4);
 #endif
 #pragma omp parallel for
-    int myid = PHMPI::GetCurrentProcessorID();
 
     for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {

@@ -522,6 +522,20 @@ void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble *preconM
     Qtmp[IRW] = rm * wm;
     Qtmp[IRE] = pm / gamm1 + half * rm * (um * um + vm * vm + wm * wm);
 
+    int isPorousZone = GlobalDataBase::GetIntParaFromDB("isPorousZone");
+    if (isPorousZone != 0)
+    {
+        RDouble porosity = GlobalDataBase::GetDoubleParaFromDB("porosity");
+        RDouble densitySolid = GlobalDataBase::GetDoubleParaFromDB("densitySolid");
+        RDouble cpSolid = GlobalDataBase::GetDoubleParaFromDB("cpSolid");
+        RDouble refMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
+        RDouble refVelocity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalVelocity");
+        RDouble refTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
+        RDouble referenceEnergy = refVelocity * refVelocity;
+        RDouble tm = gama * refMachNumber * refMachNumber * pm / rm;
+        Qtmp[IRE] = Qtmp[IRE] * porosity + densitySolid * cpSolid * tm * refTemperature / referenceEnergy * (1.0 - porosity);
+    }
+
     for (int m = nm; m < neqn; ++ m)
     {
         Qtmp[m] = q[IR] * q[m];

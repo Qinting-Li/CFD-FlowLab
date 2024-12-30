@@ -13,6 +13,12 @@
 #include "HOSimulation.h"
 #include "Post_ProbesWrite.h"
 
+#ifdef USE_CUDA
+#include "BasicDeviceVariables.h"
+#include "GPUFaceColor.h"
+#endif 
+
+
 #include "OversetInformation.h"
 #include "SolversList.h"
 #include "PostProcess.h"
@@ -66,59 +72,59 @@ void Simulation::Start()
 
     switch (taskType)
     {
-    case SOLVE_FIELD:
-        RunCFD();
-        break;
-    case CREATE_GRID:
-        PHSPACE::CreateGrid();
-        break;
-    case CAL_WALL_DIST:
-        ComputeWallDistance();
-        break;
-    case PARTITION_GRID:
-        IsNeedConvert();
-        PHSPACE::PartitionGrid();
-        break;
-    case OVERSETGRID_VIEW:
-        PHSPACE::OversetGridView();
-        break;
-    case OVERSET_CONFIG:
-        PHSPACE::RunOversetGridConfig();
-        break;
-    case HO_SOLVER:
-        {
-            HOUnstruct::HOSimulation *uho = new HOUnstruct::HOSimulation();
-            uho->Run();
-            delete uho;
+        case SOLVE_FIELD:
+            RunCFD();
             break;
-        }
-    case INTEGRATIVE_SOLVER:
-        RunIntegrativeSolver();
-        break;
-    #ifdef USE_SpecDiffHybSolver
-    case SPECDIFFHYB_SOLVER:
-        RunSpecDiffHybSolver();
-        break;
-    case SPEC_SOLVER:
-        RunSpecSolver();
-        break;
-    #endif
-    case POST_PROCESSING:
-        RunPostProcessing();
-        break;
-    #ifdef USE_LBMSolverMPI
-    case LBM_SOLVER_MPI:
-        RunLBMSolverMPI();
-        break;
-    #endif
-    #ifdef USE_LBMSolverOMP
-    case LBM_SOLVER_OMP:
-        RunLBMSolverOMP();
-        break;
-    #endif
-    default:
-        TK_Exit::UnexpectedVarValue("taskType = ", taskType);
-        break;
+        case CREATE_GRID:
+            PHSPACE::CreateGrid();
+            break;
+        case CAL_WALL_DIST:
+            ComputeWallDistance();
+            break;
+        case PARTITION_GRID:
+            IsNeedConvert();
+            PHSPACE::PartitionGrid();
+            break;
+        case OVERSETGRID_VIEW:
+            PHSPACE::OversetGridView();
+            break;
+        case OVERSET_CONFIG:
+            PHSPACE::RunOversetGridConfig();
+            break;
+        case HO_SOLVER:
+            {
+                HOUnstruct::HOSimulation *uho = new HOUnstruct::HOSimulation();
+                uho->Run();
+                delete uho;
+                break;
+            }
+        case INTEGRATIVE_SOLVER:
+            RunIntegrativeSolver();
+            break;
+        #ifdef USE_SpecDiffHybSolver
+        case SPECDIFFHYB_SOLVER:
+            RunSpecDiffHybSolver();
+            break;
+        case SPEC_SOLVER:
+            RunSpecSolver();
+            break;
+        #endif
+        case POST_PROCESSING:
+            RunPostProcessing();
+            break;
+        #ifdef USE_LBMSolverMPI
+        case LBM_SOLVER_MPI:
+            RunLBMSolverMPI();
+            break;
+        #endif
+        #ifdef USE_LBMSolverOMP
+        case LBM_SOLVER_OMP:
+            RunLBMSolverOMP();
+            break;
+        #endif
+        default:
+            TK_Exit::UnexpectedVarValue("taskType = ", taskType);
+            break;
     }
 }
 
@@ -238,16 +244,35 @@ void Simulation::RunCFD()
 
     GenerateWalldist();
 
+#ifdef USE_CUDA
+    using namespace GPUMemory;
+    using namespace GPUGeomVariables;
+    GPUGeomInfoAllocCopy();
+#endif
+
     //! Initialize each solver on each zone.
     InitializeSolvers();
 
     MultiGridInitFlow();
+
+#ifdef USE_CUDA
+   using namespace GPUMemory;
+   using namespace GPUGeomVariables;
+   using namespace GPUFlowVariables;
+   using namespace GPUFaceColor;
+   GPUFaceColorMain();
+#endif
 
     //! The main simulation entrance.
     SolveSimulation();
 
     //! Do some work after simulation.
     PostSimulation();
+    
+#ifdef USE_CUDA
+    using namespace GPUMemory;
+    GPUMemoryFree();
+#endif
 }
 
 bool Simulation::IsRestartProcess()
@@ -465,19 +490,19 @@ void Simulation::SecondStepRunCFD(bool isStart/* = false*/)
     string keyVariable = "";
     switch (nControlVariable)
     {
-    case 0:
-        keyVariable = "density";
-    case 1:
-        keyVariable = "translation temperature";
-    case 2:
-        keyVariable = "vibration temperature";
-    case 3:
-        keyVariable = "electron temperature";
-    case 4:
-        keyVariable = "pressure";
-    default:
-        keyVariable = "translation temperature";
-        break;
+        case 0:
+            keyVariable = "density";
+        case 1:
+            keyVariable = "translation temperature";
+        case 2:
+            keyVariable = "vibration temperature";
+        case 3:
+            keyVariable = "electron temperature";
+        case 4:
+            keyVariable = "pressure";
+        default:
+            keyVariable = "translation temperature";
+            break;
     }
     GlobalDataBase::UpdateData("keyVariable", &keyVariable, PHSTRING, 1);
 
@@ -623,19 +648,19 @@ void Simulation::FinalStepRunCFD()
 
         switch (nControlVariable)
         {
-        case 0:
-            keyVariable = "density";
-        case 1:
-            keyVariable = "translation temperature";
-        case 2:
-            keyVariable = "vibration temperature";
-        case 3:
-            keyVariable = "electron temperature";
-        case 4:
-            keyVariable = "pressure";
-        default:
-            keyVariable = "translation temperature";
-            break;
+            case 0:
+                keyVariable = "density";
+            case 1:
+                keyVariable = "translation temperature";
+            case 2:
+                keyVariable = "vibration temperature";
+            case 3:
+                keyVariable = "electron temperature";
+            case 4:
+                keyVariable = "pressure";
+            default:
+                keyVariable = "translation temperature";
+                break;
         }
 
         nKeyVariableIndex = nControlVariable;   //! The index of the variable temperature.
