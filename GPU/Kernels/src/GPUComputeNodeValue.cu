@@ -1205,35 +1205,6 @@ namespace GPUKernels
 #endif
     }
 
-    void CallGPUModifyQTurbNodeValue(const int nIPoint, const int nEquation, const int nTotalNode)
-    {
-        using namespace GPUMemory;
-        using namespace GPUFlowVariables;
-        using namespace GPUGeomVariables;
-        int gridSize  = 1;
-        int blockSize = 1;
-        //!int loopLen= nTotalNode;
-
-        int loopLen = nIPoint;
-        KernelLaunchPara((void *)GPUModifyQTurbNodeValue, loopLen, 0, gridSize, blockSize);
-
-#ifdef KERNELLAUNCHTEST
-        ReportKernelPara((void *)GPUModifyQTurbNodeValue, 0, gridSize, blockSize);
-#endif
-
-#ifdef CUDADEBUGATOMIC
-        GPUModifyQTurbNodeValue<<<1, 1>>>(nIPoint, nEquation, nTotalNode, d_qTurbNode, d_qTurbInterPoint,
-                                          d_interPoint2GlobalPoint);
-#else
-        GPUModifyQTurbNodeValue<<<gridSize, blockSize>>>(nIPoint, nEquation, nTotalNode, d_qTurbNode, d_qTurbInterPoint,
-                                                         d_interPoint2GlobalPoint);
-#endif
-
-#ifdef KERNELLAUNCHTEST
-        HANDLE_KERNEL_ERR();
-#endif
-    }
-
     __global__ void GPUModifyNodeValue(const int nIPoint, const int nEquation, const int nTotalNode, RFloat *qNode,
                                        RFloat *tNode, RFloat *qInterPoint, RFloat *tInterPoint,
                                        const int *interPoint2GlobalPoint)

@@ -1672,15 +1672,6 @@ namespace GPUNSSolverUnstruct
                     cfl              = cflStart * pow(CFLratio, (iterationStep - 1) * 1.0 / cflNstep);
                 }
             }
-
-#ifdef USE_HYFLOW_CODE
-            int nNumberOfCFLStep = parametersns->GetnNumberOfCFLStep();
-            if (nNumberOfCFLStep > 0)
-            {
-                cfl *= varyPara(iterationStep, nNumberOfCFLStep, parametersns->GetCFLVaryMultiStep(),
-                                parametersns->GetCFLVaryCoef());
-            }
-#endif
             CFL = cfl;
         }
 

@@ -716,7 +716,10 @@ elseif ("${BUILD_LIBRARY_TYPE}" STREQUAL "Static")
 endif()
 
 # link API library:
-
+if(BUILD_GPU)
+  message(STATUS "Linking ${GPU_TARGET_NAME} ...")
+  list(APPEND LINK_LIBRARY_LIST ${GPU_TARGET_NAME})
+endif(BUILD_GPU)
 if(WIN32)
   if(USE_VS2019)
     list(APPEND LINK_LIBRARY_LIST metis parmetis cgns libhdf5 libhdf5_hl mgrid IMlib)
