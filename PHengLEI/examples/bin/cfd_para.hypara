@@ -8,7 +8,7 @@
 //          Platform for Hybrid Engineering Simulation of Flows           +
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
-//                         PHengLEI 2412                                  +
+//                         PHengLEI 2506                                  +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ###########################################################################
 #                       Default parameters for Grid conversion            #
@@ -278,6 +278,7 @@ int compressible = 1;
 int ifLowSpeedPrecon = 0;
 double Kprec = 3.0;
 int preconFarfieldBCMethod = 1;
+double refLengthOfLowSpeed = 1.0;
 
 //-----------------------------------------------------------------------
 #                           CFD Control Parameter                       #
@@ -355,13 +356,19 @@ double freestream_vibration_temperature = 300.00;
 //double longitude = 110.95    
 //double latitude = 19.61;
 
-// The is calculated by an exponential function, temperature and pressure are fixed.
+// The is calculated by an exponential or logarithmic  function, temperature and pressure are fixed.
 //int inflowParaType = 8;
-//double refDimensionalVelocity = 15;
+//int windProfileType = 0;
+//double refDimensionalGroundVelocity = 15;
 //double refDimensionalHeight = 10;
 //double powerLawCoefficient = 0.25;
+//int windProfileType = 1;
+//double refDimensionalFrictionVelocity = 0.4;
+//double refDimensionalRoughLength = 0.3;
+//double logarithmicLawKappa = 0.41;
+//double refDimensionalVelocity = 8;
 //double refDimensionalPressure = 101325;
-//double refDimensionalTemperature = 271.97;
+//double refDimensionalTemperature = 288.15;
 
 double wallTemperature = -1.0;
 
@@ -462,7 +469,9 @@ string str_limiter_name = "vanalbada";
 // roeEntropyScale: Entropy fix (correction) coefficient scale, default is 1.0.
 //                  It is used to scale the default Roe entropy fix coefficients.
 // AusmpwPlusLimiter: A Limiter to make "function w" not change acutely in AusmpwPlus scheme, default is 1.0.
-
+// isTurbulenceModelCorrect: Whether to use AI algorithms for the correction of turbulence models.
+//              0 -- No.
+//              1 -- Yes.
 //int    viscousType = 0;
 //string viscousName = "Euler";
 
@@ -474,6 +483,8 @@ string viscousName = "1eq-sa";
 
 //int    viscousType = 4;
 //string viscousName = "2eq-kw-menter-sst";
+
+int isTurbulenceModelCorrect = 0;
 
 int DESType = 0;
 
@@ -488,6 +499,7 @@ int reconmeth      = 1;
 int limitVariables = 0;
 int limitVector    = 0;
 double skewnessAngle = 60.0;
+double turbSkewnessAngle = 0.0;
 
 int roeEntropyFixMethod = 3;
 double roeEntropyScale  = 1.0;
@@ -579,6 +591,8 @@ int    iSimplifyViscousTerm = 1;
 int    ifLocalTimeStep = 0;
 int    isUseLocalCFL = 0;
 int    isUsePreTwall = 0;
+
+int    cflMethod   = 0;
 double CFLStart    = 0.01;
 double CFLEnd      = 10.0;
 int    CFLVaryStep = 500;
@@ -666,6 +680,8 @@ double kSolid = 202.4;
 //                     1 -- Not compute.
 // protectionFile0 and protectionFile1: Two continuation file of the data protection mechanism.
 // wall_heatfluxfile: The file to output the MaxHeatFlux of wall.
+// isRestartChangeInflow: Whether to change the inflow conditions for continued calculation.
+
 int    numberOfGridGroups  = 1;
 string gridfile            = "./grid/rae2822_hybrid2d__4.fts";
 string wallTemperaturefile = "";
@@ -673,6 +689,8 @@ string wallTemperaturefile = "";
 int    nIsComputeWallDist = 0;
 int    walldistMethod     = 1;
 int    cellMethodOrNodeMethod = 0;
+
+int    isRestartChangeInflow = 0;
 
 string resSaveFile        = "results/res.dat";
 string turbresfile        = "results/turbres.dat";
@@ -703,6 +721,10 @@ string wall_varfile       = "";
 string sixDofFileName     = "results/sixDofInfo.dat";
 string derivativeFileName = "results/identify.dat";
 string hysteresisFileName = "results/force_beta.plt";
+
+string restartGridFile     = "results/rae2822_hybrid2d__4.fts";
+string restartNSVarFile       = "results/flow.dat";
+string restartTurbVarFile     = "results/turb.dat";
 
 int plotFieldType = 0;
 int dumpFlowOnOriginalGrid = 0;
@@ -832,6 +854,8 @@ int probeVariablesInterpolationMethod = 0;
 //                   2 -- gama-re-theta.
 // turbIntensity: (valid while greater than 0.0 ) turbulent intensity of free stream(*100) in transition.
 // freeturbIntensitySRModify: to use SR modify in free stream turbulent intensity decay or not.
+// qTurbLimit: If limit the min/max qTurb for the SA model or not, default is 0.
+
 int turbInterval     = 1;
 int turbOrderStruct  = 2;
 int kindOfTurbSource = 0;
@@ -845,7 +869,7 @@ int freeturbIntensitySRModify = 0;
 double freeDecayXLocation = 0.0;
 int compressibleCorrection = 0;
 int transitionMaFix = 1;
-
+int qTurbLimit      = 0;
 // maximum eddy viscosity (myt/my) max.
 double eddyViscosityLimit = 1.0e10;
 int monitor_vistmax = 0;
@@ -1350,14 +1374,18 @@ int  allReduceStep = 1;
 // walldistMainZone: The initial value of background grid which does not exist wall boundary condition.
 // toleranceForOversetSearch: The tolerance of overset searching zone to judge whether the obtained node is in the current computing cell.
 // toleranceForOversetBox: The tolerance of building the minimum box of computing cells in the overlapping region.
-// twoOrderInterpolationOrNot: The number of interpolated cell layers in the overlapping boundary.
+// nLayerOfInterCells    ：The number of interpolated cell layers in the overlapping boundary for Explicit assembly. 
 //             0 -- one layer.
-//             1 -- two layers.
-// keyEnlargeOfActiveNodes: The number of enlarged overset-boundary layers in the buffer region.
+//             1 -- two layers or more.
+// keyEnlargeOfInterBoundary: The range of interpolation boundary conditions.
+// keyEnlargeOfBufferNodes: The number of enlarged overset-boundary layers in the buffer region.
 // outTecplotOverset: Whether to dump out the flowfield data after the progress of overset configure.
 //             0 -- no.
 //             1 -- yes.
 int    codeOfOversetGrid          = 0;
+int    isOversetSlip              = 0;
+int    isCommGradientforSlip      = 0;
+int    oversetGridConfigMethod    = 1;
 int    oversetInterpolationMethod = 0;
 int    readOversetFileOrNot       = 0;
 int    symetryOrNot               = 0;
@@ -1368,15 +1396,21 @@ string auxiliaryInnerGrid0        = "./grid/aux-upper.fts";
 string auxiliaryInnerGrid1        = "./grid/aux-lower.fts";
 string auxiliaryInnerGrid2        = "";
 string oversetGridFileName        = "./grid/iblank.ovs";
-double walldistMainZone           = 1.0
+double defaultBlockWalldist_0     = 1.0
+double defaultBlockWalldist_1     = 1.0
+double defaultBlockWalldist_2     = 1.0
 double toleranceForOversetSearch  = 1.0e-3;
 double toleranceForOversetBox     = 1.0e-3;
-int    twoOrderInterpolationOrNot = 0;
-int    keyEnlargeOfActiveNodes    = 0;
+int    keyEnlargeOfInterBoundary  = 0;
+int    keyEnlargeOfBufferNodes    = 0;
+int    keyEnlargeOfSearchNodes    = 2;
+int    nLayerOfInterCells         = 0;
+int    nCommunicateCellIBlank     = 0;
 int    outTecplotOverset          = 0;
 int    outPutOversetVisualization = 0;
 int    numberOfMovingBodies       = 2;
-
+int    nLayerOfCellsOfCutting     = 0;
+int    ifCheckWallCollision       = 1;
 // ----------------- ALE configuration ------------------------------
 int codeOfAleModel                = 0;
 int aleStartStrategy              = -1;
@@ -1434,6 +1468,7 @@ double configPamameter_0[] = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
 int  RBDMethod_0 = 0;
 double amplitude_0 = 0.0;
 double reduceFrequency_0 = 0.0;
+int storeAleWalldis = 0;
 // direction of rotation.
 //         1 -- clockwise from the point of view along the positive x axis.
 //        -1 -- anticlockwise from the point of view along the positive x axis.

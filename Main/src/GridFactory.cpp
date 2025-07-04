@@ -9,6 +9,7 @@
 #include "PHIO.h"
 #include "TK_Log.h"
 #include "Pre_StructToUnstruct.h"
+#include "AleManager.h"
 
 
 #include "FieldViewIn.h"
@@ -645,6 +646,7 @@ void MultiGridConvert()
     int fromGridType = GlobalDataBase::GetIntParaFromDB("from_gtype");
     int gridType = GlobalDataBase::GetIntParaFromDB("gridtype");
 
+    int gridTypeMultiGrid = GlobalDataBase::GetIntParaFromDB("gridtype");
     int numberOfGridFile = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfGridFile");
     PHVectorString1D gridFileNameList;
     gridFileNameList.push_back(PHSPACE::GlobalDataBase::GetStrParaFromDB("from_gfile"));
@@ -662,6 +664,12 @@ void MultiGridConvert()
     for (int iGridFile = 0; iGridFile < numberOfGridFile; ++ iGridFile)
     {
         string gridFileName = gridFileNameList[iGridFile];
+        if (gridTypeMultiGrid > 1)
+        {
+            fromGridType = PHSPACE::GetIntegerParameterFromDataBase(iGridFile,"from_gtype");
+            gridType = PHSPACE::GetIntegerParameterFromDataBase(iGridFile, "gridtype");
+        }
+
         Pre_GridConversion *gridConversion = GetConvertType(gridFileName, gridType, fromGridType);
         gridConversion->Run();
 
@@ -680,12 +688,15 @@ void MultiGridConvert()
         DumpGrid(outGridFile, grids, nZones);
         DumpCharacteristicBoundary(outGridFile, grids, nZones);
         WriteBCNameInfo(outGridFile, grids, nZones);
+        gridConversion->WriteVolumeName(outGridFile, grids);
 
         delete gridConversion;
         delete [] grids;
     }
 
     WriteBoundaryInfo(&totalGrids[0], static_cast<int>(totalGrids.size()));
+
+    WriteVolumeInfo(&totalGrids[0], static_cast<int>(totalGrids.size()));
 
     for (int iZone = 0; iZone < totalGrids.size(); ++ iZone)
     {

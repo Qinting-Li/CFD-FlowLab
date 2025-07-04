@@ -52,13 +52,11 @@ CFDSolver::~CFDSolver()
 {
     if (postVisualization != NULL)
     {
-        delete postVisualization;
-        postVisualization = 0;
+        FreePointer(postVisualization);
     }
     if (postVisualWall != NULL)
     {
-        delete postVisualWall;
-        postVisualWall = 0;
+        FreePointer(postVisualWall);
     }
 }
 
@@ -84,14 +82,23 @@ void CFDSolver::InitFlow()
 
     //! This method would be wrong when turbulent computational from laminar flow field.
     //! But this situation breaks the law, so it is not considered.
-    bool readFlowFile = false;
+    int readFlowFile = INITINFLOW;
     if (JudgeIfRestart())
     {
-        readFlowFile = true;
+        readFlowFile = RESTARTFLIE;
 
         nstart = 1;
         GlobalDataBase::UpdateData("nstart", &nstart, PHINT, 1);
     }
+
+    if (JudgeIfInterpolate())
+    {
+        readFlowFile = INTERPOLATEFLIE;
+
+        nstart = 1;
+        GlobalDataBase::UpdateData("nstart", &nstart, PHINT, 1);
+    }
+ 
 
     if (!readFlowFile)
     {
@@ -103,13 +110,21 @@ void CFDSolver::InitFlow()
 
         InitFlowAsRestart();
     }
-    else
+    else if(readFlowFile == RESTARTFLIE)
     {
         //! To read data in restart file for continual simulation.
         ActionKey *actkeyReadRestartData = new ActionKey();
         FillActionKey(actkeyReadRestartData, READ_RESTART, 0);
         InitFlowAsReadingRestart(actkeyReadRestartData);
-        delete actkeyReadRestartData;
+        FreePointer(actkeyReadRestartData);
+    }
+    else if(readFlowFile == INTERPOLATEFLIE)
+    {
+        //! To read data in restart file for continual simulation.
+        ActionKey *actkeyReadInterpolateData = new ActionKey();
+        FillActionKey(actkeyReadInterpolateData, READ_INTERPOLATE, 0);
+        InitFlowByReadingInterpolate(actkeyReadInterpolateData);
+        FreePointer(actkeyReadInterpolateData);
     }
 
     RDouble globalMinTimeStep = -LARGE;
@@ -150,7 +165,7 @@ void CFDSolver::InitProtectedFlow()
         ActionKey *actkeyReadRestartData = new ActionKey();
         FillActionKey(actkeyReadRestartData, READ_RESTART, 0);
         InitFlowAsReadingProtectedRestart(actkeyReadRestartData);
-        delete actkeyReadRestartData;
+        FreePointer(actkeyReadRestartData);
     }
 
     RDouble globalMinTimeStep = -LARGE;
@@ -180,6 +195,11 @@ bool CFDSolver::JudgeIfRestart()
     return false;
 }
 
+bool CFDSolver::JudgeIfInterpolate()
+{
+    return false;
+}
+
 bool CFDSolver::JudgeIfProtectedRestart()
 {
     return false;
@@ -199,8 +219,7 @@ void CFDSolver::FreeControlParameters()
 {
     if (controlParameters)
     {
-        delete controlParameters;
-        controlParameters = nullptr;
+        FreePointer(controlParameters);
     }
 }
 
@@ -441,6 +460,11 @@ void CFDSolver::ReadRestartH5(ActionKey *actkey)
 
 }
 
+void CFDSolver::InterpolateFromRestartH5(ActionKey* actkey)
+{
+
+}
+
 void CFDSolver::AllocateGlobalVariables()
 {
     Grid *grid = GetGrid();
@@ -506,14 +530,12 @@ void CFDSolver::DeAllocateGlobalVar(Grid *grid)
 {
     if (postVisualization != 0)
     {
-        delete postVisualization;
-        postVisualization = 0;
+        FreePointer(postVisualization);
     }
 
     if (postVisualWall != 0)
     {
-        delete postVisualWall;
-        postVisualWall = 0;
+        FreePointer(postVisualWall);
     }
 }
 
@@ -599,23 +621,22 @@ LIB_EXPORT void CFDSolver::RegisterOversetField(const string &name, const int ty
 void CFDSolver::DeAllocateOversetInterfaceVar(Grid *grid)
 {
     UnstructGrid *gridUnstr = UnstructGridCast(grid);
-    if (gridUnstr == NULL)
+    if (gridUnstr == nullptr)
     {
         return;
     }
-    OversetInfoProxy *oversetInfoProxy = gridUnstr->GetOversetInfoProxy();
-    if (oversetInfoProxy)
-    {
-        DeAllocateOversetInterfaceVar(oversetInfoProxy);
-        delete oversetInfoProxy;
-        oversetInfoProxy = NULL;
-    }
-}
 
-void CFDSolver::DeAllocateOversetInterfaceVar(OversetInfoProxy *oversetInfoProxy)
+    OversetInformationProxy *oversetInformationProxy = gridUnstr->GetOversetInformationProxy();
+    if (oversetInformationProxy)
+    {
+        DeAllocateOversetInterfaceVar(oversetInformationProxy);
+    }
+    }
+
+void CFDSolver::DeAllocateOversetInterfaceVar(OversetInformationProxy *oversetInformationProxy)
 {
-    DeAllocateOversetInterfaceVar(oversetInfoProxy->GetRecvDataStorage());
-    DeAllocateOversetInterfaceVar(oversetInfoProxy->GetSendDataStorage());
+    DeAllocateOversetInterfaceVar(oversetInformationProxy->GetOversetDataProxyForReceive()->GetDataStorage());
+    DeAllocateOversetInterfaceVar(oversetInformationProxy->GetOversetDataProxyForSend()->GetDataStorage());
 }
 
 void CFDSolver::DeAllocateOversetInterfaceVar(Data_ParamFieldSuite *dataStore)
@@ -641,7 +662,7 @@ void CFDSolver::GetInterfaceData(ActionKey *actkey)
 
     GetInterfaceData(grid->GetFinestGrid()->GetInterfaceInfo(),actkey,interfaceDataProxy);
 
-    delete interfaceDataProxy;
+    FreePointer(interfaceDataProxy);
 }
 
 void CFDSolver::GetInterpointData(ActionKey *actkey)
@@ -663,7 +684,7 @@ void CFDSolver::GetInterpointData(ActionKey *actkey)
     //PHSPACE::GetInterpointData(interfaceInfo,actkey,interpointDataProxy);
     GetInterpointData(grid->GetFinestGrid()->GetInterpointInfo(),actkey,interpointDataProxy);
 
-    delete interpointDataProxy;
+    FreePointer(interpointDataProxy);
 }
 
 void CFDSolver::TranslateInterfaceData(ActionKey *actkey)
@@ -684,7 +705,7 @@ void CFDSolver::TranslateInterfaceData(ActionKey *actkey)
     }
 
     TranslateInterfaceData(grid->GetFinestGrid()->GetInterfaceInfo(),actkey,interfaceDataProxy);
-    delete interfaceDataProxy;
+    FreePointer(interfaceDataProxy);
 }
 
 void CFDSolver::TranslateInterpointData(ActionKey *actkey)
@@ -704,7 +725,7 @@ void CFDSolver::TranslateInterpointData(ActionKey *actkey)
     }
 
     TranslateInterpointData(grid->GetFinestGrid()->GetInterpointInfo(),actkey,interpointDataProxy);
-    delete interpointDataProxy;
+    FreePointer(interpointDataProxy);
 }
 
 streamsize CFDSolver::TranslateInterfaceDataLength(ActionKey *actkey)
@@ -724,8 +745,8 @@ streamsize CFDSolver::TranslateInterfaceDataLength(ActionKey *actkey)
     }
 
     streamsize nlen = TranslateInterfaceDataLength(grid->GetFinestGrid()->GetInterfaceInfo(),actkey,interfaceDataProxy);
-    
-    delete interfaceDataProxy;
+
+    FreePointer(interfaceDataProxy);
 
     return nlen;
 }
@@ -747,8 +768,8 @@ streamsize CFDSolver::TranslateInterpointDataLength(ActionKey *actkey)
     }
 
     streamsize nlen = TranslateInterpointDataLength(grid->GetFinestGrid()->GetInterpointInfo(),actkey,interpointDataProxy);
-    
-    delete interpointDataProxy;
+
+    FreePointer(interpointDataProxy);
 
     return nlen;
 }
@@ -770,7 +791,7 @@ void CFDSolver::GetOversetData(ActionKey *actkey)
 
     GetOversetInterfaceData(oversetInformationProxy, actkey, interfaceDataProxy);
 
-    delete interfaceDataProxy;
+    FreePointer(interfaceDataProxy);
 }
 
 void CFDSolver::TranslateOversetData(ActionKey *actkey)
@@ -789,8 +810,8 @@ void CFDSolver::TranslateOversetData(ActionKey *actkey)
     PrepareOversetInterfaceData(dataStorageForReveive, interfaceDataProxy);
 
     TranslateOversetInterfaceData(oversetInformationProxy, actkey, interfaceDataProxy);
-    
-    delete interfaceDataProxy;
+
+    FreePointer(interfaceDataProxy);
 }
 
 void CFDSolver::Boundary(Grid *grid)
@@ -926,6 +947,17 @@ void CFDSolver::CommunicationInterfaceData()
     DownloadInterfaceData();
 }
 
+void CFDSolver::CommunicationOversetSlipData()
+{
+    int isOversetSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isOversetSlip");
+    int isCommGradientforSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isCommGradientforSlip");
+    if (isOversetSlip && isCommGradientforSlip)
+    {
+        UploadOversetData();
+        UpdateOversetData();
+        DownloadOversetData();
+    }
+}
 void CFDSolver::CommunicationInterfaceData(int iLevel)
 {
     Param_CFDSolver *parameters = GetControlParameters();
@@ -979,7 +1011,8 @@ void UpdateInterfaceData()
             MainTaskBlocking(actkey);
         }
         //delete task;
-        delete actkey;    actkey = nullptr;
+
+        FreePointer(actkey);
     }
 }
 
@@ -1148,9 +1181,9 @@ void CFDSolver::SolveOnGridUnsteady(Grid *grid)
             grid->CVGNorm(q1Proxy, q2Proxy, neqn, norm1);
             cvg = norm1 / (norm0 + SMALL);
         }
-        
+
         cout << "iner_iter = " << iner_iter << " cvg = " << cvg << "\n";
-        
+
         if (cvg <= tol_sub_iter)
         {
             break;
@@ -1161,9 +1194,9 @@ void CFDSolver::SolveOnGridUnsteady(Grid *grid)
         }
     }
 
-    delete qnProxy;
-    delete q1Proxy;
-    delete q2Proxy;
+    FreePointer(qnProxy);
+    FreePointer(q1Proxy);
+    FreePointer(q2Proxy);
 }
 
 //! Execute the multi-grid flow solver on grid level.
@@ -1253,11 +1286,11 @@ void CFDSolver::RungeKutta(Grid *grid, FieldProxy *rhsProxy)
         UpdateFlowField(grid, qProxy, resRK);
     }
 
-    delete [] lamda;    lamda = NULL;
-    delete qProxy;    qProxy = NULL;
-    delete q0ProxyTemp;    q0ProxyTemp = NULL;
-    delete resProxy;    resProxy = NULL;
-    delete resRK;    resRK = NULL;
+    DelPointer(lamda);
+    FreePointer(qProxy);
+    FreePointer(q0ProxyTemp);
+    FreePointer(resProxy);
+    FreePointer(resRK);
 }
 
 void CFDSolver::SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
@@ -1319,7 +1352,7 @@ void CFDSolver::PutCorrection(Grid *grid, FieldProxy *qProxy)
 
     PutCorrection(grid, qProxy, old_q_proxy, neqn);
 
-    delete old_q_proxy;
+    FreePointer(old_q_proxy);
 }
 
 void CFDSolver::Action(ActionKey *actkey)
@@ -1468,7 +1501,7 @@ void CFDSolver::GetInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *actkey,
             }
         }
         cdata->Write(qtmp, nlen * sizeof(RDouble));
-        delete [] qtmp;    qtmp = NULL;
+        DelPointer(qtmp);
     }
 }
 
@@ -1515,7 +1548,7 @@ void CFDSolver::GetInterpointData(InterpointInformation *interpointInformation, 
             }
         }
         cdata->Write(qtmp, nlen * sizeof(RDouble));
-        delete [] qtmp;    qtmp = nullptr;
+        DelPointer(qtmp);
     }
 }
 
@@ -1562,7 +1595,7 @@ void CFDSolver::TranslateInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *a
                 q[m][iFace] = qTemp[icount ++];
             }
         }
-        delete [] qTemp;
+        DelPointer(qTemp);
     }
 }
 
@@ -1607,7 +1640,7 @@ void CFDSolver::TranslateInterpointData(InterpointInformation *interpointInforma
                 q[m][iPoint] = qtmp[iCount ++];
             }
         }
-        delete [] qtmp;    qtmp = nullptr;
+        DelPointer(qtmp);
     }
 }
 
@@ -1696,7 +1729,7 @@ void CFDSolver::GetOversetInterfaceData(OversetInformationProxy *oversetInformat
             }
         }
         cdata->Write(qtmp, nlen * sizeof(RDouble));
-        delete [] qtmp;    qtmp = nullptr;
+        DelPointer(qtmp);
     }
 }
 
@@ -2539,6 +2572,56 @@ void CFDSolver::InitFlowAsReadingRestart(ActionKey *actkey)
     actkey->filepos = 0;
 }
 
+void CFDSolver::InitFlowByReadingInterpolate(ActionKey* actkey)
+{
+    int zoneIDofThisSolver = GetZoneLocalID();
+    if (zoneIDofThisSolver != 0)
+    {
+        //! Very Important: only the first zone on a processor need to implement the task.
+        //! other wise, the tasks would be implemented several times.
+        return;
+    }
+
+    using namespace PHMPI;
+  
+    actkey->gridfilename = GetRestartGridFileName();
+
+    actkey->filename = GetRestartFlowFileName();
+
+    if (actkey->gridfilename == "" || actkey->filename == "")
+    {
+        return;
+    }
+
+    hid_t gridfile;
+    gridfile = OpenHDF5File(actkey->gridfilename);
+    actkey->gridfilepos = gridfile;
+
+    hid_t file;
+    file = OpenHDF5File(actkey->filename);
+    actkey->filepos = file;
+
+    int nZones = GetNumberofGlobalZones();
+    int currentProcessorID = GetCurrentProcessorID();
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int recvProcess = GetZoneProcessorID(iZone);
+
+        if (currentProcessorID == recvProcess)
+        {
+            CFDSolver *solver = static_cast <CFDSolver *> (GlobalSolvers::GetSolver(iZone, actkey->solverID));
+            solver->InterpolateFromRestartH5(actkey);
+        }
+    }
+
+    H5Fclose(gridfile);
+    actkey->gridfilepos = 0;
+
+    H5Fclose(file);
+    actkey->filepos = 0;
+
+}
 void CFDSolver::InitFlowAsReadingProtectedRestart(ActionKey *actkey)
 {
     int zoneIDofThisSolver = GetZoneLocalID();
@@ -2632,6 +2715,21 @@ const string CFDSolver::GetRestartFileName()
     string restartNSFile = "flow.dat";
     GlobalDataBase::GetData("restartNSFile", &restartNSFile, PHSTRING, 1);
     return restartNSFile;
+}
+//! Get the grid file name for Restart info by interpolated.
+const string CFDSolver::GetRestartGridFileName()
+{
+    string restartGridFile = "";
+    GlobalDataBase::GetData("restartGridFile", &restartGridFile, PHSTRING, 1);
+    return restartGridFile;
+}
+
+//! Get the flow file name for Restart info by interpolated.
+const string CFDSolver::GetRestartFlowFileName()
+{
+    string restartNSVarFile = "";
+    GlobalDataBase::GetData("restartNSVarFile", &restartNSVarFile, PHSTRING, 1);
+    return restartNSVarFile;
 }
 
 void CFDSolver::DumpAirForceCoef(ActionKey *actkey)
@@ -2777,7 +2875,7 @@ void CFDSolver::DumpCpDistri(ActionKey *actkey)
 
     for (unsigned int iZone = 0 ; iZone < datalist.size(); ++ iZone)
     {
-        delete datalist[iZone];
+        FreePointer(datalist[iZone]);
     }
 }
 
@@ -3012,7 +3110,7 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
                     }
                     if (coor_count % nWordOfLine != 0) wallAircoefFile << "\n";
 
-                    delete [] vector_data[iData];
+                    DelPointer(vector_data[iData]);
                 }
             }
             else
@@ -3043,7 +3141,7 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
 
                 for (int iData = 0; iData < dataNumber; ++ iData)
                 {
-                    delete [] vector_data[iData];
+                    DelPointer(vector_data[iData]);
                 }
 
                 int count = 0;
@@ -3057,12 +3155,12 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
                     wallAircoefFile << "\n";
                 }
 
-                delete [] face2node;
+                DelPointer(face2node);
             }
 
-            delete [] x;
-            delete [] y;
-            delete [] z;
+            DelPointer(x);
+            DelPointer(y);
+            DelPointer(z);
 
             PHRead(cdata, &TecioMission, 1);
         }
@@ -3143,9 +3241,10 @@ void CFDSolver::DumpHeatFlux(ActionKey *actkey)
     int serverTmp = GetServerSepMode();
     if (currentProcessorID == serverTmp)
     {
-        WriteHeatFluxASCII(actkey, HeatFlux); //! Write data to file.
+        WriteHeatFluxASCII(actkey, HeatFlux);    //! Write data to file.
     }
-    delete [] HeatFlux;
+
+    DelPointer(HeatFlux);
 }
 
 void CFDSolver::WriteHeatFluxASCII(ActionKey *actkey, RDouble *HeatFlux)
@@ -3386,7 +3485,7 @@ void CFDSolver::WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> dat
             {
                 I = TECDAT112(&data_count[iData], vector_data[iData], &IsDouble);
 
-                delete [] vector_data[iData];
+                DelPointer(vector_data[iData]);
             }
 
             if (gridTypeofLocalZone == UNSTRUCTGRID)
@@ -3396,7 +3495,7 @@ void CFDSolver::WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> dat
 
                 I = TECNOD112(face2node);
 
-                delete [] face2node;
+                DelPointer(face2node);
             }
 
             if (FileIsFull == false)
@@ -3404,12 +3503,12 @@ void CFDSolver::WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> dat
                 FileIsFull = true;
             }
 
-            delete [] x;
-            delete [] y;
-            delete [] z;
+            DelPointer(x);
+            DelPointer(y);
+            DelPointer(z);
 
             PHRead(cdata, &TecioMission, 1);
-            delete [] ValueLocation;
+            DelPointer(ValueLocation);
         }
     }
 
@@ -3454,7 +3553,7 @@ void CFDSolver::UploadInterfaceData()
                 solver->UploadInterfaceData(actkey);
             }
         }
-        delete actkey;    actkey = nullptr;
+        FreePointer(actkey);
     }
 }
 
@@ -3485,7 +3584,7 @@ void CFDSolver::UpdateInterfaceData()
             MainTaskBlocking(actkey);
         }
         //delete task;
-        delete actkey;    actkey = nullptr;
+        FreePointer(actkey);
     }
 }
 
@@ -3519,7 +3618,7 @@ void CFDSolver::DownloadInterfaceData()
             }
         }
 
-        delete actkey;    actkey = nullptr;
+        FreePointer(actkey);
     }
 }
 
@@ -3550,7 +3649,7 @@ void CFDSolver::UploadInterfaceData(int iLevel)
         }
     }
 
-    delete actkey;    actkey = nullptr;
+    FreePointer(actkey);
 }
 
 void CFDSolver::UpdateInterfaceData(int iLevel)
@@ -3577,7 +3676,7 @@ void CFDSolver::UpdateInterfaceData(int iLevel)
         MainTaskBlocking(actkey);
     }
 
-    delete actkey;    actkey = nullptr;
+    FreePointer(actkey);
 }
 
 void CFDSolver::DownloadInterfaceData(int iLevel)
@@ -3607,7 +3706,7 @@ void CFDSolver::DownloadInterfaceData(int iLevel)
         }
     }
 
-    delete actkey;    actkey = nullptr;
+    FreePointer(actkey);
 }
 
 void CFDSolver::UploadInterpointData()
@@ -3639,7 +3738,7 @@ void CFDSolver::UploadInterpointData()
                 solver->UploadInterpointData(actkey);
             }
         }
-        delete actkey;    actkey = nullptr;
+        FreePointer(actkey);
     }
 }
 
@@ -3669,8 +3768,9 @@ void CFDSolver::UpdateInterpointData()
         {
             task->MainTaskBlocking(actkey);
         }
-        delete task;    task = nullptr;
-        delete actkey;    actkey = nullptr;
+
+        FreePointer(actkey);
+        FreePointer(task);
     }
 }
 
@@ -3704,7 +3804,7 @@ void CFDSolver::DownloadInterpointData()
             }
         }
 
-        delete actkey;    actkey = nullptr;
+        FreePointer(actkey);
     }
 }
 
@@ -3728,7 +3828,7 @@ void CFDSolver::CommunicationInterpointWeight()
         CommunicationInterpointWeight(actkey);
         DownloadInterpointWeight(actkey);
 
-        delete actkey;    actkey = nullptr;
+        FreePointer(actkey);
     }
 }
 
@@ -3762,7 +3862,7 @@ void CFDSolver::UploadOversetData()
             }
         }
 
-        delete actkey;    actkey = nullptr;
+        FreePointer(actkey);
     }
 }
 
@@ -3795,7 +3895,7 @@ void CFDSolver::UpdateOversetData()
                 PH_Interface(actkey, iZone, oversetNeighborZoneIndex);
             }
         }
-        delete actkey;    actkey = nullptr;
+        FreePointer(actkey);
     }
 }
 
@@ -3828,7 +3928,7 @@ void CFDSolver::DownloadOversetData()
                 solver->DownloadOversetData(actkey);
             }
         }
-        delete actkey;    actkey = nullptr;
+        FreePointer(actkey);
     }
 }
 

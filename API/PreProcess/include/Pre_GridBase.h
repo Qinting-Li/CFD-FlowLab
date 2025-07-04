@@ -149,68 +149,107 @@ public:
     cgsize_t GetNBoundFace() const { return nBoundFace; }
 private:
     cgsize_t nTotalNode, nTotalCell, nBoundFace;
-    int nSections, nBCRegions;
-    string *boundaryName;
-    string  volumeName;
-    cgsize_t *istart, *iend;
-    cgsize_t *ElementDataSize;
-    int *elem_type;
-    cgsize_t **conn_list;
-    int *nBCElem;
-    cgsize_t **mixed_conn_index;
+    int      nSections, nBCRegions;
+    string   *boundaryName;
+    string   volumeName;
+    cgsize_t *iStart, *iEnd;
+    cgsize_t *elementDataSize;
+    int      *elementType;
+    cgsize_t **connList;
+    int      *nBCElem;
+    cgsize_t **mixedConnID;
 
-    int *bc_type;
-    int *bc_elem_set_type, *bc_grid_location;
-    cgsize_t **bc_conn_list;
+    int *bcType;
+    int *boundaryElementType, * bcGridLocation;
+    cgsize_t **bcConnList;
     int vcType;
+    cgsize_t **connectOffSet;
+    int isCartesian3D, isCartesian2D;
+    int cellStartIndex;
+
+    int nIFaceRegion;
+    int *nIFaceElem;
+    int *interFaceType;
+    int *interFaceElementType, *interFaceGridLocation;
+    cgsize_t **interFaceConnList;
+    string   *interFaceName;
+
 public:
-    string * GetBCName() const { return boundaryName; }
-    void SetBCName(string *nameIn) { boundaryName = nameIn; }
+    string *GetBCName() const { return boundaryName; }
+    void   SetBCName(string *nameIn) { boundaryName = nameIn; }
 
     string GetVCName() { return volumeName; }
-    void SetVCName(string nameIn) { volumeName = nameIn; }
+    void   SetVCName(string nameIn) { volumeName = nameIn; }
 
     int  GetVCType() { return vcType; }
     void SetVCType(int vcTypeIn) { vcType = vcTypeIn; }
 
-    cgsize_t ** GetBoundaryElementConnectionList() const { return bc_conn_list; }
-    void SetBoundaryElementConnectionList(cgsize_t **bc_conn_list) { this->bc_conn_list = bc_conn_list; }
+    cgsize_t **GetBoundaryElementConnectionList() const { return bcConnList; }
+    void     SetBoundaryElementConnectionList(cgsize_t **bcConnList) { this->bcConnList = bcConnList; }
 
-    int * GetBCType() const { return bc_type; }
-    void SetBCType(int *bc_type) { this->bc_type = bc_type; }
+    int  *GetBCType() const { return bcType; }
+    void SetBCType(int *bcType) { this->bcType = bcType; }
 
-    int * GetBoundaryGridLocation() const { return bc_grid_location; }
-    void SetBoundaryGridLocation(int *bc_grid_location) { this->bc_grid_location = bc_grid_location; }
+    int  *GetBoundaryGridLocation() const { return bcGridLocation; }
+    void SetBoundaryGridLocation(int *bcGridLocation) { this->bcGridLocation = bcGridLocation; }
 
-    int * GetBoundaryElementType() const { return bc_elem_set_type; }
-    void SetBoundaryElementType(int *bc_elem_set_type) { this->bc_elem_set_type = bc_elem_set_type; }
+    int  *GetBoundaryElementType() const { return boundaryElementType; }
+    void SetBoundaryElementType(int *boundaryElementType) { this->boundaryElementType = boundaryElementType; }
 
-    int * GetNumberOfBCElements() const { return nBCElem; }
+    int  *GetNumberOfBCElements() const { return nBCElem; }
     void SetNumberOfBCElements(int *nBCElem) { this->nBCElem = nBCElem; }
 
-    cgsize_t ** GetElementConnectionList() const { return conn_list; }
-    cgsize_t ** GetMixedConnectionIndex() const { return mixed_conn_index; }
-    int GetNumberOfSections() const { return nSections; }
-    void SetNumberOfSections(int nSections) { this->nSections = nSections; }
+    cgsize_t **GetElementConnectionList() const { return connList; }
+    cgsize_t **GetMixedConnectionIndex() const { return mixedConnID; }
+    int      GetNumberOfSections() const { return nSections; }
+    void     SetNumberOfSections(int nSections) { this->nSections = nSections; }
 
-    int GetNumberOfBCRegions() const { return nBCRegions; }
+    int  GetNumberOfBCRegions() const { return nBCRegions; }
     void SetNumberOfBCRegions(int nBCRegions) { this->nBCRegions = nBCRegions; }
 
-    cgsize_t * GetIndexOfStart() const { return istart; }
-    cgsize_t * GetIndexOfEnd() const { return iend; }
-    cgsize_t * GetElementDataSize() const { return ElementDataSize; }
+    cgsize_t *GetIndexOfStart() const { return iStart; }
+    cgsize_t *GetIndexOfEnd() const { return iEnd; }
+    cgsize_t *GetElementDataSize() const { return elementDataSize; }
 
-    int * GetElementType() const { return elem_type; }
+    cgsize_t **GetConnectOffSet() const { return connectOffSet; }
+
+    void SetIsCartesian2D(int isCartesian2D) { this->isCartesian2D = isCartesian2D; }
+    void SetIsCartesian3D(int isCartesian3D) { this->isCartesian3D = isCartesian3D; }
+    void SetCellStartIndex(int cellStartIndex) { this->cellStartIndex = cellStartIndex; }
+    int GetIsCartesian2D() { return isCartesian2D; }
+    int GetIsCartesian3D() { return isCartesian3D; }
+    int GetCellStartIndex() { return cellStartIndex; }
+
+    int  *GetNumberOfInterFaceElements() { return nIFaceElem; }
+    void SetNumberOfInterFaceElements(int *nIFaceElem) { this->nIFaceElem = nIFaceElem; }
+
+    int  *GetInterFaceElementType() { return interFaceElementType; }
+    void SetInterFaceElementType(int *interFaceElementType) { this->interFaceElementType = interFaceElementType; }
+
+    int  *GetInterFaceGridLocation() { return interFaceGridLocation; }
+    void SetInterFaceGridLocation(int *interFaceGridLocation) { this->interFaceGridLocation = interFaceGridLocation; }
+
+    int  *GetInterFaceType() { return interFaceType; }
+    void SetInterFaceType(int *interFaceType) { this->interFaceType = interFaceType; }
+
+    cgsize_t **GetInterFaceElementConnectionList() { return interFaceConnList; }
+    void     SetInterFaceElementConnectionList(cgsize_t **interFaceConnList) { this->interFaceConnList = interFaceConnList; }
+
+    string *GetIFaceName() const { return interFaceName; }
+    void   SetIFaceName(string *nameIn) { interFaceName = nameIn; }
+
+    int *GetElementType() const { return elementType; }
 public:
     void CreateElement(int nSections);
     void CreateBC(int nBCRegions);
-    void PreProcess(Base_Grid_Conn *gconn, BaseElement *base_elem);
-    void PostProcess(Base_Grid_Conn *gconn);
+    void CreateInterFace(int nIFaceRegions);
+    void PreProcess(Base_Grid_Conn *gConn, BaseElement *baseElem);
+    void PostProcess(Base_Grid_Conn *gConn);
     void GetISection(cgsize_t iCell, int &isection);
 
     bool CheckBCFace(int *bc_face, int nfacept, set<cgsize_t> &bc_vertex);
 
-    void ComputeGridConn(Base_Grid_Conn *gconn, BaseElement *base_elem);
+    void ComputeGridConn(Base_Grid_Conn *gConn, BaseElement *baseElem);
     void GetElem(cgsize_t *elem_source, cgsize_t iCell, int ptnum, cgsize_t *&elem);
     void GetBCFaceMixed(cgsize_t *elem_source, cgsize_t iCell, int isection, cgsize_t *&elem);
     void GetElem(BaseElement *base_elem, cgsize_t iCell, int &etype, cgsize_t *&elem);
@@ -218,9 +257,18 @@ public:
     void GetFace(Base_Grid_Conn *gconn, cgsize_t *elem, cgsize_t iCell, CElemFace *elemface);
     void GetFace(cgsize_t *elem, int loc, int *bc_face, int &nfacept, CElemFace *elemface);
 
-    void ComputeElemFace(Base_Grid_Conn *gconn, BaseElement *base_elem);
-    void ComputeBCFace(Base_Grid_Conn *gconn, BaseElement *base_elem);
-    void ComputeCellToNode(Base_Grid_Conn *gconn, BaseElement *base_elem);
+    //! Using for NGON_n and NFACE_n type of sections to get 3D Cartesian grid face information of face2node and face2cell.
+    void GetFaceInformationofFace2Node(Base_Grid_Conn *gConn, int sectionID);
+    void GetFaceInformationofFace2Cell(Base_Grid_Conn *gConn, int sectionID);
+
+    //! Construct element face for 2D Cartesian grid.
+    void GetCartesian2DFace(Base_Grid_Conn *gConn, cgsize_t *elem, cgsize_t iCell, int nPoint);
+    void GetCartesian2DBCFace(cgsize_t iCell, int sectionID, int &facePtNum, cgsize_t *&bcFace);
+    void ProcessBCFaceCartesian2D(Base_Grid_Conn *gConn, cgsize_t iElement, int sectionID, BCType_t bcType, const string &BCName);
+
+    void ComputeElemFace(Base_Grid_Conn *gConn, BaseElement *baseElem);
+    void ComputeBCFace(Base_Grid_Conn *gConn, BaseElement *baseElem);
+    void ComputeCellToNode(Base_Grid_Conn *gConn, BaseElement *baseElem);
     bool MarkBCFace(Base_Grid_Conn *gconn, cgsize_t *bcface, int facept_num, BCType_t bctype, const string &BCName);
     void MarkBCInterface(Base_Grid_Conn *gconn);
 
@@ -318,30 +366,31 @@ class CGNSFactory
 {
 private:
     int nBlocks;
-    CGNSBase       **base_cgns;
-    Base_Grid_Conn **base_conn;
-    BaseElement    *base_elem;
-    BaseBCType     *fantasy_bc;
-    RawGrid        **rawgrid;
+    CGNSBase       **baseCGNS;
+    Base_Grid_Conn **baseConn;
+    BaseElement    *baseElem;
+    BaseBCType     *fantasyBC;
+    RawGrid        **rawGrid;
+
 public:
     CGNSFactory(int nBlocks);
     ~CGNSFactory();
 public:
-    Base_Grid_Conn ** GetBaseGridConnection() const { return base_conn; }
-    Base_Grid_Conn * GetBaseGridConnection(int iZone) const { return base_conn[iZone]; }
-    BaseElement * GetBaseElement() const { return base_elem; }
-    BaseBCType * GetBaseBCType() const { return fantasy_bc; }
-    RawGrid  * GetRawGrid(int iZone) { return rawgrid[iZone]; }
-    CGNSBase * GetCGNSBase(int iZone = 0) { return base_cgns[iZone]; }
+    Base_Grid_Conn **GetBaseGridConnection() const { return baseConn; }
+    Base_Grid_Conn *GetBaseGridConnection(int iZone) const { return baseConn[iZone]; }
+    BaseElement *GetBaseElement() const { return baseElem; }
+    BaseBCType *GetBaseBCType() const { return fantasyBC; }
+    RawGrid  *GetRawGrid(int iZone) { return rawGrid[iZone]; }
+    CGNSBase *GetCGNSBase(int iZone = 0) { return baseCGNS[iZone]; }
     int GetNumberofBlocks() const { return nBlocks; }
     void ConvertGrid2Fantasy();
     void DumpSelfDefinePartInformation();
-    void SetNumberofBlocks(int nBlocks_in) { this->nBlocks = nBlocks_in; }
+    void SetNumberofBlocks(int nBlocksIn) { this->nBlocks = nBlocksIn; }
 private:
-    void ComputeGridConn(CGNSBase *cgnsgrid, Base_Grid_Conn *gconn);
+    void ComputeGridConn(CGNSBase *cgnsGrid, Base_Grid_Conn *gConn);
     void ReLableSelfDefineBC();
 };
 
-void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid);
+void CGNS2UnsGrid(CGNSFactory *factoryCGNS, int iZone, UnstructGrid *grid);
 
 }

@@ -5,10 +5,14 @@ namespace PHSPACE
     LIB_EXPORT Geo_LineTopo_Unstruct::Geo_LineTopo_Unstruct()
     {
         nLine = 0;
+        starIndex     = 0;
+        endIndex      = 0;
         nCellsInLines = NULL;
         CellOfLine = NULL;
         FaceOfLine = NULL;
         LineOfCell = NULL;
+        Line2Node     = NULL;
+        Face2Line     = NULL;
     }
 
     LIB_EXPORT Geo_LineTopo_Unstruct::~Geo_LineTopo_Unstruct()
@@ -31,6 +35,16 @@ namespace PHSPACE
         if (LineOfCell != NULL)
         {
             DelPointer(LineOfCell);
+        }
+
+        if (Line2Node != NULL)
+        {
+            DelPointer(Line2Node);
+        }
+
+        if (Face2Line != NULL)
+        {
+            DelPointer2(Face2Line);
         }
     }
 

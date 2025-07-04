@@ -88,6 +88,9 @@ public:
     //! Compute the minimum and maximum box of the grid zone.
     LIB_EXPORT void ComputeMinMaxBox();
 
+    //! Compute the minimum and maximum box of the grid zone.
+    LIB_EXPORT bool IfBoxOverset(RDouble *pmin, RDouble *pmax, int nDim, RDouble eps = 1.0e-6);
+
     //! Compute the minimum distance of the grid edges.
     LIB_EXPORT virtual RDouble CalMinEdgeLength();
 

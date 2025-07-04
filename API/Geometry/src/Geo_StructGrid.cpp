@@ -809,6 +809,35 @@ void StructGrid::AllocateMetricsALE(ActionKey *actkey)
     dynamicGridMetrics->SetFaceVelocityY(faceVelocityY);
     dynamicGridMetrics->SetFaceVelocityZ(faceVelocityZ);
     dynamicGridMetrics->SetCellVolumeOld(voln);
+
+    RDouble3D *cellVelocityX = dynamicGridMetrics->GetCellVelocityX();
+    RDouble3D *cellVelocityY = dynamicGridMetrics->GetCellVelocityY();
+    RDouble3D *cellVelocityZ = dynamicGridMetrics->GetCellVelocityZ();
+
+    int ifLowSpeedPrecon = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
+    if (ifLowSpeedPrecon != 0)
+    {
+        if (cellVelocityX == NULL)
+        {
+            cellVelocityX = new RDouble3D(I, J, K, fortranArray);
+            (*cellVelocityX) = zero;
+        }
+        if (cellVelocityY == NULL)
+        {
+            cellVelocityY = new RDouble3D(I, J, K, fortranArray);
+            (*cellVelocityY) = zero;
+        }
+        if (cellVelocityZ == NULL)
+        {
+            cellVelocityZ = new RDouble3D(I, J, K, fortranArray);
+            (*cellVelocityZ) = zero;
+        }
+
+        dynamicGridMetrics->SetCellVelocityX(cellVelocityX);
+        dynamicGridMetrics->SetCellVelocityY(cellVelocityY);
+        dynamicGridMetrics->SetCellVelocityZ(cellVelocityZ);
+    }
+
 }
 
 void ModifyWallTemperature(const string& name, Grid *grid_in, RDouble4D &qn)
@@ -1630,7 +1659,14 @@ void StructGrid::CompressSpecificArrayToInterface(DataContainer *&dataContainer,
     {
         return;
     }
-
+    if (fieldName == "gradPrimtiveVarX"||fieldName == "gradPrimtiveVarY"||fieldName == "gradPrimtiveVarZ")
+    {
+        return;
+    }
+    if (fieldName == "gradTemperatureX"||fieldName == "gradTemperatureY"||fieldName == "gradTemperatureZ")
+    {
+        return;
+    }
     StructGrid *finestGrid = StructGridCast(this->GetFinestGrid());
     InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
 
@@ -1685,7 +1721,14 @@ void StructGrid::DecompressArrayFromInterface(DataContainer *&dataContainer, con
     {
         return;
     }
-
+    if (fieldName == "gradPrimtiveVarX"||fieldName == "gradPrimtiveVarY"||fieldName == "gradPrimtiveVarZ")
+    {
+        return;
+    }
+    if (fieldName == "gradTemperatureX"||fieldName == "gradTemperatureY"||fieldName == "gradTemperatureZ")
+    {
+        return;
+    }
     StructGrid *finestGrid = StructGridCast(this->GetFinestGrid());
     InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
 
@@ -3959,6 +4002,65 @@ LIB_EXPORT void StructGrid::GridSurfaceVelocity(RDouble *xt, RDouble *yt, RDoubl
     }
 }
 
+LIB_EXPORT void StructGrid::GridCellVelocity(RDouble *xt, RDouble *yt, RDouble *zt)
+{
+    int ni = this->GetNI();
+    int nj = this->GetNJ();
+    int nk = this->GetNK();
+
+    Range I, J, K;
+    GetRange(ni, nj, nk, 0, 0, I, J, K);
+
+    RDouble3D xxt(xt, I, J, K, neverDeleteData, fortranArray);
+    RDouble3D yyt(yt, I, J, K, neverDeleteData, fortranArray);
+    RDouble3D zzt(zt, I, J, K, neverDeleteData, fortranArray);
+
+    RDouble3D &xx = *this->GetStructX();
+    RDouble3D &yy = *this->GetStructY();
+    RDouble3D &zz = *this->GetStructZ();
+
+    RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
+
+    RDouble3D &cellVelocityX = *(this->GetCellVelocityX());
+    RDouble3D &cellVelocityY = *(this->GetCellVelocityY());
+    RDouble3D &cellVelocityZ = *(this->GetCellVelocityZ());
+
+    int ist, ied, jst, jed, kst, ked;
+    this->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+
+    int il1 = 1;
+    int jl1 = 1;
+    int kl1 = 1;
+    if (nk == 1) kl1 = 0;
+
+    for (int k = kst; k <= ked; ++k)
+    {
+        for (int j = jst; j <= jed; ++j)
+        {
+            for (int i = ist; i <= ied; ++i)
+            {
+                int il, jl, kl;
+
+                il = i + il1;
+                jl = j + jl1;
+                kl = k + kl1;
+
+                RDouble a = eighth * (xxt(i, j, k) +xxt(il, j, k) + xxt(il, jl, k) + xxt(i, jl, k)
+                    + xxt(i, j, kl) + xxt(il, j, kl) + xxt(il, jl, kl) + xxt(i, jl, kl));
+                RDouble b = eighth * (yyt(i, j, k) + yyt(il, j, k) + yyt(il, jl, k) + yyt(i, jl, k)
+                    + yyt(i, j, kl) + yyt(il, j, kl) + yyt(il, jl, kl) + yyt(i, jl, kl));
+                RDouble c = eighth * (zzt(i, j, k) + zzt(il, j, k) + zzt(il, jl, k) + zzt(i, jl, k)
+                    + zzt(i, j, kl) + zzt(il, j, kl) + zzt(il, jl, kl) + zzt(i, jl, kl));
+
+                cellVelocityX(i, j, k) = a;
+                cellVelocityY(i, j, k) = b;
+                cellVelocityZ(i, j, k) = c;
+            }
+        }
+    }
+  
+}
+
 LIB_EXPORT void StructGrid::ComputeGridFaceVelocity()
 {
     int nTotalNode = this->GetNTotalNode();
@@ -3968,6 +4070,12 @@ LIB_EXPORT void StructGrid::ComputeGridFaceVelocity()
 
     GridVerticeVelocity(xt, yt, zt);
     GridSurfaceVelocity(xt, yt, zt);
+
+    int ifLowSpeedPrecon = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
+    if (ifLowSpeedPrecon == 1)
+    {
+        GridCellVelocity(xt, yt, zt);
+    }
 
     delete [] xt;    xt = nullptr;
     delete [] yt;    yt = nullptr;

@@ -80,7 +80,7 @@ private:
     void StoreStrFieldVTKData(int zoneIndex, DataContainer *cdata);
     void StoreUnsBoundaryVTKData(int zoneIndex, DataContainer *cdata);
     void StoreUnsFieldVTKData(int zoneIndex, DataContainer *cdata);
-    void StoreUnsFieldVTKData2D(int zoneIndex, DataContainer *cdata);
+    void StoreUnsFieldVTKData2D(int zoneIndex, DataContainer *cData);
     void StoreUnsFieldVTKData3D(int zoneIndex, DataContainer *cdata);
 
 private:

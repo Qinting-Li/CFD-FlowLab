@@ -21,6 +21,7 @@
 #include "PHIO.h"
 #include <omp.h>
 #include <Geo_StructMerge.h>
+#include <Geo_UnstructMerge.h>
 #include <Post_WriteTecplot.h>
 #include <GridType.h>
 
@@ -939,7 +940,7 @@ void Region::RecoverGridFromFile(fstream &file, int iZone)
 
     InterpretDataToGrid(cdata, iZone);
 
-    delete cdata;    cdata = nullptr;
+    FreePointer(cdata);
 }
 
 LIB_EXPORT void Region::ReadSingleGrid(fstream &file, int iZone)
@@ -1029,70 +1030,122 @@ void Region::InitOriginalGrid()
 
     Post_WriteTecplotByOriginalGrid *writeTecplotByOriginalGrid = GetWriteTecplotByOriginalGrid();
     int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
+    int nDim           = GetDim();
+    int nTotalZone     = PHMPI::GetNumberofGlobalZones();
+    int *ordinaryGridIndexOfEachZone = new int [nTotalZone];
+    for (int iZone = 0; iZone < nTotalZone; ++ iZone)
+    {
+        ordinaryGridIndexOfEachZone[iZone] = -1;
+    }
+    for (int iZone = 0; iZone < nTotalZone; ++ iZone)
+    {
+        if (!GetGrid(iZone, 0)) continue;
+        Grid *grid             = GetGrid(iZone, 0);
+        int  ordinaryGridIndex = grid->GetOrdinaryGridIndex();
+        ordinaryGridIndexOfEachZone[iZone] = ordinaryGridIndex;
+    }
+    int *ordinaryGridIndexOfEachZoneGlobal = new int [nTotalZone];
+    PH_AllReduce(ordinaryGridIndexOfEachZone, ordinaryGridIndexOfEachZoneGlobal, nTotalZone, MPI_MAX);
+    DelPointer(ordinaryGridIndexOfEachZone);
+
+    int nTotalblock = 0;
+    for (int iZone = 0; iZone < nTotalZone; ++ iZone)
+    {
+        nTotalblock = MAX(nTotalblock, ordinaryGridIndexOfEachZoneGlobal[iZone]);
+    }
+    ++ nTotalblock;
+
+    vector < vector < Grid* > > originalgridofBlock;
+    originalgridofBlock.resize(nTotalblock);
+    int    myid     = PHMPI::GetCurrentProcessorID();
+    string gridFile = GlobalDataBase::GetStrParaFromDB("gridfile");
+
+    string gridfileProc = AddSymbolToFileName(gridFile, "_", myid);
+    bool   fileExist    = FileExist(gridfileProc);
+    int nFileProcessors = 0;
+    if (!fileExist)
+    {
+        if (myid < nTotalblock && UNSTRUCTGRID == systemGridType)
+        {
+            //! The server processor must be file processor.
+            TK_Exit::FileOpenErrorExit(gridfileProc);
+        }
+    }
+    else
+    {
+        nFileProcessors = 1;
+    }
+    int globalFileNumber = 0;
+    PH_AllReduce(&nFileProcessors, &globalFileNumber, 1, MPI_SUM);
+    PHMPI::SetNumberofFiles(globalFileNumber);
+    WriteLogFile("Global grid files number: ", globalFileNumber);
+
+    int *fileIDOfEachZone = new int [nTotalZone];
+    for (int iZone = 0; iZone < nTotalZone; ++ iZone)
+    {
+        fileIDOfEachZone[iZone] = 0;
+    }
     if (UNSTRUCTGRID == systemGridType)
     {
-        cout << "this function has not yet been developed.";
-        TK_Exit::UnexpectedVarValue("systemGridType = ", systemGridType);
-    }
-    else if (STRUCTGRID == systemGridType)
-    {
-        int nTotalZone = PHMPI::GetNumberofGlobalZones();
-        int *ordinaryGridIndexOfEachZone = new int[nTotalZone];
-        for (int iZone = 0; iZone < nTotalZone; ++ iZone)
+        for (int iFile = 0; iFile < globalFileNumber; ++iFile)
         {
-            ordinaryGridIndexOfEachZone[iZone] = -1;
-        }
-        for (int iZone = 0; iZone < nTotalZone; ++ iZone)
-        {
-            if (!GetGrid(iZone, 0)) continue;
-            StructGrid *grid                   = StructGridCast(GetGrid(iZone, 0));
-            int        ordinaryGridIndex       = grid->GetOrdinaryGridIndex();
-            ordinaryGridIndexOfEachZone[iZone] = ordinaryGridIndex;
-        }
-        int *ordinaryGridIndexOfEachZoneGlobal = new int[nTotalZone];
-        PH_AllReduce(ordinaryGridIndexOfEachZone, ordinaryGridIndexOfEachZoneGlobal, nTotalZone, MPI_MAX);
-        delete [] ordinaryGridIndexOfEachZone;    ordinaryGridIndexOfEachZone = nullptr;
-
-        int nTotalblock = 0;
-        for (int iZone = 0; iZone < nTotalZone; ++ iZone)
-        {
-            nTotalblock = MAX(nTotalblock, ordinaryGridIndexOfEachZoneGlobal[iZone]);
-        }
-        ++ nTotalblock;
-
-        vector < vector < StructGrid* > > originalgridofBlock;
-        originalgridofBlock.resize(nTotalblock);
-        int    myid     = PHMPI::GetCurrentProcessorID();
-        string gridFile = GlobalDataBase::GetStrParaFromDB("gridfile");
-        IO_ReadHDF5Grid *gridReader = new IO_ReadHDF5Grid(AddSymbolToFileName(gridFile, "_", 0));
-        gridReader->OpenFile();
-        int *originalGridProc = new int[nTotalblock];
-        Post_WriteTecplotByOriginalGrid *writeTecplotByOriginalGrid = GetWriteTecplotByOriginalGrid();
-        writeTecplotByOriginalGrid->SetOriginalGridProc(nTotalblock, originalGridProc);
-
-        for (int iZone = 0; iZone < nTotalZone; ++ iZone)
-        {
-            int indexofBlock = ordinaryGridIndexOfEachZoneGlobal[iZone];
-            if (myid == originalGridProc[indexofBlock])
+            IO_ReadHDF5Grid *reader = new IO_ReadHDF5Grid(AddSymbolToFileName(gridFile, "_", iFile));
+            reader->OpenFile();
+            int nTotalBlocksInFile = 0;
+            reader->GetNumberOfZones(nTotalBlocksInFile);
+            int *blockIdx = new int[nTotalBlocksInFile];
+            reader->GetZoneIndex(blockIdx);
+            for (int iZone = 0; iZone < nTotalBlocksInFile; ++iZone)
             {
-                Grid *singleGrid = 0;
-                GridID *index = new GridID(iZone);
-                singleGrid = CreateGridGeneral(STRUCTGRID, index, 0, GetDim());
-                gridReader->GetGridInfo(singleGrid);
-                originalgridofBlock[indexofBlock].push_back(StructGridCast(singleGrid));
+                fileIDOfEachZone[blockIdx[iZone]] = iFile;
             }
+
+            DelPointer(blockIdx);
+            reader->CloseFile();
+            FreePointer(reader);
+        }
+    }
+
+    int *originalGridProc = new int [nTotalblock];
+    writeTecplotByOriginalGrid->SetOriginalGridProc(nTotalblock, originalGridProc);
+
+    for (int iZone = 0; iZone < nTotalZone; ++ iZone)
+    {
+        int fileID = fileIDOfEachZone[iZone];
+        IO_ReadHDF5Grid *gridReader = new IO_ReadHDF5Grid(AddSymbolToFileName(gridFile, "_", fileID));
+        gridReader->OpenFile();
+        int indexofBlock = ordinaryGridIndexOfEachZoneGlobal[iZone];
+        if (myid == originalGridProc[indexofBlock])
+        {
+            Grid *singleGrid = 0;
+            GridID *index = new GridID(iZone);
+            if (UNSTRUCTGRID == systemGridType)
+            {
+                singleGrid = CreateGridGeneral(UNSTRUCTGRID, index, 0, GetDim());
+            }
+            else if (STRUCTGRID == systemGridType)
+            {
+                singleGrid = CreateGridGeneral(STRUCTGRID, index, 0, GetDim());
+            }
+            gridReader->GetGridInfo(singleGrid);
+            originalgridofBlock[indexofBlock].push_back(singleGrid);
         }
         gridReader->CloseFile();
-        delete [] ordinaryGridIndexOfEachZoneGlobal;    ordinaryGridIndexOfEachZoneGlobal = nullptr;
+        FreePointer(gridReader);
+    }
+    DelPointer(fileIDOfEachZone);
 
-        OriginalStructGridMerge originalStructGridMerge;
-        originalStructGridMerge.Initial(originalgridofBlock, nTotalblock, nTotalZone);
-        originalStructGridMerge.Run();
-        int nBlocks = originalStructGridMerge.GetnTotalblock();
-        StructGrid **mergegrid = new StructGrid * [nBlocks];
-        originalStructGridMerge.GetMergeGrid(mergegrid);
-
-        Grid **grids = new Grid *[nBlocks];
+    if (UNSTRUCTGRID == systemGridType)
+    {
+        OriginalUnstructGridMerge originalUnstructGridMerge;
+        originalUnstructGridMerge.SetOriginalGridOfBlock(originalgridofBlock, nTotalblock, nTotalZone, nDim);
+        originalUnstructGridMerge.SetOrdinaryGridIndexOfEachZoneGlobal(ordinaryGridIndexOfEachZoneGlobal);
+        originalUnstructGridMerge.Initial();
+        originalUnstructGridMerge.Run();
+        int nBlocks = originalUnstructGridMerge.GetnTotalblock();
+        UnstructGrid **mergegrid = new UnstructGrid * [nBlocks];
+        originalUnstructGridMerge.GetMergeGrid(mergegrid);
+        Grid **grids = new Grid * [nBlocks];
         for (int iBlock = 0; iBlock < nBlocks; ++ iBlock)
         {
             Grid *singleGrid = 0;
@@ -1104,8 +1157,33 @@ void Region::InitOriginalGrid()
         }
         writeTecplotByOriginalGrid->SetOriginalGrid(grids);
         writeTecplotByOriginalGrid->Initialize();
-        delete [] mergegrid;    mergegrid = nullptr;
+        DelPointer2(mergegrid);
     }
+    else if (STRUCTGRID == systemGridType)
+    {
+        OriginalStructGridMerge originalStructGridMerge;
+        originalStructGridMerge.Initial(originalgridofBlock, nTotalblock, nTotalZone, nDim);
+        originalStructGridMerge.Run();
+        int nBlocks = originalStructGridMerge.GetnTotalblock();
+        StructGrid **mergegrid = new StructGrid * [nBlocks];
+        originalStructGridMerge.GetMergeGrid(mergegrid);
+
+        Grid **grids = new Grid * [nBlocks];
+        for (int iBlock = 0; iBlock < nBlocks; ++ iBlock)
+        {
+            Grid *singleGrid = 0;
+            if (mergegrid[iBlock])
+            {
+                singleGrid = mergegrid[iBlock];
+            }
+            grids[iBlock] = singleGrid;
+        }
+        writeTecplotByOriginalGrid->SetOriginalGrid(grids);
+        writeTecplotByOriginalGrid->Initialize();
+        DelPointer2(mergegrid);
+    }
+
+    DelPointer(ordinaryGridIndexOfEachZoneGlobal);
 }
 
 LIB_EXPORT void Region::DataMonitor()
@@ -1286,9 +1364,9 @@ void Region::GetProcessorZones(int iZone, ZoneNeighbor *zoneNeighbor, vector< in
     using namespace PHMPI;
     uint_t numberOfNeighbor = zoneNeighbor->GetNumberOfNeighbor();
 
-    //! Insert the neighbor processors into set, 
+    //! Insert the neighbor processors into set,
     //! including itself if the neighbor zone belong to the same processor.
-    // int currentProcessor = GetZoneProcessorID(iZone); 
+    // int currentProcessor = GetZoneProcessorID(iZone);
     set< int > neighborProcessorsList;
     for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
     {

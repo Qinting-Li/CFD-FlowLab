@@ -15,42 +15,43 @@ namespace PHSPACE
 LIB_EXPORT Pre_CGNSToPHengLEI_Unstruct::Pre_CGNSToPHengLEI_Unstruct(const string &gridFileName) : 
     Pre_GridConversion(gridFileName)
 {
-    factory_cgns = 0;
+    factoryCGNS = 0;
 }
 
 LIB_EXPORT Pre_CGNSToPHengLEI_Unstruct::~Pre_CGNSToPHengLEI_Unstruct()
 {
-    delete factory_cgns;
+    delete factoryCGNS;
 }
 
 void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
 {
-    string &cgnsfile = gridFileName;
-    cout << "    CGNS file name: " << cgnsfile << "\n";
-
-    cgsize_t isize[3][1];
-    int fileid, baseid;
-    cgsize_t irmin, irmax, istart, iend;
-    int nbndry, iparent_flag;
+    string &cgnsFile = gridFileName;
+    cout << "    CGNS file name: " << cgnsFile << "\n";
+    cgsize_t iSize[3][1];
+    int fileID, baseID;
+    cgsize_t lowerRangID, upperRangID, iStart, iEnd;
+    int isBoundary, iParentFlag;
     int cellDim, physDim;
     cgsize_t nTotalNode, nTotalCell;
+    int nIFaceRegions;
     int nCoords, nSections, nBCRegions, nFamilies, FamBC, nGeo;
-    cgsize_t nBCElem, normListFlag;
+    cgsize_t nBCElem, normListFlag, nIFaceElem;
     int normalIndex, nDataSet;
-    char zonename[33], sectionname[33];
-    char basename[33], coordname[33], bocoName[33];
-    cgsize_t elementdatasize;
-    ElementType_t  etype;
-    ZoneType_t     zoneType;
-    DataType_t     dataType;
-    BCType_t       bocoType;
-    PointSetType_t ptsetType;
-    DataType_t     normDataType;
-    CGNSRawCoor    *raw_coor;
+    char zoneName[33], sectionName[33];
+    char baseName[33], coordName[33], bocoName[33], iFaceName[33];
+    cgsize_t               elementDataSize;
+    ElementType_t          eType;
+    ZoneType_t             zoneType;
+    DataType_t             dataType;
+    BCType_t               bocoType;
+    PointSetType_t         pointSetType;
+    DataType_t             normDataType;
+    CGNSRawCoor            *rawCoor;
+    DataType_t             interFaceDataType;
+    GridConnectivityType_t iFaceType;
 
     //! Open the CGNS for reading and check if the file was found.
-    //if (cg_open(cgnsfile.c_str(), MODE_READ, &fileid) != CG_OK)
-    if (cg_open(cgnsfile.c_str(), CG_MODE_READ, &fileid) != CG_OK)
+    if (cg_open(cgnsFile.c_str(), CG_MODE_READ, &fileID) != CG_OK)
     {
         TK_Exit::ExceptionExit(cg_get_error());
     }
@@ -59,49 +60,45 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
     GlobalDataBase::UpdateData("hasVolumeCondition", &hasVolumeCondition, PHINT, 1);
 
     //! Determine the of bases in the grid.
-    cg_nbases(fileid, &baseid);
+    cg_nbases(fileID, &baseID);
 
     //! Determine the number of FamilyBC in the grid.
-    cg_nfamilies(fileid, baseid, &nFamilies);
+    cg_nfamilies(fileID, baseID, &nFamilies);
 
     typedef char char_33[33];
-    char_33 *FamilyName=NULL;
-    char_33 FamBCName;
-
-    BCType_t *FamilyBCType = new BCType_t [nFamilies];
-    int BC=1;
-
+    char_33 *familyName=NULL;
+    char_33 famBCName;
+    BCType_t *familyBCType = new BCType_t [nFamilies];
+    int bc=1;
     if (nFamilies > 0)
     {
-        FamilyName = new char_33 [nFamilies];
-
-        for (int Fam = 1; Fam <= nFamilies; ++ Fam)
+        familyName = new char_33 [nFamilies];
+        for (int iFam = 1; iFam <= nFamilies; ++ iFam)
         {
-            cg_family_read(fileid, baseid, Fam, FamilyName[Fam-1], &FamBC, &nGeo);
-            cg_fambc_read(fileid, baseid, Fam, BC, FamBCName, &FamilyBCType[Fam-1]);
+            cg_family_read(fileID, baseID, iFam, familyName[iFam-1], &FamBC, &nGeo);
+            cg_fambc_read(fileID, baseID, iFam, bc, famBCName, &familyBCType[iFam-1]);
         }
     }
 
     //! Read the number of zones in the grid.
-    cg_nzones(fileid, baseid, &nBlocks);
+    cg_nzones(fileID, baseID, &nBlocks);
 
     //! Check the cell and physical dimensions of the bases.
-    cg_base_read(fileid, baseid, basename, &cellDim, &physDim);
+    cg_base_read(fileID, baseID, baseName, &cellDim, &physDim);
 
     if (cellDim != PHSPACE::GetDim())
     {
         TK_Exit::ExceptionExit("Error: Dimension in CGNS file is not according with that in parameter file!");
     }
 
-    factory_cgns = new CGNSFactory(nBlocks);
+    factoryCGNS = new CGNSFactory(nBlocks);
     for (int iZone = 1; iZone <= nBlocks; ++ iZone)
     {
-        CGNSBase *base_cgns = factory_cgns->GetCGNSBase(iZone-1);
-
-        cg_goto(fileid, baseid, "Zone_t", iZone, "end");
+        CGNSBase *baseCGNS = factoryCGNS->GetCGNSBase(iZone-1);
+        cg_goto(fileID, baseID, "Zone_t", iZone, "end");
         char_33 volumeName;
         cg_famname_read(volumeName);
-        base_cgns->SetVCName(volumeName);
+        baseCGNS->SetVCName(volumeName);
         if ((strcmp(volumeName, "Unspecified") != 0) && (strcmp(volumeName, "") != 0))
         {
             hasVolumeCondition = 1;
@@ -113,210 +110,212 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
         {
             for (int iFam = 1; iFam <= nFamilies; ++ iFam)
             {
-                if (strcmp(volumeName, FamilyName[iFam-1]) == 0)
+                if (0 == strcmp(volumeName, familyName[iFam-1]))
                 {
                     char_33 name;
                     char *desc=NULL;
-                    cg_goto(fileid, baseid, "Family_t", iFam, "end");
-
+                    cg_goto(fileID, baseID, "Family_t", iFam, "end");
                     int nDesc;
                     cg_ndescriptors (&nDesc);
-                    for (int iDesc = 1; iDesc <= nDesc; iDesc++)
+                    for (int iDesc = 1; iDesc <= nDesc; ++ iDesc)
                     {
                         cg_descriptor_read (iDesc, name, &desc);
-
-                        if (strcmp(name, "FamVC_TypeName") == 0)
+                        if (0 == strcmp(name, "FamVC_TypeName"))
                         {
-                            if (strcmp(desc, "Fluid") == 0)
+                            if (0 == strcmp(desc, "Fluid"))
                             {
                                 vcType = PHENGLEI::FLUID;
                                 break;
                             }
-                            else if (strcmp(desc, "Solid") == 0)
+                            else if (0 == strcmp(desc, "Solid"))
                             {
                                 vcType = PHENGLEI::SOLID;
                                 break;
                             }
                         }
                     }
-
-                    delete [] desc;
+                    delete [] desc;    desc = nullptr;
                 }
             }
         }
-        base_cgns->SetVCType(vcType);
+        baseCGNS->SetVCType(vcType);
 
         //! Check the zone type.
-        cg_zone_type(fileid, baseid, iZone, &zoneType);
+        cg_zone_type(fileID, baseID, iZone, &zoneType);
 
-        if (zoneType == Structured)
+        if (Structured == zoneType)
         {
             TK_Exit::ExceptionExit("Error: the input CGNS mesh must be UNSTRUCTURED type!");
         }
 
         //! Determine the number of vertices and volume elements in this zone.
-        cg_zone_read(fileid, baseid, iZone, zonename, isize[0]);
-
-        nTotalNode = isize[0][0];
-        nTotalCell = isize[1][0];
-
-        base_cgns->SetNTotalNode(nTotalNode);
-        base_cgns->SetNTotalCell(nTotalCell);
-
+        cg_zone_read(fileID, baseID, iZone, zoneName, iSize[0]);
+        nTotalNode = iSize[0][0];
+        nTotalCell = iSize[1][0];
+        baseCGNS->SetNTotalNode(nTotalNode);
+        baseCGNS->SetNTotalCell(nTotalCell);
         cout << " nTotalNode = " << nTotalNode << " nTotalCell = " << nTotalCell << "\n";
 
         //! Determine the number and names of the coordinates.
-        cg_ncoords(fileid, baseid, iZone, &nCoords);
+        cg_ncoords(fileID, baseID, iZone, &nCoords);
 
         //! Lower range index.
-        irmin = 1;
+        lowerRangID = 1;
         //! Upper range index of vertices.
-        irmax = nTotalNode;
+        upperRangID = nTotalNode;
 
         //! Temporarily assume that grid is unstructured, it will be considered later.
         RDouble *x = new RDouble[nTotalNode]();
         RDouble *y = new RDouble[nTotalNode]();
         RDouble *z = new RDouble[nTotalNode]();
 
-        RawGrid *rawgrid = factory_cgns->GetRawGrid(iZone-1);
+        RawGrid *rawGrid = factoryCGNS->GetRawGrid(iZone-1);
+        rawGrid->SetNTotalNode(nTotalNode);
+        rawGrid->SetX(x);
+        rawGrid->SetY(y);
+        rawGrid->SetZ(z);
 
-        rawgrid->SetNTotalNode(nTotalNode);
-        rawgrid->SetX(x);
-        rawgrid->SetY(y);
-        rawgrid->SetZ(z);
-
-        raw_coor = new CGNSRawCoor();
-
-        for (int icoor = 0; icoor < nCoords; ++ icoor)
+        rawCoor = new CGNSRawCoor();
+        for (int iCoor = 0; iCoor < nCoords; ++ iCoor)
         {
-            cg_coord_info(fileid, baseid, iZone, icoor+1, &dataType, coordname);
-            raw_coor->AllocateData(icoor, nTotalNode, dataType);
+            cg_coord_info(fileID, baseID, iZone, iCoor+1, &dataType, coordName);
+            rawCoor->AllocateData(iCoor, nTotalNode, dataType);
 
             //! Read the x-, y-, z-coordinates.
-            cg_coord_read(fileid, baseid, iZone, coordname, dataType, &irmin, &irmax, raw_coor->GetCoor(icoor));
+            cg_coord_read(fileID, baseID, iZone, coordName, dataType, &lowerRangID, &upperRangID, rawCoor->GetCoor(iCoor));
         }
 
-        if (nCoords == 2)
+        if (2 == nCoords)
         {
             for (int iNode = 0; iNode < nTotalNode; ++ iNode)
             {
                 z[iNode] = 0.0;
             }
-
-            raw_coor->AllocateData(2, nTotalNode, dataType);
+            rawCoor->AllocateData(2, nTotalNode, dataType);
         }
-
-        raw_coor->SetAllData(x, y, z);
-
-        if (nCoords == 2)
+        rawCoor->SetAllData(x, y, z);
+        if (2 == nCoords)
         {
             for (int iNodess = 0; iNodess < nTotalNode; ++ iNodess)
             {
                 z[iNodess] = 0.0;
             }
         }
-
-        delete raw_coor;
+        delete rawCoor;
 
         //! Determine the number of sections for this zone. Note that
         //! surface elements can be stored in a volume zone, but they
         //! are NOT taken into account in the number obtained from 
         //! cg_zone_read.
-        cg_nsections(fileid, baseid, iZone, &nSections);
+        cg_nsections(fileID, baseID, iZone, &nSections);
 
         //! Loop over the number of sections and read the element
         //! connectivities. As CGNS starts the numbering at 1 the
         //! for-loop starts at 1 as well.
-        base_cgns->CreateElement(nSections);
-
-        cgsize_t *base_cgns_istart = base_cgns->GetIndexOfStart();
-        cgsize_t *base_cgns_iend = base_cgns->GetIndexOfEnd();
-        int *base_cgns_elem_type = base_cgns->GetElementType();
-        cgsize_t **base_cgns_conn_list = base_cgns->GetElementConnectionList();
-        cgsize_t  *base_cgns_elementdatasize = base_cgns->GetElementDataSize();
-        cgsize_t **base_cgns_mixed_conn_list = base_cgns->GetMixedConnectionIndex();
-
-        cgsize_t *base_elem_elem_pt = factory_cgns->GetBaseElement()->GetElementPoint();
-
+        baseCGNS->CreateElement(nSections);
+        cgsize_t *baseCGNSIStart          = baseCGNS->GetIndexOfStart();
+        cgsize_t *baseCGNSIEnd            = baseCGNS->GetIndexOfEnd();
+        int      *baseCGNSElementType     = baseCGNS->GetElementType();
+        cgsize_t **baseCGNSConnList       = baseCGNS->GetElementConnectionList();
+        cgsize_t *baseCGNSElementDataSize = baseCGNS->GetElementDataSize();
+        cgsize_t **baseCGNSMixedConnList  = baseCGNS->GetMixedConnectionIndex();
+        cgsize_t *baseCGNSElementPoint    = factoryCGNS->GetBaseElement()->GetElementPoint();
+#ifdef USE_VS2019
+        cgsize_t **startOffset            = baseCGNS->GetConnectOffSet();
+#endif
         cout << " nSections = " << nSections << "\n";
         for (int iSection = 1; iSection <= nSections; ++ iSection)
         {
-            cg_section_read(fileid, baseid, iZone, iSection, sectionname, &etype,
-                            &istart, &iend, &nbndry, &iparent_flag);
-
-            cg_ElementDataSize(fileid, baseid, iZone, iSection, &elementdatasize);
+            cg_section_read(fileID, baseID, iZone, iSection, sectionName, &eType,
+                            &iStart, &iEnd, &isBoundary, &iParentFlag);
+            cg_ElementDataSize(fileID, baseID, iZone, iSection, &elementDataSize);
 
             cout << "\nReading section " << iSection << " ...\n";
-            cout << "   section name = " << sectionname << "\n";
-            cout << "   section type = " << ElementTypeName[etype] << "\n";
-            cout << "   istart,iend =  " << istart << " " << iend << "\n";
+            cout << "   section name = " << sectionName << "\n";
+            cout << "   section type = " << ElementTypeName[eType] << "\n";
+            cout << "   istart,iend =  " << iStart << " " << iEnd << "\n";
 
-            base_cgns_istart   [iSection - 1] = istart;
-            base_cgns_iend     [iSection - 1] = iend;
-            base_cgns_elem_type[iSection - 1] = etype;
-            base_cgns_elementdatasize[iSection - 1] = elementdatasize;
+            baseCGNSIStart         [iSection - 1] = iStart;
+            baseCGNSIEnd           [iSection - 1] = iEnd;
+            baseCGNSElementType    [iSection - 1] = eType;
+            baseCGNSElementDataSize[iSection - 1] = elementDataSize;
 
-            cgsize_t nelem = iend - istart + 1;
-            if (etype != MIXED)
-            {
-                int ptnum = static_cast<int>(base_elem_elem_pt[etype]);
-                elementdatasize = ptnum * nelem;
-            }
-            base_cgns_conn_list[iSection - 1] = new cgsize_t [elementdatasize];
-            
+            cgsize_t nElem = iEnd - iStart + 1;
+            baseCGNSConnList[iSection - 1] = new cgsize_t [elementDataSize];
+#ifdef USE_VS2019
+            startOffset     [iSection - 1] = new cgsize_t [nElem + 1];
+#endif
+
             //! Read the connectivity. Again, the node numbering of the 
             //! connectivities start at 1. If internally a starting index 
             //! of 0 is used (typical for C-codes) 1 must be subtracted 
             //! from the connectivities read.
-            cg_elements_read(fileid, baseid, iZone, iSection, base_cgns_conn_list[iSection - 1], NULL);
-
-            if (etype == MIXED)
+#ifdef USE_VS2019
+            if (NGON_n == eType || NFACE_n == eType)
             {
-                base_cgns_mixed_conn_list[iSection - 1] = new cgsize_t [nelem];
+                cg_poly_elements_read(fileID, baseID, iZone, iSection, baseCGNSConnList[iSection - 1], startOffset[iSection - 1], NULL);
+            }
+            else
+            {
+                cg_elements_read(fileID, baseID, iZone, iSection, baseCGNSConnList[iSection - 1], NULL);
+            }
+#else
+            cg_elements_read(fileID, baseID, iZone, iSection, baseCGNSConnList[iSection - 1], NULL);
+#endif
+            //! Determine whether the grid is Cartesian2D or Cartesian3D.
+            if (NGON_n == eType)
+            {
+                if (!(baseCGNS->GetIsCartesian3D()))
+                {
+                    baseCGNS->SetIsCartesian2D(true);
+                }
+            }
+            else if (NFACE_n == eType)
+            {
+                baseCGNS->SetIsCartesian2D(false);
+                baseCGNS->SetIsCartesian3D(true);
+            }
 
+            if (MIXED == eType)
+            {
+                baseCGNSMixedConnList[iSection - 1] = new cgsize_t [nElem];
                 int iNode = 0;
                 int index = 0;
-                for (; iNode < elementdatasize;)
+                for (; iNode < elementDataSize;)
                 {
-                    int ptnum = static_cast<int>(base_elem_elem_pt[base_cgns_conn_list[iSection - 1][iNode]]);
-                    base_cgns_mixed_conn_list[iSection - 1][index] = iNode;
-
-                    iNode = iNode + ptnum + 1;
+                    int pointNumber = static_cast<int>(baseCGNSElementPoint[baseCGNSConnList[iSection - 1][iNode]]);
+                    baseCGNSMixedConnList[iSection - 1][index] = iNode;
+                    iNode = iNode + pointNumber + 1;
                     ++ index;
                 }
             }
         }
 
-        // Determine the number of boundary conditions for this zone.
-        cg_nbocos(fileid, baseid, iZone, &nBCRegions);
-
+        //! Determine the number of boundary conditions for this zone.
+        cg_nbocos(fileID, baseID, iZone, &nBCRegions);
         cout << "\nNumber of BC Regions: " << nBCRegions << endl;
-        base_cgns->CreateBC(nBCRegions);
-
-        int *base_cgns_nBCElem            = base_cgns->GetNumberOfBCElements();
-        int *base_cgns_bc_elem_set_type   = base_cgns->GetBoundaryElementType();
-        int *base_cgns_bc_grid_location   = base_cgns->GetBoundaryGridLocation();
-        int *base_cgns_bc_type            = base_cgns->GetBCType();
-        cgsize_t **base_cgns_bc_conn_list = base_cgns->GetBoundaryElementConnectionList();
-
+        baseCGNS->CreateBC(nBCRegions);
+        int      *baseCGNSnBCElem              = baseCGNS->GetNumberOfBCElements();
+        int      *baseCGNSBoundaryElementType  = baseCGNS->GetBoundaryElementType();
+        int      *baseCGNSBoundaryGridLocation = baseCGNS->GetBoundaryGridLocation();
+        int      *baseCGNSBCType               = baseCGNS->GetBCType();
+        cgsize_t **baseCGNSBCConnList          = baseCGNS->GetBoundaryElementConnectionList();
         GridLocation_t igr;
 
         //! Loop over the number of boundary conditions.
         string *boundaryName = new string [nBCRegions]();
-        base_cgns->SetBCName(boundaryName);
-
+        baseCGNS->SetBCName(boundaryName);
         for (int iBCRegion = 1; iBCRegion <= nBCRegions; ++ iBCRegion)
         {
             cout << "  Reading bcRegion " << iBCRegion << " ... " << endl;
-            cg_goto(fileid, baseid, "Zone_t", iZone, "ZoneBC_t", 1, "BC_t", iBCRegion, "end");
+            cg_goto(fileID, baseID, "Zone_t", iZone, "ZoneBC_t", 1, "BC_t", iBCRegion, "end");
             cg_gridlocation_read(&igr);
-
             cout << "  Grid Location Name = " << GridLocationName[igr] << "\n";
-            if (igr == FaceCenter)
+            if (FaceCenter == igr)
             {
                 cout << "GridLocation = FaceCenter means BC data refers to elements, not nodes\n";
             }
-            else if (igr == Vertex)
+            else if (Vertex == igr)
             {
                 cout << "GridLocation = Vertex means BC data refers to nodes, not elements\n";
                 cout << " ============================================================ " << endl;
@@ -326,53 +325,50 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
                 cout << "        the Face-based BCs are exported as Vertex-based type  " << endl;
                 cout << "        wrongly by Gridgen15.18 !!!" << endl;
                 cout << " =========================================================== "  << endl;
-                //igr = FaceCenter;
             }
             //! Read the info for this boundary condition.
-            cg_boco_info(fileid, baseid, iZone, iBCRegion, bocoName, &bocoType, &ptsetType, &nBCElem, &normalIndex,
+            cg_boco_info(fileID, baseID, iZone, iBCRegion, bocoName, &bocoType, &pointSetType, &nBCElem, &normalIndex,
                          &normListFlag, &normDataType, &nDataSet);
 
-            if (bocoType == FamilySpecified || nFamilies > 0)
+            if (FamilySpecified == bocoType || nFamilies > 0)
             {
                 for (int iFam = 1; iFam <= nFamilies; ++ iFam)
                 {
-                    if (strcmp(bocoName, FamilyName[iFam-1]) == 0)
+                    if (0 == strcmp(bocoName, familyName[iFam-1]))
                     {
-                        bocoType = FamilyBCType[iFam-1];
+                        bocoType = familyBCType[iFam-1];
                         break;
                     }
                 }
             }
 
             boundaryName[iBCRegion - 1] = bocoName;
-
             cout << "  Boundary Name = " << bocoName << "\n";
             cout << "  BCtype  = " << BCTypeName[bocoType] << "\n";
             cout << "  nBCElem = " << nBCElem << "\n";
 
-            base_cgns_nBCElem         [iBCRegion-1] = static_cast<int>(nBCElem);
-            base_cgns_bc_conn_list    [iBCRegion-1] = new cgsize_t [nBCElem];
-            base_cgns_bc_type         [iBCRegion-1] = bocoType;
-            base_cgns_bc_elem_set_type[iBCRegion-1] = ptsetType;
-            base_cgns_bc_grid_location[iBCRegion-1] = igr;
+            baseCGNSnBCElem             [iBCRegion-1] = static_cast<int>(nBCElem);
+            baseCGNSBCConnList          [iBCRegion-1] = new cgsize_t [nBCElem];
+            baseCGNSBCType              [iBCRegion-1] = bocoType;
+            baseCGNSBoundaryElementType [iBCRegion-1] = pointSetType;
+            baseCGNSBoundaryGridLocation[iBCRegion-1] = igr;
 
-            cout << "  PointSetType_t = " << PointSetTypeName[ptsetType] << "\n";
+            cout << "  PointSetType_t = " << PointSetTypeName[pointSetType] << "\n";
 
             //! Read the element ID¡¯s.
-            cg_boco_read(fileid, baseid, iZone, iBCRegion, base_cgns_bc_conn_list[iBCRegion-1], NULL);
+            cg_boco_read(fileID, baseID, iZone, iBCRegion, baseCGNSBCConnList[iBCRegion-1], NULL);
 
-            if (nBCElem == 2)
+            if (2 == nBCElem)
             {
                 cout << "  Start & End point of Region " << ": " 
-                     << base_cgns_bc_conn_list[iBCRegion-1][0] << " " << base_cgns_bc_conn_list[iBCRegion-1][1] << "\n";
+                     << baseCGNSBCConnList[iBCRegion-1][0] << " " << baseCGNSBCConnList[iBCRegion-1][1] << "\n";
             }
             else
             {
                 cout << "  The first 20 points of Region " << ": ";
-                for (int j = 0; j < MIN(20, (int)nBCElem); ++ j)
-                    //for (int j = 0; j < nBCElem; ++ j)
+                for (int jPoint = 0; jPoint < MIN(20, (int)nBCElem); ++ jPoint)
                 {
-                    cout << base_cgns_bc_conn_list[iBCRegion-1][j] << " ";
+                    cout << baseCGNSBCConnList[iBCRegion-1][jPoint] << " ";
                 }
                 cout << "\n";
             }
@@ -381,24 +377,103 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
 
             cout << endl;
         }
+
+        //! Read the interface information of Zones.
+        cg_nconns(fileID, baseID, iZone, &nIFaceRegions);
+        cout << "Number of InterFace Regions: " << nIFaceRegions << endl;
+        baseCGNS->CreateInterFace(nIFaceRegions);
+        int      *baseCGNSnIFaceElem        = baseCGNS->GetNumberOfInterFaceElements();
+        int      *baseCGNSIFaceElementType  = baseCGNS->GetInterFaceElementType();
+        int      *baseCGNSIFaceGridLocation = baseCGNS->GetInterFaceGridLocation();
+        int      *baseCGNSIFaceType         = baseCGNS->GetInterFaceType();
+        cgsize_t **baseCGNSIFaceConnList    = baseCGNS->GetInterFaceElementConnectionList();
+        GridLocation_t igrIFace;
+
+        string *interFaceName = new string [nIFaceRegions]();
+        baseCGNS->SetIFaceName(interFaceName);
+        for (int iIFaceRegion = 1; iIFaceRegion <= nIFaceRegions; ++ iIFaceRegion)
+        {
+            cout << "  Reading InterFaceRegion " << iIFaceRegion << " ... " << endl;
+            cg_goto(fileID, baseID, "Zone_t", iZone, "ZoneBC_t", 1, "BC_t", iIFaceRegion, "end");
+            cg_gridlocation_read(&igrIFace);
+            cout << "  Grid Location Name = " << GridLocationName[igr] << "\n";
+            if (FaceCenter == igrIFace)
+            {
+                cout << "GridLocation = FaceCenter means BC data refers to elements, not nodes\n";
+            }
+            else if (Vertex == igrIFace)
+            {
+                cout << "GridLocation = Vertex means BC data refers to nodes, not elements\n";
+                cout << " ============================================================ " << endl;
+                cout << "    Very Important Warning: " << endl;
+                cout << "        if the cgns grid file is exported from Gridgen15.18,  " << endl;
+                cout << "        make sure the V16 Format button is toggle off, because" << endl;
+                cout << "        the Face-based BCs are exported as Vertex-based type  " << endl;
+                cout << "        wrongly by Gridgen15.18 !!!" << endl;
+                cout << " =========================================================== " << endl;
+            }
+
+            char           donorName[33];
+            ZoneType_t     donorZoneType;
+            PointSetType_t donorPtSetType;
+            DataType_t     donorDataType;
+            cgsize_t       nDataDonor;
+
+            cg_conn_info(fileID, baseID, iZone, iIFaceRegion, iFaceName,&igrIFace,
+                &iFaceType, &pointSetType, &nIFaceElem,donorName, &donorZoneType,
+                &donorPtSetType, &donorDataType, &nDataDonor);
+
+            interFaceName[iIFaceRegion - 1] = iFaceName;
+            cout << "  InterFace Name = " << iFaceName << "\n";
+            cout << "  InterFacetype  = " << GridConnectivityTypeName[iFaceType] << "\n";
+            cout << "  nInterFaceElem = " << nIFaceElem << "\n";
+
+            baseCGNSnIFaceElem       [iIFaceRegion - 1] = static_cast<int>(nIFaceElem);
+            baseCGNSIFaceConnList    [iIFaceRegion - 1] = new cgsize_t[nIFaceElem];
+            baseCGNSIFaceType        [iIFaceRegion - 1] = iFaceType;
+            baseCGNSIFaceElementType [iIFaceRegion - 1] = pointSetType;
+            baseCGNSIFaceGridLocation[iIFaceRegion - 1] = igrIFace;
+            cout << "  PointSetType_t = " << PointSetTypeName[pointSetType] << "\n";
+            cgsize_t *donorData = new cgsize_t [nDataDonor];
+            cg_conn_read(fileID, baseID, iZone, iIFaceRegion,
+                baseCGNSIFaceConnList[iIFaceRegion - 1], donorDataType, donorData);
+            delete [] donorData;    donorData = nullptr;
+
+            if (2 == nIFaceElem)
+            {
+                cout << "  Start & End point of Region " << ": "
+                    << baseCGNSIFaceConnList[iIFaceRegion - 1][0] << " " << baseCGNSIFaceConnList[iIFaceRegion - 1][1] << "\n";
+            }
+            else
+            {
+                cout << "  The first 20 points of Region " << ": ";
+                for (int jPoint = 0; jPoint < MIN(20, (int)nIFaceElem); ++ jPoint)
+                {
+                    cout << baseCGNSIFaceConnList[iIFaceRegion - 1][jPoint] << " ";
+                }
+                cout << "\n";
+            }
+            //! And much more to make it fit into the 
+            //! internal data structures.
+            cout << endl;
+        }
     }
-     delete [] FamilyBCType;    FamilyBCType = NULL;
-    //! Close CGNS file.
-    cg_close(fileid);
+    delete [] familyBCType;    familyBCType = nullptr;
+
+     //! Close CGNS file.
+    cg_close(fileID);
 }
 
 void Pre_CGNSToPHengLEI_Unstruct::Conversion()
 {
-    factory_cgns->ConvertGrid2Fantasy();
-
-    grids = new Grid * [nBlocks];
-
+    factoryCGNS->ConvertGrid2Fantasy();
+    grids = new Grid *[nBlocks];
     for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
         GridID *index = new GridID(iZone);
         Grid *grid = CreateGridGeneral(UNSTRUCTGRID, index, 0, GetDim());
         grids[iZone] = grid;
-        CGNS2UnsGrid(factory_cgns, iZone, UnstructGridCast(grid));
+        CGNS2UnsGrid(factoryCGNS, iZone, UnstructGridCast(grid));
         grid->ComputeMinMaxBox();
     }
 }

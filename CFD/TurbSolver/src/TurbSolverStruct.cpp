@@ -43,7 +43,7 @@ void TurbSolverStr::AllocateGlobalVar(Grid *gridIn)
 {
     Param_TurbSolverStruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
-    int viscoueType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
 
     if (nTurbulenceEquation == 0)
     {
@@ -130,7 +130,7 @@ void TurbSolverStr::AllocateGlobalVar(Grid *gridIn)
         }
     }
 
-    if (viscoueType == 4)
+    if (viscousType == TWO_EQU)
     {
         RDouble3D *cross = new RDouble3D(I, J, K, fortranArray);
         grid->UpdateDataPtr("cross", cross);    //! For the crossing term in two equation turbulence model.
@@ -166,7 +166,7 @@ void TurbSolverStr::DeAllocateGlobalVar(Grid *gridIn)
 {
     Param_TurbSolverStruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
-    int viscoueType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
     if (nTurbulenceEquation == 0)
     {
         return;
@@ -235,7 +235,7 @@ void TurbSolverStr::DeAllocateGlobalVar(Grid *gridIn)
         }
     }
 
-    if (viscoueType == 4)
+    if (viscousType == TWO_EQU)
     {
         RDouble3D *cross = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("cross"));
         delete cross;
@@ -2314,13 +2314,13 @@ void TurbSolverStr::SourceFluxTwoEquation(Grid *gridIn)
 void TurbSolverStr::Diagonal(Grid *gridIn)
 {
     Param_TurbSolverStruct *parameters = GetControlParameters();
-    int viscoueType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
 
-    if (viscoueType == 3)
+    if (viscousType == ONE_EQU)
     {
         SpectrumRadiusOfOneEquation(gridIn);
     }
-    else if (viscoueType == 4)
+    else if (viscousType == TWO_EQU)
     {
         SpectrumRadiusOfTwoEquation(gridIn);
     }

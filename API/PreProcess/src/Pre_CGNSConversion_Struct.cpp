@@ -78,9 +78,60 @@ void Pre_CGNSConversion_Struct::ReadGrid()
     cout << "	Block number = " << nBlocks << endl;
     Str_CGNS_Data = new CGNS_Str_Data(nBlocks);
 
+    int hasVolumeCondition = 0;
+    GlobalDataBase::UpdateData("hasVolumeCondition", &hasVolumeCondition, PHINT, 1);
+
     for (int iZone = 1; iZone <= nBlocks; ++ iZone)
     {
         BaseData *base_cgns = Str_CGNS_Data->GetBaseData(iZone-1);
+
+        cg_goto(fileid, baseid, "Zone_t", iZone, "end");
+        char_33 volumeName;
+        cg_famname_read(volumeName);
+        base_cgns->SetVCName(volumeName);
+        if ((strcmp(volumeName, "Unspecified") != 0) && (strcmp(volumeName, "") != 0))
+        {
+            hasVolumeCondition = 1;
+            GlobalDataBase::UpdateData("hasVolumeCondition", &hasVolumeCondition, PHINT, 1);
+        }
+
+        int vcType = PHENGLEI::UNDEFINED;
+        if (nfamililies > 0)
+        {
+            for (int iFam = 1; iFam <= nfamililies; ++ iFam)
+            {
+                if (strcmp(volumeName, familynames[iFam-1]) == 0)
+                {
+                    char_33 name;
+                    char *desc=NULL;
+                    cg_goto(fileid, baseid, "Family_t", iFam, "end");
+
+                    int nDesc;
+                    cg_ndescriptors (&nDesc);
+                    for (int iDesc = 1; iDesc <= nDesc; iDesc++)
+                    {
+                        cg_descriptor_read (iDesc, name, &desc);
+
+                        if (strcmp(name, "FamVC_TypeName") == 0)
+                        {
+                            if (strcmp(desc, "Fluid") == 0)
+                            {
+                                vcType = PHENGLEI::FLUID;
+                                break;
+                            }
+                            else if (strcmp(desc, "Solid") == 0)
+                            {
+                                vcType = PHENGLEI::SOLID;
+                                break;
+                            }
+                        }
+                    }
+
+                    delete [] desc;
+                }
+            }
+        }
+        base_cgns->SetVCType(vcType);
 
         //! Determine the number and names of the coordinates.
         base_cgns->SetNCoords(CellDim);

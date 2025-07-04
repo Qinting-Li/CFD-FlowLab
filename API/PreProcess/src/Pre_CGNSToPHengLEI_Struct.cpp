@@ -30,6 +30,7 @@ void Pre_CGNSToPHengLEI_Struct::Conversion()
         grids[iZone] = grid;
     }
 
+    SetVolumeInfo();
     SetCoordinate();
     SetBCInfo();
 
@@ -97,7 +98,22 @@ void Pre_CGNSToPHengLEI_Struct::SetCoordinate()
         grid->ComputeMinMaxBox();
     }
 }
+void Pre_CGNSToPHengLEI_Struct::SetVolumeInfo()
+{
+    for (int iZone = 0; iZone < nBlocks; ++iZone)
+    {
+        BaseData *base_cgns = Str_CGNS_Data->GetBaseData(iZone);
+        StructGrid *grid = StructGridCast(grids[iZone]);
 
+        SimpleVC *volumeCondition = new SimpleVC();
+        string vcName = base_cgns->GetVCName();
+        volumeCondition->SetVCName(vcName);
+        int vcType = base_cgns->GetVCType();
+        volumeCondition->SetVCType(vcType);
+        grid->SetVolumeCondition(volumeCondition);
+    }
+
+}
 void Pre_CGNSToPHengLEI_Struct::SetBCInfo()
 {
     for (int iZone = 0; iZone < nBlocks; ++ iZone)

@@ -145,6 +145,23 @@ void PartitionUnstructGrid()
         //! Step2: partition grid serially.
         Grid *grid = GetGrid(0, 0);
 
+        RDouble nCellsPerProc = 100000.0;
+        if (GlobalDataBase::IsExist("nCellsPerProc", PHDOUBLE, 1))
+        {
+            GlobalDataBase::GetData("nCellsPerProc", &nCellsPerProc, PHDOUBLE, 1);
+            int nTotalCell = grid->GetNTotalCell();
+            RDouble nprocessor = static_cast<double>(nTotalCell) / nCellsPerProc;
+            nProcessor = static_cast<int>(round(nprocessor));
+            if (nProcessor < 2)
+            {
+                PrintToWindow("Number of original && final partitions due to nCellsPerProc: ", nZones, nProcessor, "\n");
+                return;
+            }
+            partitionGridFile = originalGridFile;
+            partitionGridFile = AddSymbolToFileName(partitionGridFile, "__", nProcessor);
+            PrintToWindow("Number of original && final partitions due to nCellsPerProc: ", nZones, nProcessor, "\n");
+        }
+
         Pre_UnstructGridPartition unstructGridParition(UnstructGridCast(grid), nProcessor, partMethod, originalGridFile);
 
         unstructGridParition.PartitionGridSerial(partitionGridFile);

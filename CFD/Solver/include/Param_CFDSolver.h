@@ -144,12 +144,17 @@ public:
     //! Get flag of statics reynolds stress.
     int GetIfStaticsReynoldsStress() const;
 
+    //! Get flag of starting with changing inflow.
+    int GetIsRestartChangeInflow() const;
+
     //! Get method of computing statistical reynolds stress.
     int GetStatisticMethod() const;
 
     int GetIsOverLapping() const;
 
     RDouble GetSkewnessAngle() const;
+    RDouble GetTurbSkewnessAngle() const;
+
     //! Get parameter judge whether modify Wenn Scheme.
     int GetWennSchemeFlag() const;
 
@@ -222,6 +227,7 @@ private:
     int ifStartFromSteadyResults;
     int ifStaticsFlowField;
     int ifStaticsReynoldsStress;
+    int isRestartChangeInflow;
     int statisticMethod;
     int intervalStepFlow;
     int ifLocalTimeStep;
@@ -234,6 +240,7 @@ private:
     int isWennScheme;
 
     RDouble skewnessAngle;
+    RDouble turbSkewnessAngle;
 
     int nDiagonalModifiedTurb;
 

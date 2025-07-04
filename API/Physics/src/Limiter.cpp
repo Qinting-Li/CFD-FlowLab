@@ -1225,7 +1225,7 @@ void Limiter::MinMaxDiff(RDouble *dmin, RDouble *dmax, RDouble *q)
         int re       = rightCellOfFace[iFace];
 
         int bcType = bcRegion->GetBCType();
-        if (!IsInterface(bcType))
+        if (!IsInterface(bcType) && bcType != PHENGLEI::OVERSET)
         {
             continue;
         }

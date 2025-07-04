@@ -739,7 +739,7 @@ void Post_WriteVisualFile::StoreUnsFieldVTKData(int zoneIndex, DataContainer *cd
     }
 }
 
-void Post_WriteVisualFile::StoreUnsFieldVTKData2D(int zoneIndex, DataContainer *cdata)
+void Post_WriteVisualFile::StoreUnsFieldVTKData2D(int zoneIndex, DataContainer *cData)
 {
     int nVisualVariables = flowFieldDataOnNode[zoneIndex]->GetNumberofVisualVariables();
     int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
@@ -754,74 +754,73 @@ void Post_WriteVisualFile::StoreUnsFieldVTKData2D(int zoneIndex, DataContainer *
     Grid *grid = flowFieldDataOnNode[zoneIndex]->GetGrid();
     UnstructGrid *unsGrid = UnstructGridCast(grid);
 
-    int TecioMission = WriteBlock;
-    PHWrite(cdata, TecioMission);
+    int tecioMission = WriteBlock;
+    PHWrite(cData, tecioMission);
 
     int nTotalNode = unsGrid->GetNTotalNode();
     int nTotalCell = unsGrid->GetNTotalCell();
     int nBoundFace = unsGrid->GetNBoundFace();
     int nTotalFace = unsGrid->GetNTotalFace();
 
-    int *face2node          = unsGrid->GetFace2Node();
-    int *left_cell_of_face  = unsGrid->GetLeftCellOfFace();
-    int *right_cell_of_face = unsGrid->GetRightCellOfFace();
+    int *face2Node       = unsGrid->GetFace2Node();
+    int *leftCellOfFace  = unsGrid->GetLeftCellOfFace();
+    int *rightCellOfFace = unsGrid->GetRightCellOfFace();
 
     RDouble *x = unsGrid->GetX();
     RDouble *y = unsGrid->GetY();
     RDouble *z = unsGrid->GetZ();
 
-    //! Find out cellToFace.
-    HyList<int> * cell2face = new HyList <int> [nTotalCell];
+    HyList<int> * cell2Face = new HyList <int> [nTotalCell];
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        cell2face[iCell].SetAverNnode(4);
+        cell2Face[iCell].SetAverNnode(4);
     }
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int le = left_cell_of_face[iFace];
-        cell2face[le].insert(iFace);
+        int le = leftCellOfFace[iFace];
+        cell2Face[le].insert(iFace);
     }
     for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
-        int le = left_cell_of_face[iFace];
-        int re = right_cell_of_face[iFace];
-        cell2face[le].insert(iFace);
-        cell2face[re].insert(iFace);
+        int le = leftCellOfFace[iFace];
+        int re = rightCellOfFace[iFace];
+        cell2Face[le].insert(iFace);
+        cell2Face[re].insert(iFace);
     }
 
     //! Find out cellToNode.
-    HyList<int> *cell2node = new HyList <int> [nTotalCell];
+    HyList<int> *cell2Node = new HyList <int> [nTotalCell];
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        cell2node[iCell].SetAverNnode(4);
+        cell2Node[iCell].SetAverNnode(4);
     }
 
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        int face0 = cell2face[iCell][0];
-        int ip1 = face2node[2 * face0];
-        int ip2 = face2node[2 * face0 + 1];
-        cell2node[iCell].insert(ip1);
-        cell2node[iCell].insert(ip2);
+        int face0 = cell2Face[iCell][0];
+        int ip1   = face2Node[2 * face0];
+        int ip2   = face2Node[2 * face0 + 1];
+        cell2Node[iCell].insert(ip1);
+        cell2Node[iCell].insert(ip2);
 
         int targetNode = ip2;
         int checkNode  = ip1;
 
-        int nFaceOfCell = cell2face[iCell].size();
+        int nFaceOfCell = cell2Face[iCell].size();
         int isClockWise = false;
         while (! isClockWise)
         {
             for (int iFace = 1; iFace < nFaceOfCell; ++ iFace)
             {
-                int face  = cell2face[iCell][iFace];
-                int node1 = face2node[2 * face];
-                int node2 = face2node[2 * face + 1];
+                int face  = cell2Face[iCell][iFace];
+                int node1 = face2Node[2 * face];
+                int node2 = face2Node[2 * face + 1];
 
                 if (node1 == targetNode)
                 {
                     if (node2 != checkNode)
                     {
-                        cell2node[iCell].insert(node2);
+                        cell2Node[iCell].insert(node2);
                         targetNode = node2;
                     }
                     else
@@ -834,7 +833,7 @@ void Post_WriteVisualFile::StoreUnsFieldVTKData2D(int zoneIndex, DataContainer *
                 {
                     if (node1 != checkNode)
                     {
-                        cell2node[iCell].insert(node1);
+                        cell2Node[iCell].insert(node1);
                         targetNode = node1;
                     }
                     else
@@ -847,54 +846,114 @@ void Post_WriteVisualFile::StoreUnsFieldVTKData2D(int zoneIndex, DataContainer *
         }        //! Judge whether the nodes of cell have searched closed.
     }            //! iCell.
 
-    PHWrite(cdata, nTotalNode);
-    PHWrite(cdata, nTotalCell);
-
-    PHWrite(cdata, x, nTotalNode);
-    PHWrite(cdata, y, nTotalNode);
-    PHWrite(cdata, z, nTotalNode);
-
-    for (int m = 0; m < nVisualVariables; ++ m)
+    int nTotalCellVTK = 0;
+    vector<RDouble> xVTK;
+    vector<RDouble> yVTK;
+    vector<RDouble> zVTK;
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        RDouble *qq = qn[m];
-        PHWrite(cdata, qq, nTotalNode);
+        RDouble xNode = x[iNode];
+        RDouble yNode = y[iNode];
+        RDouble zNode = z[iNode];
+        xVTK.push_back(xNode);
+        yVTK.push_back(yNode);
+        zVTK.push_back(zNode);
     }
 
-    int *cell2node_vtk = new int [nTotalCell * 4];
-    int ncount = 0;
+    UnstructGrid *gridVTK = UnstructGridCast(grid);
+    RDouble      *xcc     = gridVTK->GetCellCenterX();
+    RDouble      *ycc     = gridVTK->GetCellCenterY();
+    RDouble      *zcc     = gridVTK->GetCellCenterZ();
+
+    vector<vector<RDouble>> qnVTK;
+    qnVTK.resize(nVisualVariables);
+    for (int iVisualVariable = 0; iVisualVariable < nVisualVariables; ++ iVisualVariable)
+    {
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
+        {
+            qnVTK[iVisualVariable].push_back(qn[iVisualVariable][iNode]);
+        }
+    }
+
+    vector<int> cell2NodeVTK;
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if (cell2node[iCell].size() == 3)
+        if (cell2Node[iCell].size() == 3)
         {
             for (int m = 0; m < 3; ++ m)
             {
-                cell2node_vtk[ncount] = cell2node[iCell].GetData(m) + 1;
-                ncount ++;
+                cell2NodeVTK.push_back((cell2Node[iCell].GetData(m) + 1));
             }
-            cell2node_vtk[ncount] = cell2node[iCell].GetData(2) + 1;
-            ncount ++;
+            cell2NodeVTK.push_back((cell2Node[iCell].GetData(2) + 1));
+            ++ nTotalCellVTK;
         }
-        else if (cell2node[iCell].size() == 4)
+        else if (cell2Node[iCell].size() == 4)
         {
             for (int m = 0; m < 4; ++ m)
             {
-                cell2node_vtk[ncount] = cell2node[iCell].GetData(m) + 1;
-                ncount ++;
+                cell2NodeVTK.push_back((cell2Node[iCell].GetData(m) + 1));
             }
+            ++ nTotalCellVTK;
         }
         else
         {
-            cout << "Error: this function only support triangle and quad !\n";
-            exit(0);
+            int nDividedCell = cell2Node[iCell].size();
+            int countNodeID = 0;
+            xVTK.push_back(xcc[iCell]);
+            yVTK.push_back(ycc[iCell]);
+            zVTK.push_back(zcc[iCell]);
+            ++ nTotalNode;
+            int cellCenterNodeID = nTotalNode - 1;
+            RDouble qnVTKcentre;
+            for (int iVisualVariable = 0; iVisualVariable < nVisualVariables; ++ iVisualVariable)
+            {
+                RDouble qnVTKcount = 0;
+                for (int iNode = 0; iNode < nDividedCell; ++ iNode)
+                {
+                    int nodeID = cell2Node[iCell].GetData(iNode);
+                    qnVTKcount = qnVTKcount + qnVTK[iVisualVariable][nodeID];
+                }
+                qnVTKcentre = qnVTKcount / nDividedCell;
+                qnVTK[iVisualVariable].push_back(qnVTKcentre);
+            }
+
+            for (int iDividedCell = 0; iDividedCell < nDividedCell; ++ iDividedCell)
+            {
+                for (int iNode = 0; iNode < 2; ++ iNode)
+                {
+                    cell2NodeVTK.push_back((cellCenterNodeID + 1));
+                }
+                cell2NodeVTK.push_back((cell2Node[iCell].GetData(iDividedCell) + 1));
+                if ((iDividedCell + 1) < nDividedCell)
+                {
+                    cell2NodeVTK.push_back((cell2Node[iCell].GetData(iDividedCell + 1) + 1));
+                }
+                else
+                {
+                    cell2NodeVTK.push_back((cell2Node[iCell].GetData(0) + 1));
+                }
+                ++ nTotalCellVTK;
+            }
         }
     }
 
-    PHWrite(cdata, cell2node_vtk, nTotalCell * 4);
+    PHWrite(cData, nTotalNode);
+    PHWrite(cData, nTotalCellVTK);
 
-    delete [] qn;    qn = nullptr;
-    delete [] cell2node;    cell2node = nullptr;
-    delete [] cell2face;    cell2face = nullptr;
-    delete [] cell2node_vtk;    cell2node_vtk = nullptr;
+    PHWrite(cData, &xVTK[0], nTotalNode);
+    PHWrite(cData, &yVTK[0], nTotalNode);
+    PHWrite(cData, &zVTK[0], nTotalNode);
+
+    for (int iVisualVariable = 0; iVisualVariable < nVisualVariables; ++ iVisualVariable)
+    {
+        PHWrite(cData, &qnVTK[iVisualVariable][0], nTotalNode);
+    }
+
+    PHWrite(cData, &cell2NodeVTK[0], nTotalCellVTK * 4);
+
+    delete [] qn;           qn        = nullptr;
+    delete [] cell2Node;    cell2Node = nullptr;
+    delete [] cell2Face;    cell2Face = nullptr;
 }
 
 void Post_WriteVisualFile::StoreUnsFieldVTKData3D(int zoneIndex, DataContainer *cdata)

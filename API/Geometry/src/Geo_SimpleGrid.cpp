@@ -147,6 +147,26 @@ LIB_EXPORT void SimpleGrid::ComputeMinMaxBox()
     pmax[2] = zmax;
 }
 
+LIB_EXPORT bool SimpleGrid::IfBoxOverset(RDouble* pmin, RDouble* pmax, int nDim, RDouble eps)
+{
+    for (int iDim = 0; iDim < nDim; iDim++)
+    {
+        RDouble ds = eps * (this->pmax[iDim] - this->pmin[iDim]);
+        this->pmax[iDim] += ds;
+        this->pmin[iDim] -= ds;
+
+        ds = eps * (pmax[iDim] - pmin[iDim]);
+        pmax[iDim] += ds;
+        pmin[iDim] -= ds;
+
+        if (this->pmax[iDim] <= pmin[iDim] || this->pmin[iDim] >= pmax[iDim])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 LIB_EXPORT RDouble SimpleGrid::CalMinEdgeLength()
 {
     return 0.0;

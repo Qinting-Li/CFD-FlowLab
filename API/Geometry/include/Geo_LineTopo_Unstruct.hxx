@@ -18,6 +18,16 @@ inline void Geo_LineTopo_Unstruct::SetLI_FaceOfLine(int **FaceOfLine_in)
     this->FaceOfLine = FaceOfLine_in;
 }
 
+inline void Geo_LineTopo_Unstruct::SetLine2Node(int *Line2NodeIn)
+{
+    this->Line2Node = Line2NodeIn;
+}
+
+inline void Geo_LineTopo_Unstruct::SetFace2Line(int** Face2LineIn)
+{
+    this->Face2Line = Face2LineIn;
+}
+
 inline void Geo_LineTopo_Unstruct::SetLI_LineOfCell(int *LineOfCell_in)
 {
     this->LineOfCell = LineOfCell_in;

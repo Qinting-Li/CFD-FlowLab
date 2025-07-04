@@ -350,6 +350,7 @@ ${Geometry_H_PATH}/GeneralFieldProxy.h
 ${Geometry_H_PATH}/FaceProxy.h
 ${Geometry_H_PATH}/Geo_SimpleVC.h
 ${Geometry_H_PATH}/Geo_StructMerge.h
+${Geometry_H_PATH}/Geo_UnstructMerge.h
 )
 source_group(Geometry\\include FILES ${Geometry_H_LIST})
 include_directories(${Geometry_H_PATH})
@@ -400,7 +401,9 @@ ${Geometry_CPP_PATH}/FieldProxy.cpp
 ${Geometry_CPP_PATH}/GeneralFieldProxy.cpp
 ${Geometry_CPP_PATH}/FaceProxy.cpp
 ${Geometry_CPP_PATH}/Geo_SimpleVC.cpp
-${Geometry_CPP_PATH}/Geo_StructMerge.cpp)
+${Geometry_CPP_PATH}/Geo_StructMerge.cpp
+${Geometry_CPP_PATH}/Geo_UnstructMerge.cpp
+)
 source_group(Geometry\\src FILES ${Geometry_CPP_LIST})
 
 # set directory of Physics.
@@ -716,7 +719,10 @@ elseif ("${BUILD_LIBRARY_TYPE}" STREQUAL "Static")
 endif()
 
 # link API library:
-
+if(BUILD_GPU)
+  message(STATUS "Linking ${GPU_TARGET_NAME} ...")
+  list(APPEND LINK_LIBRARY_LIST ${GPU_TARGET_NAME})
+endif(BUILD_GPU)
 if(WIN32)
   if(USE_VS2019)
     list(APPEND LINK_LIBRARY_LIST metis parmetis cgns libhdf5 libhdf5_hl mgrid IMlib)

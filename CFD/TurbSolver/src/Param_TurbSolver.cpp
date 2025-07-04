@@ -60,7 +60,7 @@ LIB_EXPORT void Param_TurbSolver::Init()
     RDouble kwoo = 1.0e-8;
     GlobalDataBase::GetData("kwoo", &kwoo, PHDOUBLE, 1);
 
-    int viscousType = 1;
+    int viscousType = LAMINAR;
     GlobalDataBase::GetData("viscousType", &viscousType, PHINT, 1);
 
     int neasm = -1;

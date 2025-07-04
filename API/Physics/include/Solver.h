@@ -128,6 +128,9 @@ public:
     //! Interpoint data communications.
     virtual void CommunicationInterpointData() {};
 
+    //! Overset data communications.
+    virtual void CommunicationOversetSlipData(){};
+
     //! To get the number of equations to be solve in the solver.
     //! here it is a pure virtual function, it should be re-defined in the real solver.
     virtual int GetNumberOfEquations() = 0;

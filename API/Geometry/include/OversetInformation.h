@@ -76,7 +76,7 @@ public:
     RDouble * GetInterCellCenterX(int neighborIndex);
     RDouble * GetInterCellCenterY(int neighborIndex);
     RDouble * GetInterCellCenterZ(int neighborIndex);
-
+    RDouble * GetInterCellVolume (int neighborIndex);
     Data_ParamFieldSuite * GetDataStorage();
 public:
     int FindNeighborIndex(int zoneIndex);
@@ -132,7 +132,8 @@ public:
     void GetDonorCellIndexContainer(int donorZoneIndexIn, PHVectorInt1D &donorCellIndexContainer,
                                                           PHVectorRDouble1D &interCellCenterX,
                                                           PHVectorRDouble1D &interCellCenterY,
-                                                          PHVectorRDouble1D &interCellCenterZ);
+                                                          PHVectorRDouble1D &interCellCenterZ,
+                                                          PHVectorRDouble1D &interCellVolume);
 public:
     void EncodeOversetInformation(DataContainer *dataContainer);
     void DecodeOversetInformation(DataContainer *dataContainer);
@@ -173,8 +174,8 @@ public:
     OversetCell();
     ~OversetCell();
 protected:
-    int zoneIndex;
-    int cellIndex;
+    int zoneIndex;    //!zone index to be interpolated
+    int cellIndex;    //!cell index to be interpolated
     int donorZoneIndex;
     int donorCellIndex;
 public:
@@ -197,7 +198,7 @@ public:
 protected:
     int zoneIndex;
     int donorZoneIndex;
-    PHVectorInt1D cellIndexContainer;
+    PHVectorInt1D cellIndexContainer;    //!the set of elements to be interpolated
     PHVectorInt1D storageIndexContainer;
     Data_ParamFieldSuite *dataStorage;
 public:
@@ -233,6 +234,7 @@ protected:
     PHVectorRDouble1D interCellCenterX;
     PHVectorRDouble1D interCellCenterY;
     PHVectorRDouble1D interCellCenterZ;
+    PHVectorRDouble1D interCellVolume;
 public:
     Data_ParamFieldSuite * GetDataStorage() { return dataStorage; }
 
@@ -246,11 +248,13 @@ public:
     PHVectorRDouble1D & GetInterCellCenterX() { return interCellCenterX; }
     PHVectorRDouble1D & GetInterCellCenterY() { return interCellCenterY; }
     PHVectorRDouble1D & GetInterCellCenterZ() { return interCellCenterZ; }
+    PHVectorRDouble1D & GetInterCellVolume()  { return interCellVolume; }
 
     void SetDonorCellIndexContainer(PHVectorInt1D     & donorCellIndexContainerIn) { this->donorCellIndexContainer = donorCellIndexContainerIn; }
     void SetInterCellCenterX       (PHVectorRDouble1D & interCellCenterXIn       ) { this->interCellCenterX        = interCellCenterXIn; }
     void SetInterCellCenterY       (PHVectorRDouble1D & interCellCenterYIn       ) { this->interCellCenterY        = interCellCenterYIn; }
     void SetInterCellCenterZ       (PHVectorRDouble1D & interCellCenterZIn       ) { this->interCellCenterZ        = interCellCenterZIn; }
+    void SetInterCellVolume        (PHVectorRDouble1D & interCellVolumeIn       ) { this->interCellVolume        = interCellVolumeIn; }
 
     int GetNumberOfOversetDonorCells() { return static_cast<int>(donorCellIndexContainer.size()); }
 
@@ -318,6 +322,7 @@ public:
     RDouble * GetInterCellCenterX(int iNeighbor);
     RDouble * GetInterCellCenterY(int iNeighbor);
     RDouble * GetInterCellCenterZ(int iNeighbor);
+    RDouble * GetInterCellVolume(int iNeighbor);
 
     Data_ParamFieldSuite * GetDataStorage() { return dataStorage; }
 

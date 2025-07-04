@@ -67,6 +67,11 @@ const int STATIONARY_FRAME = 0;
 const int TRANSLATIONAL_FRAME = 1;
 const int ROTATIONAL_FRAME = 2;
 
+//! Type of InitFlow.
+const int INITINFLOW      = 0;
+const int RESTARTFLIE     = 1;
+const int INTERPOLATEFLIE = 2;
+
 //! periodicType
 const int NO_PERIODICITY = 0;
 const int TRANSLATIONAL_PERIODICITY = 1;
@@ -106,6 +111,7 @@ const RDouble PI              = 3.141592653589793;
 const RDouble straightAngle   = 180.0;
 
 const int SEGCTION_LENGTH     = 10240;
+const int MAXCELLLAYER        = 1024;
 
 const int NS_EQUATION         = 1;
 const int TURBULENCE          = 2;
@@ -122,6 +128,9 @@ const int WEATHERCONDITION      = 7;
 const int WINDSPEEDPROFILE      = 8;
 const int PRIMITIVE_VARIABLES   = 9;
 const int TRAJECTORY            = 10;
+
+const int POWERLAW              = 0;
+const int LOGARITHMICLAW        = 1;
 
 const int VIS_STD               = 0;
 const int VIS_AVER              = 1;
@@ -226,6 +235,10 @@ const int THREE_GHOST_LAYER = 3;    //! Their have three-layer ghost cells.
 
 const int GlobalCoordinate = 0;
 const int LocalCoordinate  = 1;
+
+//! These variables are for porous media algorithm.
+const int NON_POROUS = 0;
+const int POROUS = 1;
 
 //! these variables are for overset algorithm.
 const int INACTIVE        = 0;

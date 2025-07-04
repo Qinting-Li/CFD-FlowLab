@@ -568,7 +568,7 @@ void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **dq, 
 
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if (cellIBlank[iCell] != 1)
+        if (cellIBlank[iCell] != ACTIVE)
         {
             continue;
         }
@@ -629,6 +629,10 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &dq, i
         residualNormal[iEquation] = 0.0;
     }
 
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int *iBlank = grid->GetCellTypeContainer();
+
     RDouble3D &xcc = *grid->GetCellCenterX();
     RDouble3D &ycc = *grid->GetCellCenterY();
     RDouble3D &zcc = *grid->GetCellCenterZ();
@@ -667,6 +671,11 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &dq, i
         {
             for (int i = ist; i <= ied; ++ i)
             {
+                int cellLabel = (ni - 1) * (nj - 1) * (k - 1) + (ni - 1) * (j - 1) + (i - 1);
+                if (iBlank[cellLabel] != ACTIVE)
+                {
+                    continue;
+                }
                 for (int m = mst; m <= med; ++ m)
                 {
                     RDouble dResm = dq(i, j, k, m) * gridScaleUnit;

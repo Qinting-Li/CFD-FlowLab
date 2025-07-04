@@ -523,7 +523,7 @@ void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble *preconM
     Qtmp[IRE] = pm / gamm1 + half * rm * (um * um + vm * vm + wm * wm);
 
     int isPorousZone = GlobalDataBase::GetIntParaFromDB("isPorousZone");
-    if (isPorousZone != 0)
+    if (isPorousZone != NON_POROUS)
     {
         RDouble porosity = GlobalDataBase::GetDoubleParaFromDB("porosity");
         RDouble densitySolid = GlobalDataBase::GetDoubleParaFromDB("densitySolid");

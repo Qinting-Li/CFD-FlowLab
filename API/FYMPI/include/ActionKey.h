@@ -24,6 +24,7 @@ namespace PHSPACE
 typedef enum
 {
     READ_RESTART = 1,
+    READ_INTERPOLATE,
     BUILD_WALL_STRUCT,
     CALC_WALL_DIST,
     FILL_WALL_STRUCT,
@@ -79,12 +80,14 @@ public:
     int ipos;
     int kind;    //! 0 solver, 1 grid.
     int64_t filepos;    //! new version of HDF5 library requires int64_t type of hid_t, instead of int type.
+    int gridfilepos;
     int format;
     fstream *file;
     bool del_file;
     bool VTKvisual;
     ios_base::openmode openmode;
     string filename;
+    string gridfilename;
     string tecfilename;
     DataContainer *data;
     DataContainer *tecdata;
@@ -96,6 +99,7 @@ public:
     DataContainer * GetTecData() const { return tecdata; }
     fstream * GetFile() const { return file; }
     string GetFileName() const { return filename; }
+    bool GetVTKVisual() const { return VTKvisual; }
     int GetAction() { return action; }
     void SetData(DataContainer *dataIn) { this->data = dataIn; }
     void SetTecData(DataContainer *dataIn) { this->tecdata = dataIn; }

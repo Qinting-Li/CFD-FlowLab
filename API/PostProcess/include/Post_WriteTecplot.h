@@ -31,7 +31,7 @@ private:
 
     //! Collect visual data for tecplot visual file.
     void StoreVisualizationData();
-    void StoreVisualizationData(int zoneIndex, DataContainer *cdata);
+    void StoreVisualizationData(int zoneIndex, DataContainer *cdata, DataContainer *cBlkData);
     void StoreStrBoundaryVisualData(int zoneIndex, DataContainer *cdata);
     void StoreStrFieldVisualData(int zoneIndex, DataContainer *cdata);
     void StoreUnsBoundaryVisualData(int zoneIndex, DataContainer *cdata);

@@ -110,7 +110,7 @@ namespace Reorder
             nTotalCellFaces++;
             nFaceOfEachCell[cellLabelRight]++;
             nTotalCellFaces++;
-        }		
+        }
         printf("set the size of cell2Cell and cell2Face\n");
         //test begin
             //printf("On cell %d, nFaceOfEachCell[%d]=%d\n", 0, 0, nFaceOfEachCell[0]);
@@ -154,7 +154,7 @@ namespace Reorder
             cell2faceOffset = offsetCell2Face[cellLabelRight];
             cell2Face[cell2faceOffset] = iFace;
             offsetCell2Face[cellLabelRight]++;
-        }		
+        }
 
         //Reset offsetCell2Face
         printf("Before reset offsetCell2Face[%d]=%d, nTotalCellFaces = %d\n", static_cast<int>(nTotalCell-1), offsetCell2Face[nTotalCell-1], nTotalCellFaces);
@@ -261,7 +261,7 @@ namespace Reorder
 
         printf("nTotalDist = %d, nTotalCell = %d\n", nTotalDist, nTotalCell);
         */
-        delete [] bandwidthOfEachCell;    bandwidthOfEachCell = NULL;		
+        delete [] bandwidthOfEachCell;    bandwidthOfEachCell = NULL;
     }
     
     void CallReorderFaceLabel(Base_Grid_Conn *gconn)
@@ -798,7 +798,7 @@ namespace Reorder
         }
         
         printf("Searching the root vertex ...\n");
-        //start from vetex 0	
+        //start from vetex 0
         int rStart = 0;
         printf("At the beginning, rStart = %d\n", rStart);
         //Here, reorderCell is used for marking a cell exsiting in root level structure
@@ -806,7 +806,7 @@ namespace Reorder
         int lCur = 0;
         int lOld = -1;
         //Get current level of vertex r
-        GetCurrentLevel(rStart, nFaceOfEachCell, cell2Cell, offsetCell2Face, reorderCell, numSortCur, cellIDSortCur);	
+        GetCurrentLevel(rStart, nFaceOfEachCell, cell2Cell, offsetCell2Face, reorderCell, numSortCur, cellIDSortCur);
         
         //Get the next level of vertex r
         GetNextLevel(numSortCur, cellIDSortCur, nFaceOfEachCell, cell2Cell, offsetCell2Face, reorderCell, numSortNext, cellIDSortNext);
@@ -839,7 +839,7 @@ namespace Reorder
 
                 reorderCell[rStart] = 1;
 
-                GetCurrentLevel(rStart, nFaceOfEachCell, cell2Cell, offsetCell2Face, reorderCell, numSortCur, cellIDSortCur);	
+                GetCurrentLevel(rStart, nFaceOfEachCell, cell2Cell, offsetCell2Face, reorderCell, numSortCur, cellIDSortCur);
 
                 GetNextLevel(numSortCur, cellIDSortCur, nFaceOfEachCell, cell2Cell, offsetCell2Face, reorderCell, numSortNext, cellIDSortNext);
                     
@@ -859,9 +859,9 @@ namespace Reorder
         ResetCellSort(numSortNext, cellIDSortNext);
     
         //set rStart as 0, and numVertex as 1
-        reorderCell[rStart] = 1;	
+        reorderCell[rStart] = 1;
         int numVertex = 0;
-        newCell[rStart] = numVertex;	
+        newCell[rStart] = numVertex;
         int nLevel = 0;
         
         //Get current level of rStart
@@ -872,7 +872,7 @@ namespace Reorder
         {
             printf("nLevel = %d, numSortCur = %d\n", nLevel, numSortCur);
          
-            AscendingCellIDSortCurByDegree(numSortCur, nFaceOfEachCell, cellIDSortCur);	
+            AscendingCellIDSortCurByDegree(numSortCur, nFaceOfEachCell, cellIDSortCur);
             ReOrderLevelCur(numSortCur, cellIDSortCur, numVertex, newCell);
 
             GetNextLevel(numSortCur, cellIDSortCur, nFaceOfEachCell, cell2Cell, offsetCell2Face, reorderCell, numSortNext, cellIDSortNext);
@@ -1121,7 +1121,7 @@ namespace Reorder
                 if (degree > degreeNext)
                 {
                     //! Exchange vertex order
-                    cellIDSortCur[iSort] = cellIDNext;		
+                    cellIDSortCur[iSort] = cellIDNext;
                     cellIDSortCur[iSort+1] = cellID;
                 }
             }
@@ -1163,7 +1163,7 @@ namespace Reorder
 
             //! Check rule 3
             int numComp = numCellCells;
-            //! At least two cells in cell2Cell	
+            //! At least two cells in cell2Cell
             while (numComp > 1)
             {
                 for (int jCell = 0; jCell < numComp-1; ++ jCell)
@@ -1234,7 +1234,7 @@ namespace Reorder
         for (int iCell = 0; iCell < nTotalCell; ++ iCell) 
         {
             if (numCells[iCell] != 1) printf("CheckNewCell, cellID %d in newCell breaks rule 2, has %d cells\n", iCell, numCells[iCell]);
-        }	
+        }
 
         delete [] numCells;    numCells = NULL;
     }
@@ -1265,7 +1265,7 @@ namespace Reorder
             nTotalCellFaces ++;
             nFaceOfEachCell[cellLabelRight] ++;
             nTotalCellFaces ++;
-        }		
+        }
     }
     //! Set offsetCell2Face by nFaceOfEachCell
     void SetOffSetCell2Face(const int nTotalCell, const int *nFaceOfEachCell, int *offsetCell2Face)
@@ -1306,7 +1306,7 @@ namespace Reorder
             cell2faceOffset = offsetCell2Face[cellLabelRight];
             cell2Face[cell2faceOffset] = iFace;
             offsetCell2Face[cellLabelRight] ++;
-        }		
+        }
     }
 
     //! Set cell2Cell
@@ -1346,7 +1346,7 @@ namespace Reorder
     //! Compute bandwidth of each cell
     void ComputeBandwidth(const int nTotalCell, const int *nFaceOfEachCell, const int *offsetCell2Face, const int *cell2Cell)
     {
-        int *bandwidthOfEachCell = new int[nTotalCell];		
+        int *bandwidthOfEachCell = new int[nTotalCell];
         for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
             int sizeCellFace = nFaceOfEachCell[iCell];
@@ -1406,7 +1406,7 @@ namespace Reorder
         }
         printf("nTotalDist = %d, nTotalCell = %d\n", nTotalDist, nTotalCell);
         
-        delete [] bandwidthOfEachCell;   bandwidthOfEachCell = NULL;		
+        delete [] bandwidthOfEachCell;   bandwidthOfEachCell = NULL;
     }
 
     //! Update face_number_of_each_face by swap method

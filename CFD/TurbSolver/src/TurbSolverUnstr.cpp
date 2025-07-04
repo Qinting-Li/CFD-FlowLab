@@ -45,7 +45,7 @@ void TurbSolverUnstr::AllocateGlobalVar(Grid *gridIn)
 {
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
-    int viscoueType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
     if (nTurbulenceEquation == 0) return;
 
     int transitionType = parameters->GetTransitionType();
@@ -199,7 +199,7 @@ void TurbSolverUnstr::AllocateGlobalVar(Grid *gridIn)
         }
     }
 
-    if (viscoueType == 4)
+    if (viscousType == TWO_EQU)
     {
         RDouble *cross = new RDouble[numberOfTotal];
         grid->UpdateDataPtr("cross", cross);    //! For the crossing term in two equation turbulence model.
@@ -217,7 +217,6 @@ void TurbSolverUnstr::AllocateGlobalVar(Grid *gridIn)
         }
     }
 
-    int viscousType = parameters->GetViscousType();
     int neasm    = GlobalDataBase::GetIntParaFromDB("neasm");
 
     if (viscousType >= TWO_EQU && neasm > 0)
@@ -243,7 +242,7 @@ void TurbSolverUnstr::DeAllocateGlobalVar(Grid *gridIn)
 {
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
-    int viscoueType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
     if (nTurbulenceEquation == 0) return;
 
     int transitionType = parameters->GetTransitionType();
@@ -351,7 +350,7 @@ void TurbSolverUnstr::DeAllocateGlobalVar(Grid *gridIn)
         DelPointer3(dcTurbSpan);
     }
 
-    if (viscoueType == 4)
+    if (viscousType == TWO_EQU)
     {
         RDouble *cross  = reinterpret_cast<RDouble *> (grid->GetDataPtr("cross"));
         delete []cross;
@@ -368,7 +367,6 @@ void TurbSolverUnstr::DeAllocateGlobalVar(Grid *gridIn)
         }
     }
 
-    int viscousType = parameters->GetViscousType();
     int neasm    = GlobalDataBase::GetIntParaFromDB("neasm");
 
     if (viscousType >= TWO_EQU && neasm > 0)
@@ -1190,14 +1188,14 @@ void TurbSolverUnstr::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldPro
 
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
-    int viscoueType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
     int DESType = parameters->GetDESType();
 
     using namespace IDX;
 
     RDouble *primitiveVariable = new RDouble [nTurbulenceEquation];
 
-    if (viscoueType == 3)
+    if (viscousType == ONE_EQU)
     {
         //! Spalart-allmaras model.
 
@@ -1205,12 +1203,13 @@ void TurbSolverUnstr::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldPro
         RDouble nuMin = 1.0e-5 * nuoo;
         RDouble nuMax = 1.0e10 * nuoo;
         int newNstep = GlobalDataBase::GetIntParaFromDB("newnstep");
+        int qTurbLimit = GlobalDataBase::GetIntParaFromDB("qTurbLimit");
         if(newNstep < 1000)
         {
             nuMax = 1.0e5 * nuoo;
         }
 
-        if(DESType == RANS)
+        if(DESType == RANS && qTurbLimit == 0)
         {
             for (int iCell = 0; iCell < numberOfTotalCell; ++iCell)
             {
@@ -1227,7 +1226,7 @@ void TurbSolverUnstr::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldPro
             }
         }
     }
-    else if (viscoueType == 4)
+    else if (viscousType == TWO_EQU)
     {
         RDouble *freeStreamTurbVar = parameters->GetFreeStreamTurbVar();
 
@@ -1430,7 +1429,7 @@ void TurbSolverUnstr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Field
     //! Now the Forward Sweep
     for (int iCell = 0; iCell < numberOfTotalCell; ++ iCell)
     {
-        if (iBlank[iCell] <= 0)
+        if (iBlank[iCell] != ACTIVE)
         {
             for (int m = 0; m < nTurbulenceEquation; ++ m)
             {
@@ -1468,6 +1467,8 @@ void TurbSolverUnstr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Field
             int le   = leftCellOfFace [face];
             int re   = rightCellOfFace [face];
             
+            if (iBlank[le] == INTERPOLATION || iBlank[re] == INTERPOLATION) continue; 
+
             //! One of le and re must be cell itself.
             if (le > iCell || re > iCell) continue;
 
@@ -1549,7 +1550,7 @@ void TurbSolverUnstr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, Fiel
     //! Backward Sweep
     for (int iCell = numberOfTotalCell - 1; iCell >= 0; -- iCell)
     {
-        if (iBlank[iCell] <= 0)
+        if (iBlank[iCell] != ACTIVE)
         {
             for (int m = 0; m < nTurbulenceEquation; ++ m)
             {
@@ -1583,6 +1584,8 @@ void TurbSolverUnstr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, Fiel
             int face  = cell2Face[iCell][jFace];
             int le    = leftCellOfFace  [face];
             int re    = rightCellOfFace [face];
+
+            if (iBlank[le] == INTERPOLATION || iBlank[re] == INTERPOLATION) continue; 
 
             //! One of le and re must be cell itself.
             if (le < iCell || re < iCell) continue;
@@ -1654,7 +1657,7 @@ void TurbSolverUnstr::SetGhostDQLUSGS(Grid *gridIn, RDouble **dq)
         UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
         int bcType = bcRegion->GetBCType();
 
-        if (IsInterface(bcType))
+        if (IsInterface(bcType) || bcType == PHENGLEI::OVERSET)
         {
             continue;
         }
@@ -2271,10 +2274,10 @@ void TurbSolverUnstr::ModifyResidualOnWallBoundary(Grid *gridIn)
     RDouble **residualTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb"));
 
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
-    int viscoueType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
 
     using namespace PHENGLEI;
-    if (viscoueType == 3)
+    if (viscousType == ONE_EQU)
     {
         UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
         int nBCRegion = unstructBCSet->GetnBCRegion();
@@ -2308,10 +2311,10 @@ void TurbSolverUnstr::ResetWallScalar(Grid *gridIn)
     RDouble **qTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"));
 
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
-    int viscoueType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
 
     using namespace PHENGLEI;
-    if (viscoueType == 3)
+    if (viscousType == ONE_EQU)
     {
         UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
         int nBCRegion = unstructBCSet->GetnBCRegion();
@@ -3523,7 +3526,7 @@ void TurbSolverUnstr::ComputeQTurbNodeValue(Grid *gridIn)
             int le = leftCellOfFace [iFace];
             int re = rightCellOfFace[iFace];
 
-            if (bcType != PHENGLEI::INTERFACE)
+            if (bcType != PHENGLEI::INTERFACE && bcType != PHENGLEI::OVERSET)
             {
                 for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
                 {
@@ -3907,7 +3910,7 @@ void TurbSolverUnstr::GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int lo
     RDouble *viscousTurbulence = reinterpret_cast<RDouble *> (grid->GetDataPtr("vist"));
 
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
-    int viscoueType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
 
     string viscousName = parameters->GetViscousName();
 
@@ -3944,7 +3947,7 @@ void TurbSolverUnstr::GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int lo
 
             le = leftCellOfFace[iFace];
 
-            if (IsInterface(bcType))
+            if (IsInterface(bcType) || bcType == PHENGLEI::OVERSET)
             {
                 continue;
             }
@@ -3964,7 +3967,7 @@ void TurbSolverUnstr::GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int lo
 
     using namespace IDX;
 
-    if (viscoueType == 3)
+    if (viscousType == ONE_EQU)
     {
         RDouble KW_sigma = parameters->GetKW_sigma();
         RDouble oSigma = 1.0 / KW_sigma;
@@ -4471,6 +4474,7 @@ void TurbSolverUnstr::ComputeVisflux(Grid *gridIn, FaceProxy *faceProxy, int loc
 
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
     RDouble skewnessAngle = parameters->GetSkewnessAngle();
+    RDouble turbSkewnessAngle = parameters->GetTurbSkewnessAngle();
 
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
     RDouble oRefReNumber = parameters->GetoRefReNumber();
@@ -4536,7 +4540,7 @@ void TurbSolverUnstr::ComputeVisflux(Grid *gridIn, FaceProxy *faceProxy, int loc
             dfdn[m] = 0.0;
         }
 
-        if (angle1 > skewnessAngle && angle2 > skewnessAngle && ABS(dL) > TINY && ABS(dR) > TINY)
+        if (angle1 > turbSkewnessAngle && angle2 > turbSkewnessAngle && ABS(dL) > TINY && ABS(dR) > TINY)
         {
             for (int m = 0; m < nTurbulenceEquation; ++ m)
             {
@@ -4562,7 +4566,7 @@ void TurbSolverUnstr::ComputeVisflux(Grid *gridIn, FaceProxy *faceProxy, int loc
                 UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
                 int bcType = bcRegion->GetBCType();
 
-                if (bcType != PHENGLEI::INTERFACE && bcType != PHENGLEI::SYMMETRY)
+                if (bcType != PHENGLEI::INTERFACE && bcType != PHENGLEI::SYMMETRY && bcType != PHENGLEI::OVERSET)
                 {
                     RDouble normalDist = (cellCenterX[re] - cellCenterX[le]) * nxs +
                                          (cellCenterY[re] - cellCenterY[le]) * nys +
@@ -4671,13 +4675,13 @@ void TurbSolverUnstr::ComputeVisflux(Grid *gridIn, FaceProxy *faceProxy, int loc
 void TurbSolverUnstr::Diagonal(Grid *grid)
 {
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
-    int viscoueType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
 
-    if (viscoueType == 3)
+    if (viscousType == ONE_EQU)
     {
         SpectrumRadiusOfOneEquation(grid);
     }
-    else if (viscoueType == 4)
+    else if (viscousType == TWO_EQU)
     {
         SpectrumRadiusOfTwoEquation(grid);
     }
@@ -5034,7 +5038,7 @@ void TurbSolverUnstr::GetQlQrTurbulence(Grid *gridIn, FaceProxy *faceProxy, int 
 
         int jFace = iFace - localStart;
 
-        if (bcType == PHENGLEI::INTERFACE)
+        if (bcType == PHENGLEI::INTERFACE || bcType == PHENGLEI::OVERSET)
         {
             continue;
         }
@@ -5118,7 +5122,7 @@ void TurbSolverUnstr::GetQlQrNS(Grid *gridIn, FaceProxy *faceProxy, int localSta
 
         int jFace = iFace - localStart;
 
-        if (bcType == PHENGLEI::INTERFACE)
+        if (bcType == PHENGLEI::INTERFACE || bcType == PHENGLEI::OVERSET)
         {
             continue;
         }
@@ -5250,7 +5254,7 @@ void TurbSolverUnstr::GMRES_NNDFlux(Grid *gridIn, FaceProxy *faceProxy, int loca
 
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
-    int viscoueType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
 
     int subJacMatSize = grid->GetBlockSizeOfJacobianMatrix();
     int nLaminar = subJacMatSize - nTurbulenceEquation;
@@ -5317,7 +5321,7 @@ void TurbSolverUnstr::GMRES_NNDFlux(Grid *gridIn, FaceProxy *faceProxy, int loca
 
     using namespace IDX;
 
-    if (viscoueType == 3)
+    if (viscousType == ONE_EQU)
     {
         //! rhoFlag, is used to compatible both original and conversative variables.
         //! For SA equation, using original variable; else, using conversative variables.
@@ -5794,9 +5798,9 @@ void TurbSolverUnstr::NNDFlux(Grid *gridIn, FaceProxy *faceProxy, int localStart
         }
     }
 
-    delete [] qTurbL;    qTurbL = nullptr;
-    delete [] qTurbR;    qTurbR = nullptr;
-    delete [] f;    f = nullptr;
+    DelPointer(qTurbL);
+    DelPointer(qTurbR);
+    DelPointer(f);
 }
 
 void TurbSolverUnstr::GetResidual(ActionKey *actkey)
@@ -5914,10 +5918,16 @@ void TurbSolverUnstr::DecompressArrayFromInterface(DataContainer *&dataContainer
 
 void TurbSolverUnstr::Boundary(Grid *gridIn)
 {
+    using namespace PHENGLEI;
     UnstructGrid *grid = UnstructGridCast(gridIn);
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
+    int isOverset = parameters->GetIsOverLapping();
 
-    using namespace PHENGLEI;
+    if (isOverset)
+    {
+        ReSetOversetBoundary(grid);
+    }
+
     int wallFunctionType = parameters->GetWallFunctionType();
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int nBCRegion = unstructBCSet->GetnBCRegion();
@@ -5966,7 +5976,7 @@ void TurbSolverUnstr::Boundary(Grid *gridIn)
             continue;
         }
 
-        if (IsInterface(bcType))
+        if (IsInterface(bcType) || bcType == PHENGLEI::OVERSET)
         {
             continue;
         }
@@ -6003,7 +6013,7 @@ void TurbSolverUnstr::Boundary(Grid *gridIn)
         }
         else
         {
-            OutflowBCRegion(grid, bcRegion);
+            TK_Exit::ExceptionExit("Error: this boundary type does not exist!\n");
         }
     }
 }
@@ -6031,6 +6041,47 @@ void TurbSolverUnstr::OutflowBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct
         for (int m = 0; m < nTurbulenceEquation; ++ m)
         {
             qTurbulence[m][re] = qTurbulence[m][le];
+        }
+    }
+}
+
+//! Overlapping boundary : The flow field variables are interpolated from the interpolating cell to the invalid cell 
+void TurbSolverUnstr::ReSetOversetBoundary(Grid* gridIn)
+{
+    int isOversetSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isOversetSlip");
+    if (isOversetSlip)
+    {
+        return;
+    }
+    //! Get the basic variables for boundary calculating.
+    UnstructGrid *grid   = UnstructGridCast(gridIn);
+    int nTotalCell = grid->GetNTotalCell();
+    vector<int> *c2c = grid->GetCell2Cell();
+    int *iBlank = grid->GetBlankIndex();
+
+    //! Get the number of equations.
+    Param_TurbSolverUnstruct *parameters = GetControlParameters();
+    int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
+    RDouble **qTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"));
+    RDouble *viscousTurbulence = reinterpret_cast<RDouble  *> (grid->GetDataPtr("vist"));
+
+    for (int iCell = 0; iCell < nTotalCell; iCell++)
+    {
+        if (iBlank[iCell] == INTERPOLATION)
+        {
+            int nNeighbor = static_cast<int>(c2c[iCell].size());
+            for (int j = 0; j < nNeighbor; ++j)
+            {
+                int neighborCell = c2c[iCell][j];
+                if (neighborCell < nTotalCell && iBlank[neighborCell] == INACTIVE)
+                {
+                    viscousTurbulence[neighborCell] = viscousTurbulence[iCell];
+                    for (int m = 0; m < nTurbulenceEquation; ++m)
+                    {
+                        qTurbulence[m][neighborCell] = qTurbulence[m][iCell];
+                    }
+                }
+            }
         }
     }
 }
@@ -6071,7 +6122,7 @@ void TurbSolverUnstr::WallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct)
     RDouble *wallDistance = grid->GetWallDist();
 
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
-    int viscoueType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
     RDouble refReNumber = parameters->GetRefReNumber();
     RDouble **qTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"));
     RDouble **q           = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
@@ -6091,11 +6142,11 @@ void TurbSolverUnstr::WallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct)
             int re = rightCellOfFace[iFace];
 
             viscousTurbulence[re] = -viscousTurbulence[le];
-            if (viscoueType == 3)
+            if (viscousType == ONE_EQU)
             {
                 qTurbulence[ISA][re] = - qTurbulence[ISA][le];
             }
-            else if (viscoueType == 4)
+            else if (viscousType == TWO_EQU)
             {
                 RDouble beta1 = 0.075;
                 RDouble rho   = q[IR][le];
@@ -6134,7 +6185,7 @@ void TurbSolverUnstr::WallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct)
             }
 
             viscousTurbulence[re] = -viscousTurbulence[le];
-            if (viscoueType == 3)
+            if (viscousType == ONE_EQU)
             {
                 for (int n = 0; n < nTurbulenceEquation; n++)
                 {
@@ -6173,7 +6224,7 @@ void TurbSolverUnstr::GMRES_WallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstr
     RDouble *wallDistance = grid->GetWallDist();
 
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
-    int viscoueType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
     RDouble refReNumber = parameters->GetRefReNumber();
     int transitionType = parameters->GetTransitionType();
     RDouble **qTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"));
@@ -6204,7 +6255,7 @@ void TurbSolverUnstr::GMRES_WallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstr
         }
 
         viscousTurbulence[re] = -viscousTurbulence[le];
-        if (viscoueType == 3)
+        if (viscousType == ONE_EQU)
         {
             for (int n = 0; n < nTurbulenceEquation; n++)
             {
@@ -6256,7 +6307,7 @@ void TurbSolverUnstr::VisWallWithWallFunctionStandard(Grid *gridIn, UnstructBC *
     RDouble *wallDistance = grid->GetWallDist();
 
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
-    int viscoueType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
     RDouble refReNumber = parameters->GetRefReNumber();
     RDouble **qTurbulence = reinterpret_cast<RDouble**> (grid->GetDataPtr("q_turb"));
     RDouble **qLaminar = reinterpret_cast<RDouble**> (grid->GetDataPtr("q"));
@@ -6339,11 +6390,11 @@ void TurbSolverUnstr::VisWallWithWallFunctionStandard(Grid *gridIn, UnstructBC *
         viscousTurbulenceWall = MAX(viscousTurbulenceWall, 0.0);
         viscousTurbulence[re] = 2.0 * viscousTurbulenceWall - viscousTurbulence[le];
 
-        if (viscoueType == ONE_EQU)
+        if (viscousType == ONE_EQU)
         {
             qTurbulence[ISA][re] = -qTurbulence[ISA][le];
         }
-        else if (viscoueType == TWO_EQU)
+        else if (viscousType == TWO_EQU)
         {
             RDouble distanceSquare = wallDist * wallDist;
 
@@ -6381,7 +6432,7 @@ void TurbSolverUnstr::VisWallWithWallFunctionPAB3D(Grid *gridIn, UnstructBC *bcR
     RDouble *wallDistance = grid->GetWallDist();
 
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
-    int viscoueType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
     RDouble refReNumber = parameters->GetRefReNumber();
     RDouble **qTurbulence = reinterpret_cast<RDouble**> (grid->GetDataPtr("q_turb"));
     RDouble **qLaminar = reinterpret_cast<RDouble**> (grid->GetDataPtr("q"));
@@ -6471,11 +6522,11 @@ void TurbSolverUnstr::VisWallWithWallFunctionPAB3D(Grid *gridIn, UnstructBC *bcR
         RDouble viscousTurbulenceWall = laminarViscosity * (laminarViscosity * xnplus * xnplus / (wallDist * rhoInside * uvw * refReNumber) - 1.0);
         viscousTurbulenceWall = MAX(viscousTurbulenceWall, 0.0);
         viscousTurbulence[re] = 2.0 * viscousTurbulenceWall - viscousTurbulence[le];
-        if (viscoueType == ONE_EQU)
+        if (viscousType == ONE_EQU)
         {
             qTurbulence[ISA][re] = -qTurbulence[ISA][le];
         }
-        else if (viscoueType == TWO_EQU)
+        else if (viscousType == TWO_EQU)
         {
             RDouble distanceSquare = wallDist * wallDist;
 
@@ -6501,6 +6552,7 @@ void TurbSolverUnstr::FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruc
     RDouble *nxs = grid->GetFaceNormalX();
     RDouble *nys = grid->GetFaceNormalY();
     RDouble *nzs = grid->GetFaceNormalZ();
+    RDouble *vgn = grid->GetFaceNormalVelocity();
 
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
@@ -6542,8 +6594,8 @@ void TurbSolverUnstr::FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruc
             win = q[IW][le];
             pin = q[IP][le];
 
-            vno = nxs[iFace] * uoo + nys[iFace] * voo + nzs[iFace] * woo;
-            vni = nxs[iFace] * uin + nys[iFace] * vin + nzs[iFace] * win;
+        vno = nxs[iFace] * uoo + nys[iFace] * voo + nzs[iFace] * woo - vgn[iFace];
+        vni = nxs[iFace] * uin + nys[iFace] * vin + nzs[iFace] * win - vgn[iFace];
             vei = sqrt(uin * uin + vin * vin + win * win);
 
             RDouble gama = gamma[le];
@@ -6876,7 +6928,6 @@ void TurbSolverUnstr::Viscosity(Grid *gridIn)
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
     RDouble eddyViscosityLimit = parameters->GetEddyViscosityLimit();
     int monitorViscousTurbulenceMax = GlobalDataBase::GetIntParaFromDB("monitor_vistmax");
-
     string viscousName  = parameters->GetViscousName();
     RDouble refReNumber = parameters->GetRefReNumber();
     RDouble reynoldsSquare = refReNumber * refReNumber;
@@ -6903,8 +6954,8 @@ void TurbSolverUnstr::Viscosity(Grid *gridIn)
             if(nue > 0.0)
             {
                 ld  = nue * q[IR][iCell] / (viscousLaminar[iCell] + SMALL);
-            ld3  = ld * ld * ld;
-            fv1 = ld3 / (ld3 + SA_cv1_cube);
+                ld3 = ld * ld * ld;
+                fv1 = ld3 / (ld3 + SA_cv1_cube);
                 viscousTurbulence[iCell] = q[IR][iCell] * fv1 * nue;
             }
             else
@@ -7271,9 +7322,25 @@ void TurbSolverUnstr::UploadOversetData(ActionKey *actkey)
 
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
-
+    int isSolve = GlobalDataBase::GetIntParaFromDB("isSolve");
+    if (!isSolve)
+    {
     RDouble **qTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"));
     PHSPACE::UploadOversetValue(grid, qTurbulence, "turb::q", nTurbulenceEquation);
+
+        RDouble *viscousTurbulence = reinterpret_cast<RDouble *> (grid->GetDataPtr("vist"));
+        PHSPACE::UploadOversetValue(grid, viscousTurbulence, "vist");
+}
+    else
+    {
+        RDouble **gradientTurbulenceX = reinterpret_cast <RDouble**> (grid->GetDataPtr("gradTurbulenceX"));
+        RDouble **gradientTurbulenceY = reinterpret_cast <RDouble**> (grid->GetDataPtr("gradTurbulenceY"));
+        RDouble **gradientTurbulenceZ = reinterpret_cast <RDouble**> (grid->GetDataPtr("gradTurbulenceZ"));
+
+        PHSPACE::UploadOversetValue(grid, gradientTurbulenceX, "turb::dqdx", nTurbulenceEquation);
+        PHSPACE::UploadOversetValue(grid, gradientTurbulenceY, "turb::dqdy", nTurbulenceEquation);
+        PHSPACE::UploadOversetValue(grid, gradientTurbulenceZ, "turb::dqdz", nTurbulenceEquation);
+    }
 }
 
 //! need further compllished!!!
@@ -7284,10 +7351,26 @@ void TurbSolverUnstr::DownloadOversetData(ActionKey *actkey)
 
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
-
+    int isSolve = GlobalDataBase::GetIntParaFromDB("isSolve");
+    if (!isSolve)
+    {
     RDouble **qTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"));
 
     PHSPACE::DownloadOversetValue(grid, qTurbulence, "turb::q", nTurbulenceEquation);
+
+        RDouble *viscousTurbulence = reinterpret_cast<RDouble *> (grid->GetDataPtr("vist"));
+        PHSPACE::DownloadOversetValue(grid, viscousTurbulence, "vist");
+}
+    else
+    {
+        RDouble **gradientTurbulenceX = reinterpret_cast <RDouble**> (grid->GetDataPtr("gradTurbulenceX"));
+        RDouble **gradientTurbulenceY = reinterpret_cast <RDouble**> (grid->GetDataPtr("gradTurbulenceY"));
+        RDouble **gradientTurbulenceZ = reinterpret_cast <RDouble**> (grid->GetDataPtr("gradTurbulenceZ"));
+
+        PHSPACE::DownloadOversetValue(grid, gradientTurbulenceX, "turb::dqdx", nTurbulenceEquation);
+        PHSPACE::DownloadOversetValue(grid, gradientTurbulenceY, "turb::dqdy", nTurbulenceEquation);
+        PHSPACE::DownloadOversetValue(grid, gradientTurbulenceZ, "turb::dqdz", nTurbulenceEquation);
+    }
 }
 
 //! Bell 20120910 add
@@ -8796,8 +8879,8 @@ LIB_EXPORT void TurbSolverUnstr::InitControlParameters()
 
     //! Define turbulent equation formation: Original SA / CFL3D SA / NSMB SA, or SST.
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
-    int viscoueType = parameters->GetViscousType();
-    if (viscoueType == 3)
+    int viscousType = parameters->GetViscousType();
+    if (viscousType == ONE_EQU)
     {
         Turb_Equation_Formation = FORMATION_SA_NSMB;
     }

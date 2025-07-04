@@ -194,6 +194,15 @@ public:
     //! Return the cell volume pointer of the last time step (voln).
     RDouble3D * GetCellVolumeOld() const;
 
+    //! Return the X velocity pointer of cell center.
+    RDouble3D *GetCellVelocityX() const;
+
+    //! Return the Y velocity pointer of cell center.
+    RDouble3D *GetCellVelocityY() const;
+
+    //! Return the Z velocity pointer of cell center.
+    RDouble3D *GetCellVelocityZ() const;
+
     //! Return the face normal velocity (vgn) pointer.
     RDouble4D * GetFaceNormalVelocity() const;
 
@@ -448,6 +457,9 @@ public:
 
     //! Get surface velocity.
     LIB_EXPORT void GridSurfaceVelocity(RDouble *xt, RDouble *yt, RDouble *zt);
+
+    //! Get cell velocity.
+    LIB_EXPORT void GridCellVelocity(RDouble *xt, RDouble *yt, RDouble *zt);
     
     LIB_EXPORT void ComputeGridFaceVelocity();
     //! Change BC type.

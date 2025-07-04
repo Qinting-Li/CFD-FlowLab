@@ -40,7 +40,8 @@
 #include "Geo_Point.h"
 #include "Geo_Face.h"
 #include "TK_Exit.h"
-
+#include "PHHeader.h"
+#include "Geo_LineTopo_Unstruct.h"
 using namespace std;
 using namespace PHSPACE;
 
@@ -58,6 +59,9 @@ typedef            int CAulong;
 CAulong gethashkey(const Point3D &p);
 CAulong gethashkey(const Point3D *p);
 
+CAulong gethashkey(const Geo_LineTopo_Unstruct &line);
+CAulong gethashkey(const Geo_LineTopo_Unstruct *line);
+
 CAulong gethashkey(const Geo_Face &face);
 CAulong gethashkey(const Geo_Face *face);
 
@@ -66,6 +70,9 @@ bool equal_hash(const Point3D *p1, const Point3D *p2);
 
 bool equal_hash(const Geo_Face &face1, const Geo_Face &face2);
 bool equal_hash(const Geo_Face *face1, const Geo_Face *face2);
+
+bool equal_hash(const Geo_LineTopo_Unstruct &line1, const Geo_LineTopo_Unstruct &line2);
+bool equal_hash(const Geo_LineTopo_Unstruct *line1, const Geo_LineTopo_Unstruct *line2);
 
 template <class T>
 class Hash {

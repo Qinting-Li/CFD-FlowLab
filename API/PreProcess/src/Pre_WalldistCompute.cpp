@@ -8,6 +8,7 @@
 #include "Geo_Grid.h"
 #include "Geo_UnstructGrid.h"
 #include "Pre_HDF5File.h"
+#include "AleManager.h"
 #ifdef USE_TecplotLib
 #include "TECXXX.h"
 #endif
@@ -19,18 +20,6 @@ using namespace std;
 
 namespace PHSPACE
 {
-
-RDouble DistSQ(RDouble *a1, RDouble *a2, int dim)
-{
-    RDouble distSQ = 0.0;
-    while (--dim >= 0)
-    {
-        RDouble diff = a1[dim] - a2[dim];
-        distSQ += diff * diff;
-    }
-    return distSQ;
-}
-
 LIB_EXPORT Pre_WalldistCompute::Pre_WalldistCompute(int walldistComputeMethod, int level)
 {
     this->wallstructureList = new vector<WallStructure *>;
@@ -1684,6 +1673,8 @@ void Pre_WalldistCompute::ComputeNodeWallDist3DByKDTreeMethod(int nTotalNode, RD
         {
             nodeWalldist[iNode] = wdst;
         }
+
+        FreeKDRes(minResults);
      }
     delete [] xyz;    xyz = NULL;
 }
@@ -1935,7 +1926,7 @@ void Pre_WalldistCompute::ComputeWallDistanceKDTree(StructGrid *grid)
                 }
                 grid->CenterCoor(i, j, k, xyzCellCenter[0], xyzCellCenter[1], xyzCellCenter[2]);
                 KDRes *minResults = KDNearest(wallFaceKDTree, xyzCellCenter);
-                RDouble wdst = DistSQ(minResults->Position(), xyzCellCenter, 3);
+                RDouble wdst = sqrt(DistSQ(minResults->Position(), xyzCellCenter, 3));
                 walldist(i, j, k) = wdst;
             }
         }
@@ -3334,7 +3325,7 @@ void Pre_WalldistCompute::BuildWallStructTree()
     {
         WallStructure *cwalldist = (*wallstructureList)[iWall];
 
-        if (cwalldist->GetIBlock() != presentBlock)
+        if (cwalldist->GetIBlock() != presentBlock && walldistComputeMethod == KDTREE_METHOD)
         {
             continue;
         }
@@ -4948,10 +4939,10 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodForBlock()
         //! if nTWallFace = 0, this must be the main back ground block
         if (nTWallFace == 0)
         {
-            RDouble dist = GlobalDataBase::GetDoubleParaFromDB("walldistMainZone");
+            RDouble defaultBlockWalldist = PHSPACE::GetRDoubleParameterFromDataBase(iBlock,"defaultBlockWalldist");
             RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
 
-            SetField(nodeWalldist, dist / gridScaleFactor, nTotalNode);
+            SetField(nodeWalldist, defaultBlockWalldist / gridScaleFactor, nTotalNode);
 
             continue;
         }
@@ -5301,6 +5292,7 @@ vector<WallStructure *> * Pre_WalldistCompute::GetWallstructureList()
     return wallstructureList;
 };
 
+
 void GenerateWalldist()
 {
     if (GetTaskCode() == HO_SOLVER) return;
@@ -5316,7 +5308,7 @@ void GenerateWalldist()
     int nIsComputeWallDist = GlobalDataBase::GetIntParaFromDB("nIsComputeWallDist");    //! just for laminar or Euler flow.  by dms
 
     int sysGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    if (viscousType > 1 || sysGridType != STRUCTGRID)    //! turbulence flow or not STRUCTGRID
+    if (viscousType > LAMINAR || sysGridType != STRUCTGRID)    //! turbulence flow or not STRUCTGRID
     {
         nIsComputeWallDist = 0;
     }
@@ -5339,7 +5331,8 @@ void GenerateWalldist()
         WalldistStatics();
     }
 
-    if (viscousType != INVISCID)
+    int flowInitMethod = GlobalDataBase::GetIntParaFromDB("flowInitMethod");
+    if (viscousType != INVISCID && flowInitMethod > 0)
     {
         CompMaxBoundaryLayerWalldist();
     }
@@ -5418,6 +5411,7 @@ bool IsBoundaryLayerExist()
     int nZones = PHMPI::GetNumberofGlobalZones();
     int myid   = PHMPI::GetCurrentProcessorID();
     int dimension = GetDim();
+    int hasCellType = 1;
 
     set < int > cellTypeSet;
     for (int iZone = 0; iZone < nZones; ++ iZone)
@@ -5441,11 +5435,20 @@ bool IsBoundaryLayerExist()
                 int cellType = GetCellType(dimension, nodeNum);
                 if (cellType == -1)
                 {
-                    return false;
+                    hasCellType = 0;
                 }
                 cellTypeSet.insert(cellType);
             }
         }
+    }
+
+    int globalHasCellType = 1;
+    PH_AllReduce(&hasCellType, &globalHasCellType, 1, MPI_MIN);
+   
+    if (globalHasCellType  == 0)
+    {
+        PrintToWindow("This cell type is not supported!\n");
+        return false;
     }
 
     int localCellTypeSize = static_cast<int>(cellTypeSet.size());
@@ -5703,13 +5706,14 @@ void VisualWalldist()
 }
 #endif
 
-void WriteWalldist()
+void WriteWalldist(int dumpData)
 {
     string walldistfile = "walldist.dat";
     GlobalDataBase::GetData("walldistfile", &walldistfile, PHSTRING, 1);
 
     ActionKey *actkey = new ActionKey();
     actkey->filename = (walldistfile);
+    actkey->subact   = dumpData;
 
     ParallelCreateHDF5File(actkey);
 
@@ -5779,21 +5783,13 @@ void DumpWalldistToFile(ActionKey *actkey, int iZone)
     string nearestwallfacenormalyname = dataName + "_nwfny";
     string nearestwallfacenormalzname = dataName + "_nwfnz";
     CreateAndWriteData(actkey->filepos, dataName, 1, nTotalCell, PHDOUBLE, wdt);
-    CreateAndWriteData(actkey->filepos, nearestwallfacenormalxname, 1, nTotalCell, PHDOUBLE, nwfnx);
-    CreateAndWriteData(actkey->filepos, nearestwallfacenormalyname, 1, nTotalCell, PHDOUBLE, nwfny);
-    CreateAndWriteData(actkey->filepos, nearestwallfacenormalzname, 1, nTotalCell, PHDOUBLE, nwfnz);
 
-    /*test
-    ostringstream oss2;
-    oss2 << nTotalCell << endl;
-    oss2.setf(ios::scientific);
-    oss2.precision(10);
-    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    if (DUMPAllWALLDISTINFO == actkey->subact)
     {
-        oss2 << iCell << " " << walldist[iCell] << endl;
+        CreateAndWriteData(actkey->filepos, nearestwallfacenormalxname, 1, nTotalCell, PHDOUBLE, nwfnx);
+        CreateAndWriteData(actkey->filepos, nearestwallfacenormalyname, 1, nTotalCell, PHDOUBLE, nwfny);
+        CreateAndWriteData(actkey->filepos, nearestwallfacenormalzname, 1, nTotalCell, PHDOUBLE, nwfnz);
     }
-    WriteLogFile(oss2);
-    //*/
 
     delete [] walldist;    walldist = nullptr;
     delete [] wdt;    wdt = nullptr;

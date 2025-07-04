@@ -296,7 +296,7 @@ void PerfectGas::Primitive2Conservative(RDouble *prim, RDouble gama, RDouble Tv,
     q[IRE] = prim[IR] * em;
 
     int isPorousZone = GlobalDataBase::GetIntParaFromDB("isPorousZone");
-    if (isPorousZone != 0)
+    if (isPorousZone != NON_POROUS)
     {
         RDouble porosity = GlobalDataBase::GetDoubleParaFromDB("porosity");
         RDouble densitySolid = GlobalDataBase::GetDoubleParaFromDB("densitySolid");
@@ -509,6 +509,9 @@ void PerfectGas::InitCommonParameter()
     reynoldsReferenceLengthDimensional = gridScaleFactor;
 
     GlobalDataBase::UpdateData("reynoldsReferenceLengthDimensional", &reynoldsReferenceLengthDimensional, PHDOUBLE, 1);
+
+    //!for AleManager classs variables
+    GlobalDataBase::UpdateData("referenceLength", &reynoldsReferenceLengthDimensional, PHDOUBLE, 1);
 
     RDouble prl = GlobalDataBase::GetDoubleParaFromDB("prl");
     RDouble prt = GlobalDataBase::GetDoubleParaFromDB("prt");
@@ -1383,6 +1386,9 @@ void PerfectGas::ComputeDensityWithReynoldsNumber()
 
     referenceParameterDimensional.SetDensity(refDimensionalDensity);
     GlobalDataBase::UpdateData("refDimensionalDensity", &refDimensionalDensity, PHDOUBLE, 1);
+    
+    //!for AleManager classs variables
+    GlobalDataBase::UpdateData("referenceDensity", &refDimensionalDensity, PHDOUBLE, 1);
 }
 
 void PerfectGas::ComputeCoefficientOfStateEquation()
@@ -1423,6 +1429,8 @@ void PerfectGas::ComputeReferenceVelocity()
         RDouble refDimensionalVelocity = refDimensionalSonicSpeed * refMachNumber;
         referenceParameterDimensional.SetVelocity(refDimensionalVelocity);
         GlobalDataBase::UpdateData("refDimensionalVelocity", &refDimensionalVelocity, PHDOUBLE, 1);
+        //!for AleManager classs variables
+        GlobalDataBase::UpdateData("referenceVelocity", &refDimensionalVelocity, PHDOUBLE, 1);
     }
 }
 
@@ -1560,7 +1568,7 @@ void PerfectGas::ComputeOtherProperParameterForGrid()
     {
         PrintToWindow("Unsteady Informations" , "\n");
         RDouble reference_velocity_dimensional = referenceParameterDimensional.GetVelocity();
-        RDouble unit = 1.0 / reference_velocity_dimensional;
+        RDouble unit = reynoldsReferenceLengthDimensional / reference_velocity_dimensional;
         RDouble physicalTimeStepDimensional = 0.0;
         RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
         if (GlobalDataBase::IsExist("physicalTimeStepDimensional", PHDOUBLE, 1))

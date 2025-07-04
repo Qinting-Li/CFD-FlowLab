@@ -547,7 +547,20 @@ void WriteBoundaryInfo(Grid **grids_in, int nBlocks)
 
     DumpBoundaryInfo(bcNamePairSet);
 }
+void WriteVolumeInfo(Grid** grids_in, int nBlocks)
+{
+    set< pair<int, string> > vcNamePairSet;
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
+    {
+        SimpleVC *volumeCondition = grids_in[iZone]->GetVolumeConditionIn();
 
+        int vcType = volumeCondition->GetVCType();
+        string vcName = volumeCondition->GetVCName();
+        pair<int, string> vcNamePair(vcType, vcName);
+        vcNamePairSet.insert(vcNamePair);
+    }
+    DumpVolumeConditionFile(vcNamePairSet);
+}
 void DumpBoundaryInfo(const set< pair<int, string> > &bcNamePairSet)
 {
     fstream file;
@@ -769,7 +782,6 @@ void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data)
                     xBoundary[iNode] = xx(i, j, k);
                     yBoundary[iNode] = yy(i, j, k);
                     zBoundary[iNode] = zz(i, j, k);
-                    
                     ++ iNode;
                 }
             }
@@ -908,160 +920,158 @@ void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data)
     }
 }
 
-void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
+void ComputeCharacteristicBoundaryUns(Grid *gridIn, DataContainer *data)
 {
-    UnstructGrid *grid = UnstructGridCast(grid_in);
+    UnstructGrid *grid = UnstructGridCast(gridIn);
+    grid->ComputeMetrics(NULL);
 
-    if (grid_in->GetDim() == PHSPACE::TWO_D)
+    if (gridIn->GetDim() == PHSPACE::TWO_D)
     {
-        int TecioMission;
+        int tecioMission;
 
-        int nTotalNode = grid_in->GetNTotalNode();
-        int nTotalCell = grid_in->GetNTotalCell();
-        int nBoundFace = grid_in->GetNBoundFace();
-        int nTotalFace = grid_in->GetNTotalFace();
+        int nTotalNode = gridIn->GetNTotalNode();
+        int nTotalCell = gridIn->GetNTotalCell();
+        int nBoundFace = gridIn->GetNBoundFace();
+        int nTotalFace = gridIn->GetNTotalFace();
 
-        int *face2node = grid->GetFace2Node();
-        int *left_cell_of_face = grid->GetLeftCellOfFace();
-        int *right_cell_of_face = grid->GetRightCellOfFace();
+        int *face2Node       = grid->GetFace2Node();
+        int *leftCellOfFace  = grid->GetLeftCellOfFace();
+        int *rightCellOfFace = grid->GetRightCellOfFace();
 
-        RDouble *x = grid_in->GetX();
-        RDouble *y = grid_in->GetY();
-        RDouble *z = grid_in->GetZ();
+        RDouble *x = gridIn->GetX();
+        RDouble *y = gridIn->GetY();
+        RDouble *z = gridIn->GetZ();
 
-        vector < vector < int > > face2nodelist(nBoundFace);
+        vector < vector < int > > face2NodeList(nBoundFace);
         vector < int > linkmap;
 
-        set< pair<int, string> > bcnameMap;
+        set< pair<int, string> > bcNameMap;
         UnstructBCSet **bcr = grid->GetBCRecord();
         for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
             int bcType = bcr[iFace]->GetKey();
             string bcName = bcr[iFace]->GetBCName();
-
-            bcnameMap.insert(pair<int, string>(bcType, bcName));
+            bcNameMap.insert(pair<int, string>(bcType, bcName));
         }
 
         set< pair<int, string> >::iterator iter;
-        for (iter = bcnameMap.begin(); iter != bcnameMap.end(); ++ iter)
+        for (iter = bcNameMap.begin(); iter != bcNameMap.end(); ++ iter)
         {
             if ((*iter).first == PHENGLEI::INTERFACE || (*iter).first < 0) continue;
 
-            TecioMission = WriteBoundary;
-            PHWrite(data, &TecioMission, 1);
+            tecioMission = WriteBoundary;
+            PHWrite(data, &tecioMission, 1);
 
-            int BCtype = (*iter).first;
-            PHWrite(data, &BCtype, 1);
+            int bcType = (*iter).first;
+            PHWrite(data, &bcType, 1);
 
             string bcName = (*iter).second;
             data->WriteString(bcName);
 
-            face2nodelist.resize(0);
+            face2NodeList.resize(0);
             linkmap.resize(0);
 
-            GetFace2NodeList(grid, *iter, linkmap, face2nodelist);
-            
-            int NumPts = static_cast<int>(linkmap.size());
-            int NumElements = static_cast<int>(face2nodelist.size());
+            GetFace2NodeList(grid, *iter, linkmap, face2NodeList);
 
-            PHWrite(data, &NumPts, 1);
-            PHWrite(data, &NumElements, 1);
+            int numPts = static_cast<int>(linkmap.size());
+            int numElements = static_cast<int>(face2NodeList.size());
 
+            PHWrite(data, &numPts, 1);
+            PHWrite(data, &numElements, 1);
 
-            RDouble *xBoundary = new RDouble [NumPts];
-            RDouble *yBoundary = new RDouble [NumPts];
-            RDouble *zBoundary = new RDouble [NumPts];
+            RDouble *xBoundary = new RDouble [numPts];
+            RDouble *yBoundary = new RDouble [numPts];
+            RDouble *zBoundary = new RDouble [numPts];
 
-            for (int iNode = 0; iNode < NumPts; ++ iNode)
+            for (int iNode = 0; iNode < numPts; ++ iNode)
             {
                 int it = linkmap[iNode];
-
                 xBoundary[iNode] = x[it];
                 yBoundary[iNode] = y[it];
                 zBoundary[iNode] = z[it];
             }
 
-            PHWrite(data, xBoundary, NumPts);
-            PHWrite(data, yBoundary, NumPts);
-            PHWrite(data, zBoundary, NumPts);
+            PHWrite(data, xBoundary, numPts);
+            PHWrite(data, yBoundary, numPts);
+            PHWrite(data, zBoundary, numPts);
 
-            delete [] xBoundary;
-            delete [] yBoundary;
-            delete [] zBoundary;
+            delete [] xBoundary;    xBoundary = nullptr;
+            delete [] yBoundary;    yBoundary = nullptr;
+            delete [] zBoundary;    zBoundary = nullptr;
 
-            int *cell2node = new int [NumElements * 4];
-            int ncount = 0;
-            for (int iCell = 0; iCell < NumElements; ++ iCell)
+            int *cell2Node = new int [numElements * 4];
+            int nCount = 0;
+            for (int iCell = 0; iCell < numElements; ++ iCell)
             {
-                uint_t np = face2nodelist[iCell].size();
-                int index0 = face2nodelist[iCell][0];
+                uint_t np = face2NodeList[iCell].size();
+                int index0 = face2NodeList[iCell][0];
                 for (uint_t ip = 0; ip < np; ++ ip)
                 {
-                    cell2node[ncount] = face2nodelist[iCell][ip] + 1;
-                    ncount ++;
+                    cell2Node[nCount] = face2NodeList[iCell][ip] + 1;
+                    nCount ++;
                 }
 
                 for (uint_t ip = np; ip < 4; ++ ip)
                 {
-                    cell2node[ncount] = index0 + 1;
-                    ncount ++;
+                    cell2Node[nCount] = index0 + 1;
+                    nCount ++;
                 }
             }
 
-            PHWrite(data, cell2node, NumElements * 4);
-            delete [] cell2node;
+            PHWrite(data, cell2Node, numElements * 4);
+            delete [] cell2Node;    cell2Node = nullptr;
         }
 
-        HyList < int > *cell2face = new HyList < int > [nTotalCell];
+        HyList < int > *cell2Face = new HyList < int > [nTotalCell];
         for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
-            cell2face[iCell].SetAverNnode(4);
+            cell2Face[iCell].SetAverNnode(4);
         }
         for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            int le = left_cell_of_face[iFace];
-            cell2face[le].insert(iFace);
+            int le = leftCellOfFace[iFace];
+            cell2Face[le].insert(iFace);
         }
         for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
         {
-            int le = left_cell_of_face[iFace];
-            int re = right_cell_of_face[iFace];
-            cell2face[le].insert(iFace);
-            cell2face[re].insert(iFace);
+            int le = leftCellOfFace[iFace];
+            int re = rightCellOfFace[iFace];
+            cell2Face[le].insert(iFace);
+            cell2Face[re].insert(iFace);
         }
 
-        HyList < int > *cell2node = new HyList < int > [nTotalCell];
+        HyList < int > *cell2Node = new HyList < int > [nTotalCell];
         for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
-            cell2node[iCell].SetAverNnode(4);
+            cell2Node[iCell].SetAverNnode(4);
         }
 
         for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
-            int face0 = cell2face[iCell][0];
-            int ip1 = face2node[2 * face0];
-            int ip2 = face2node[2 * face0 + 1];
-            cell2node[iCell].insert(ip1);
-            cell2node[iCell].insert(ip2);
+            int face0 = cell2Face[iCell][0];
+            int ip1 = face2Node[2 * face0];
+            int ip2 = face2Node[2 * face0 + 1];
+            cell2Node[iCell].insert(ip1);
+            cell2Node[iCell].insert(ip2);
 
             int targetNode = ip2;
             int checkNode  = ip1;
-            
-            int nFaceOfCell = cell2face[iCell].size();
+
+            int nFaceOfCell = cell2Face[iCell].size();
             bool isClockWise = false;
             while (!isClockWise)
             {
                 for (int iFace = 1; iFace < nFaceOfCell; ++ iFace)
                 {
-                    int face  = cell2face[iCell][iFace];
-                    int node1 = face2node[2 * face];
-                    int node2 = face2node[2 * face + 1];
+                    int face  = cell2Face[iCell][iFace];
+                    int node1 = face2Node[2 * face];
+                    int node2 = face2Node[2 * face + 1];
 
                     if (node1 == targetNode)
                     {
                         if (node2 != checkNode)
                         {
-                            cell2node[iCell].insert(node2);
+                            cell2Node[iCell].insert(node2);
                             targetNode = node2;
                         }
                         else
@@ -1074,7 +1084,7 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
                     {
                         if (node1 != checkNode)
                         {
-                            cell2node[iCell].insert(node1);
+                            cell2Node[iCell].insert(node1);
                             targetNode = node1;
                         }
                         else
@@ -1087,112 +1097,145 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
             }
         }
 
-        TecioMission = WriteBlock;
-        PHWrite(data, &TecioMission, 1);
-        
-        PHWrite(data, &nTotalNode, 1);
-        PHWrite(data, &nTotalCell, 1);
+        int nTotalCellVTK = 0;
+        vector<RDouble> xVTK;
+        vector<RDouble> yVTK;
+        vector<RDouble> zVTK;
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
+        {
+            RDouble xNode = x[iNode];
+            RDouble yNode = y[iNode];
+            RDouble zNode = z[iNode];
+            xVTK.push_back(xNode);
+            yVTK.push_back(yNode);
+            zVTK.push_back(zNode);
+        }
 
-        PHWrite(data, x, nTotalNode);
-        PHWrite(data, y, nTotalNode);
-        PHWrite(data, z, nTotalNode);
+        RDouble *xCC = grid->GetCellCenterX();
+        RDouble *yCC = grid->GetCellCenterY();
+        RDouble *zCC = grid->GetCellCenterZ();
+        vector<int> cell2NodeVTK;
 
-        int *cell2node_vtk = new int [nTotalCell * 4];
-        int ncount = 0;
         for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
-            if (cell2node[iCell].size() == 3)
+            if (cell2Node[iCell].size() == 3)
             {
                 for (int m = 0; m < 3; ++ m)
                 {
-                    cell2node_vtk[ncount] = cell2node[iCell].GetData(m) + 1;
-                    ncount ++;
+                    cell2NodeVTK.push_back((cell2Node[iCell].GetData(m) + 1));
                 }
-                cell2node_vtk[ncount] = cell2node[iCell].GetData(2) + 1;
-                ncount ++;
+                cell2NodeVTK.push_back((cell2Node[iCell].GetData(2) + 1));
+                ++ nTotalCellVTK;
             }
-            else if (cell2node[ iCell ].size() == 4)
+            else if (cell2Node[ iCell ].size() == 4)
             {
                 for (int m = 0; m < 4; ++ m)
                 {
-                    cell2node_vtk[ncount] = cell2node[iCell].GetData(m) + 1;
-                    ncount ++;
+                    cell2NodeVTK.push_back((cell2Node[iCell].GetData(m) + 1));
                 }
+                ++ nTotalCellVTK;
             }
             else
             {
-                cout << "Error: this function only support triangle and quad !\n";
-                exit(0);
+                int nDividedCell = cell2Node[iCell].size();
+                int countNodeID  = 0;
+                xVTK.push_back(xCC[iCell]);
+                yVTK.push_back(yCC[iCell]);
+                zVTK.push_back(zCC[iCell]);
+                ++ nTotalNode;
+                int cellCenterNodeID = nTotalNode - 1;
+
+                for (int iDividedCell = 0; iDividedCell < nDividedCell; ++ iDividedCell)
+                {
+                    for (int iNode = 0; iNode < 2; ++ iNode)
+                    {
+                        cell2NodeVTK.push_back((cellCenterNodeID + 1));
+                    }
+                    cell2NodeVTK.push_back((cell2Node[iCell].GetData(iDividedCell) + 1));
+                    if ((iDividedCell + 1) < nDividedCell)
+                    {
+                        cell2NodeVTK.push_back((cell2Node[iCell].GetData(iDividedCell + 1) + 1));
+                    }
+                    else
+                    {
+                        cell2NodeVTK.push_back((cell2Node[iCell].GetData(0) + 1));
+                    }
+                    ++ nTotalCellVTK;
+                }
             }
         }
 
-        PHWrite(data, cell2node_vtk, nTotalCell * 4);
+        tecioMission = WriteBlock;
+        PHWrite(data, &tecioMission, 1);
 
-        delete [] cell2node_vtk;
-        delete [] cell2node;
-        delete [] cell2face;
+        PHWrite(data, &nTotalNode, 1);
+        PHWrite(data, &nTotalCellVTK, 1);
+
+        PHWrite(data, xVTK, nTotalNode);
+        PHWrite(data, yVTK, nTotalNode);
+        PHWrite(data, zVTK, nTotalNode);
+
+        PHWrite(data, cell2NodeVTK, nTotalCellVTK * 4);
+
+        delete [] cell2Node;    cell2Node = nullptr;
+        delete [] cell2Face;    cell2Face = nullptr;
     }
     else
     {
-        int nBoundFace = grid_in->GetNBoundFace();
-        int nTotalNode = grid_in->GetNTotalNode();
-
-        grid->ComputeMetrics(NULL);
-
-        RDouble *x   = grid_in->GetX();
-        RDouble *y   = grid_in->GetY();
-        RDouble *z   = grid_in->GetZ();
-        RDouble *xfc = grid->GetFaceCenterX();
-        RDouble *yfc = grid->GetFaceCenterY();
-        RDouble *zfc = grid->GetFaceCenterZ();
+        int     nBoundFace = gridIn->GetNBoundFace();
+        int     nTotalNode = gridIn->GetNTotalNode();
+        RDouble *x         = gridIn->GetX();
+        RDouble *y         = gridIn->GetY();
+        RDouble *z         = gridIn->GetZ();
+        RDouble *xfc       = grid->GetFaceCenterX();
+        RDouble *yfc       = grid->GetFaceCenterY();
+        RDouble *zfc       = grid->GetFaceCenterZ();
 
         using namespace PHENGLEI;
-        vector < vector < int > > face2nodelist(nBoundFace);
+        vector < vector < int > > face2NodeList(nBoundFace);
         vector < int > linkmap;
 
-        set< pair<int, string> > bcnameMap;
+        set< pair<int, string> > bcNameMap;
 
         UnstructBCSet **bcr = grid->GetBCRecord();
         for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
             int bcType = bcr[iFace]->GetKey();
             string bcName = bcr[iFace]->GetBCName();
-
-            bcnameMap.insert(pair<int, string>(bcType, bcName));
+            bcNameMap.insert(pair<int, string>(bcType, bcName));
         }
 
-        int TecioMission;
+        int tecioMission;
         set< pair<int, string> >::iterator iter;
-        for (iter = bcnameMap.begin(); iter != bcnameMap.end(); ++ iter)
+        for (iter = bcNameMap.begin(); iter != bcNameMap.end(); ++ iter)
         {
             if ((*iter).first == PHENGLEI::INTERFACE || (*iter).first < 0) continue;
 
-            TecioMission = WriteBoundary;
-            PHWrite(data, &TecioMission, 1);
+            tecioMission = WriteBoundary;
+            PHWrite(data, &tecioMission, 1);
 
-            int BCtype = (*iter).first;
-            PHWrite(data, &BCtype, 1);
+            int bcType = (*iter).first;
+            PHWrite(data, &bcType, 1);
 
             string bcName = (*iter).second;
             data->WriteString(bcName);
 
-            face2nodelist.resize(0);
+            face2NodeList.resize(0);
             linkmap.resize(0);
 
-            GetFace2NodeList(grid, *iter, linkmap, face2nodelist);
-            
-            int NumPts = static_cast<int>(linkmap.size());
-            int NumElements = static_cast<int>(face2nodelist.size());
+            GetFace2NodeList(grid, *iter, linkmap, face2NodeList);
 
-            PHWrite(data, &NumPts, 1);
-            PHWrite(data, &NumElements, 1);
-            
+            int numPts = static_cast<int>(linkmap.size());
+            int numElements = static_cast<int>(face2NodeList.size());
 
-            RDouble *xBoundary = new RDouble [NumPts];
-            RDouble *yBoundary = new RDouble [NumPts];
-            RDouble *zBoundary = new RDouble [NumPts];
+            PHWrite(data, &numPts, 1);
+            PHWrite(data, &numElements, 1);
 
-            for (int iNode = 0; iNode < NumPts; ++ iNode)
+            RDouble *xBoundary = new RDouble [numPts];
+            RDouble *yBoundary = new RDouble [numPts];
+            RDouble *zBoundary = new RDouble [numPts];
+
+            for (int iNode = 0; iNode < numPts; ++ iNode)
             {
                 int nodeIndex = linkmap[iNode];
                 if (nodeIndex < nTotalNode)
@@ -1210,35 +1253,35 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
                 }
             }
 
-            PHWrite(data, xBoundary, NumPts);
-            PHWrite(data, yBoundary, NumPts);
-            PHWrite(data, zBoundary, NumPts);
+            PHWrite(data, xBoundary, numPts);
+            PHWrite(data, yBoundary, numPts);
+            PHWrite(data, zBoundary, numPts);
 
-            delete [] xBoundary;
-            delete [] yBoundary;
-            delete [] zBoundary;
+            delete [] xBoundary;    xBoundary = nullptr;
+            delete [] yBoundary;    yBoundary = nullptr;
+            delete [] zBoundary;    zBoundary = nullptr;
 
-            int *cell2node = new int [NumElements * 4];
-            int ncount = 0;
-            for (int iCell = 0; iCell < NumElements; ++ iCell)
+            int *cell2Node = new int [numElements * 4];
+            int nCount = 0;
+            for (int iCell = 0; iCell < numElements; ++ iCell)
             {
-                uint_t np = face2nodelist[iCell].size();
-                int index0 = face2nodelist[iCell][0];
+                uint_t np     = face2NodeList[iCell].size();
+                int    index0 = face2NodeList[iCell][0];
                 for (uint_t ip = 0; ip < np; ++ ip)
                 {
-                    cell2node[ncount] = face2nodelist[iCell][ip] + 1;
-                    ncount ++;
+                    cell2Node[nCount] = face2NodeList[iCell][ip] + 1;
+                    nCount ++;
                 }
 
                 for (uint_t ip = np; ip < 4; ++ ip)
                 {
-                    cell2node[ncount] = index0 + 1;
-                    ncount ++;
+                    cell2Node[nCount] = index0 + 1;
+                    nCount ++;
                 }
             }
 
-            PHWrite(data, cell2node, NumElements * 4);
-            delete [] cell2node;
+            PHWrite(data, cell2Node, numElements * 4);
+            delete [] cell2Node;    cell2Node = nullptr;
         }
     }
 }

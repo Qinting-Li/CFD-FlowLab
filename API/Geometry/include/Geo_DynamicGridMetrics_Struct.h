@@ -33,7 +33,10 @@ private:
 
     //! Face velocity.
     RDouble4D *xfv, *yfv, *zfv;
-    
+
+    //! cell velocity.
+    RDouble3D *xcv, *ycv, *zcv;
+
 public:
     Geo_DynamicGridMetrics_Struct();
     ~Geo_DynamicGridMetrics_Struct();
@@ -54,6 +57,15 @@ public:
     //! Return the z component of face velocity (zfv).
     RDouble4D * GetFaceVelocityZ() const;
 
+    //! Return the X cell velocity pointer.
+    RDouble3D * GetCellVelocityX() const;
+
+    //! Return the Y cell velocity pointer.
+    RDouble3D * GetCellVelocityY() const;
+
+    //! Return the Z cell velocity pointer.
+    RDouble3D * GetCellVelocityZ() const;
+
     //! Assign the cell volume of the last time step (voln).
     void SetCellVolumeOld(RDouble3D *voln);
 
@@ -68,6 +80,15 @@ public:
 
     //! Assign the z component of face velocity (zfv).
     void SetFaceVelocityZ(RDouble4D *zfv);
+
+    //! Assign the given pointer to the X cell velocity.
+    void SetCellVelocityX(RDouble3D *xcv);
+
+    //! Assign the given pointer to the Y cell velocity.
+    void SetCellVelocityY(RDouble3D *ycv);
+
+    //! Assign the given pointer to the Z cell velocity.
+    void SetCellVelocityZ(RDouble3D *zcv);
 
 private:
     void DeallocateAll();

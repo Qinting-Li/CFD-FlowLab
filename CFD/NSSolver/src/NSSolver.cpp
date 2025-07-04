@@ -97,7 +97,7 @@ void NSSolver::Post()
     ActionKey *actkeyDumpRestartData = new ActionKey();
     FillActionKey(actkeyDumpRestartData, DUMP_RESTART, 0);
     DumpRestartData(actkeyDumpRestartData);
-    delete actkeyDumpRestartData;
+    FreePointer(actkeyDumpRestartData);
 
     //! To dump residual data.
     //ActionKey *actkeyDumpResidual = new ActionKey();
@@ -115,7 +115,7 @@ void NSSolver::Post()
     ActionKey *actkeyDumpWallAircoef = new ActionKey();
     FillActionKey(actkeyDumpWallAircoef, DUMP_CP_DISTRI, 0);
     DumpCpDistri(actkeyDumpWallAircoef);
-    delete actkeyDumpWallAircoef;
+    FreePointer(actkeyDumpWallAircoef);
 
     if (IsNeedStatistics())
     {
@@ -123,7 +123,7 @@ void NSSolver::Post()
         ActionKey *actkeyTecOutAverageFlow = new ActionKey();
         FillActionKey(actkeyTecOutAverageFlow, VISUALIZATION_AVERAGE_FLOW, 0);
         TecOutAverageFlow(actkeyTecOutAverageFlow);
-        delete actkeyTecOutAverageFlow;
+        FreePointer(actkeyTecOutAverageFlow);
     }
 
     if (IsNeedReynoldsStressStatistics())
@@ -132,7 +132,7 @@ void NSSolver::Post()
         ActionKey *actkeyTecOutAverageReynoldsStress = new ActionKey();
         FillActionKey(actkeyTecOutAverageReynoldsStress, VISUALIZATION_AVERAGE_ReynoldsStress, 0);
         TecOutAverageReynoldsStress(actkeyTecOutAverageReynoldsStress);
-        delete actkeyTecOutAverageReynoldsStress;
+        FreePointer(actkeyTecOutAverageReynoldsStress);
     }
 }
 
@@ -184,7 +184,7 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
             ActionKey *actkeyDumpRestartData = new ActionKey();
             FillActionKey(actkeyDumpRestartData, DUMP_RESTART, level);
             DumpRestartData(actkeyDumpRestartData);
-            delete actkeyDumpRestartData;    actkeyDumpRestartData = nullptr;
+            FreePointer(actkeyDumpRestartData);
         }
 
         else
@@ -193,8 +193,7 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
             ActionKey *actkeyDumpRestartData = new ActionKey();
             FillActionKey(actkeyDumpRestartData, DUMP_RESTART, level);
             DumpProtectData(actkeyDumpRestartData, RestartFile);
-            delete actkeyDumpRestartData;    actkeyDumpRestartData = nullptr;
-
+            FreePointer(actkeyDumpRestartData);
             if(outnstep > 1)
             {
                 if(RestartFile == 0)
@@ -232,7 +231,7 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
             ActionKey *actkeyTecOutAverageFlow = new ActionKey();
             FillActionKey(actkeyTecOutAverageFlow, VISUALIZATION_AVERAGE_FLOW, level);
             TecOutAverageFlow(actkeyTecOutAverageFlow);
-            delete actkeyTecOutAverageFlow;    actkeyTecOutAverageFlow = nullptr;
+            FreePointer(actkeyTecOutAverageFlow);
         }
 
         if (IsNeedReynoldsStressStatistics())
@@ -241,7 +240,7 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
             ActionKey *actkeyTecOutAverageReynoldsStress = new ActionKey();
             FillActionKey(actkeyTecOutAverageReynoldsStress, VISUALIZATION_AVERAGE_ReynoldsStress, level);
             TecOutAverageReynoldsStress(actkeyTecOutAverageReynoldsStress);
-            delete actkeyTecOutAverageReynoldsStress;    actkeyTecOutAverageReynoldsStress = nullptr;
+            FreePointer(actkeyTecOutAverageReynoldsStress);
         }
     }
 
@@ -252,7 +251,7 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
         ActionKey *actkeyDumpResidual = new ActionKey();
         FillActionKey(actkeyDumpResidual, DUMP_RESIDUAL, level);
         DumpResidual(actkeyDumpResidual);
-        delete actkeyDumpResidual;    actkeyDumpResidual = nullptr;
+        FreePointer(actkeyDumpResidual);
     }
 
     int intervalStepForce = parameters->GetIntervalStepForce();
@@ -266,27 +265,24 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
                 ActionKey *actkeyDumpAirForceCoef = new ActionKey();
                 FillActionKey(actkeyDumpAirForceCoef, DUMP_AIR_FORCE_COEF, level);
                 DumpAirForceCoef(actkeyDumpAirForceCoef);
-                delete actkeyDumpAirForceCoef;    actkeyDumpAirForceCoef = nullptr;
-
+                FreePointer(actkeyDumpAirForceCoef);
                 //! To dump wall airforce coefficient data.
                 ActionKey *actkeyDumpWallAircoef = new ActionKey();
                 FillActionKey(actkeyDumpWallAircoef, DUMP_CP_DISTRI, 0);
                 DumpCpDistri(actkeyDumpWallAircoef);
-                delete actkeyDumpWallAircoef;    actkeyDumpWallAircoef = nullptr;
-
+                FreePointer(actkeyDumpWallAircoef);
                 //! To dump surface information data.
                 ActionKey *actkeyDumpSurfaceInfo = new ActionKey();
                 FillActionKey(actkeyDumpSurfaceInfo, DUMP_SURFACE_INFO, 0);
                 DumpSurfaceInfo(actkeyDumpSurfaceInfo);
-                delete actkeyDumpSurfaceInfo;    actkeyDumpSurfaceInfo = nullptr;
-
+                FreePointer(actkeyDumpSurfaceInfo);
                 if (sys_gridtype == STRUCTGRID)
                 {
                     //! To dump surface max and average heat flux.
                     ActionKey *actkeyDumpHeatFlux = new ActionKey();
                     FillActionKey(actkeyDumpHeatFlux, DUMP_HEATFLUX, 0);
                     DumpHeatFlux(actkeyDumpHeatFlux);
-                    delete actkeyDumpHeatFlux;    actkeyDumpHeatFlux = nullptr;
+                    FreePointer(actkeyDumpHeatFlux);
                 }
             }
         }
@@ -298,13 +294,12 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
                 ActionKey *actkeyDumpWallAircoef = new ActionKey();
                 FillActionKey(actkeyDumpWallAircoef, DUMP_CP_DISTRI, 0);
                 DumpCpDistri(actkeyDumpWallAircoef);
-                delete actkeyDumpWallAircoef;    actkeyDumpWallAircoef = nullptr;
-
+                FreePointer(actkeyDumpWallAircoef);
                 //! To dump surface information data.
                 ActionKey *actkeyDumpSurfaceInfo = new ActionKey();
                 FillActionKey(actkeyDumpSurfaceInfo, DUMP_SURFACE_INFO, 0);
                 DumpSurfaceInfo(actkeyDumpSurfaceInfo);
-                delete actkeyDumpSurfaceInfo;    actkeyDumpSurfaceInfo = nullptr;
+                FreePointer(actkeyDumpSurfaceInfo);
             }
         }
     }
@@ -430,7 +425,7 @@ void NSSolver::CheckResiduals(Grid *grid, int level)
     ActionKey *actkeyCheckResidual = new ActionKey();
     FillActionKey(actkeyCheckResidual, DUMP_RESIDUAL, level);
     CheckResidual(actkeyCheckResidual);
-    delete actkeyCheckResidual;
+    FreePointer(actkeyCheckResidual);
 
     int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
     int nMaxSimuStep = GlobalDataBase::GetIntParaFromDB("maxSimuStep");
@@ -516,7 +511,7 @@ void NSSolver::DumpCFLNumber(Grid *grid, int level)
         ParallelCloseFile(actkeyObtainCFLNumber);
     }
 
-    delete actkeyObtainCFLNumber;
+    FreePointer(actkeyObtainCFLNumber);
 }
 
 void NSSolver::CheckSurfaceHeatingChange(Grid *grid, int level)
@@ -769,7 +764,7 @@ void NSSolver::InitDependentVariables()
     using namespace GPUMemory;
     using namespace GPUFlowVariables;
     using namespace TemporaryOperations;
-    GPUQCopy(fineGrid);	
+    GPUQCopy(fineGrid);
     GPUPrim_infCopy();
 #endif
 
@@ -894,7 +889,7 @@ void NSSolver::RegisterCFDSolverInterfaceField()
             CFDSolver::RegisterInterfaceField(varName, PHDOUBLE, 1);
         }
     }
-    delete postVisualization;    postVisualization = nullptr;
+    FreePointer(postVisualization);
 }
 
 void NSSolver::ReleaseCFDSolverInterfaceField()
@@ -996,7 +991,7 @@ void NSSolver::RegisterCFDSolverInterpointField()
             CFDSolver::RegisterInterpointField(varName, PHDOUBLE, 1);
         }
 
-        delete postVisualizationAverageFlow;    postVisualizationAverageFlow = nullptr;
+        FreePointer(postVisualizationAverageFlow);
     }
 
     int ifStaticsReynoldsStress = parameters->GetIfStaticsReynoldsStress();
@@ -1013,10 +1008,10 @@ void NSSolver::RegisterCFDSolverInterpointField()
             CFDSolver::RegisterInterpointField(varName, PHDOUBLE, 1);
         }
 
-        delete postVisualizationAverageReynoldsStress;    postVisualizationAverageReynoldsStress = nullptr;
+        FreePointer(postVisualizationAverageReynoldsStress);
     }
 
-    delete postVisualization;    postVisualization = nullptr;
+    FreePointer(postVisualization);
 }
 
 void NSSolver::RegisterOversetField()
@@ -1026,6 +1021,21 @@ void NSSolver::RegisterOversetField()
     CFDSolver::RegisterOversetField("q", PHDOUBLE, nEquation);
     int nTemperatureModel = parameters->GetTemperatureModel();
     CFDSolver::RegisterOversetField("t", PHDOUBLE, nTemperatureModel);
+
+    int isOversetSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isOversetSlip");
+    int isCommGradientforSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isCommGradientforSlip");
+    if (isOversetSlip && isCommGradientforSlip )
+    {
+        CFDSolver::RegisterOversetField("dqdx", PHDOUBLE, nEquation);
+        CFDSolver::RegisterOversetField("dqdy", PHDOUBLE, nEquation);
+        CFDSolver::RegisterOversetField("dqdz", PHDOUBLE, nEquation);
+
+        CFDSolver::RegisterOversetField("limit2D", PHDOUBLE, nEquation);
+
+        CFDSolver::RegisterOversetField("dtdx", PHDOUBLE, nTemperatureModel);
+        CFDSolver::RegisterOversetField("dtdy", PHDOUBLE, nTemperatureModel);
+        CFDSolver::RegisterOversetField("dtdz", PHDOUBLE, nTemperatureModel);
+    }
 }
 
 void NSSolver::DeAllocateOversetInterfaceVar(Data_ParamFieldSuite *dataStore)
@@ -1035,6 +1045,31 @@ void NSSolver::DeAllocateOversetInterfaceVar(Data_ParamFieldSuite *dataStore)
 
     RDouble **t = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("t"));
     DelPointer2(t);
+
+    int isOversetSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isOversetSlip");
+    int isCommGradientforSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isCommGradientforSlip");
+    if (isOversetSlip && isCommGradientforSlip)
+    {
+        RDouble **gradPrimtiveVarX = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("dqdx"));
+        RDouble **gradPrimtiveVarY = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("dqdy"));
+        RDouble **gradPrimtiveVarZ = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("dqdz"));
+
+        RDouble **limit2D = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("limit2D"));
+
+        RDouble **gradTemperatureX = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("dtdx"));
+        RDouble **gradTemperatureY = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("dtdy"));
+        RDouble **gradTemperatureZ = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("dtdz"));
+
+        DelPointer2(gradPrimtiveVarX);
+        DelPointer2(gradPrimtiveVarY);
+        DelPointer2(gradPrimtiveVarZ);
+
+        DelPointer2(limit2D);
+
+        DelPointer2(gradTemperatureX);
+        DelPointer2(gradTemperatureY);
+        DelPointer2(gradTemperatureZ);
+    }
 }
 
 void NSSolver::PrepareOversetInterfaceData(Data_ParamFieldSuite *dataStore, InterfaceDataProxy *interfaceDataProxy)
@@ -1048,13 +1083,44 @@ void NSSolver::PrepareOversetInterfaceData(Data_ParamFieldSuite *dataStore, Inte
     vector <RDouble **> &vectorData = interfaceDataProxy->GetVectorData();
     vector <int> & vectorDimension = interfaceDataProxy->GetVectorDimension();
 
-    vectorDimension.push_back(nEquation);
-    vectorData.push_back(q);
-    
     RDouble **t = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("t"));
-    
+
+    int isSolve = GlobalDataBase::GetIntParaFromDB("isSolve");
+    if (!isSolve)
+    {
+        vectorDimension.push_back(nEquation);
+        vectorData.push_back(q);
+
     vectorDimension.push_back(nTemperatureModel);
     vectorData.push_back(t);
+}
+    else
+    {
+        RDouble **gradPrimtiveVarX = reinterpret_cast <RDouble**> (dataStore->GetDataPtr("dqdx"));
+        RDouble **gradPrimtiveVarY = reinterpret_cast <RDouble**> (dataStore->GetDataPtr("dqdy"));
+        RDouble **gradPrimtiveVarZ = reinterpret_cast <RDouble**> (dataStore->GetDataPtr("dqdz"));
+        vectorDimension.push_back(nEquation);
+        vectorData.push_back(gradPrimtiveVarX);
+        vectorDimension.push_back(nEquation);
+        vectorData.push_back(gradPrimtiveVarY);
+        vectorDimension.push_back(nEquation);
+        vectorData.push_back(gradPrimtiveVarZ);
+
+        RDouble **limit2D = reinterpret_cast <RDouble**> (dataStore->GetDataPtr("limit2D"));
+
+        vectorDimension.push_back(nEquation);
+        vectorData.push_back(limit2D);
+
+        RDouble **gradTemperatureX = reinterpret_cast <RDouble**> (dataStore->GetDataPtr("dtdx"));
+        RDouble **gradTemperatureY = reinterpret_cast <RDouble**> (dataStore->GetDataPtr("dtdy"));
+        RDouble **gradTemperatureZ = reinterpret_cast <RDouble**> (dataStore->GetDataPtr("dtdz"));
+        vectorDimension.push_back(nTemperatureModel);
+        vectorData.push_back(gradTemperatureX);
+        vectorDimension.push_back(nTemperatureModel);
+        vectorData.push_back(gradTemperatureY);
+        vectorDimension.push_back(nTemperatureModel);
+        vectorData.push_back(gradTemperatureZ);
+    }
 }
 
 void NSSolver::GetResidual(ActionKey *actkey)

@@ -644,7 +644,7 @@ void Mesh_DeformationRBF::RBFDeformingKernel(DynamicGrid *grid, int nodeIndex, P
     RDouble2D *controlMatrix = new RDouble2D(M, M, fortranArray);
     RDouble2D &controlMatrix2D = *reinterpret_cast<RDouble2D *> (controlMatrix);
     RDouble2D *inverseMatrix = new RDouble2D(M, M, fortranArray);
-	RDouble2D &inverseMatrix2D = *reinterpret_cast<RDouble2D *> (inverseMatrix);
+    RDouble2D &inverseMatrix2D = *reinterpret_cast<RDouble2D *> (inverseMatrix);
 
     /*vector< vector< RDouble > > controlMatrix;
     controlMatrix.resize(numberOfRealCP);

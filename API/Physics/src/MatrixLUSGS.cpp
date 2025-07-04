@@ -13,7 +13,7 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
 {
     StructGrid *grid = StructGridCast(gridIn);
 
-	SolveDiagonalMatrix(grid);
+    SolveDiagonalMatrix(grid);
 
     RDouble4D &dq = dqProxy->GetField_STR();
     RDouble4D &deltaFlux = LUplusDQ->GetField_STR();
@@ -24,7 +24,7 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
     RDouble4D &gvgn  = *(grid->GetFaceNormalVelocity());
     RDouble4D &garea = *(grid->GetFaceArea());
     /*RDouble3D &gvol  = *(grid->GetCellVolume());*/
-	
+
     int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
     int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
     int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
@@ -40,32 +40,32 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
     RDouble *temperature = new RDouble[nTemperatureModel];
     RDouble *qPrecondition = new RDouble[nEquation];
     RDouble *Ux = new RDouble [nEquation];
-	RDouble *deltaQ = new RDouble[nEquation];
-	RDouble *rhsMatrix = new RDouble[nEquation];
-	RDouble *priml = new RDouble[nEquation];
-	RDouble *primr = new RDouble[nEquation];
-	
+    RDouble *deltaQ = new RDouble[nEquation];
+    RDouble *rhsMatrix = new RDouble[nEquation];
+    RDouble *priml = new RDouble[nEquation];
+    RDouble *primr = new RDouble[nEquation];
+
     Range M(0, nEquation - 1);
-	RDouble2D *diagonalMatrixD = new RDouble2D(M, M, fortranArray);
-	RDouble2D &diagonalMatrix2D = *reinterpret_cast<RDouble2D *> (diagonalMatrixD);
-	RDouble2D *tempMatrix = new RDouble2D(M, M, fortranArray);
+    RDouble2D *diagonalMatrixD = new RDouble2D(M, M, fortranArray);
+    RDouble2D &diagonalMatrix2D = *reinterpret_cast<RDouble2D *> (diagonalMatrixD);
+    RDouble2D *tempMatrix = new RDouble2D(M, M, fortranArray);
     RDouble2D &tempMatrix2D = *reinterpret_cast<RDouble2D *> (tempMatrix);
-	RDouble2D *jacobianMatrix = new RDouble2D(M, M, fortranArray);
+    RDouble2D *jacobianMatrix = new RDouble2D(M, M, fortranArray);
     RDouble2D &jacobianMatrix2D = *reinterpret_cast<RDouble2D *> (jacobianMatrix);
 
     RDouble4D &res = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res"));
     RDouble4D &visSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("visSpectralRadius"));
     RDouble4D &q  = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
     RDouble3D &gamma = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
-	RDouble5D &diagonalMatrix = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("diagonalMatrix"));
-	RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (gridIn->GetDataPtr("rtem"));
+    RDouble5D &diagonalMatrix = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("diagonalMatrix"));
+    RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (gridIn->GetDataPtr("rtem"));
 
     int iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd;
     grid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, NON_GHOST);
 
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     RDouble3D viscousLaminar, viscousTurbulence;
-    if (viscousType > 0)
+    if (viscousType > INVISCID)
     {
         viscousLaminar = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("visl"));
         viscousTurbulence = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("vist"));
@@ -79,10 +79,10 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
         {
             for (int i = iCellStart; i <= iCellEnd; ++ i)
             {    
-				for (int m = 0; m < nEquation; ++ m)
-				{
-					dq(i, j, k, m) = 0.0;
-				}
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    dq(i, j, k, m) = 0.0;
+                }
 
                 for (int m = 0; m < nEquation; ++ m)
                 {
@@ -116,9 +116,9 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
                 for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
                 {
                     int il1, jl1, kl1, il, jl, kl;
-					grid->GetNsurfIndex(il1, jl1, kl1, iSurface);
+                    grid->GetNsurfIndex(il1, jl1, kl1, iSurface);
 
-					grid->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
+                    grid->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                     for (int m = 0; m < nEquation; ++ m)
                     {
@@ -126,7 +126,7 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
                         qNeighbor[m] = q(il, jl, kl, m);
                         dqNeighbor[m] = dq(il, jl, kl, m);
 
-						priml[m] = q(il, jl, kl, m);
+                        priml[m] = q(il, jl, kl, m);
                         primr[m] = q(i, j, k, m);
                     }
                    
@@ -150,29 +150,29 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
 
                     RDouble gama = gamma(il, jl, kl);
 
-					ComputeInviscidMatrix(prim, xfn, yfn, zfn, area, vgn, gama, tempMatrix);
+                    ComputeInviscidMatrix(prim, xfn, yfn, zfn, area, vgn, gama, tempMatrix);
 
-					RDouble rtemL = rtem(il, jl, kl);
-					RDouble rtemR = rtem(i,  j,  k);
+                    RDouble rtemL = rtem(il, jl, kl);
+                    RDouble rtemR = rtem(i,  j,  k);
 
-					SolveRoeMatrix(priml, primr, xfn1, yfn1, zfn1, gama, area1, rtemL, rtemR, jacobianMatrix);
-					for (int m = 0; m < nEquation; ++ m)
-					{
-						for (int n = 0; n < nEquation; ++ n)
-						{
-							tempMatrix2D(m, n) += jacobianMatrix2D(m, n);
-						}
-					}
+                    SolveRoeMatrix(priml, primr, xfn1, yfn1, zfn1, gama, area1, rtemL, rtemR, jacobianMatrix);
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        for (int n = 0; n < nEquation; ++ n)
+                        {
+                            tempMatrix2D(m, n) += jacobianMatrix2D(m, n);
+                        }
+                    }
 
-					for (int m = 0; m < nEquation; ++ m)
-					{
-						RDouble fSum = 0.0;
-						for (int n = 0; n < nEquation; ++ n)
-						{
-							fSum += half * tempMatrix2D(m, n) * dqNeighbor[n];
-						}
-						df[m] = fSum;
-					}
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        RDouble fSum = 0.0;
+                        for (int n = 0; n < nEquation; ++ n)
+                        {
+                            fSum += half * tempMatrix2D(m, n) * dqNeighbor[n];
+                        }
+                        df[m] = fSum;
+                    }
 
                     //! Add Flux together.
                     for (int m = 0; m < nEquation; ++ m)
@@ -180,7 +180,7 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
                         rhs0[m] -= df[m];
                     }
 
-                    if (viscousType > 0)
+                    if (viscousType > INVISCID)
                     {
                         RDouble rad_vis = half * visSpectralRadius(il, jl, kl, iSurface - 1);
 
@@ -190,36 +190,36 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
                         }
                     }
                 }
-				
-				for (int m = 0; m < nEquation; ++ m)
-				{
-					rhsMatrix[m] = 0.0;
-					deltaQ[m]    = 0.0;
-					rhsMatrix[m] = dq(i, j, k, m) - Ux[m] - rhs0[m];
-				}
-				
-				for (int m = 0; m < nEquation; ++ m)
-				{
-					for (int n = 0; n < nEquation; ++ n)
-					{
-						diagonalMatrix2D(m, n) = diagonalMatrix(i, j, k, m, n);
-					}
-				}
+                
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    rhsMatrix[m] = 0.0;
+                    deltaQ[m]    = 0.0;
+                    rhsMatrix[m] = dq(i, j, k, m) - Ux[m] - rhs0[m];
+                }
+                
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    for (int n = 0; n < nEquation; ++ n)
+                    {
+                        diagonalMatrix2D(m, n) = diagonalMatrix(i, j, k, m, n);
+                    }
+                }
 
-				for (int m = 0; m < nEquation; ++ m)
-				{
-					RDouble qSum = 0.0;
-					for (int n = 0; n < nEquation; ++ n)
-					{
-						qSum += diagonalMatrix2D(m, n) * rhsMatrix[n];
-					}
-					deltaQ[m] = qSum;
-				}
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    RDouble qSum = 0.0;
+                    for (int n = 0; n < nEquation; ++ n)
+                    {
+                        qSum += diagonalMatrix2D(m, n) * rhsMatrix[n];
+                    }
+                    deltaQ[m] = qSum;
+                }
 
                 for (int m = 0; m < nEquation; ++ m)
                 {
                     //! dq(i, j, k, m) = deltQ[m]
-					dq(i, j, k, m) = deltaQ[m];
+                    dq(i, j, k, m) = deltaQ[m];
                     //! Store the lower forward sweep delta-flux, which will be used in the backward sweep.
                     deltaFlux(i, j, k, m) += rhs0[m];
                     sweepNormal += SQR(dq(i, j, k, m) - dqOld[m]);
@@ -232,15 +232,15 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
     delete [] prim;
     delete [] qNeighbor;
     delete [] rhs0;
-	delete [] priml;
-	delete [] primr;
+    delete [] priml;
+    delete [] primr;
 
     delete [] df;
-	delete [] deltaQ;
-	delete [] rhsMatrix;
-	delete diagonalMatrixD;
-	delete tempMatrix;
-	delete jacobianMatrix;
+    delete [] deltaQ;
+    delete [] rhsMatrix;
+    delete diagonalMatrixD;
+    delete tempMatrix;
+    delete jacobianMatrix;
 
     delete [] qPrecondition;
     delete [] dqCell;
@@ -282,26 +282,26 @@ void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProx
     RDouble *qPrecondition = new RDouble[nEquation];
     RDouble *dqCell = new RDouble[nEquation];
     RDouble *Lx = new RDouble[nEquation];
-	RDouble *deltaQ = new RDouble[nEquation];
-	RDouble *rhsMatrix = new RDouble[nEquation];
-	RDouble *priml = new RDouble[nEquation];
-	RDouble *primr = new RDouble[nEquation];
-	
-	//! Allocate the memories.
+    RDouble *deltaQ = new RDouble[nEquation];
+    RDouble *rhsMatrix = new RDouble[nEquation];
+    RDouble *priml = new RDouble[nEquation];
+    RDouble *primr = new RDouble[nEquation];
+    
+    //! Allocate the memories.
     Range M(0, nEquation - 1);
-	RDouble2D *diagonalMatrixD = new RDouble2D(M, M, fortranArray);
-	RDouble2D &diagonalMatrix2D = *reinterpret_cast<RDouble2D *> (diagonalMatrixD);
-	RDouble2D *tempMatrix = new RDouble2D(M, M, fortranArray);
+    RDouble2D *diagonalMatrixD = new RDouble2D(M, M, fortranArray);
+    RDouble2D &diagonalMatrix2D = *reinterpret_cast<RDouble2D *> (diagonalMatrixD);
+    RDouble2D *tempMatrix = new RDouble2D(M, M, fortranArray);
     RDouble2D &tempMatrix2D = *reinterpret_cast<RDouble2D *> (tempMatrix);
-	RDouble2D *jacobianMatrix = new RDouble2D(M, M, fortranArray);
+    RDouble2D *jacobianMatrix = new RDouble2D(M, M, fortranArray);
     RDouble2D &jacobianMatrix2D = *reinterpret_cast<RDouble2D *> (jacobianMatrix);
 
     RDouble4D &res = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res"));
     RDouble4D &visSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("visSpectralRadius"));
     RDouble4D &q  = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
     RDouble3D &gamma = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
-	RDouble5D &diagonalMatrix = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("diagonalMatrix"));
-	RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (gridIn->GetDataPtr("rtem"));
+    RDouble5D &diagonalMatrix = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("diagonalMatrix"));
+    RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (gridIn->GetDataPtr("rtem"));
 
     Range II, JJ, KK;
     GetRange(ni, nj, nk, -2, 1, II, JJ, KK);
@@ -312,7 +312,7 @@ void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProx
 
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     RDouble3D viscousLaminar, viscousTurbulence;
-    if (viscousType > 0)
+    if (viscousType > INVISCID)
     {
         viscousLaminar = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("visl"));
         viscousTurbulence = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("vist"));
@@ -327,9 +327,9 @@ void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProx
             for (int i = iCellEnd; i >= iCellStart; -- i)
             {
                 for (int m = 0; m < nEquation; ++ m)
-				{
-					dq(i, j, k, m) = 0.0;
-				}
+                {
+                    dq(i, j, k, m) = 0.0;
+                }
 
                 for (int m = 0; m < nEquation; ++ m)
                 {
@@ -359,7 +359,7 @@ void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProx
                 for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
                 {
                     int il1, jl1, kl1, il, jl, kl;
-					grid->GetNsurfIndex(il1, jl1, kl1, iSurface);
+                    grid->GetNsurfIndex(il1, jl1, kl1, iSurface);
 
                     grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
@@ -369,7 +369,7 @@ void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProx
                         qNeighbor[m] = q(il, jl, kl, m);
                         dqNeighbor[m] = dq(il, jl, kl, m);
 
-						priml[m] = q(i, j, k, m);
+                        priml[m] = q(i, j, k, m);
                         primr[m] = q(il, jl, kl, m);
                     }
 
@@ -394,29 +394,29 @@ void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProx
 
                     RDouble gama = gamma(il, jl, kl);
 
-					ComputeInviscidMatrix(prim, xfn, yfn, zfn, area, vgn, gama, tempMatrix);
+                    ComputeInviscidMatrix(prim, xfn, yfn, zfn, area, vgn, gama, tempMatrix);
 
-					RDouble rtemL = rtem(i, j, k);
-					RDouble rtemR = rtem(il, jl, kl);
+                    RDouble rtemL = rtem(i, j, k);
+                    RDouble rtemR = rtem(il, jl, kl);
 
-					SolveRoeMatrix(priml, primr, xfn1, yfn1, zfn1, gama, area1, rtemL, rtemR, jacobianMatrix);
-					for (int m = 0; m < nEquation; ++ m)
-					{
-						for (int n = 0; n < nEquation; ++ n)
-						{
-							tempMatrix2D(m, n) -= jacobianMatrix2D(m, n);
-						}
-					}
+                    SolveRoeMatrix(priml, primr, xfn1, yfn1, zfn1, gama, area1, rtemL, rtemR, jacobianMatrix);
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        for (int n = 0; n < nEquation; ++ n)
+                        {
+                            tempMatrix2D(m, n) -= jacobianMatrix2D(m, n);
+                        }
+                    }
 
-					for (int m = 0; m < nEquation; ++ m)
-					{
-						RDouble fSum = 0.0;
-						for (int n = 0; n < nEquation; ++ n)
-						{
-							fSum += half * tempMatrix2D(m, n) * dqNeighbor[n];
-						}
-						df[m] = fSum;
-					}
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        RDouble fSum = 0.0;
+                        for (int n = 0; n < nEquation; ++ n)
+                        {
+                            fSum += half * tempMatrix2D(m, n) * dqNeighbor[n];
+                        }
+                        df[m] = fSum;
+                    }
 
                     //! Add Flux together.
                     for (int m = 0; m < nEquation; ++ m)
@@ -424,7 +424,7 @@ void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProx
                         rhs0[m] += df[m];
                     }
 
-                    if (viscousType > 0)
+                    if (viscousType > INVISCID)
                     {
                         RDouble rad_vis = half * visSpectralRadius(il, jl, kl, iSurface - 1);
 
@@ -434,36 +434,36 @@ void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProx
                         }
                     }
                 }
-				
-				for (int m = 0; m < nEquation; ++ m)
-				{
-					rhsMatrix[m] = 0.0;
-					deltaQ[m]    = 0.0;
-					rhsMatrix[m] = dq(i, j, k, m) - Lx[m] - rhs0[m];
-				}
-				
-				for (int m = 0; m < nEquation; ++ m)
-				{
-					for (int n = 0; n < nEquation; ++ n)
-					{
-						diagonalMatrix2D(m, n) = diagonalMatrix(i, j, k, m, n);
-					}
-				}
 
-				for (int m = 0; m < nEquation; ++ m)
-				{
-					RDouble qSum = 0.0;
-					for (int n = 0; n < nEquation; ++ n)
-					{
-						qSum += diagonalMatrix2D(m, n) * rhsMatrix[n];
-					}
-					deltaQ[m] = qSum;
-				}
-				
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    rhsMatrix[m] = 0.0;
+                    deltaQ[m]    = 0.0;
+                    rhsMatrix[m] = dq(i, j, k, m) - Lx[m] - rhs0[m];
+                }
+                
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    for (int n = 0; n < nEquation; ++ n)
+                    {
+                        diagonalMatrix2D(m, n) = diagonalMatrix(i, j, k, m, n);
+                    }
+                }
+
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    RDouble qSum = 0.0;
+                    for (int n = 0; n < nEquation; ++ n)
+                    {
+                        qSum += diagonalMatrix2D(m, n) * rhsMatrix[n];
+                    }
+                    deltaQ[m] = qSum;
+                }
+
                 for (int m = 0; m < nEquation; ++ m)
                 {
                     //! dq(i, j, k, m) = deltQ[m]
-					dq(i, j, k, m) = deltaQ[m];
+                    dq(i, j, k, m) = deltaQ[m];
 
                     //! Store the upper backward sweep delta-flux, which will be used in the forward sweep.
                     deltaFlux(i, j, k, m) += rhs0[m];
@@ -478,15 +478,15 @@ void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProx
     delete [] prim;
     delete [] qNeighbor;
     delete [] rhs0;
-	delete [] priml;
-	delete [] primr;
+    delete [] priml;
+    delete [] primr;
 
     delete [] df;
-	delete [] deltaQ;
-	delete [] rhsMatrix;
-	delete diagonalMatrixD;
-	delete tempMatrix;
-	delete jacobianMatrix;
+    delete [] deltaQ;
+    delete [] rhsMatrix;
+    delete diagonalMatrixD;
+    delete tempMatrix;
+    delete jacobianMatrix;
 
     delete [] temperature;
     delete [] Lx;
@@ -518,21 +518,21 @@ void SolveDiagonalMatrix(StructGrid *gridIn)
     RDouble4D &gvgn  = *(gridIn->GetFaceNormalVelocity());
     RDouble4D &garea = *(gridIn->GetFaceArea());
 
-	RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (gridIn->GetDataPtr("rtem"));
+    RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (gridIn->GetDataPtr("rtem"));
 
     Range I, J, K, M(0, nEquation - 1);
     RDouble5D &diagonalMatrix = *reinterpret_cast<RDouble5D *> (gridIn->GetDataPtr("diagonalMatrix"));
     RDouble2D *tempMatrix = new RDouble2D(M, M, fortranArray);
     RDouble2D &tempMatrix2D = *reinterpret_cast<RDouble2D *> (tempMatrix);
-	RDouble2D *diagonalMatrixD = new RDouble2D(M, M, fortranArray);
-	RDouble2D &diagonalMatrix2D = *reinterpret_cast<RDouble2D *> (diagonalMatrixD);
-	RDouble2D *inverseDiaMatrix = new RDouble2D(M, M, fortranArray);
-	RDouble2D &inverseDiaMatrix2D = *reinterpret_cast<RDouble2D *> (inverseDiaMatrix);
+    RDouble2D *diagonalMatrixD = new RDouble2D(M, M, fortranArray);
+    RDouble2D &diagonalMatrix2D = *reinterpret_cast<RDouble2D *> (diagonalMatrixD);
+    RDouble2D *inverseDiaMatrix = new RDouble2D(M, M, fortranArray);
+    RDouble2D &inverseDiaMatrix2D = *reinterpret_cast<RDouble2D *> (inverseDiaMatrix);
 
     RDouble *primitiveVars = new RDouble[nEquation];
     RDouble *temperature = new RDouble[nEquation];
-	RDouble *priml = new RDouble[nEquation];
-	RDouble *primr = new RDouble[nEquation];
+    RDouble *priml = new RDouble[nEquation];
+    RDouble *primr = new RDouble[nEquation];
     int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
 
     int iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd;
@@ -558,7 +558,7 @@ void SolveDiagonalMatrix(StructGrid *gridIn)
                     primitiveVars[m] = q(i, j, k, m);
                 }
                 gama = gamma(i, j, k);
-                if (viscousType > 0)
+                if (viscousType > INVISCID)
                 {
                     visLaminar = viscousLaminar(i, j, k);
                     visTurbulence = viscousTurbulence(i, j, k);
@@ -581,7 +581,7 @@ void SolveDiagonalMatrix(StructGrid *gridIn)
                         diagonalMatrix(i, j, k, m, n) = 0.0;
                     }
                 }
-				
+
                 //! Compute the scalar coefficient of the diagonal matrix.
                 for (int m = 0; m < nEquation; ++ m)
                 {
@@ -594,7 +594,7 @@ void SolveDiagonalMatrix(StructGrid *gridIn)
                 for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
                 {
                     int il1, jl1, kl1;
-					gridIn->GetNsurfIndex(il1, jl1, kl1, iSurface);
+                    gridIn->GetNsurfIndex(il1, jl1, kl1, iSurface);
 
                     //! Compute spectrum radius of inviscid flux.
                     if (iSimplifyViscousTerm == 1)// Equivalent method to computing the spectrum radius.
@@ -603,37 +603,37 @@ void SolveDiagonalMatrix(StructGrid *gridIn)
                         rad_ns += visSpectrumRadius(i, j, k, iSurface - 1);
                     }
 
-					//! Compute the surface -1/2
-					gridIn->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, iL, jL, kL);
+                    //! Compute the surface -1/2
+                    gridIn->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, iL, jL, kL);
 
-					for (int m = 0; m < nEquation; ++ m)
+                    for (int m = 0; m < nEquation; ++ m)
                     {
                         priml[m]  =  q(iL, jL, kL, m);
                         primr[m]  =  q(i, j, k, m);
                     }
 
-					xfn1  = gxfn (i ,j ,k ,iSurface);
+                    xfn1  = gxfn (i ,j ,k ,iSurface);
                     yfn1  = gyfn (i ,j ,k ,iSurface);
                     zfn1  = gzfn (i ,j ,k ,iSurface);
                     area1 = garea(i ,j ,k ,iSurface);
-                    vgn1  = gvgn (i ,j ,k ,iSurface);             
+                    vgn1  = gvgn (i ,j ,k ,iSurface);
 
-					RDouble rtemL = rtem(iL, jL, kL);
-					RDouble rtemR = rtem(i,  j,  k);
+                    RDouble rtemL = rtem(iL, jL, kL);
+                    RDouble rtemR = rtem(i,  j,  k);
 
-					SolveRoeMatrix(priml, primr, xfn1, yfn1, zfn1, gama, area1, rtemL, rtemR, tempMatrix);
-					for (int m = 0; m < nEquation; ++ m)
-					{
-						for (int n = 0; n < nEquation; ++ n)
-						{
-							diagonalMatrix(i, j, k, m, n) += 0.5 * tempMatrix2D(m, n);
-						}
-					}
+                    SolveRoeMatrix(priml, primr, xfn1, yfn1, zfn1, gama, area1, rtemL, rtemR, tempMatrix);
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        for (int n = 0; n < nEquation; ++ n)
+                        {
+                            diagonalMatrix(i, j, k, m, n) += 0.5 * tempMatrix2D(m, n);
+                        }
+                    }
 
-					//! Compute the surface +1/2
-					gridIn->GetRightCellOfFace(i, j, k, il1, jl1, kl1, iR, jR, kR);
+                    //! Compute the surface +1/2
+                    gridIn->GetRightCellOfFace(i, j, k, il1, jl1, kl1, iR, jR, kR);
 
-					for (int m = 0; m < nEquation; ++ m)
+                    for (int m = 0; m < nEquation; ++ m)
                     {
                         priml[m]  =  q(i, j, k, m);
                         primr[m]  =  q(iR, jR, kR, m);
@@ -645,17 +645,17 @@ void SolveDiagonalMatrix(StructGrid *gridIn)
                     area2 = garea(iR, jR, kR, iSurface);
                     vgn2  = gvgn (iR, jR, kR, iSurface);
 
-					rtemL = rtem(i, j, k);
-					rtemR = rtem(iR, jR, kR);
+                    rtemL = rtem(i, j, k);
+                    rtemR = rtem(iR, jR, kR);
 
-					SolveRoeMatrix(priml, primr, xfn2, yfn2, zfn2, gama, area2, rtemL, rtemR, tempMatrix);
-					for (int m = 0; m < nEquation; ++ m)
-					{
-						for (int n = 0; n < nEquation; ++ n)
-						{
-							diagonalMatrix(i, j, k, m, n) += 0.5 * tempMatrix2D(m, n);
-						}
-					}
+                    SolveRoeMatrix(priml, primr, xfn2, yfn2, zfn2, gama, area2, rtemL, rtemR, tempMatrix);
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        for (int n = 0; n < nEquation; ++ n)
+                        {
+                            diagonalMatrix(i, j, k, m, n) += 0.5 * tempMatrix2D(m, n);
+                        }
+                    }
                 }
 
                 //! Compute the summation of spectrum radius.
@@ -664,24 +664,24 @@ void SolveDiagonalMatrix(StructGrid *gridIn)
                     diagonalMatrix(i, j, k, m, m) += rad_ns;
                 }
 
-				for (int m = 0; m < nEquation; ++ m)
-				{
-					for (int n = 0; n < nEquation; ++ n)
-					{
-						diagonalMatrix2D(m, n) = diagonalMatrix(i, j, k, m, n);
-					}
-				}
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    for (int n = 0; n < nEquation; ++ n)
+                    {
+                        diagonalMatrix2D(m, n) = diagonalMatrix(i, j, k, m, n);
+                    }
+                }
 
-				//! ComputeInverseDiagonalMatrix(diagonalMatrixD, nEquation, inverseDiaMatrix);
-				ObtainInverseDiagonalMatrix(diagonalMatrixD, nEquation, inverseDiaMatrix);
+                //! ComputeInverseDiagonalMatrix(diagonalMatrixD, nEquation, inverseDiaMatrix);
+                ObtainInverseDiagonalMatrix(diagonalMatrixD, nEquation, inverseDiaMatrix);
 
-				for (int m = 0; m < nEquation; ++ m)
-				{
-					for (int n = 0; n < nEquation; ++ n)
-					{
-						diagonalMatrix(i, j, k, m, n) = inverseDiaMatrix2D(m, n);
-					}
-				}
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    for (int n = 0; n < nEquation; ++ n)
+                    {
+                        diagonalMatrix(i, j, k, m, n) = inverseDiaMatrix2D(m, n);
+                    }
+                }
             }
         }
     }
@@ -689,10 +689,10 @@ void SolveDiagonalMatrix(StructGrid *gridIn)
     delete [] primitiveVars;
     delete [] temperature;
     delete tempMatrix;
-	delete diagonalMatrixD;
-	delete inverseDiaMatrix;
-	delete [] priml;
-	delete [] primr;
+    delete diagonalMatrixD;
+    delete inverseDiaMatrix;
+    delete [] priml;
+    delete [] primr;
 }
 
 void ComputeInviscidMatrix(RDouble *primitiveVars, RDouble xfn, RDouble yfn, RDouble zfn, RDouble area, RDouble vgn, RDouble gama, RDouble2D *tempMatrix)
@@ -777,20 +777,20 @@ void ComputeInviscidMatrix(RDouble *primitiveVars, RDouble xfn, RDouble yfn, RDo
 void SolveRoeMatrix(RDouble *priml, RDouble *primr, RDouble xfn, RDouble yfn, RDouble zfn, RDouble gama, RDouble area, RDouble rtemL, RDouble rtemR, RDouble2D *jacobianMatrix)
 {
     using namespace IDX;
-	RDouble2D &matrix = *reinterpret_cast<RDouble2D *> (jacobianMatrix);
-	
-	RDouble rl = priml[IDX::IR];
+    RDouble2D &matrix = *reinterpret_cast<RDouble2D *> (jacobianMatrix);
+
+    RDouble rl = priml[IDX::IR];
     RDouble ul = priml[IDX::IU];
     RDouble vl = priml[IDX::IV];
     RDouble wl = priml[IDX::IW];
     RDouble pl = priml[IDX::IP];
-	
-	RDouble rr = primr[IDX::IR];
+
+    RDouble rr = primr[IDX::IR];
     RDouble ur = primr[IDX::IU];
     RDouble vr = primr[IDX::IV];
     RDouble wr = primr[IDX::IW];
     RDouble pr = primr[IDX::IP];
-	
+
     RDouble nx = xfn;
     RDouble ny = yfn;
     RDouble nz = zfn;
@@ -812,7 +812,7 @@ void SolveRoeMatrix(RDouble *priml, RDouble *primr, RDouble xfn, RDouble yfn, RD
     RDouble h = (hl + hr * ratio) * coef;
     RDouble halfV2 = half * (u * u + v * v + w * w);
     RDouble Vn = nx * u + ny * v + nz * w;
-	RDouble absVel = sqrt(two * halfV2);
+    RDouble absVel = sqrt(two * halfV2);
 
     RDouble c2 = t0 * (h - halfV2);
     RDouble c = sqrt(ABS(c2));
@@ -822,11 +822,11 @@ void SolveRoeMatrix(RDouble *priml, RDouble *primr, RDouble xfn, RDouble yfn, RD
     RDouble eigv3 = ABS(Vn - c);
 
     //! Entropy fix.
-	int RoeEntropyFixMethod = 2;
-	RDouble RoeEntropyFixCoef1 = 0.0;
-	RDouble RoeEntropyFixCoef2 = 0.0;
+    int RoeEntropyFixMethod = 2;
+    RDouble RoeEntropyFixCoef1 = 0.0;
+    RDouble RoeEntropyFixCoef2 = 0.0;
 
-	Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, rtemL, rtemR, absVel, Vn, c, RoeEntropyFixMethod, RoeEntropyFixCoef1, RoeEntropyFixCoef2);
+    Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, rtemL, rtemR, absVel, Vn, c, RoeEntropyFixMethod, RoeEntropyFixCoef1, RoeEntropyFixCoef2);
 
     RDouble y0 = eigv1;
     RDouble y1 = half * (2.0 * eigv1 - eigv2 - eigv3) / c2;
@@ -859,7 +859,7 @@ void SolveRoeMatrix(RDouble *priml, RDouble *primr, RDouble xfn, RDouble yfn, RD
     matrix(3, 2) = (v * w * t0 - c2 * ny * nz) * y1 + (ny * w - nz * v * t0) * y2;
     matrix(3, 3) = (w * w * t0 - c2 * nz * nz) * y1 + (nz * w - nz * w * t0) * y2 + y0;
     matrix(3, 4) = -w * t0 * y1 + nz * t0 * y2;
-		  	  
+
     //! Fi(t,r)w.
     matrix(4, 0) = (-halfV2 * halfV2 * t0 + Vn * Vn * c2 - halfV2 * c2) * y1 + (halfV2 * Vn * (t0 - 1.0) - c2 * Vn / t0) * y2;
     matrix(4, 1) = (u * c2 + u * halfV2 * t0 - nx * Vn * c2) * y1 + (nx * halfV2 + nx * c2 / t0 - u * Vn * t0) * y2;
@@ -867,7 +867,7 @@ void SolveRoeMatrix(RDouble *priml, RDouble *primr, RDouble xfn, RDouble yfn, RD
     matrix(4, 3) = (w * c2 + w * halfV2 * t0 - nz * Vn * c2) * y1 + (nz * halfV2 + nz * c2 / t0 - w * Vn * t0) * y2;
     matrix(4, 4) = -halfV2 * t0 * y1 + Vn * t0 * y2 + half * (eigv2 + eigv3);
 
-	for (int m = 0; m < 5; ++ m)
+    for (int m = 0; m < 5; ++ m)
     {
         for (int n = 0; n < 5; ++ n)
         {
@@ -996,119 +996,119 @@ void ComputeViscousMatrix(RDouble *primitiveVars, RDouble *temperature, RDouble 
 
 void ObtainInverseDiagonalMatrix(RDouble2D *diagonalMatrixD, int nEquation, RDouble2D *inverseDiaMatrix)
 {
-	Range II(0, nEquation - 1);
-	RDouble2D *lMatrix = new RDouble2D(II, II, fortranArray);
-	RDouble2D &lMatrix2D = *reinterpret_cast<RDouble2D *> (lMatrix);
+    Range II(0, nEquation - 1);
+    RDouble2D *lMatrix = new RDouble2D(II, II, fortranArray);
+    RDouble2D &lMatrix2D = *reinterpret_cast<RDouble2D *> (lMatrix);
 
-	RDouble2D *uMatrix = new RDouble2D(II, II, fortranArray);
-	RDouble2D &uMatrix2D = *reinterpret_cast<RDouble2D *> (uMatrix);
+    RDouble2D *uMatrix = new RDouble2D(II, II, fortranArray);
+    RDouble2D &uMatrix2D = *reinterpret_cast<RDouble2D *> (uMatrix);
 
-	RDouble2D *lInverseMatrix = new RDouble2D(II, II, fortranArray);
-	RDouble2D &lInverseMatrix2D = *reinterpret_cast<RDouble2D *> (lInverseMatrix);
+    RDouble2D *lInverseMatrix = new RDouble2D(II, II, fortranArray);
+    RDouble2D &lInverseMatrix2D = *reinterpret_cast<RDouble2D *> (lInverseMatrix);
 
-	RDouble2D *uInverseMatrix = new RDouble2D(II, II, fortranArray);
-	RDouble2D &uInverseMatrix2D = *reinterpret_cast<RDouble2D *> (uInverseMatrix);
+    RDouble2D *uInverseMatrix = new RDouble2D(II, II, fortranArray);
+    RDouble2D &uInverseMatrix2D = *reinterpret_cast<RDouble2D *> (uInverseMatrix);
 
-	RDouble2D &dMatrix = *reinterpret_cast<RDouble2D *>(diagonalMatrixD);
-	RDouble2D &inverseMatrix = *reinterpret_cast<RDouble2D *>(inverseDiaMatrix);
+    RDouble2D &dMatrix = *reinterpret_cast<RDouble2D *>(diagonalMatrixD);
+    RDouble2D &inverseMatrix = *reinterpret_cast<RDouble2D *>(inverseDiaMatrix);
 
-	int i, j, k;
-	RDouble s, t;
+    int i, j, k;
+    RDouble s, t;
 
-	for (i = 0; i < nEquation; i ++)
-	{
-		for (j = 0; j < nEquation; j ++)
-		{
-			lMatrix2D(i, j) = 0.0;
-			uMatrix2D(i, j) = 0.0;
-			lInverseMatrix2D(i, j) = 0.0;
-			uInverseMatrix2D(i, j) = 0.0;
-		}
-	}
-	
-	//! Calculate the diagonal of the l matrix.
-	for (i = 0; i < nEquation; i ++)
-	{
-		lMatrix2D(i, i) = 1;
-	}
+    for (i = 0; i < nEquation; i ++)
+    {
+        for (j = 0; j < nEquation; j ++)
+        {
+            lMatrix2D(i, j) = 0.0;
+            uMatrix2D(i, j) = 0.0;
+            lInverseMatrix2D(i, j) = 0.0;
+            uInverseMatrix2D(i, j) = 0.0;
+        }
+    }
 
-	for (i = 0; i < nEquation; i ++)
-	{
-		for (j = i; j < nEquation; j ++)
-		{
-			s = 0.0;
-			for (k = 0; k < i; k ++)
-			{
-				s += lMatrix2D(i, k) * uMatrix2D(k, j);
-			}
-			uMatrix2D(i, j) = dMatrix(i, j) - s;    //! Calculate u value by row.
-		}
+    //! Calculate the diagonal of the l matrix.
+    for (i = 0; i < nEquation; i ++)
+    {
+        lMatrix2D(i, i) = 1;
+    }
 
-		for (j = i + 1; j < nEquation; j ++)
-		{
-			s = 0.0;
-			for (k = 0; k < i; k ++)
-			{
-				s += lMatrix2D(j, k) * uMatrix2D(k, i);
-			}
-			lMatrix2D(j, i) = (dMatrix(j ,i) - s) / uMatrix2D(i, i);    //! Calculate l value by column.
-		}
-	}
+    for (i = 0; i < nEquation; i ++)
+    {
+        for (j = i; j < nEquation; j ++)
+        {
+            s = 0.0;
+            for (k = 0; k < i; k ++)
+            {
+                s += lMatrix2D(i, k) * uMatrix2D(k, j);
+            }
+            uMatrix2D(i, j) = dMatrix(i, j) - s;    //! Calculate u value by row.
+        }
 
-	//! Calculate the inverse matrix of l in row order from top to bottom.
-	for (i = 0; i < nEquation; i ++)
-	{
-		lInverseMatrix2D(i, i) = 1;
-	}
+        for (j = i + 1; j < nEquation; j ++)
+        {
+            s = 0.0;
+            for (k = 0; k < i; k ++)
+            {
+                s += lMatrix2D(j, k) * uMatrix2D(k, i);
+            }
+            lMatrix2D(j, i) = (dMatrix(j ,i) - s) / uMatrix2D(i, i);    //! Calculate l value by column.
+        }
+    }
 
-	for (i = 1; i < nEquation; i ++)
-	{
-		for (j = 0; j < i; j ++)
-		{
-			s = 0.0;
-			for (k = 0; k < i; k ++)
-			{
-				s += lMatrix2D(i, k) * lInverseMatrix2D(k, j);
-			}
-			lInverseMatrix2D(k, j) = -s;
-		}
-	}
+    //! Calculate the inverse matrix of l in row order from top to bottom.
+    for (i = 0; i < nEquation; i ++)
+    {
+        lInverseMatrix2D(i, i) = 1;
+    }
 
-	//! Calculate the inverse matrix of u in column order from bottom to top.
-	for (i = 0; i < nEquation; i ++)
-	{
-		uInverseMatrix2D(i, i) = 1 / uMatrix2D(i, i);
-	}
+    for (i = 1; i < nEquation; i ++)
+    {
+        for (j = 0; j < i; j ++)
+        {
+            s = 0.0;
+            for (k = 0; k < i; k ++)
+            {
+                s += lMatrix2D(i, k) * lInverseMatrix2D(k, j);
+            }
+            lInverseMatrix2D(k, j) = -s;
+        }
+    }
 
-	for (i = 1; i < nEquation; i ++)
-	{
-		for (j = i - 1; j >= 0; j --)
-		{
-			s = 0.0;
-			for (k = j + 1; k <= i; k ++)
-			{
-				s += uMatrix2D(j, k) * uInverseMatrix2D(k, i);
-			}
-			uInverseMatrix2D(j, i) = -s / uMatrix2D(j, j);
-		}
-	}
+    //! Calculate the inverse matrix of u in column order from bottom to top.
+    for (i = 0; i < nEquation; i ++)
+    {
+        uInverseMatrix2D(i, i) = 1 / uMatrix2D(i, i);
+    }
 
-	for (i = 0; i < nEquation; i ++)
-	{
-		for (j = 0; j < nEquation; j ++)
-		{
-			t = 0.0;
-			for (k = 0; k < nEquation; k ++)
-			{
-				t += uInverseMatrix2D(i, k) * lInverseMatrix2D(k, j);
-			}
-			inverseMatrix(i, j) = t;
-		}
-	}
-	delete lMatrix;
-	delete uMatrix;
-	delete lInverseMatrix;
-	delete uInverseMatrix;
+    for (i = 1; i < nEquation; i ++)
+    {
+        for (j = i - 1; j >= 0; j --)
+        {
+            s = 0.0;
+            for (k = j + 1; k <= i; k ++)
+            {
+                s += uMatrix2D(j, k) * uInverseMatrix2D(k, i);
+            }
+            uInverseMatrix2D(j, i) = -s / uMatrix2D(j, j);
+        }
+    }
+
+    for (i = 0; i < nEquation; i ++)
+    {
+        for (j = 0; j < nEquation; j ++)
+        {
+            t = 0.0;
+            for (k = 0; k < nEquation; k ++)
+            {
+                t += uInverseMatrix2D(i, k) * lInverseMatrix2D(k, j);
+            }
+            inverseMatrix(i, j) = t;
+        }
+    }
+    delete lMatrix;
+    delete uMatrix;
+    delete lInverseMatrix;
+    delete uInverseMatrix;
 }
 
 }

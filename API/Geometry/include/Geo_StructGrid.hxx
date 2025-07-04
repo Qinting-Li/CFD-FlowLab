@@ -128,6 +128,21 @@ inline RDouble3D * StructGrid::GetCellVolumeOld() const
     return dynamicGridMetrics->GetCellVolumeOld();
 }
 
+inline RDouble3D *StructGrid::GetCellVelocityX() const
+{
+    return dynamicGridMetrics->GetCellVelocityX();
+}
+
+inline RDouble3D *StructGrid::GetCellVelocityY() const
+{
+    return dynamicGridMetrics->GetCellVelocityY();
+}
+
+inline RDouble3D *StructGrid::GetCellVelocityZ() const
+{
+    return dynamicGridMetrics->GetCellVelocityZ();
+}
+
 inline RDouble5D * StructGrid::GetFaceVector_FD() const
 {
     return faceMetrics->GetFaceVector_FD();

@@ -806,6 +806,13 @@ public:
 
     void CreateUnstructBCSetInfo();
 
+    void CreateInterpolateInfo(ActionKey *actkey);
+
+    //! Compute node2face topology.
+    int *GetNTotalFacesOfEachNode();
+    int *GetNode2Face();
+    void ComputeFace2NodeToNode2Face();
+    void ComputeNode2FaceArray();
 private:
     bool ComputeCellNodeTopo();
     void ComputeCell2NodeArray();
@@ -957,7 +964,7 @@ void ComputeNodeVariable(UnstructGrid *grid, RDouble **q_n, RDouble **q, int nEq
 void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, int *n_count, int bctype_in, bool twoside);
 void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, RDouble *n_count, int bctype_in, bool twoside);
 void CompNodeVarLimit(UnstructGrid *grid, RDouble *q_n, RDouble *q);
-
+void GetFace2NodeListForLine(UnstructGrid *grid, pair<int, string> iter, vector<int> &linkmap, vector < vector < int > > &face2nodelist, set<int> &line);
 void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &linkmap, vector < vector < int > > &face2nodelist);
 void GetFace2NodeList(UnstructGrid *grid, int bcType, vector<int> &linkmap, vector < vector < int > > &face2nodelist);
 
@@ -1008,11 +1015,12 @@ void UploadInterpointValue(UnstructGrid *grid, RDouble **f, const string &name, 
 //! -# 2 :  2-D array.
 //! -# n :  n-D array.
 void DownloadInterpointValue(UnstructGrid *grid, RDouble **f, const string &name, int neqn);
-
+void UploadOversetValue(UnstructGrid *grid, RDouble *field, const string &name);
 void UploadOversetValue(UnstructGrid *grid, RDouble **field, const string &name, int neqn);
 void UploadOversetValueDefault(UnstructGrid *grid, RDouble **field, const string &name, int neqn);
 void UploadOversetValueByWeight(UnstructGrid *grid, RDouble **field, const string &name, int neqn);
 void DownloadOversetValue(UnstructGrid *grid, RDouble **field, const string &name, int neqn);
+void DownloadOversetValue(UnstructGrid *grid, RDouble *field, const string &name);
 
 void BarthLimiterINF (Grid *grid_in, int ig, RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
 void VencatLimiterINF(Grid *grid_in, int ig, RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);

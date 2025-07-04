@@ -52,20 +52,22 @@ ActionKey::ActionKey()
     data    = new DataContainer();
     tecdata = new DataContainer();
 
-    action    = 0;
-    subact    = 0;
-    solver    = 0;
-    solverID  = 0;
-    level     = 0;
-    ipos      = 0;
-    kind      = 0;
-    filepos   = 0;
-    format    = 0;
-    file      = 0;
-    del_file  = false;
-    VTKvisual = false;
-    openmode  = ios_base::out;
+    action      = 0;
+    subact      = 0;
+    solver      = 0;
+    solverID    = 0;
+    level       = 0;
+    ipos        = 0;
+    kind        = 0;
+    filepos     = 0;
+    gridfilepos = 0;
+    format      = 0;
+    file        = 0;
+    del_file    = false;
+    VTKvisual   = false;
+    openmode    = ios_base::out;
     filename  = "";
+    gridfilename  = "";
     tecfilename = "";
     taskname  = "";
 }

@@ -9,6 +9,9 @@ Geo_DynamicGridMetrics_Struct::Geo_DynamicGridMetrics_Struct()
     xfv = NULL;
     yfv = NULL;
     zfv = NULL;
+    xcv = NULL;
+    ycv = NULL;
+    zcv = NULL;
     vgn = NULL;
 }
 

@@ -909,11 +909,6 @@ bool IO_HDF5Read::Run()
 
 void IO_HDF5Read::ReadWallDist()
 {
-    if (gridNameList.size() != 1)
-    {
-        return;
-    }
-
     string WallDistFileName = ChangeExtensionOfFileName(gridNameList.front(), "wdt");
 
     bool fileExist = true;
@@ -932,11 +927,13 @@ void IO_HDF5Read::ReadWallDist()
     hid_t file;
     int zoneCount = 0;
 
+    zoneStart = 0;
     for (int iGrid = 0; iGrid < numberOfGridGroups; ++ iGrid)
     {
+        int nZonesOfGridGroup = 0;
         for (int iFile = 0; iFile < localGridNameList[iGrid].size(); ++ iFile)
         {
-            file = OpenHDF5File(ChangeExtensionOfFileName(localGridNameList[iGrid][iFile], "wdt"));
+            file = OpenHDF5File(ChangeExtensionOfFileName(localGridNameList[0][iFile], "wdt"));
             if (file < 0)
             {
                 return;
@@ -945,16 +942,16 @@ void IO_HDF5Read::ReadWallDist()
             for (int iZone = 0; iZone < nZonesList[iGrid][iFile]; ++ iZone)
             {
                 int gridIndex = blockIdx[zoneCount ++];
-                if (myProcID != blockProc[gridIndex])
+                if (myProcID != blockProc[gridIndex + zoneStart])
                 {
                     continue;
                 }
 
                 ostringstream oss;
-                oss << "Grid-" << gridIndex;
+                oss << "Grid-" << gridIndex + zoneStart;
                 string dataName = oss.str();
 
-                Grid *grid = GetGrid(gridIndex, 0);
+                Grid *grid = GetGrid(gridIndex + zoneStart, 0);
                 grid->InitWallDist();
 
                 int nTotalCell = grid->GetNTotalCell();
@@ -1018,8 +1015,11 @@ void IO_HDF5Read::ReadWallDist()
                 delete [] wdt;    wdt = nullptr;
             }
 
+            nZonesOfGridGroup += nZonesList[iGrid][iFile];
             H5Fclose(file);
         }
+
+        zoneStart += nZonesOfGridGroup;
     }
 }
 
@@ -2878,6 +2878,21 @@ void IO_ReadHDF5Grid::GetUnstructGridInfo(Grid *gridOut)
     int *keyActiveOfCells = new int [nTotalCell];
     SetField(keyActiveOfCells, 1, nTotalCell);
     unsGrid->SetBlankIndex(keyActiveOfCells);
+
+    int ordinaryGridIndex = -1;
+    int *ordinaryNodeIndex = new int [nTotalNode];
+    int *ordinaryFaceIndex = new int [nTotalFace];
+    int *ordinaryCellIndex = new int [nTotalCell];
+
+    ReadUnsOrdinaryGridIndex(gridIndex, ordinaryGridIndex);
+    ReadUnsOrdinaryNodeIndex(gridIndex, ordinaryNodeIndex, nTotalNode);
+    ReadUnsOrdinaryFaceIndex(gridIndex, ordinaryFaceIndex, nTotalFace);
+    ReadUnsOrdinaryCellIndex(gridIndex, ordinaryCellIndex, nTotalCell);
+
+    unsGrid->SetOrdinaryGridIndex(ordinaryGridIndex);
+    unsGrid->SetOrdinaryNodeIndex(ordinaryNodeIndex);
+    unsGrid->SetOrdinaryFaceIndex(ordinaryFaceIndex);
+    unsGrid->SetOrdinaryCellIndex(ordinaryCellIndex);
 }
 
 void IO_ReadHDF5Grid::ReadStrOrdinaryGridIndex(int zoneIndex, int &ordinaryGridIndexOut)
@@ -2966,6 +2981,122 @@ void IO_ReadHDF5Grid::ReadStrOrdinaryDimEnd(int zoneIndex, int *ordinaryDimEndOu
     ordinaryDimEndOut[1] = ordinaryDimEndIndex[1];
     ordinaryDimEndOut[2] = ordinaryDimEndIndex[2];
     delete [] ordinaryDimEndIndex;    ordinaryDimEndIndex = nullptr;
+    H5Gclose(grpData);
+    H5Gclose(gridGroup);
+}
+
+void IO_ReadHDF5Grid::ReadUnsOrdinaryGridIndex(int zoneIndex, int &ordinaryGridIndexOut)
+{
+    hid_t  gridGroup;
+    string grpName;
+    ostringstream oss;
+    oss << "Grid-" << zoneIndex;
+    grpName = oss.str();
+    gridGroup = OpenGroup(fileID, grpName);
+
+    bool dataExist = CheckDataExist(gridGroup, "PartitionInfo");
+    if (!dataExist)
+    {
+        ordinaryGridIndexOut = -1;
+        H5Gclose(gridGroup);
+        return;
+    }
+
+    hid_t grpData;
+    grpData = OpenGroup(gridGroup, "PartitionInfo");
+    int ordinaryGridIndex = -1;
+    ReadData(grpData, &ordinaryGridIndex, "OrdinaryGrid");
+    ordinaryGridIndexOut = ordinaryGridIndex;
+    H5Gclose(grpData);
+    H5Gclose(gridGroup);
+}
+
+void IO_ReadHDF5Grid::ReadUnsOrdinaryNodeIndex(int zoneIndex, int *ordinaryNodeIndexOut, int nTotalNode)
+{
+    hid_t  gridGroup;
+    string grpName;
+    ostringstream oss;
+    oss << "Grid-" << zoneIndex;
+    grpName = oss.str();
+    gridGroup = OpenGroup(fileID, grpName);
+
+    bool dataExist = CheckDataExist(gridGroup, "PartitionInfo");
+    if (!dataExist)
+    {
+        delete [] ordinaryNodeIndexOut;    ordinaryNodeIndexOut = nullptr;
+        H5Gclose(gridGroup);
+        return;
+    }
+
+    hid_t grpData;
+    grpData = OpenGroup(gridGroup, "PartitionInfo");
+    int *ordinaryNodeIndex = new int [nTotalNode];
+    ReadData(grpData, ordinaryNodeIndex, "OrdinaryNodeIndex");
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
+    {
+        ordinaryNodeIndexOut[iNode] = ordinaryNodeIndex[iNode];
+    }
+    delete [] ordinaryNodeIndex;    ordinaryNodeIndex = nullptr;
+    H5Gclose(grpData);
+    H5Gclose(gridGroup);
+}
+
+void IO_ReadHDF5Grid::ReadUnsOrdinaryFaceIndex(int zoneIndex, int *ordinaryFaceIndexOut, int nTotalFace)
+{
+    hid_t  gridGroup;
+    string grpName;
+    ostringstream oss;
+    oss << "Grid-" << zoneIndex;
+    grpName = oss.str();
+    gridGroup = OpenGroup(fileID, grpName);
+
+    bool dataExist = CheckDataExist(gridGroup, "PartitionInfo");
+    if (!dataExist)
+    {
+        delete [] ordinaryFaceIndexOut;    ordinaryFaceIndexOut = nullptr;
+        H5Gclose(gridGroup);
+        return;
+    }
+
+    hid_t grpData;
+    grpData = OpenGroup(gridGroup, "PartitionInfo");
+    int *ordinaryFaceIndex = new int [nTotalFace];
+    ReadData(grpData, ordinaryFaceIndex, "OrdinaryFaceIndex");
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
+    {
+        ordinaryFaceIndexOut[iFace] = ordinaryFaceIndex[iFace];
+    }
+    delete [] ordinaryFaceIndex;    ordinaryFaceIndex = nullptr;
+    H5Gclose(grpData);
+    H5Gclose(gridGroup);
+}
+
+void IO_ReadHDF5Grid::ReadUnsOrdinaryCellIndex(int zoneIndex, int *ordinaryCellIndexOut, int nTotalCell)
+{
+    hid_t  gridGroup;
+    string grpName;
+    ostringstream oss;
+    oss << "Grid-" << zoneIndex;
+    grpName = oss.str();
+    gridGroup = OpenGroup(fileID, grpName);
+
+    bool dataExist = CheckDataExist(gridGroup, "PartitionInfo");
+    if (!dataExist)
+    {
+        delete [] ordinaryCellIndexOut;    ordinaryCellIndexOut = nullptr;
+        H5Gclose(gridGroup);
+        return;
+    }
+
+    hid_t grpData;
+    grpData = OpenGroup(gridGroup, "PartitionInfo");
+    int *ordinaryCellIndex = new int [nTotalCell];
+    ReadData(grpData, ordinaryCellIndex, "OrdinaryCellIndex");
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        ordinaryCellIndexOut[iCell] = ordinaryCellIndex[iCell];
+    }
+    delete [] ordinaryCellIndex;    ordinaryCellIndex = nullptr;
     H5Gclose(grpData);
     H5Gclose(gridGroup);
 }

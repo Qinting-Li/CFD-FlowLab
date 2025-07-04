@@ -7076,6 +7076,7 @@ void GMRES_Roe_Scheme_ConservativeForm_nolim_2nd(FaceProxy *face_proxy, Inviscid
     delete [] dgraddqy;  dgraddqy = nullptr;
     delete [] dgraddqz;  dgraddqz = nullptr;
 }
+}
 
 //! GMRESnolim
 void GMRES_Roe_Scheme_ConservativeForm_nolim_Matrix(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara)
@@ -7738,7 +7739,7 @@ void GMRES_Roe_Scheme_ConservativeForm_nolim_Matrix(FaceProxy *face_proxy, Invis
                         //! dQre/dgradR*dgradRdqN
                         dGrad = dGdqx * dxR + dGdqy * dyR + dGdqz * dzR;
 
-                        int indexf  = le * nEquation;    !// first index
+                        int indexf  = le * nEquation;    //! first index
                         int indexs  = neighborIndex * nEquation;    //! second index
                         int indexf2 = re * nEquation; 
                         int colidx  = GetIndexOfBlockJacobianMatrix(AI, AJ, nEquation, le, neighborIndex);
@@ -8636,7 +8637,7 @@ void GMRES_Roe_Scheme_ConservativeForm_CSR(FaceProxy *face_proxy, InviscidScheme
                     for(int indexK=0; indexK < nEquation; indexK++)
                     {
                         dRdq[indexI][colidx+indexJ] += dFluxdpL[indexI][indexK]*
-                                                       \ dqdcvL[indexK][indexJ];
+                                                         dqdcvL[indexK][indexJ];
                     }
                 }
             }
@@ -9343,8 +9344,8 @@ void GMRES_Roe_Scheme_ConservativeForm_FD_PV(FaceProxy *face_proxy, InviscidSche
                 }
             }
 
-            /! convert dFluxdpR to dFluxdcvR by right multiplying the dqdcvR,
-            /! then add to the corresponding location in dRdq.
+            //! convert dFluxdpR to dFluxdcvR by right multiplying the dqdcvR,
+            //! then add to the corresponding location in dRdq.
             indexf = le * nEquation;    //! first index
             indexs = re * nEquation;    //! second index
             for(int indexI=0; indexI < nEquation; indexI++)

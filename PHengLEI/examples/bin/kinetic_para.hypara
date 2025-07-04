@@ -40,4 +40,5 @@ double addedForce_0[]           = 0.0      ,0.0      ,0.0       ;
 //additional moment of Force  (system axis)              mX        mY        mZ        
 double addedMoment_0[]          = 0.0      ,0.0      ,0.0       ;
 
-int    integralOrder            = 4;
+int integralOrder   = 4;
+int storeAleWalldis = 0;

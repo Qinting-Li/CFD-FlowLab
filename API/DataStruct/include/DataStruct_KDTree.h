@@ -127,6 +127,14 @@ public:
         destr = NULL;
     };
 
+    ~DataStruct_KDTree()
+    {
+        if (this)
+        {
+            this->Clear();
+        }
+    };
+
     void Free();
 
     void Clear();
@@ -159,7 +167,7 @@ public:
     {
         if (kdTree) delete kdTree;
         if (rlist)  delete rlist;
-        if (riter)  delete riter;
+        //if (riter)  delete riter;
     }
 
 
