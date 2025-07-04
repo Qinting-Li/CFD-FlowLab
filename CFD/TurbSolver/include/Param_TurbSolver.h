@@ -107,6 +107,8 @@ private:
 
     int wallFunctionType;
 
+    int isTurbulenceModelCorrect;
+
     RDouble SST_a1;
 
     RDouble SST_alphaw1;

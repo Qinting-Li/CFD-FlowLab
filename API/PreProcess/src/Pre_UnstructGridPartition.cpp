@@ -1122,7 +1122,12 @@ void Pre_UnstructGridPartition::BuildInterfaceLink(Grid **grids, int maxProcesso
 }
 
 void Pre_UnstructGridPartition::SetPeriodInfo(Grid **grids, int iZone)
-{
+{   
+    int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
+    if (periodicType == NO_PERIODICITY)
+    {
+        return;
+    }
     UnstructGrid *gridpart = UnstructGridCast(grids[iZone]);
 
     UnstructBCSet *unstructBCSet = gridSource->GetUnstructBCSet();
@@ -1159,7 +1164,6 @@ void Pre_UnstructGridPartition::SetPeriodInfo(Grid **grids, int iZone)
 
     bool *isNeighborInterfaceFound = interfaceInfo->GetIsNeighborInterfaceFound();
 
-    int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
     RDouble translationLength[3] = { 0.0 };
     GlobalDataBase::GetData("translationLength", &translationLength, PHDOUBLE, 3);
     double rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");

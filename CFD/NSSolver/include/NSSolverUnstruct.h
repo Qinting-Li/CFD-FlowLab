@@ -52,6 +52,7 @@ public:
 
     //! Judge if the flow field variables file already exists in NS solver.
     bool JudgeIfRestart();
+    bool JudgeIfInterpolate();
     bool JudgeIfReadAverage();
 
     void DumpRestart(ActionKey *actkey);
@@ -59,6 +60,7 @@ public:
 
     void DumpRestartH5(ActionKey *actkey);
     void ReadRestartH5(ActionKey *actkey);
+    void InterpolateFromRestartH5(ActionKey *actkey);
 
     void InitFlowAsRestart();
     void LoadQ(Grid *gridIn, FieldProxy *qProxy);
@@ -115,9 +117,6 @@ public:
     void LocalTimeStep(Grid *grid);
     void LimitCFL(Grid *gridIn, RDouble *CFLCell);
 
-    //! calculate time step by another methods different with PHengLEI code.
-    void LocalTimeStep_Prince(Grid *grid);
-    
     void GlobalTimeStep(Grid *grid);
     void LocalGlobalTimeStep(Grid *grid);
     void RungeKuttaResidual(Grid *gridIn, FieldProxy *dqProxy, RDouble coef);
@@ -319,6 +318,9 @@ public:
     //! @param[in] gridIn              an unstruct grid pointer.
     //! @param[in] bcRegionUnstruct    an object of some BCRegionUnstruct class, contain the information of this BC.
     void OutflowBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct);
+
+    //! Overlapping boundary : The flow field variables are interpolated from the interpolating cell to the invalid cell 
+    void ReSetOversetBoundary(Grid* gridIn);
 
     //! Symmetry boundary condition for one Region of a bounday.
     //! @param[in] gridIn              an unstruct grid pointer.

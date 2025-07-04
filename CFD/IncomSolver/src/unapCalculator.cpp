@@ -35,7 +35,7 @@ void unapCalculator::mathLibSolveInit(Grid *gridIn)
     initUtility();
 #endif
     
-	Communicator* comm = &COMM::getGlobalComm();
+    Communicator* comm = &COMM::getGlobalComm();
     
     using namespace UNAP;
     

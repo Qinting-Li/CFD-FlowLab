@@ -110,10 +110,10 @@ void SolveSingleInnerIterationStepForAleSolvers()
 
         aleManager->CommunicateCellCenterData();
 
-        /*if (viscousType > ALGEBRAIC && numberOfMovingBodies > 1)
+        if (viscousType > ALGEBRAIC && numberOfMovingBodies > 1)
         {
             ComputeWalldist();
-        }*/
+        }
 
         //! computing the faceNormalVelocityContainer. we do not compute the movement velocity for quasi steady questions.
         int methodOfDualTime = GlobalDataBase::GetIntParaFromDB("methodOfDualTime");

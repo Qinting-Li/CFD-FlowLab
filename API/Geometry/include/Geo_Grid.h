@@ -61,6 +61,9 @@ protected:
     //! The number of Total Cells.
     int nTotalCell;
 
+    //! The number of Total Cells.
+    int nTotalLine;
+
     //! The number of boundary faces which include interface faces.
     int nBoundFace;
 
@@ -228,6 +231,9 @@ public:
 
     //! Return the value to the number of boundary faces which include interface faces.
     int GetNBoundFace() const;
+
+    //! Return the value to the number of Total Lines.
+    int GetNTotalLine() const;
 
     //! Return The number of interface faces.
     //! Interface faces: faces between different zones,

@@ -18,7 +18,8 @@ namespace PHSPACE
             return NULL;
         }
 
-        rect->dim = dim;
+        /*rect->dim = dim;
+        
         rect->min = new(std::nothrow) RDouble[dim];
         if (rect->min == NULL)
         {
@@ -32,7 +33,7 @@ namespace PHSPACE
             delete rect->min;
             delete rect;
             return NULL;
-        }
+        }*/
 
         memcpy(rect->min, min, size);
         memcpy(rect->max, max, size);
@@ -260,7 +261,7 @@ namespace PHSPACE
     void FreeKDRes(KDRes *rset)
     {
         clearResults(rset);
-        delete rset->rlist;
+        //delete rset->rlist;
         delete rset;
     }
 
@@ -366,7 +367,7 @@ namespace PHSPACE
         }
 
         rset->rlist->next = NULL;
-        rset->kdTree = kdTree;
+        //rset->kdTree = kdTree;
 
         rect = DuplicateHyperRect(kdTree->rect);
         if (rect == NULL)
@@ -385,7 +386,7 @@ namespace PHSPACE
         KDNearestI(kdTree->root, pos, &result, &distSQ, rect);
 
         //rect->Free();
-		delete rect;
+        delete rect;
 
         if (result)
         {

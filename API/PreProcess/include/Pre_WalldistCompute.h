@@ -293,8 +293,38 @@ private:
     vector<vector<int> > face2node;
 };
 
+
+class AleWalldistManager
+{
+private:
+    int storeAleWalldis;
+    int iterNumOneCycle;
+
+public:
+    AleWalldistManager();
+    ~AleWalldistManager();
+
+public:
+    void Initialize();
+    void Run();
+
+private:
+    bool JudgeWalldistExist();
+    void ReadWalldist();
+    void GenerateAleWalldist();
+
+private:
+    int iterFileIndex;
+    string walldistFile;
+};
+
+const int DUMPAllWALLDISTINFO = 0;
+const int DUMPWALLDISTONLY    = 1;
+
 //! Process of generate wall distance.
 void GenerateWalldist();
+
+void AleWalldistGenerate();
 
 #ifdef AI_RandomForestRegressor
 void DumpCellToWallNormal(vector<vector<RDouble>> allcelltowallnormal);
@@ -309,7 +339,7 @@ void AllocateWalldist();
 void ComputeWalldist();
 
 //! Write wall distance.
-void WriteWalldist();
+void WriteWalldist(int dumpData = DUMPAllWALLDISTINFO);
 
 void CompMaxBoundaryLayerWalldist();
 

@@ -33,6 +33,15 @@ private:
     //! 2D Node to cell: connected cells index of per node.
     int **node2CellArray;
 
+    //! Number of connected element faces per node.
+    int *nTotalFacesOfEachNode;
+
+    //! Node to Face: connected element faces index of per node.
+    int *node2Face;
+
+    //! 2D Node to Face: connected element faces index of per node.
+    int **node2FaceArray;
+
 public:
     LIB_EXPORT Geo_NodeTopo_Unstruct();
     LIB_EXPORT ~Geo_NodeTopo_Unstruct();
@@ -55,6 +64,24 @@ public:
 
     //! Get 2-D node to cell: connected cells index of per node.
     int ** GetNode2CellArray() const;
+
+    //! Set the number of connected faces per node.
+    void SetNTotalFacesOfEachNode(int *nFPN);
+
+    //! Set node to face: connected faces index of per node.
+    void SetNode2Face(int *n2F);
+
+    //! Get the number of connected faces per node.
+    int *GetNTotalFacesOfEachNode() const;
+
+    //! Get node to face: connected faces index of per node.
+    int *GetNode2Face() const;
+
+    //! Set 2-D node to face: connected faces index of per node.
+    void SetNode2FaceArray(int **node2CellArrayIn);
+
+    //! Get 2-D node to face: connected face index of per node.
+    int **GetNode2faceArray() const;
 };
 
 #include "Geo_NodeTopo_Unstruct.hxx"

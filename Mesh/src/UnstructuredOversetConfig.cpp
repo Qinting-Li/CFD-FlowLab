@@ -8,18 +8,19 @@
 #include "Task.h"
 #include "Task_ServerUpdateInterface.h"
 #include "OversetKDTree.h"
+#include "AleManager.h"
 using namespace std;
 
 namespace PHSPACE
 {
 
-OversetConfigFactoryMulti *oversetConfigFactory = NULL;
+OversetConfigFactoryMulti *oversetConfigFactory = nullptr;
 
 Region *region;
 
 void RunOversetGridConfig()
 {
-    if (region == NULL)
+    if (region == nullptr)
     {
         region = new Region;
     }
@@ -27,30 +28,42 @@ void RunOversetGridConfig()
     region->InitGridForOversetConfig();
 
     RunUnstructuredOversetGridConfig();
-
-    //delete region;
 }
 
 void RunUnstructuredOversetGridConfig()
 {
     ReConfigUnstructOversetGrid();
 
-    //OutUnstructOversetGridConfig();
-
     FreeUnstructOversetGridConfig();
 }
 
 void InitializeOversetGridConfig()
 {
-    if (oversetConfigFactory == NULL)
+    if (oversetConfigFactory == nullptr)
     {
         oversetConfigFactory = new OversetConfigFactoryMulti();
         oversetConfigFactory->Initialize();
     }
 }
 
+void InitializeExplicitMethod()
+{
+ 
+}
+
 void ReConfigUnstructOversetGrid()
 {
+    TimeSpan testTime;
+
+    int isOversetSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isOversetSlip");
+
+    if (isOversetSlip)
+    {
+        ConfigOversetSlip();
+
+        return;
+    }
+
     int oversetGridConfigMethod = IMPLICIT_CONFIG;
     if (GlobalDataBase::IsExist("oversetGridConfigMethod", PHINT, 1))
     {
@@ -68,27 +81,37 @@ void ReConfigUnstructOversetGrid()
     {
         ImplicitHoleCut();
     }
+
+    PrintToWindow("Run ReConfigUnstructOversetGrid sucessfully ...\n");
+    testTime.ShowTimeSpanToLogFile("OversetGrid Configing");
 }
 
-void ExplicitHoleCut()
+void ConfigOversetSlip()
 {
-   /*InitializeExplicitMethod();
+    InitializeOversetGridConfig();
 
-    oversetConfigFactory->ExplicitConfigMulti();
-
+    oversetConfigFactory->OversetSlipConfigMulti();
     int outTecplotOverset = GlobalDataBase::GetIntParaFromDB("outTecplotOverset");
 
     if (outTecplotOverset == 1)
     {
         oversetConfigFactory->OutPutOversetFiles();
-    }*/
+    }
+}
+
+void ExplicitHoleCut()
+{
+    InitializeExplicitMethod();
+
+    oversetConfigFactory->OversetExConfigMulti();
+
 }
 
 void ImplicitHoleCut()
 {
     InitializeOversetGridConfig();
 
-    oversetConfigFactory->OversetConfigMulti();
+    oversetConfigFactory->OversetImConfigMulti();
 
     int outTecplotOverset = GlobalDataBase::GetIntParaFromDB("outTecplotOverset");
 
@@ -105,10 +128,9 @@ void OutUnstructOversetGridConfig()
 
 void FreeUnstructOversetGridConfig()
 {
-    if (oversetConfigFactory != NULL)
+    if (oversetConfigFactory != nullptr)
     {
-        delete oversetConfigFactory;
-        oversetConfigFactory = NULL;
+        FreePointer(oversetConfigFactory);
     }
 }
 
@@ -121,29 +143,33 @@ OversetConfigFactoryMulti::OversetConfigFactoryMulti()
 {
     numberOfInterfaceNodesInBlocks = nullptr;
     keyOfInterfaceNodesInBlocks = nullptr;
+    hasSymmetryBCInBlocks = nullptr;
 
     numberOfBlocks = 0;
     numberOfZones = 0;
+    hasCalMinMax = false;
 
     oversetConfigMultiZone = nullptr;
     zonesSearchNodes = nullptr;
+    zonesSearchLines = nullptr;
     zonesInterpolateCells = nullptr;
-    zonesDefectCells = nullptr;
 
     testTime = 0;
     geometricDimension = GetDim();
 
     pMinOfBlocks = nullptr;
     pMaxOfBlocks = nullptr;
+    pMinOfBlocksByLayer = nullptr;
+    pMaxOfBlocksByLayer = nullptr;
 }
 
 OversetConfigFactoryMulti::~OversetConfigFactoryMulti()
 {
-    delete [] numberOfInterfaceNodesInBlocks;
-    numberOfInterfaceNodesInBlocks = nullptr;
-
+    DelPointer(numberOfInterfaceNodesInBlocks);
     DelPointer2(keyOfInterfaceNodesInBlocks);
-    keyOfInterfaceNodesInBlocks = nullptr;
+
+    DelPointer2(pMinOfBlocks);
+    DelPointer2(pMaxOfBlocks);
 
     int currentProcessor = PHMPI::GetCurrentProcessorID();
     for (int iZone = 0; iZone < numberOfZones; ++iZone)
@@ -155,15 +181,12 @@ OversetConfigFactoryMulti::~OversetConfigFactoryMulti()
         }
         delete zonesInterpolateCells[iZone];
         zonesInterpolateCells[iZone] = nullptr;
-
-        delete zonesDefectCells[iZone];
-        zonesDefectCells[iZone] = nullptr;
     }
 
-    delete [] oversetConfigMultiZone;    oversetConfigMultiZone = nullptr;
-    delete [] zonesSearchNodes;          zonesSearchNodes       = nullptr;
-    delete [] zonesInterpolateCells;     zonesInterpolateCells  = nullptr;
-    delete [] zonesDefectCells;          zonesDefectCells       = nullptr;
+    DelPointer2(oversetConfigMultiZone);
+    DelPointer2(zonesSearchNodes);
+    DelPointer2(zonesSearchLines);
+    DelPointer2(zonesInterpolateCells);
 
     for (unsigned iBlock = 0; iBlock < innerGrid.size(); ++iBlock)
     {
@@ -174,27 +197,24 @@ OversetConfigFactoryMulti::~OversetConfigFactoryMulti()
 
 void OversetConfigFactoryMulti::Initialize()
 {
-    //TimeSpan *timeSpan = new TimeSpan();
     if (GetIfOutPutOversetVisualization() == 1)
     {
         PHMakeDir("OversetOutput");
     }
     int currentProcessor = PHMPI::GetCurrentProcessorID();
     numberOfBlocks = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfGridGroups");
-
+    pMinOfBlocks = NewPointer2< RDouble >(numberOfBlocks, geometricDimension);
+    pMaxOfBlocks = NewPointer2< RDouble >(numberOfBlocks, geometricDimension);
     numberOfZones = PHMPI::GetNumberofGlobalZones();
     oversetConfigMultiZone = new OversetConfig * [numberOfZones];
-
     zonesSearchNodes = new ZoneSearchNodes * [numberOfZones];
-    zonesDefectCells       = new InterCells * [numberOfZones];
     zonesInterpolateCells = new InterCells * [numberOfZones];
 
     for (int iZone = 0; iZone < this->numberOfZones; ++iZone)
     {
-        oversetConfigMultiZone[iZone] = NULL;
-        zonesSearchNodes[iZone] = NULL;
-        zonesInterpolateCells[iZone] = NULL;
-        zonesDefectCells[iZone]       = NULL;
+        oversetConfigMultiZone[iZone] = nullptr;
+        zonesSearchNodes[iZone] = nullptr;
+        zonesInterpolateCells[iZone] = nullptr;
 
         int processorIndex = PHMPI::GetZoneProcessorID(iZone);
 
@@ -212,22 +232,21 @@ void OversetConfigFactoryMulti::Initialize()
         }
     }
 
-    //BuildNodesMinDistanceInThisBlocks(wallNodeCoordinateX, wallNodeCoordinateY, wallNodeCoordinateZ);               //! Minimum wall distance of nodes.
-    ComputeNodeWalldist();                 //! Minimum wall distance of nodes.
+    ComputeNodeWalldist();           //! Minimum wall distance of nodes.
 
     SetNodesMinDistanceInThisBlocksByWalldist();
 
-    ComputeNodeAndCellTopology();          //! Calculate the topological relationship of point to point and volume to point.
+    ComputeNodeAndCellTopology();    //! Calculate the topological relationship of point to point and volume to point.
 
     BuildLocalToGlobalInterfaceNodesMaps();
 
-    ReadInInnerGrid();                     //! Read in the internal grid of the object to accurately estimate whether it is in the object.
+    ReadInInnerGrid();               //! Read in the internal grid of the object to accurately estimate whether it is in the object.
 
     SetBufferRegionOnOversetBoundary();    //! Set buffer on the boundary of overset.
-    //timeSpan->ShowTimeSpanToLogfile("OversetConfigFactoryMulti::Initialize");
-    //delete timeSpan;
+
     OutPutOversetVisualizations("0_1_Initialize");
 }
+
 
 void OversetConfigFactoryMulti::BuildLocalToGlobalInterfaceNodesMaps()
 {
@@ -245,8 +264,7 @@ void OversetConfigFactoryMulti::BuildLocalToGlobalInterfaceNodesMaps()
         }
     }
     PH_AllReduce(numberOfNodesInBlocksLocal, numberOfNodesInBlocks, numberOfBlocks, MPI_SUM);
-    delete [] numberOfNodesInBlocksLocal;
-    numberOfNodesInBlocksLocal = NULL;
+    DelPointer(numberOfNodesInBlocksLocal);
 
     numberOfInterfaceNodesInBlocks = new int[numberOfBlocks];
     SetField(numberOfInterfaceNodesInBlocks, 0, numberOfBlocks);
@@ -255,8 +273,7 @@ void OversetConfigFactoryMulti::BuildLocalToGlobalInterfaceNodesMaps()
         BuildLocalToGlobalInterfaceNodesMap(iBlock, numberOfNodesInBlocks);
     }
 
-    delete [] numberOfNodesInBlocks;
-    numberOfNodesInBlocks = NULL;
+    DelPointer(numberOfNodesInBlocks);
 
     keyOfInterfaceNodesInBlocks = NewPointer2< int >(numberOfBlocks, numberOfInterfaceNodesInBlocks);
 }
@@ -301,8 +318,7 @@ void OversetConfigFactoryMulti::BuildLocalToGlobalInterfaceNodesMap(int iBlockIn
         }
     }
 
-    delete [] keyOfNodesInBlocksGlobal;
-    keyOfNodesInBlocksGlobal = NULL;
+    DelPointer(keyOfNodesInBlocksGlobal);
 
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
@@ -326,8 +342,7 @@ void OversetConfigFactoryMulti::BuildLocalToGlobalInterfaceNodesMap(int iBlockIn
         }
     }
 
-    delete [] keyOfNodesInBlocks;
-    keyOfNodesInBlocks = NULL;
+    DelPointer(keyOfNodesInBlocks);
 }
 
 void OversetConfigFactoryMulti::BuildNodesMinDistanceInThisBlocks(vector< RDouble > *&wallNodeCoordinateXIn,
@@ -374,12 +389,9 @@ void OversetConfigFactoryMulti::BuildNodesMinDistanceInThisBlocks(vector< RDoubl
         }
     }
 
-    delete [] wallNodeCoordinateXIn;
-    delete [] wallNodeCoordinateYIn;
-    delete [] wallNodeCoordinateZIn;
-    wallNodeCoordinateXIn = NULL;
-    wallNodeCoordinateYIn = NULL;
-    wallNodeCoordinateZIn = NULL;
+    DelPointer(wallNodeCoordinateXIn);
+    DelPointer(wallNodeCoordinateYIn);
+    DelPointer(wallNodeCoordinateZIn);
 
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
@@ -392,12 +404,10 @@ void OversetConfigFactoryMulti::BuildNodesMinDistanceInThisBlocks(vector< RDoubl
         }
     }
 
-    delete [] wallNodeCoordinateXInBlocks;
-    delete [] wallNodeCoordinateYInBlocks;
-    delete [] wallNodeCoordinateZInBlocks;
-    wallNodeCoordinateXInBlocks = NULL;
-    wallNodeCoordinateYInBlocks = NULL;
-    wallNodeCoordinateZInBlocks = NULL;
+    DelPointer(wallNodeCoordinateXInBlocks);
+    DelPointer(wallNodeCoordinateYInBlocks);
+    DelPointer(wallNodeCoordinateZInBlocks);
+
 }
 void OversetConfigFactoryMulti::SetNodesMinDistanceInThisBlocksByWalldist()
 {
@@ -456,7 +466,7 @@ bool OversetConfigFactoryMulti::ReadInInnerGridH5(const string &fileName, Unstru
     gridIn->SetNTotalNode(iDimensions[0]);
     gridIn->SetNTotalFace(iDimensions[1]);
     gridIn->SetNTotalCell(iDimensions[2]);
-    delete [] iDimensions;
+    DelPointer(iDimensions);
 
     //! Read Grid Coordinates.
     grpData = OpenGroup(grpGrid, "GridCoordinates");
@@ -506,7 +516,7 @@ bool OversetConfigFactoryMulti::ReadInInnerGridH5(const string &fileName, Unstru
             SWAP(leftCellOfFace[iFace], rightCellOfFace[iFace]);
         }
     }
-    delete [] nodePosi;
+    DelPointer(nodePosi);
 
     int nBoundFace = 0;
     ReadData(grpData, &nBoundFace, "nBoundFace");
@@ -520,7 +530,7 @@ bool OversetConfigFactoryMulti::ReadInInnerGridH5(const string &fileName, Unstru
         bcr[iFace]->SetKey(BcType[iFace]);
     }
     gridIn->SetBCRecord(bcr);
-    delete [] BcType;
+    DelPointer(BcType);
 
     gridIn->SpecifyRightCellofBC();
 
@@ -555,9 +565,9 @@ bool OversetConfigFactoryMulti::ReadInInnerGridH5(const string &fileName, Unstru
             interFace2BoundaryFace[iFace] = interFace2BoundaryFaceTemp[iFace];
         }
 
-        delete [] interFace2ZoneIDTemp;
-        delete [] interFace2InterFaceIDTemp;
-        delete [] interFace2BoundaryFaceTemp;
+        DelPointer(interFace2ZoneIDTemp);
+        DelPointer(interFace2InterFaceIDTemp);
+        DelPointer(interFace2BoundaryFaceTemp);
     }
 
     H5Gclose(grpData);
@@ -596,8 +606,9 @@ bool OversetConfigFactoryMulti::ReadInInnerGridH5(const string &fileName, Unstru
         bcr[iFace]->SetBCName(BCNameList[iFace]);
     }
 
-    delete [] BCNameList;
-    delete [] BCName;
+    DelPointer(BCNameList);
+    DelPointer(BCName);
+
     H5Gclose(grpData);
 
     H5Gclose(grpGrid);
@@ -630,7 +641,7 @@ void OversetConfigFactoryMulti::ReadInInnerGrid()
 
         if (!FileExist(fileName))
         {
-            innerGrid[iBlock] = NULL;
+            innerGrid[iBlock] = nullptr;
             continue;
         }
 
@@ -643,11 +654,6 @@ void OversetConfigFactoryMulti::ReadInInnerGrid()
         fileIsH5File = ReadInInnerGridH5(fileName, grid);
         if (fileIsH5File)
         {
-            //ostringstream oss;
-            //oss << "./results/auxiliaryInnerGrid" << iBlock;
-            //string fileName = oss.str();
-            //
-            //innerGrid[iBlock] ->Output(fileName);
             continue;
         }
 
@@ -688,7 +694,7 @@ void OversetConfigFactoryMulti::ReadInInnerGrid()
 
         innerGrid[iBlock]->Decode(dataContainer, 0);
 
-        delete dataContainer;
+        FreePointer(dataContainer);
     }
 }
 
@@ -702,7 +708,7 @@ void OversetConfigFactoryMulti::ComputeNodeWalldist()
 
     wallDistCompute->ComputeNodeDistance();
 
-    delete wallDistCompute;
+    FreePointer(wallDistCompute);
 }
 
 void OversetConfigFactoryMulti::ComputeNodeWalldistInOtherBlock()
@@ -715,7 +721,7 @@ void OversetConfigFactoryMulti::ComputeNodeWalldistInOtherBlock()
 
     wallDistCompute->ComputeNodeDistanceInOtherBlock();
 
-    delete wallDistCompute;
+    FreePointer(wallDistCompute);
 }
 
 void OversetConfigFactoryMulti::ComputeNodeAndCellTopology()
@@ -797,8 +803,28 @@ void OversetConfigFactoryMulti::GetGlobalInterfaceNodes(int iBlock)
     keyActiveOfGlobalInterNodes[iBlock].resize(numberOfGlobalInterfaceNodes);
     SetField(&keyActiveOfGlobalInterNodes[iBlock][0], 0, numberOfGlobalInterfaceNodes);
 }
+void OversetConfigFactoryMulti::OversetSlipConfigMulti()
+{
+    SetInitialValue();    //! Set initial value.
 
-void OversetConfigFactoryMulti::OversetConfigMulti()
+    FindInterCellsByBoundary();
+
+    CreatGlobalInterCells();
+
+    BuildDefectCellRelationships();
+
+    ResetOversetInformation();    //! Rebuild interpolation information.
+
+    FindActiveCellsByBoundary();
+
+    ResetCellCentersByBoundary();
+
+}
+void OversetConfigFactoryMulti::OversetExConfigMulti()
+{
+}
+
+void OversetConfigFactoryMulti::OversetImConfigMulti()
 {
     SetInitialValue();    //! Set initial value.
 
@@ -827,7 +853,7 @@ void OversetConfigFactoryMulti::SpecifyCellsInBodyByAuxiliaryInnerGrid()
         }
         else
         {
-            innerAuxiliaryGridKDTrees[iBlock] = NULL;
+            innerAuxiliaryGridKDTrees[iBlock] = nullptr;
         }
     }
 
@@ -840,8 +866,7 @@ void OversetConfigFactoryMulti::SpecifyCellsInBodyByAuxiliaryInnerGrid()
             delete innerAuxiliaryGridKDTrees[iBlock];
         }
     }
-    //timeSpan->ShowTimeSpanToLogfile("SpecifyCellsInBodyByAuxiliaryInnerGrid");
-    //delete timeSpan;
+
     OutPutOversetVisualizations("1_3_BuildInBlockCellsAndNodes");
 }
 
@@ -862,21 +887,18 @@ void OversetConfigFactoryMulti::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDT
 void OversetConfigFactoryMulti::InterFaceBoundaryOptimize()
 {
     //TimeSpan *timeSpan = new TimeSpan();
-    int twoOrderInterpolationOrNot = GetTwoOrderInterpolationOrNot() + 1;
+    int keyEnlargeOfInterBoundary = GetKeyEnlargeOfInterBoundary() + 1;
 
-    for (int iter = 0; iter < twoOrderInterpolationOrNot; ++ iter)
+    for (int iter = 0; iter < keyEnlargeOfInterBoundary; ++ iter)
     {
         CharacterNodeToCell();
         CharacterCellToNode();
-        //SetNegativeForInnerAndInitialInterNodes();
         SetNegativeForInnerNodes();
     }
 
     //! Points in buffer are set to inactive.
     SetNegativeForBufferRegion();
 
-    //timeSpan->ShowTimeSpanToLogfile("InterFaceBoundaryOptimize");
-    //delete timeSpan;
     OutPutOversetVisualizations("1_5_InterFaceBoundaryOptimize");
 }
 
@@ -958,20 +980,17 @@ void OversetConfigFactoryMulti::ReComputeWallDistance()
 
 void OversetConfigFactoryMulti::BuildNodesMinDistanceInOtherBlocks()
 {
-    //TimeSpan *timeSpan = new TimeSpan();
+
     BuildKDTreesBySearchRegions();
 
     BuildNodesMinDistanceInOtherBlocksByKDTrees();
-    //timeSpan->ShowTimeSpanToLogfile("BuildNodesMinDistanceInOtherBlocks");
-    //delete timeSpan;
+
     OutPutOversetVisualizations("1_1_BuildNodesMinDistanceInOtherBlocks");
 }
 
 void OversetConfigFactoryMulti::BuildNodesMinDistanceInOtherBlocks2()
 {
-    //TimeSpan *timeSpan = new TimeSpan();
-    //timeSpan->ShowTimeSpanToLogfile("BuildNodesMinDistanceInOtherBlocks");
-    //delete timeSpan;
+
     BuildKDTreesBySearchRegions();
 
     BuildZonesSearchNodes();
@@ -985,15 +1004,10 @@ void OversetConfigFactoryMulti::BuildNodesMinDistanceInOtherBlocks2()
 
 void OversetConfigFactoryMulti::BuildNodesMinDistanceInOtherBlocksByKDTrees()
 {
-    //TimeSpan *timeSpan = new TimeSpan();
-    BuildZonesSearchNodes();
-    //timeSpan->ShowTimeSpan("BuildZonesSearchNodes ");
-    //delete timeSpan;
 
-    //timeSpan = new TimeSpan();
+    BuildZonesSearchNodes();
+
     SearchZonesSearchNodesInKDTrees();
-    //timeSpan->ShowTimeSpan("SearchZonesSearchNodesInKDTrees ");
-    //delete timeSpan;
 
     AllReduceNodesMinDistanceInOtherBlock();
 
@@ -1029,8 +1043,7 @@ void OversetConfigFactoryMulti::AllReduceNodesMinDistanceInOtherBlock()
 
             SetField(nodesMinDistanceToOtherBlock, nodesMinDistanceInOtherBlockGlobal, numberOfNodes);
 
-            delete [] nodesMinDistanceInOtherBlockGlobal;
-            nodesMinDistanceInOtherBlockGlobal = NULL;
+            DelPointer(nodesMinDistanceInOtherBlockGlobal);
         }
     }
 }
@@ -1047,8 +1060,7 @@ void OversetConfigFactoryMulti::SetNodesMinDistanceInOtherBlockByZonesNodes()
             RDouble *nodesMinDistanceToOtherBlock = zoneSearchNodes->GetNodesMinDistanceToOtherBlock();
             oversetConfigMultiZone[iZone]->CopyMinDist(nodesMinDistanceToOtherBlock);
         }
-        delete zonesSearchNodes[iZone];
-        zonesSearchNodes[iZone] = NULL;
+        FreePointer(zonesSearchNodes[iZone]);
     }
 }
 
@@ -1062,11 +1074,9 @@ void OversetConfigFactoryMulti::CellsOperator()
 
     CheckInterpolateRelationships();
 
-    BuildKDTreeByActiveCells();
+    CollectEffectiveDonorCells();
 
     BuildDefectCellRelationships();
-
-    CheckInterpolateRelationships();
 
     ResetOversetInformation();    //! Rebuild interpolation information.
 }
@@ -1083,15 +1093,9 @@ void OversetConfigFactoryMulti::SetInitialValue()
         }
         if (nullptr != zonesInterpolateCells[iZone])
         {
-            delete zonesInterpolateCells[iZone];
-            zonesInterpolateCells[iZone] = nullptr;
+            FreePointer(zonesInterpolateCells[iZone]);
         }
-        if (nullptr != zonesDefectCells[iZone])
-        {
-            delete zonesDefectCells[iZone];
-            zonesDefectCells[iZone] = nullptr;
     }
-}
 }
 
 void OversetConfigFactoryMulti::CalMinBoxForSearch()
@@ -1145,7 +1149,6 @@ void OversetConfigFactoryMulti::SetBufferRegionOnOversetBoundary()
 //! Identify search point by judging whether it's in other blocks.
 void OversetConfigFactoryMulti::BuildKDTreesBySearchRegions()
 {
-    //TimeSpan *timeSpan = new TimeSpan();
     BuildMinMaxBoxOfBlocks();
 
     SetActivePropertyForSearchRegions();
@@ -1163,10 +1166,8 @@ void OversetConfigFactoryMulti::BuildKDTreesBySearchRegions()
 
     BuildMinMaxBoxOfZoneBySearchRegions();
 
-    //TimeSpan *timeSpan = new TimeSpan();
     BuildKDTreeByMinMaxBoxOfZones();
-    //timeSpan->ShowTimeSpan("BuildKDTreeByMinMaxBoxOfZones");
-    //delete timeSpan;
+
 }
 
 void OversetConfigFactoryMulti::SetActivePropertyForSearchRegions()
@@ -1180,10 +1181,6 @@ void OversetConfigFactoryMulti::SetActivePropertyForSearchRegions()
             oversetConfigMultiZone[iZone]->SetActivePropertyForSearchRegion();
         }
     }
-    DelPointer2(pMinOfBlocks);
-    DelPointer2(pMaxOfBlocks);
-    pMinOfBlocks = NULL;
-    pMaxOfBlocks = NULL;
 }
 
 void OversetConfigFactoryMulti::SetSearchRegionByActivePropertys()
@@ -1238,15 +1235,36 @@ void OversetConfigFactoryMulti::BuildKDTreeByActiveCells()
     }
 }
 
+void OversetConfigFactoryMulti::CollectEffectiveDonorCells()
+{
+    int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
+    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    {
+        int processorIndex = PHMPI::GetZoneProcessorID(iZone);
+        if (currentProcessorIndex == processorIndex)
+        {
+            oversetConfigMultiZone[iZone]->CollectEffectiveDonorCell();
+        }
+    }
+}
+
 void OversetConfigFactoryMulti::BuildMinMaxBoxOfBlocks()
 {
-    pMinOfBlocks = NewPointer2< RDouble >(numberOfBlocks, geometricDimension);
-    pMaxOfBlocks = NewPointer2< RDouble >(numberOfBlocks, geometricDimension);
+    int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
     RDouble **minBoxOfBlocksLocal = NewPointer2< RDouble >(numberOfBlocks, geometricDimension);
     RDouble **maxBoxOfBlocksLocal = NewPointer2< RDouble >(numberOfBlocks, geometricDimension);
 
     for (int iBlock = 0; iBlock < numberOfBlocks; ++iBlock)
     {
+        if (isAle)
+        {
+            int RBDMethod = PHSPACE::GetIntegerParameterFromDataBase(iBlock, "RBDMethod");
+            if (hasCalMinMax && RBDMethod == 0)
+            {
+                continue;
+            }
+        }
+
         SetField(pMinOfBlocks[iBlock], LARGE, geometricDimension);
         SetField(pMaxOfBlocks[iBlock], -LARGE, geometricDimension);
         SetField(minBoxOfBlocksLocal[iBlock], LARGE, geometricDimension);
@@ -1259,11 +1277,20 @@ void OversetConfigFactoryMulti::BuildMinMaxBoxOfBlocks()
         int processorIndex = PHMPI::GetZoneProcessorID(iZone);
         if (currentProcessorIndex == processorIndex)
         {
+            int blockIndex = oversetConfigMultiZone[iZone]->GetGrid()->GetIBlock();
+            if (isAle)
+            {
+                int RBDMethod = PHSPACE::GetIntegerParameterFromDataBase(blockIndex, "RBDMethod");
+                if (hasCalMinMax && RBDMethod == 0)
+                {
+                    continue;
+                }
+            }
             oversetConfigMultiZone[iZone]->BuildMinMaxBoxOfZone();
 
             RDouble *minBoxOfZone = oversetConfigMultiZone[iZone]->GetPMin();
             RDouble *maxBoxOfZone = oversetConfigMultiZone[iZone]->GetPMax();
-            int blockIndex = oversetConfigMultiZone[iZone]->GetGrid()->GetIBlock();
+
             for (int iDimension = 0; iDimension < geometricDimension; ++iDimension)
             {
                 RDouble &minInThisDimension = minBoxOfBlocksLocal[blockIndex][iDimension];
@@ -1277,6 +1304,15 @@ void OversetConfigFactoryMulti::BuildMinMaxBoxOfBlocks()
     RDouble eps = GetToleranceForOversetBox();
     for (int iBlock = 0; iBlock < numberOfBlocks; ++iBlock)
     {
+        if (isAle)
+        {
+            int RBDMethod = PHSPACE::GetIntegerParameterFromDataBase(iBlock, "RBDMethod");
+            if (hasCalMinMax && RBDMethod == 0)
+            {
+                continue;
+            }
+        }
+
         PH_AllReduce(minBoxOfBlocksLocal[iBlock], pMinOfBlocks[iBlock], geometricDimension, PH_MIN);
         PH_AllReduce(maxBoxOfBlocksLocal[iBlock], pMaxOfBlocks[iBlock], geometricDimension, PH_MAX);
 
@@ -1286,11 +1322,9 @@ void OversetConfigFactoryMulti::BuildMinMaxBoxOfBlocks()
             pMaxOfBlocks[iBlock][iDimension] += eps;
         }
     }
-
+    hasCalMinMax = true;
     DelPointer2(minBoxOfBlocksLocal);
     DelPointer2(maxBoxOfBlocksLocal);
-    minBoxOfBlocksLocal = NULL;
-    maxBoxOfBlocksLocal = NULL;
 }
 
 void OversetConfigFactoryMulti::BuildZonesSearchNodes()
@@ -1299,7 +1333,7 @@ void OversetConfigFactoryMulti::BuildZonesSearchNodes()
     for (int iZone = 0; iZone < numberOfZones; ++iZone)
     {
         int processorIndex = PHMPI::GetZoneProcessorID(iZone);
-        int *keySearchOfNodes = NULL;
+        int *keySearchOfNodes = nullptr;
         int   numberOfNodes = 0;
 
         int   blockIndex = 0;
@@ -1327,8 +1361,7 @@ void OversetConfigFactoryMulti::BuildZonesSearchNodes()
 
         if (zonesSearchNodes[iZone])
         {
-            delete zonesSearchNodes[iZone];
-            zonesSearchNodes[iZone] = NULL;
+            FreePointer(zonesSearchNodes[iZone]);
         }
         zonesSearchNodes[iZone] = new ZoneSearchNodes(numberOfSearchNodes, blockIndex);
 
@@ -1380,9 +1413,34 @@ void OversetConfigFactoryMulti::BuildZonesSearchNodes()
     MPI_Barrier(MPI_COMM_WORLD);
 }
 
+void OversetConfigFactoryMulti::SearchZonesSearchNodesInLineBoxes()
+{
+    int currentProcessor = PHMPI::GetCurrentProcessorID();
+    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    {
+        int processorIndex = PHMPI::GetZoneProcessorID(iZone);
+        if (currentProcessor == processorIndex)
+        {
+            oversetConfigMultiZone[iZone]->SearchZonesSearchNodesInLineBox();
+        }
+    }
+}
+
+void OversetConfigFactoryMulti::SearchZonesSearchNodesInLineBoxesByLayer()
+{
+    int currentProcessor = PHMPI::GetCurrentProcessorID();
+    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    {
+        int processorIndex = PHMPI::GetZoneProcessorID(iZone);
+        if (currentProcessor == processorIndex)
+        {
+            oversetConfigMultiZone[iZone]->SearchZonesSearchNodesInLineBoxByLayer();
+        }
+    }
+}
+
 void OversetConfigFactoryMulti::SpecifyInitialInterNodesByDistance()
 {
-    //TimeSpan *timeSpan = new TimeSpan();
     int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
 
     for (int iZone = 0; iZone < numberOfZones; ++iZone)
@@ -1393,8 +1451,7 @@ void OversetConfigFactoryMulti::SpecifyInitialInterNodesByDistance()
             oversetConfigMultiZone[iZone]->SpecifyInitialInterNodesByDistance();
         }
     }
-    //timeSpan->ShowTimeSpanToLogfile("SpecifyInitialInterNodesByDistance");
-    //delete timeSpan;
+
     OutPutOversetVisualizations("1_2_BuildKeyBasicActiveNodesByDistances");
 }
 
@@ -1470,6 +1527,7 @@ void OversetConfigFactoryMulti::BuildInterpolateRelationships()
     AllReduceZonesInterpolateCells();
 }
 
+
 void OversetConfigFactoryMulti::BuildDefectCellRelationships()
 {
     AllReduceZonesDefectCells();
@@ -1494,13 +1552,22 @@ void OversetConfigFactoryMulti::FindInterpolateRelationships()
 
 void OversetConfigFactoryMulti::FindDefectRelationships()
 {
+    int isOversetSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isOversetSlip");
     int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
+
     for (int iZone = 0; iZone < numberOfZones; ++iZone)
     {
         int processorIndex = PHMPI::GetZoneProcessorID(iZone);
         if (currentProcessorIndex == processorIndex)
         {
-            oversetConfigMultiZone[iZone]->FindDefectRelationship();
+            if (isOversetSlip)
+            {
+                oversetConfigMultiZone[iZone]->FindDefectRelationshipByFaces();
+            }
+            else
+            {
+                oversetConfigMultiZone[iZone]->FindDefectRelationshipByExpend();
+            }
         }
     }
 }
@@ -1549,15 +1616,15 @@ void OversetConfig::FindInterpolateRelationship()
 
                     switch (keyActiveOfCells[donorCellIndexOfThisCell])
                     {
-                    case -1:
-                        donorLevelNow = -1;
-                        break;
-                    case   0:
-                        donorLevelNow = -2;
-                        break;
-                    case   1:
-                        donorLevelNow = 1;
-                        break;
+                        case -1:
+                            donorLevelNow = -1;
+                            break;
+                        case   0:
+                            donorLevelNow = -2;
+                            break;
+                        case   1:
+                            donorLevelNow = 1;
+                            break;
                     }
 
                     if (donorLevelNow > donorLevelOfThisCell)
@@ -1578,23 +1645,28 @@ void OversetConfig::FindInterpolateRelationship()
                         }
                     }
                 }
+                else
+                {
+
+                }
             }
         }
     }
 
-    delete gridKDTree;
-    gridKDTree = nullptr;
-
-    delete [] nodeCoordinate;
-    nodeCoordinate = nullptr;
+    FreePointer(gridKDTree);
+    DelPointer(nodeCoordinate);
 }
 
 void OversetConfig::FindDefectRelationship()
 {
     RDouble *nodeCoordinate = new RDouble[THREE_D];
     int *keyActiveOfCells = this->GetKeyActiveOfCells();
-    RDouble eps = GlobalDataBase::GetDoubleParaFromDB("toleranceForOversetBox");
 
+    bool ifWallDist = true;
+    if (0 == donorCellMethod)
+    {
+        ifWallDist = false;
+    }
     int blockIndex = grid->GetIBlock();
     int zoneIndex = grid->GetZoneID();
     OversetConfigFactoryMulti *overs = GetOversetConfigFactoryMulti();
@@ -1641,35 +1713,101 @@ void OversetConfig::FindDefectRelationship()
 
                         switch (keyActiveOfCells[donorCellIndexOfThisCell])
                         {
-                        case -1:
-                            donorLevelNow = -1;
-                            break;
-                        case   0:
-                            donorLevelNow = -2;
-                            break;
-                        case   1:
-                            donorLevelNow = 1;
-                            break;
+                            case -1:
+                                donorLevelNow = -1;    //!donorCells is INTERPOLATION
+                                break;
+                            case   0:
+                                donorLevelNow = -2;    //!donorCells is INACTIVE
+                                break;
+                            case   1:
+                                donorLevelNow = 1;     //!donorCells is ACTIVE
+                                break;
                         }
 
                         if (donorLevelNow > donorLevelOfThisCell)
                         {
                             donorLevelOfThisCell = donorLevelNow;
-                            cellMinDistanceOfThisCell = ComputeDistanceInDonorZone(nodeCoordinate, donorCellIndexOfThisCell);
+                            cellMinDistanceOfThisCell = ComputeDistanceInDonorZone(nodeCoordinate, donorCellIndexOfThisCell, ifWallDist);
                             donorZoneIndex[iCell] = zoneIndex;
                             donorCellIndex[iCell] = donorCellIndexOfThisCell;
-                            //keyActiveOfCells[donorCellIndexOfThisCell] = DONORCELL;
                         }
                         else if (donorLevelNow == donorLevelOfThisCell)
                         {
-                            RDouble cellMinDistanceNow = ComputeDistanceInDonorZone(nodeCoordinate, donorCellIndexOfThisCell);
+                            RDouble cellMinDistanceNow = ComputeDistanceInDonorZone(nodeCoordinate, donorCellIndexOfThisCell, ifWallDist);
                             if (cellMinDistanceNow < cellMinDistanceOfThisCell)
                             {
                                 cellMinDistanceOfThisCell = cellMinDistanceNow;
                                 donorZoneIndex[iCell] = zoneIndex;
                                 donorCellIndex[iCell] = donorCellIndexOfThisCell;
-                                //keyActiveOfCells[donorCellIndexOfThisCell] = DONORCELL;
                             }
+                        }
+                    }
+
+                    FreeKDRes(minResults);
+                }
+            }
+        }
+    }
+
+    DelPointer(nodeCoordinate);
+}
+
+void OversetConfig::FindDefectRelationshipByFaces()
+{
+    RDouble *nodeCoordinate = new RDouble[THREE_D];
+    int *keyActiveOfCells = this->GetKeyActiveOfCells();
+    RDouble eps = GlobalDataBase::GetDoubleParaFromDB("toleranceForOversetBox");
+   
+    int blockIndex      = grid->GetIBlock();
+    int zoneIndex       = grid->GetZoneID();
+    int *leftCellofFace = grid->GetLeftCellOfFace();
+   
+    OversetConfigFactoryMulti *overs = GetOversetConfigFactoryMulti();
+    InterCells **zonesInterpolateCells = overs->GetZonesInterpolateCells();
+
+    set< int > &interpolateExpendList = GetDonorFaceListList();
+    int numberOfExpendListCells = static_cast<int>( ( GetDonorFaceListList() ).size() );
+
+    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    {
+        InterCells *&zoneInterpolateCells = zonesInterpolateCells[iZone];
+
+        if (blockIndex != zoneInterpolateCells->GetBlockIndex())
+        {
+            int numberOfInterpolateCells = zoneInterpolateCells->GetNumberOfInterCells();
+            vector< int > &interpolateCellList = (overs->GetOversetConfig())[iZone]->GetInterpolateCellList();
+            vector< int > &defectCellList = (overs->GetOversetConfig())[iZone]->GetDefectCellList();
+
+            RDouble *interpolateCellCenterX = zoneInterpolateCells->GetX();
+            RDouble *interpolateCellCenterY = zoneInterpolateCells->GetY();
+            RDouble *interpolateCellCenterZ = zoneInterpolateCells->GetZ();
+
+            int *donorZoneIndex = zoneInterpolateCells->GetDonorZoneIndex();
+            int *donorCellIndex = zoneInterpolateCells->GetDonorCellIndex();
+            int *isDefectCell   = zoneInterpolateCells->IsDefectCell();
+
+            int *donorLevel = zoneInterpolateCells->GetKey();
+            RDouble *cellMinDistance = zoneInterpolateCells->GetMinDist();
+
+            for (int iCell = 0; iCell < numberOfInterpolateCells; ++iCell)
+            {
+                if (isDefectCell[iCell])
+                {
+                    nodeCoordinate[0] = interpolateCellCenterX[iCell];
+                    nodeCoordinate[1] = interpolateCellCenterY[iCell];
+                    nodeCoordinate[2] = interpolateCellCenterZ[iCell];
+
+                    RDouble &cellMinDistanceOfThisCell = cellMinDistance[iCell];
+                    for (set<int>::iterator iter = interpolateExpendList.begin(); iter != interpolateExpendList.end(); ++iter)
+                    {
+                        int donorFaceIndexOfThisZone = *iter;
+                        int le = leftCellofFace[donorFaceIndexOfThisZone];
+                        RDouble cellMinDistanceNow = ComputeDistanceInDonorZoneForFace(nodeCoordinate, donorFaceIndexOfThisZone);
+                        if (cellMinDistanceNow < cellMinDistanceOfThisCell)
+                        {
+                            cellMinDistanceOfThisCell = cellMinDistanceNow;
+                            donorZoneIndex[iCell] = zoneIndex;
+                            donorCellIndex[iCell] = le;
                         }
                     }
                 }
@@ -1677,63 +1815,198 @@ void OversetConfig::FindDefectRelationship()
         }
     }
 
-    delete [] nodeCoordinate;
-    nodeCoordinate = NULL;
+    DelPointer(nodeCoordinate);
+}
+
+void OversetConfig::FindDefectRelationshipByExpend()
+{
+    RDouble *nodeCoordinate = new RDouble[THREE_D];
+    int *keyActiveOfCells = this->GetKeyActiveOfCells();
+    RDouble eps = GlobalDataBase::GetDoubleParaFromDB("toleranceForOversetBox");
+    bool ifWallDist = true;
+    if (0 == donorCellMethod)
+    {
+        ifWallDist = false;
+    }
+    int blockIndex      = grid->GetIBlock();
+    int zoneIndex       = grid->GetZoneID();
+    int *leftCellofFace = grid->GetLeftCellOfFace();
+
+    OversetConfigFactoryMulti *overs = GetOversetConfigFactoryMulti();
+    InterCells **zonesInterpolateCells = overs->GetZonesInterpolateCells();
+
+    set< int > &interpolateExpendList = GetInterCellExpendList();
+    int numberOfExpendListCells = static_cast<int>( ( GetInterCellExpendList() ).size() );
+
+    if (0 == numberOfExpendListCells)
+    {
+        return;
+    }
+    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    {
+        InterCells *&zoneInterpolateCells = zonesInterpolateCells[iZone];
+
+        if (blockIndex != zoneInterpolateCells->GetBlockIndex())
+        {
+            int numberOfInterpolateCells = zoneInterpolateCells->GetNumberOfInterCells();
+            vector< int > &interpolateCellList = (overs->GetOversetConfig())[iZone]->GetInterpolateCellList();
+            vector< int > &defectCellList = (overs->GetOversetConfig())[iZone]->GetDefectCellList();
+
+            RDouble *interpolateCellCenterX = zoneInterpolateCells->GetX();
+            RDouble *interpolateCellCenterY = zoneInterpolateCells->GetY();
+            RDouble *interpolateCellCenterZ = zoneInterpolateCells->GetZ();
+
+            int *donorZoneIndex = zoneInterpolateCells->GetDonorZoneIndex();
+            int *donorCellIndex = zoneInterpolateCells->GetDonorCellIndex();
+            int *isDefectCell   = zoneInterpolateCells->IsDefectCell();
+
+            int *donorLevel = zoneInterpolateCells->GetKey();
+            RDouble *cellMinDistance = zoneInterpolateCells->GetMinDist();
+
+            for (int iCell = 0; iCell < numberOfInterpolateCells; ++iCell)
+            {
+                if (isDefectCell[iCell])
+                {
+                    nodeCoordinate[0] = interpolateCellCenterX[iCell];
+                    nodeCoordinate[1] = interpolateCellCenterY[iCell];
+                    nodeCoordinate[2] = interpolateCellCenterZ[iCell];
+
+                    RDouble &cellMinDistanceOfThisCell = cellMinDistance[iCell];
+                    for (set<int>::iterator iter = interpolateExpendList.begin(); iter != interpolateExpendList.end(); ++iter)
+                    {
+                        int donorCellIndexOfThisZone = *iter;
+                        RDouble cellMinDistanceNow = ComputeDistanceInDonorZone(nodeCoordinate, donorCellIndexOfThisZone,ifWallDist);
+                        if (cellMinDistanceNow < cellMinDistanceOfThisCell)
+                        {
+                            cellMinDistanceOfThisCell = cellMinDistanceNow;
+                            donorZoneIndex[iCell] = zoneIndex;
+                            donorCellIndex[iCell] = donorCellIndexOfThisZone;
+                        }
+                    }
+                    donorLevel[iCell] = ACTIVE;
+                }
+            }
+        }
+    }
+
+    DelPointer(nodeCoordinate);
+
 }
 
 void OversetConfigFactoryMulti::CreatGlobalInterCells()
 {
-    int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
-    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    int isOversetSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isOversetSlip");
+    if (isOversetSlip)
     {
-        int   blockIndex = 0;
-        int   numberOfInterpolateCells = 0;
-
-        int zoneProcessorIndexOfThisZone = PHMPI::GetZoneProcessorID(iZone);
-        if (currentProcessorIndex == zoneProcessorIndexOfThisZone)
+        int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
+        for (int iZone = 0; iZone < numberOfZones; ++iZone)
         {
-            blockIndex = oversetConfigMultiZone[iZone]->GetGrid()->GetIBlock();
-            numberOfInterpolateCells = static_cast<int>( ( oversetConfigMultiZone[iZone]->GetInterpolateCellList() ).size() );
-        }
+            int   blockIndex = 0;
+            int   numberOfInterpolateCells = 0;
 
-        PHMPI::PH_Bcast(&blockIndex, sizeof(int), zoneProcessorIndexOfThisZone);
-        PHMPI::PH_Bcast(&numberOfInterpolateCells, sizeof(int), zoneProcessorIndexOfThisZone);
-
-        if (zonesInterpolateCells[iZone])
-        {
-            delete zonesInterpolateCells[iZone];
-            zonesInterpolateCells[iZone] = NULL;
-        }
-
-        zonesInterpolateCells[iZone] = new InterCells(numberOfInterpolateCells, blockIndex);
-
-        if (numberOfInterpolateCells)
-        {
-            RDouble *interpolateCellCenterX = zonesInterpolateCells[iZone]->GetX();
-            RDouble *interpolateCellCenterY = zonesInterpolateCells[iZone]->GetY();
-            RDouble *interpolateCellCenterZ = zonesInterpolateCells[iZone]->GetZ();
-
+            int zoneProcessorIndexOfThisZone = PHMPI::GetZoneProcessorID(iZone);
             if (currentProcessorIndex == zoneProcessorIndexOfThisZone)
             {
-                vector< int > &interpolateCellList = oversetConfigMultiZone[iZone]->GetInterpolateCellList();
-
-                RDouble *cellCenterX = oversetConfigMultiZone[iZone]->GetGrid()->GetCellCenterX();
-                RDouble *cellCenterY = oversetConfigMultiZone[iZone]->GetGrid()->GetCellCenterY();
-                RDouble *cellCenterZ = oversetConfigMultiZone[iZone]->GetGrid()->GetCellCenterZ();
-
-                for (int iCell = 0; iCell < numberOfInterpolateCells; ++iCell)
-                {
-                    int &cellIndex = interpolateCellList[iCell];
-
-                    interpolateCellCenterX[iCell] = cellCenterX[cellIndex];
-                    interpolateCellCenterY[iCell] = cellCenterY[cellIndex];
-                    interpolateCellCenterZ[iCell] = cellCenterZ[cellIndex];
-                }
+                blockIndex = oversetConfigMultiZone[iZone]->GetGrid()->GetIBlock();
+                    numberOfInterpolateCells = static_cast<int>( ( oversetConfigMultiZone[iZone]->GetInterpolateFaceList() ).size() );
             }
 
-            PHMPI::PH_Bcast(interpolateCellCenterX, numberOfInterpolateCells * sizeof(RDouble), zoneProcessorIndexOfThisZone);
-            PHMPI::PH_Bcast(interpolateCellCenterY, numberOfInterpolateCells * sizeof(RDouble), zoneProcessorIndexOfThisZone);
-            PHMPI::PH_Bcast(interpolateCellCenterZ, numberOfInterpolateCells * sizeof(RDouble), zoneProcessorIndexOfThisZone);
+            PHMPI::PH_Bcast(&blockIndex, sizeof(int), zoneProcessorIndexOfThisZone);
+            PHMPI::PH_Bcast(&numberOfInterpolateCells, sizeof(int), zoneProcessorIndexOfThisZone);
+
+            if (zonesInterpolateCells[iZone])
+            {
+                FreePointer(zonesInterpolateCells[iZone]);
+            }
+
+            zonesInterpolateCells[iZone] = new InterCells(numberOfInterpolateCells, blockIndex);
+
+            if (numberOfInterpolateCells)
+            {
+                RDouble *interpolateCellCenterX = zonesInterpolateCells[iZone]->GetX();
+                RDouble *interpolateCellCenterY = zonesInterpolateCells[iZone]->GetY();
+                RDouble *interpolateCellCenterZ = zonesInterpolateCells[iZone]->GetZ();
+
+                if (currentProcessorIndex == zoneProcessorIndexOfThisZone)
+                {
+                    vector< int > &interpolateCellList = oversetConfigMultiZone[iZone]->GetInterpolateFaceList();
+
+                    RDouble *cellCenterX = oversetConfigMultiZone[iZone]->GetGrid()->GetFaceCenterX();
+                    RDouble *cellCenterY = oversetConfigMultiZone[iZone]->GetGrid()->GetFaceCenterY();
+                    RDouble *cellCenterZ = oversetConfigMultiZone[iZone]->GetGrid()->GetFaceCenterZ();
+
+                    for (int iCell = 0; iCell < numberOfInterpolateCells; ++iCell)
+                    {
+                        int &faceIndex = interpolateCellList[iCell];
+
+                        interpolateCellCenterX[iCell] = cellCenterX[faceIndex];
+                        interpolateCellCenterY[iCell] = cellCenterY[faceIndex];
+                        interpolateCellCenterZ[iCell] = cellCenterZ[faceIndex];
+                    }
+                }
+
+                PHMPI::PH_Bcast(interpolateCellCenterX, numberOfInterpolateCells * sizeof(RDouble), zoneProcessorIndexOfThisZone);
+                PHMPI::PH_Bcast(interpolateCellCenterY, numberOfInterpolateCells * sizeof(RDouble), zoneProcessorIndexOfThisZone);
+                PHMPI::PH_Bcast(interpolateCellCenterZ, numberOfInterpolateCells * sizeof(RDouble), zoneProcessorIndexOfThisZone);
+
+                int *isDefectCell =  zonesInterpolateCells[iZone]->IsDefectCell();
+                SetField(isDefectCell, 1, numberOfInterpolateCells);
+            }
+        }
+    }
+    else
+    {
+        int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
+        for (int iZone = 0; iZone < numberOfZones; ++iZone)
+        {
+            int   blockIndex = 0;
+            int   numberOfInterpolateCells = 0;
+
+            int zoneProcessorIndexOfThisZone = PHMPI::GetZoneProcessorID(iZone);
+            if (currentProcessorIndex == zoneProcessorIndexOfThisZone)
+            {
+                blockIndex = oversetConfigMultiZone[iZone]->GetGrid()->GetIBlock();
+            numberOfInterpolateCells = static_cast<int>( ( oversetConfigMultiZone[iZone]->GetInterpolateCellList() ).size() );
+            }
+
+            PHMPI::PH_Bcast(&blockIndex, sizeof(int), zoneProcessorIndexOfThisZone);
+            PHMPI::PH_Bcast(&numberOfInterpolateCells, sizeof(int), zoneProcessorIndexOfThisZone);
+
+            if (zonesInterpolateCells[iZone])
+            {
+                FreePointer(zonesInterpolateCells[iZone]);
+            }
+
+            zonesInterpolateCells[iZone] = new InterCells(numberOfInterpolateCells, blockIndex);
+
+            if (numberOfInterpolateCells)
+            {
+                RDouble *interpolateCellCenterX = zonesInterpolateCells[iZone]->GetX();
+                RDouble *interpolateCellCenterY = zonesInterpolateCells[iZone]->GetY();
+                RDouble *interpolateCellCenterZ = zonesInterpolateCells[iZone]->GetZ();
+
+                if (currentProcessorIndex == zoneProcessorIndexOfThisZone)
+                {
+                    vector< int > &interpolateCellList = oversetConfigMultiZone[iZone]->GetInterpolateCellList();
+
+                    RDouble *cellCenterX = oversetConfigMultiZone[iZone]->GetGrid()->GetCellCenterX();
+                    RDouble *cellCenterY = oversetConfigMultiZone[iZone]->GetGrid()->GetCellCenterY();
+                    RDouble *cellCenterZ = oversetConfigMultiZone[iZone]->GetGrid()->GetCellCenterZ();
+
+                    for (int iCell = 0; iCell < numberOfInterpolateCells; ++iCell)
+                    {
+                        int &cellIndex = interpolateCellList[iCell];
+
+                        interpolateCellCenterX[iCell] = cellCenterX[cellIndex];
+                        interpolateCellCenterY[iCell] = cellCenterY[cellIndex];
+                        interpolateCellCenterZ[iCell] = cellCenterZ[cellIndex];
+                    }
+                }
+
+                PHMPI::PH_Bcast(interpolateCellCenterX, numberOfInterpolateCells * sizeof(RDouble), zoneProcessorIndexOfThisZone);
+                PHMPI::PH_Bcast(interpolateCellCenterY, numberOfInterpolateCells * sizeof(RDouble), zoneProcessorIndexOfThisZone);
+                PHMPI::PH_Bcast(interpolateCellCenterZ, numberOfInterpolateCells * sizeof(RDouble), zoneProcessorIndexOfThisZone);
+            }
         }
     }
 }
@@ -1792,16 +2065,11 @@ void OversetConfigFactoryMulti::AllReduceZonesInterpolateCells()
             SetField(cellMinDistance, cellMinDistanceGlobal, numberOfInterpolateCells);
             SetField(donorZoneIndex, donorZoneIndexGlobal, numberOfInterpolateCells);
             SetField(donorCellIndex, donorCellIndexGlobal, numberOfInterpolateCells);
-
-            delete [] donorLevelGlobal;
-            delete [] cellMinDistanceGlobal;
-            delete [] donorZoneIndexGlobal;
-            delete [] donorCellIndexGlobal;
-
-            donorLevelGlobal = NULL;
-            cellMinDistanceGlobal = NULL;
-            donorZoneIndexGlobal = NULL;
-            donorCellIndexGlobal = NULL;
+;
+            DelPointer(donorLevelGlobal);
+            DelPointer(cellMinDistanceGlobal);
+            DelPointer(donorZoneIndexGlobal);
+            DelPointer(donorCellIndexGlobal);
         }
     }
 }
@@ -1824,16 +2092,56 @@ void OversetConfigFactoryMulti::AllReduceZonesDefectCells()
 
             SetField(isDefectCell, isDefectCellGlobal, numberOfInterpolateCells);
 
-            delete [] isDefectCellGlobal;
-            isDefectCellGlobal = nullptr;
+            DelPointer(isDefectCellGlobal);
         }
     }
 }
 
+void OversetConfigFactoryMulti::FindInterCellsByBoundary()
+{
+    int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
+
+    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    {
+        int processorIndex = PHMPI::GetZoneProcessorID(iZone);
+        if (processorIndex == currentProcessorIndex)
+        {
+            oversetConfigMultiZone[iZone]->DefineInterCellsByBoundary();
+            oversetConfigMultiZone[iZone]->FindInterpolateExpend();
+        }
+    }
+}
+
+void OversetConfigFactoryMulti::FindActiveCellsByBoundary()
+{
+    int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
+
+    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    {
+        int processorIndex = PHMPI::GetZoneProcessorID(iZone);
+        if (processorIndex == currentProcessorIndex)
+        {
+            oversetConfigMultiZone[iZone]->DefineActCellsByBoundary();
+        }
+    }
+}
+
+void OversetConfigFactoryMulti::ResetCellCentersByBoundary()
+{
+    int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
+
+    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    {
+        int processorIndex = PHMPI::GetZoneProcessorID(iZone);
+        if (processorIndex == currentProcessorIndex)
+        {
+            oversetConfigMultiZone[iZone]->ResetCellCentersByInterCell();
+        }
+    }
+}
 //! Identify active cells.
 void OversetConfigFactoryMulti::FindActiveCells()
 {
-    //TimeSpan *timeSpan = new TimeSpan();
     int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
     //! Interpolation cells are determined.
     for (int iZone = 0; iZone < numberOfZones; ++iZone)
@@ -1844,15 +2152,13 @@ void OversetConfigFactoryMulti::FindActiveCells()
             oversetConfigMultiZone[iZone]->FindActiveCells();
         }
     }
-    //timeSpan->ShowTimeSpanToLogfile("FindActiveCells");
-    //delete timeSpan;
+
     OutPutOversetVisualizations("2_1_FindActiveCells");
 }
 
 //! Identify interpolation cells.
 void OversetConfigFactoryMulti::FindInterCells()
 {
-    //TimeSpan *timeSpan = new TimeSpan();
     int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
 
     //! Interpolation cells are determined.
@@ -1866,8 +2172,7 @@ void OversetConfigFactoryMulti::FindInterCells()
         }
     }
     OutPutOversetVisualizations("2_2_FindInterpolateCells");
-    //timeSpan->ShowTimeSpanToLogfile("FindInterCells");
-    //delete timeSpan;
+
 }
 
 void OversetConfigFactoryMulti::CheckInterpolateRelationships()
@@ -1875,12 +2180,6 @@ void OversetConfigFactoryMulti::CheckInterpolateRelationships()
     int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
     for (int iBlock = 0; iBlock < numberOfBlocks; ++iBlock)
     {
-        /*int numberOfInterpolateCellsInThisBlock;
-
-        int numberOfNegativeCellsInThisBlock_1;
-        int numberOfNegativeCellsInThisBlock_2;
-        int numberOfNegativeCellsInThisBlock_3;*/
-
         int numberOfInterpolateCellsInThisBlockLocal = 0;
 
         int numberOfNegativeCellsInThisBlock_1Local = 0;
@@ -1897,36 +2196,9 @@ void OversetConfigFactoryMulti::CheckInterpolateRelationships()
                     numberOfNegativeCellsInThisBlock_1Local,
                     numberOfNegativeCellsInThisBlock_2Local,
                     numberOfNegativeCellsInThisBlock_3Local);
-
             }
         }
-
-        /*PH_AllReduce(&numberOfInterpolateCellsInThisBlockLocal, &numberOfInterpolateCellsInThisBlock, 1, PH_SUM);
-        PH_AllReduce(&numberOfNegativeCellsInThisBlock_1Local, &numberOfNegativeCellsInThisBlock_1, 1, PH_SUM);
-        PH_AllReduce(&numberOfNegativeCellsInThisBlock_2Local, &numberOfNegativeCellsInThisBlock_2, 1, PH_SUM);
-        PH_AllReduce(&numberOfNegativeCellsInThisBlock_3Local, &numberOfNegativeCellsInThisBlock_3, 1, PH_SUM);
-
-        int numberOfDefectCellsInThisBlock = numberOfNegativeCellsInThisBlock_1 + numberOfNegativeCellsInThisBlock_2 + numberOfNegativeCellsInThisBlock_3;
-        
-        if (currentProcessorIndex == PHMPI::GetServerProcessorID())
-        {
-            cout << "Block" << iBlock << "->DefectCellsNumber      = " << numberOfDefectCellsInThisBlock << endl;
-            cout << "Block" << iBlock << "->InterpolateCellsNumber = " << numberOfInterpolateCellsInThisBlock << endl;
-
-            if (numberOfNegativeCellsInThisBlock_1)
-    {
-                cout << "  NegativeCell_1 of InterpolateCellsNumber due to donorCells are INTERPOLATION = " << numberOfNegativeCellsInThisBlock_1 << endl;
-            }
-            if (numberOfNegativeCellsInThisBlock_2)
-        {
-                cout << "  NegativeCell_2 of InterpolateCellsNumber due to donorCells are INACTIVE      = " << numberOfNegativeCellsInThisBlock_2 << endl;
-        }
-            if (numberOfNegativeCellsInThisBlock_3)
-            {
-                cout << "  NegativeCell_3 of InterpolateCellsNumber due to without any donorCells       = " << numberOfNegativeCellsInThisBlock_3 << endl;
     }
-        }*/
-}
 }
 
 void OversetConfigFactoryMulti::ResetOversetInformation()
@@ -1953,124 +2225,13 @@ void OversetConfigFactoryMulti::ResetOversetInformation()
         if (currentProcessorIndex == processorIndex)
         {
             oversetConfigMultiZone[iZone]->PostProcessOversetInformation();
-            oversetConfigMultiZone[iZone]->FreeKDTree();
         }
     }
 }
 
 void OversetConfigFactoryMulti::GetInterAndDonorCellManagers()
 {
-    int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
 
-    for (int iZone = 0; iZone < numberOfZones; ++iZone)
-    {
-        int sendProcessorIndex = PHMPI::GetZoneProcessorIDSepMode(iZone);
-
-        //! First get neighborZoneIndexContainer and broadcast to all process.
-        PHVectorInt1D neighborZoneIndexContainer;
-        if (currentProcessorIndex == sendProcessorIndex)
-        {
-            OversetInformationProxy *oversetInformationProxy = oversetConfigMultiZone[iZone]->GetOversetInformationProxy();
-            oversetInformationProxy->GetNeighborZoneIndexContainer(neighborZoneIndexContainer);
-        }
-
-        int numberOfNeighbors = static_cast<int>( neighborZoneIndexContainer.size() );
-        PHMPI::PH_Bcast(&numberOfNeighbors, sizeof(int), sendProcessorIndex);
-
-        if (numberOfNeighbors != 0)
-        {
-            neighborZoneIndexContainer.resize(numberOfNeighbors);
-            PHMPI::PH_Bcast(&neighborZoneIndexContainer[0], numberOfNeighbors * sizeof(int), sendProcessorIndex);
-        }
-
-        //! Loop query all neighbors one by one.
-        for (int iNeighbor = 0; iNeighbor < numberOfNeighbors; ++iNeighbor)
-        {
-            int donorZoneIndex = neighborZoneIndexContainer[iNeighbor];
-            int receiveProcessorIndex = PHMPI::GetZoneProcessorIDSepMode(donorZoneIndex);
-
-            PHVectorInt1D     donorCellIndexContainer;
-            PHVectorRDouble1D interCellCenterX;
-            PHVectorRDouble1D interCellCenterY;
-            PHVectorRDouble1D interCellCenterZ;
-
-            if (currentProcessorIndex == sendProcessorIndex)
-            {
-                //! Get interCells ready.
-                OversetInformationProxy *oversetInformationProxy = oversetConfigMultiZone[iZone]->GetOversetInformationProxy();
-                OversetSwapManager *oversetSwapManager = oversetInformationProxy->GetOversetSwapManager();
-
-                OversetInterplateCell *oversetInterplateCell = new OversetInterplateCell();
-                oversetInterplateCell->SetZoneIndex(iZone);
-                oversetInterplateCell->SetDonorZoneIndex(donorZoneIndex);
-                PHVectorInt1D &cellIndexContainer = oversetInterplateCell->GetCellIndexContainer();
-                oversetInformationProxy->GetCellIndexContainer(donorZoneIndex, cellIndexContainer);
-
-                oversetSwapManager->AddOversetInterplateCell(oversetInterplateCell);
-
-                //! Get necessary information ready for donorCells.
-                oversetInformationProxy->GetDonorCellIndexContainer(donorZoneIndex, donorCellIndexContainer, interCellCenterX, interCellCenterY, interCellCenterZ);
-            }
-
-            int numberOfDonorCells = static_cast<int>( donorCellIndexContainer.size() );
-            PHMPI::PH_Trade(&numberOfDonorCells, sizeof(int), sendProcessorIndex, receiveProcessorIndex, iZone);
-
-            int *index = new int[numberOfDonorCells];
-            RDouble *xCell = new RDouble[numberOfDonorCells];
-            RDouble *yCell = new RDouble[numberOfDonorCells];
-            RDouble *zCell = new RDouble[numberOfDonorCells];
-
-            donorCellIndexContainer.resize(numberOfDonorCells);
-            interCellCenterX.resize(numberOfDonorCells);
-            interCellCenterY.resize(numberOfDonorCells);
-            interCellCenterZ.resize(numberOfDonorCells);
-
-            if (currentProcessorIndex == sendProcessorIndex)
-            {
-                for (int iCell = 0; iCell < numberOfDonorCells; ++iCell)
-                {
-                    index[iCell] = donorCellIndexContainer[iCell];
-                    xCell[iCell] = interCellCenterX[iCell];
-                    yCell[iCell] = interCellCenterY[iCell];
-                    zCell[iCell] = interCellCenterZ[iCell];
-                }
-            }
-
-            PHMPI::PH_Trade(index, numberOfDonorCells * sizeof(int), sendProcessorIndex, receiveProcessorIndex, iZone);
-            PHMPI::PH_Trade(xCell, numberOfDonorCells * sizeof(RDouble), sendProcessorIndex, receiveProcessorIndex, iZone);
-            PHMPI::PH_Trade(yCell, numberOfDonorCells * sizeof(RDouble), sendProcessorIndex, receiveProcessorIndex, iZone);
-            PHMPI::PH_Trade(zCell, numberOfDonorCells * sizeof(RDouble), sendProcessorIndex, receiveProcessorIndex, iZone);
-
-            if (currentProcessorIndex == receiveProcessorIndex)
-            {
-                for (int iCell = 0; iCell < numberOfDonorCells; ++iCell)
-                {
-                    donorCellIndexContainer[iCell] = index[iCell];
-                    interCellCenterX[iCell] = xCell[iCell];
-                    interCellCenterY[iCell] = yCell[iCell];
-                    interCellCenterZ[iCell] = zCell[iCell];
-                }
-
-                OversetInformationProxy *oversetInformationProxy = oversetConfigMultiZone[donorZoneIndex]->GetOversetInformationProxy();
-                OversetSwapManager *oversetSwapManager = oversetInformationProxy->GetOversetSwapManager();
-
-                OversetDonorCell *oversetDonorCell = new OversetDonorCell();
-                oversetDonorCell->SetZoneIndex(donorZoneIndex);
-                oversetDonorCell->SetInterplateZoneIndex(iZone);
-                oversetDonorCell->SetDonorCellIndexContainer(donorCellIndexContainer);
-                oversetDonorCell->SetInterCellCenterX(interCellCenterX);
-                oversetDonorCell->SetInterCellCenterY(interCellCenterY);
-                oversetDonorCell->SetInterCellCenterZ(interCellCenterZ);
-
-                oversetSwapManager->AddOversetDonorCell(oversetDonorCell);
-            }
-
-            delete [] index;
-            delete [] xCell;
-            delete [] yCell;
-            delete [] zCell;
-        }
-    }
 }
 
 void OversetConfigFactoryMulti::GetInterAndDonorCellManagersNew()
@@ -2101,7 +2262,7 @@ void OversetConfigFactoryMulti::GetInterAndDonorCellManagersNew()
             PHVectorRDouble1D interCellCenterX;
             PHVectorRDouble1D interCellCenterY;
             PHVectorRDouble1D interCellCenterZ;
-
+            PHVectorRDouble1D interCellVolume;
             if (currentProcessorIndex != receiveProcessorIndex && currentProcessorIndex != sendProcessorIndex)
             {
                 continue;
@@ -2122,7 +2283,7 @@ void OversetConfigFactoryMulti::GetInterAndDonorCellManagersNew()
                 oversetSwapManager->AddOversetInterplateCell(oversetInterplateCell);
 
                 //! Get necessary information ready for donorCells.
-                oversetInformationProxy->GetDonorCellIndexContainer(donorZoneIndex, donorCellIndexContainer, interCellCenterX, interCellCenterY, interCellCenterZ);
+                oversetInformationProxy->GetDonorCellIndexContainer(donorZoneIndex, donorCellIndexContainer, interCellCenterX, interCellCenterY, interCellCenterZ, interCellVolume);
 
                 numberOfDonorCell = static_cast<int>( donorCellIndexContainer.size() );
 
@@ -2132,6 +2293,7 @@ void OversetConfigFactoryMulti::GetInterAndDonorCellManagersNew()
                 PHSPACE::PHWrite(dataContainer, interCellCenterX, numberOfDonorCell);
                 PHSPACE::PHWrite(dataContainer, interCellCenterY, numberOfDonorCell);
                 PHSPACE::PHWrite(dataContainer, interCellCenterZ, numberOfDonorCell);
+                PHSPACE::PHWrite(dataContainer, interCellVolume, numberOfDonorCell);
             }
 
             PHMPI::PH_Trade(dataContainer, sendProcessorIndex, receiveProcessorIndex);
@@ -2146,11 +2308,13 @@ void OversetConfigFactoryMulti::GetInterAndDonorCellManagersNew()
                 interCellCenterX.resize(numberOfDonorCell);
                 interCellCenterY.resize(numberOfDonorCell);
                 interCellCenterZ.resize(numberOfDonorCell);
+                interCellVolume.resize(numberOfDonorCell);
 
                 PHSPACE::PHRead(dataContainer, donorCellIndexContainer, numberOfDonorCell);
                 PHSPACE::PHRead(dataContainer, interCellCenterX, numberOfDonorCell);
                 PHSPACE::PHRead(dataContainer, interCellCenterY, numberOfDonorCell);
                 PHSPACE::PHRead(dataContainer, interCellCenterZ, numberOfDonorCell);
+                PHSPACE::PHRead(dataContainer, interCellVolume, numberOfDonorCell);
 
                 OversetInformationProxy *oversetInformationProxy = oversetConfigMultiZone[donorZoneIndex]->GetOversetInformationProxy();
                 OversetSwapManager *oversetSwapManager = oversetInformationProxy->GetOversetSwapManager();
@@ -2162,11 +2326,12 @@ void OversetConfigFactoryMulti::GetInterAndDonorCellManagersNew()
                 oversetDonorCell->SetInterCellCenterX(interCellCenterX);
                 oversetDonorCell->SetInterCellCenterY(interCellCenterY);
                 oversetDonorCell->SetInterCellCenterZ(interCellCenterZ);
+                oversetDonorCell->SetInterCellVolume(interCellVolume);
 
                 oversetSwapManager->AddOversetDonorCell(oversetDonorCell);
             }
 
-            delete dataContainer;
+            FreePointer(dataContainer);
         }
     }
 }
@@ -2270,7 +2435,7 @@ void OversetConfigFactoryMulti::OutPutOversetInformation()
             dataContainer->MoveToBegin();
             dataContainer->WriteFile(file);
         }
-        delete dataContainer;
+        delete dataContainer;    dataContainer = nullptr;
     }
 
     if (currentProcessor == serverProcessor)
@@ -2372,7 +2537,20 @@ void OversetConfigFactoryMulti::PrintCellInformation()
             cout << "       numberOfInterCells    = " << numberOfInterCells << endl;
         }
 
-        delete dataContainer;
+        FreePointer(dataContainer);
+    }
+}
+
+void OversetConfigFactoryMulti::SetCellLayersByActiveNodes()
+{
+    int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
+    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    {
+        int processorIndex = PHMPI::GetZoneProcessorID(iZone);
+        if (currentProcessorIndex == processorIndex)
+        {
+            oversetConfigMultiZone[iZone]->SetCellLayersByActiveNodes();
+        }
     }
 }
 
@@ -2408,7 +2586,6 @@ int OversetConfigFactoryMulti::CharacterNodeToValidNodeByCell()
     }
 
     //! Transmission of point attributes through interface communication. InnerAndInitialInterNodes needs to be constrained.
-    //CommunicateNodePropertyByKeyOfInterfaceNodesInBlocks();
     CommunicateNodeCharacterOnInterface();
 
     SetNegativeForInnerAndInitialInterNodes();
@@ -2430,7 +2607,6 @@ void OversetConfigFactoryMulti::CharacterCellToNode()
     }
 
     //! Transmission of point attributes through interface communication.
-    //CommunicateNodePropertyByKeyOfInterfaceNodesInBlocks();
     CommunicateNodeCharacterOnInterface();
 }
 
@@ -2451,7 +2627,7 @@ void OversetConfigFactoryMulti::CommunicateCellIBlank()
         MainTaskBlocking(actkey);
     }
 
-    delete actkey;    actkey = nullptr;
+    FreePointer(actkey);
 }
 
 //! Through the communication of virtual cell information in interface, realize the indirect communication of point attributes.
@@ -2628,6 +2804,55 @@ void OversetConfigFactoryMulti::OutGlobalNodes()
     PHSPACE::CloseFile(file);
 }
 
+ZoneSearchLines::ZoneSearchLines(int numberOfSearchNodesIn, int numberOfSearchLinesIn,
+    int blockIndexIn):
+    numberOfNodes(numberOfSearchNodesIn),
+    numberOfLines(numberOfSearchLinesIn),
+    blockIndex(blockIndexIn)
+{
+    int geometricDimension = GetDim();
+    pMin = new RDouble[geometricDimension];
+    pMax = new RDouble[geometricDimension];
+
+    if (numberOfNodes)
+    {
+        x = new RDouble[numberOfNodes];
+        y = new RDouble[numberOfNodes];
+        z = new RDouble[numberOfNodes];
+
+        line2Node = new int[numberOfNodes];
+
+        lineIndex = new int[numberOfLines];
+
+        nodesActive =  new int[numberOfNodes];
+
+        SetField(nodesActive, VARIABLEACTIVE, numberOfNodes);
+
+        linesActive =  new int[numberOfLines];
+
+        SetField(linesActive, VARIABLEACTIVE, numberOfLines);
+    }
+}
+ZoneSearchLines ::~ZoneSearchLines()
+{
+    if (numberOfNodes)
+    {
+        DelPointer(x);
+        DelPointer(y);
+        DelPointer(z);
+
+        DelPointer(line2Node);
+        DelPointer(lineIndex);
+
+        DelPointer(nodesActive);
+        DelPointer(linesActive);
+
+    }
+
+    DelPointer(pMin);
+    DelPointer(pMax);
+}
+
 ZoneSearchNodes::ZoneSearchNodes(int numberOfSearchNodesIn,
     int blockIndexIn) :
     numberOfNodes(numberOfSearchNodesIn),
@@ -2653,22 +2878,14 @@ ZoneSearchNodes ::~ZoneSearchNodes()
 {
     if (numberOfNodes)
     {
-        delete [] x;
-        delete [] y;
-        delete [] z;
-        delete [] nodesMinDistanceToOtherBlock;
-
-        x = NULL;
-        y = NULL;
-        z = NULL;
-        nodesMinDistanceToOtherBlock = NULL;
+        DelPointer(x);
+        DelPointer(y);
+        DelPointer(z);
+        DelPointer(nodesMinDistanceToOtherBlock);
     }
 
-    delete [] pMin;
-    delete [] pMax;
-
-    pMax = NULL;
-    pMin = NULL;
+    DelPointer(pMin);
+    DelPointer(pMax);
 }
 
 InterCells::InterCells(int numberOfInterpolateCellsIn,
@@ -2702,29 +2919,18 @@ InterCells::~InterCells()
 {
     if (numberOfInterCells)
     {
-        delete [] donorZoneIndex;
-        delete [] donorCellIndex;
-        delete [] isDefectCell;
+        DelPointer(donorZoneIndex);
+        DelPointer(donorCellIndex);
+        DelPointer(isDefectCell);
 
-        donorZoneIndex = nullptr;
-        donorCellIndex = nullptr;
-        isDefectCell   = nullptr;
-
-        if (NULL != donorLevel)
+        if (nullptr != donorLevel)
         {
-            delete [] donorLevel;
-            delete [] cellMinDistance;
+            DelPointer(donorLevel);
+            DelPointer(cellMinDistance);
 
-            delete [] x;
-            delete [] y;
-            delete [] z;
-
-            donorLevel      = nullptr;
-            cellMinDistance = nullptr;
-
-            x = nullptr;
-            y = nullptr;
-            z = nullptr;
+            DelPointer(x);
+            DelPointer(y);
+            DelPointer(z);
         }
     }
 }
@@ -2733,19 +2939,12 @@ void InterCells::FreeUselessMemery()
 {
     if (numberOfInterCells)
     {
-        delete [] donorLevel;
-        delete [] cellMinDistance;
+        DelPointer(donorLevel);
+        DelPointer(cellMinDistance);
 
-        delete [] x;
-        delete [] y;
-        delete [] z;
-
-        donorLevel = NULL;
-        cellMinDistance = NULL;
-
-        x = NULL;
-        y = NULL;
-        z = NULL;
+        DelPointer(x);
+        DelPointer(y);
+        DelPointer(z);
     }
 }
 
@@ -2756,8 +2955,23 @@ OversetConfig::OversetConfig()
 
     minBoxOfZone = nullptr;
     maxBoxOfZone = nullptr;
+    minBoxOfZoneByLayer = nullptr;
+    maxBoxOfZoneByLayer = nullptr;
+    minBoxOfLine = nullptr;
+    maxBoxOfLine = nullptr;
+    minBoxNodeID = nullptr;
+    maxBoxNodeID = nullptr;
+    hasCalMinMaxForZone = false;
 
     keyActiveOfNodes = nullptr;
+    keyActiveOfLines = nullptr;
+    keyActiveOfFaces = nullptr;
+
+    keySearchOfNodes = nullptr;
+    keySearchOfCells = nullptr;
+    keySearchOfLines = nullptr;
+    keySearchOfNodesByLayer = nullptr;
+    keySearchOfCellsByLayer = nullptr;
 
     keyBufferOfNodes = nullptr;
     keyBufferOfCells = nullptr;
@@ -2772,13 +2986,15 @@ OversetConfig::OversetConfig()
     localToGlobalInterfaceNodesMap = nullptr;
 
     zoneIndex = 0;
+    donorCellMethod = 0;
+    nLayerOfCellsOfCutting = 0;
 }
 
 void OversetConfig::BuildBoundaryNodeList(vector< RDouble > &wallNodeCoordinateXIn,
     vector< RDouble > &wallNodeCoordinateYIn,
     vector< RDouble > &wallNodeCoordinateZIn)
 {
-    int   numberOfBoundaryElements = grid->GetNBoundFace();
+    int numberOfBoundaryElements = grid->GetNBoundFace();
     int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
     int **faceNodeIndex = grid->GetFace2NodeArray();
 
@@ -2801,35 +3017,35 @@ void OversetConfig::BuildBoundaryNodeList(vector< RDouble > &wallNodeCoordinateX
 
         switch (boundaryConditionOfThisFace)
         {
-        case PHENGLEI::INTERFACE:
-            for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
-            {
-                interfaceBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
-            }
-            break;
-        case PHENGLEI::SOLID_SURFACE:
-            for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
-            {
-                wallBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
-            }
-            break;
-        case PHENGLEI::OVERSET:
-            for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
-            {
-                oversetBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
-            }
-            break;
-        case PHENGLEI::SYMMETRY:
-            for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
-            {
-                symmetryBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
-            }
-            break;
-        default:
-            for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
-            {
-                physicalBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
-            }
+            case PHENGLEI::INTERFACE:
+                for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
+                {
+                    interfaceBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
+                }
+                break;
+            case PHENGLEI::SOLID_SURFACE:
+                for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
+                {
+                    wallBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
+                }
+                break;
+            case PHENGLEI::OVERSET:
+                for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
+                {
+                    oversetBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
+                }
+                break;
+            case PHENGLEI::SYMMETRY:
+                for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
+                {
+                    symmetryBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
+                }
+                break;
+            default:
+                for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
+                {
+                    physicalBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
+                }
         }
     }
 
@@ -2865,12 +3081,11 @@ void OversetConfig::BuildBoundaryNodeList(vector< RDouble > &wallNodeCoordinateX
 
 void OversetConfig::BuildBoundaryNodeList()
 {
-    int   numberOfBoundaryElements = grid->GetNBoundFace();
+    int numberOfBoundaryElements = grid->GetNBoundFace();
     int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
     int **faceNodeIndex = grid->GetFace2NodeArray();
 
     UnstructBCSet **bcr = grid->GetBCRecord();
-    //int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     set< int > interfaceBoundaryNodeSet;
     set< int > wallBoundaryNodeSet;
@@ -2880,41 +3095,40 @@ void OversetConfig::BuildBoundaryNodeList()
 
     for (int iFace = 0; iFace < numberOfBoundaryElements; ++iFace)
     {
-        //UnstructBC *bcRegion = bcr[iFace];
         int boundaryConditionOfThisFace = bcr[iFace]->GetKey();
         int &numberOfNodesInThisFace = faceNodeNumber[iFace];
 
         switch (boundaryConditionOfThisFace)
         {
-        case PHENGLEI::INTERFACE:
-            for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
-            {
-                interfaceBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
-            }
-            break;
-        case PHENGLEI::SOLID_SURFACE:
-            for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
-            {
-                wallBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
-            }
-            break;
-        case PHENGLEI::OVERSET:
-            for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
-            {
-                oversetBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
-            }
-            break;
-        case PHENGLEI::SYMMETRY:
-            for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
-            {
-                symmetryBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
-            }
-            break;
-        default:
-            for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
-            {
-                physicalBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
-            }
+            case PHENGLEI::INTERFACE:
+                for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
+                {
+                    interfaceBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
+                }
+                break;
+            case PHENGLEI::SOLID_SURFACE:
+                for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
+                {
+                    wallBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
+                }
+                break;
+            case PHENGLEI::OVERSET:
+                for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
+                {
+                    oversetBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
+                }
+                break;
+            case PHENGLEI::SYMMETRY:
+                for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
+                {
+                    symmetryBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
+                }
+                break;
+            default:
+                for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
+                {
+                    physicalBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
+                }
         }
     }
 
@@ -2943,7 +3157,7 @@ void OversetConfig::BuildBoundaryNodeList()
             physicalBoundaryNodeList.push_back(*iter);
         }
     }
-    if (NULL == localToGlobalInterfaceNodesMap)
+    if (nullptr == localToGlobalInterfaceNodesMap)
     {
         localToGlobalInterfaceNodesMap = new int[interfaceBoundaryNodeList.size()];
     }
@@ -3004,46 +3218,49 @@ void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree(vector< 
         }
     }
 
-    delete [] nodeCoordinate;
-    nodeCoordinate = NULL;
+    DelPointer(nodeCoordinate);
 }
 
 OversetConfig::~OversetConfig()
 {
-    delete [] keyActiveOfNodes;
-    keyActiveOfNodes = NULL;
+    DelPointer(keyActiveOfNodes);
+    DelPointer(keyActiveOfLines);
+    DelPointer(keyActiveOfFaces);
+    DelPointer(keyBufferOfNodes);
+    DelPointer(keyBufferOfCells);
+    DelPointer(keySearchOfNodes);
+    DelPointer(keySearchOfLines);
 
-    delete [] keyBufferOfNodes;
-    keyBufferOfNodes = NULL;
-
-    delete [] keyBufferOfCells;
-    keyBufferOfCells = NULL;
-    
     FreeKeyInBlockNodes();
 
-    if (nodesMinDistanceInThisBlock != NULL)
+    if (nodesMinDistanceInThisBlock != nullptr)
     {
-        delete [] nodesMinDistanceInThisBlock;
-        nodesMinDistanceInThisBlock = NULL;
+        DelPointer(nodesMinDistanceInThisBlock);
     }
 
-    if (localToGlobalInterfaceNodesMap != NULL)
+    if (localToGlobalInterfaceNodesMap != nullptr)
     {
-        delete [] localToGlobalInterfaceNodesMap;
-        localToGlobalInterfaceNodesMap = NULL;
+        DelPointer(localToGlobalInterfaceNodesMap);
     }
+
+    DelPointer(nLayerOfCellsFromWall);
+    DelPointer(keySearchOfCells);
+    DelPointer(minBoxOfZoneByLayer);
+    DelPointer(maxBoxOfZoneByLayer);
+    DelPointer(minBoxOfZone);
+    DelPointer(maxBoxOfZone);
+    DelPointer(minBoxNodeID);
+    DelPointer(maxBoxNodeID);
 }
 
 void OversetConfig::FreeKeyBasicActiveNode()
 {
-    delete [] keyBasicActiveNodes;
-    keyBasicActiveNodes = NULL;
+    DelPointer(keyBasicActiveNodes);
 }
 
 void OversetConfig::FreeKeyInBlockNodes()
 {
-    delete [] keyInBlockNodes;
-    keyInBlockNodes = NULL;
+    DelPointer(keyInBlockNodes);
 }
 
 void OversetConfig::FreeKDTree()
@@ -3051,15 +3268,8 @@ void OversetConfig::FreeKDTree()
     if (cellKDTree)
     {
         cellKDTree->Free();
-        delete cellKDTree;
-        cellKDTree = nullptr;
+        FreePointer(cellKDTree);
     }
-
-    delete [] minBoxOfZone;
-    delete [] maxBoxOfZone;
-
-    minBoxOfZone = nullptr;
-    maxBoxOfZone = nullptr;
 }
 
 void OversetConfig::Initialize(UnstructGrid *gridIn,
@@ -3070,9 +3280,17 @@ void OversetConfig::Initialize(UnstructGrid *gridIn,
     zoneIndex = iZone;
     blockIndex = iBlock;
     grid = gridIn;
-    oversetInformationProxy = NULL;
+    oversetInformationProxy = nullptr;
+
+    donorCellMethod = 0;
+    if (GlobalDataBase::IsExist("donorCellMethod", PHINT, 1))
+    {
+        GlobalDataBase::GetData("donorCellMethod", &donorCellMethod, PHINT, 1);
+    }
+    nLayerOfCellsOfCutting = PHSPACE::GlobalDataBase::GetIntParaFromDB("nLayerOfCellsOfCutting");
 
     int numberOfNodes = grid->GetNTotalNode();
+    int numberOfCells = grid->GetNTotalCell();
 
     keyActiveOfNodes = new int[numberOfNodes];
     SetField(keyActiveOfNodes, 0, numberOfNodes);
@@ -3081,12 +3299,25 @@ void OversetConfig::Initialize(UnstructGrid *gridIn,
     SetField(nodesMinDistanceInThisBlock, LARGE, numberOfNodes);
 
     keyInBlockNodes = new int[numberOfNodes];
+
+    nLayerOfCellsFromWall = new int[numberOfCells];
+    SetField(nLayerOfCellsFromWall, MAXCELLLAYER, numberOfCells);
+
+    minBoxOfZone = new RDouble[geometricDimension];
+    maxBoxOfZone = new RDouble[geometricDimension];
+
+    minBoxNodeID = new int[geometricDimension];
+    maxBoxNodeID = new int[geometricDimension];
 }
 
 void OversetConfig::SetInitialValue()
 {
-    interpolateCellList.resize(0);
-    defectCellList.resize(0);
+    vector<int>().swap(interpolateCellList);
+    vector<int>().swap(interpolateFaceList);
+    vector<int>().swap(defectCellList);
+
+    interpolateExpendList.clear();
+    donorFaceList.clear();
 }
 
 //! Calculate the minimum box according to the cell.
@@ -3242,17 +3473,31 @@ void OversetConfig::CopyMinDist(RDouble *nodesMinDistanceInOtherBlockIn)
         }
     }
 
-    delete [] keySearchOfNodes;
-    keySearchOfNodes = NULL;
+    DelPointer(keySearchOfNodes);
+}
+
+void OversetConfig::CopyNodesActive(int* nodesActiveIn, int* nodes2NodeIn, int numberOfLinesIn)
+{
+    int numberOfNodes = grid->GetNTotalNode();
+    keyActiveOfNodes = new int[numberOfNodes];
+    SetField(keyActiveOfNodes, VARIABLEACTIVE, numberOfNodes);
+
+    int countIndex = 0;
+    int countActive = 0;
+    for (int iSearchLine = 0; iSearchLine < numberOfLinesIn; iSearchLine++)
+    {
+        int nodeIndex0 = nodes2NodeIn[countIndex++];
+        int nodeIndex1 = nodes2NodeIn[countIndex++];
+
+        keyActiveOfNodes[nodeIndex0] = nodesActiveIn[countActive++];
+        keyActiveOfNodes[nodeIndex1] = nodesActiveIn[countActive++]; 
+    }
+
+    DelPointer(keyActiveOfNodes);
 }
 
 void OversetConfig::BuildMinMaxBoxOfZone()
 {
-    minBoxOfZone = new RDouble[geometricDimension];
-    maxBoxOfZone = new RDouble[geometricDimension];
-    SetField(minBoxOfZone, LARGE, geometricDimension);
-    SetField(maxBoxOfZone, -LARGE, geometricDimension);
-
     vector< RDouble * > nodeCoordinate;
     RDouble *x = grid->GetX();
     nodeCoordinate.push_back(x);
@@ -3260,6 +3505,24 @@ void OversetConfig::BuildMinMaxBoxOfZone()
     nodeCoordinate.push_back(y);
     RDouble *z = grid->GetZ();
     nodeCoordinate.push_back(z);
+
+    if (hasCalMinMaxForZone == false)
+    {
+    SetField(minBoxOfZone, LARGE, geometricDimension);
+    SetField(maxBoxOfZone, -LARGE, geometricDimension);
+
+        SetField(minBoxNodeID, 0, geometricDimension);
+        SetField(maxBoxNodeID, 0, geometricDimension);
+    }
+    else
+    {
+        for (int iDimension = 0; iDimension < geometricDimension; ++iDimension)
+        {
+            minBoxOfZone[iDimension] = nodeCoordinate[iDimension][minBoxNodeID[iDimension]];
+            maxBoxOfZone[iDimension] = nodeCoordinate[iDimension][maxBoxNodeID[iDimension]];
+        }
+        return;
+    }
 
     int numberOfNodes = grid->GetNTotalNode();
     for (int iDimension = 0; iDimension < geometricDimension; ++iDimension)
@@ -3269,26 +3532,39 @@ void OversetConfig::BuildMinMaxBoxOfZone()
         for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
         {
             RDouble &nodeCoordinateInThisDimension = nodeCoordinate[iDimension][iNode];
+            if (minInThisDimension >= nodeCoordinateInThisDimension)
+            {
+                 minBoxNodeID[iDimension] = iNode;
+    }
+            if (maxInThisDimension <= nodeCoordinateInThisDimension)
+            {
+                 maxBoxNodeID[iDimension] = iNode;
+            }
             minInThisDimension = MIN(minInThisDimension, nodeCoordinateInThisDimension);
             maxInThisDimension = MAX(maxInThisDimension, nodeCoordinateInThisDimension);
         }
     }
+    hasCalMinMaxForZone = true;
 }
 
 void OversetConfig::BuildKDTreeByMinMaxBoxOfZone()
 {
     gridKDTree = new GridKDTree(grid, keySearchOfCells, minBoxOfZone, maxBoxOfZone);
-
-    delete [] keySearchOfCells;
-    keySearchOfCells = NULL;
 }
 
 void OversetConfig::BuildKDTreeByActiveCell()
 {
     int nDim = grid->GetDim();
-    int *keyActiveOfCells = grid->GetBlankIndex();
+
     int numberOfCells = grid->GetNTotalCell();
-    bool hasActiveCells = false;
+    int nBoundaryFace = grid->GetNBoundFace();
+    int nTotalFace = grid->GetNTotalFace();
+
+    int *leftCellofFace  = grid->GetLeftCellOfFace();
+    int *rightCellofFace = grid->GetRightCellOfFace();
+    int *keyActiveOfCells = grid->GetBlankIndex();
+
+    bool hasActiveCells = false, hasInterCells = false;
     for (int iCell = 0; iCell < numberOfCells; ++iCell)
     {
         if (keyActiveOfCells[iCell] == ACTIVE)
@@ -3298,71 +3574,348 @@ void OversetConfig::BuildKDTreeByActiveCell()
         }
     }
 
-    if (hasActiveCells && !cellKDTree)
-    {
-        cellKDTree = CreatKDTree(nDim);
-    }
-
     RDouble *nodeCoordinate = new RDouble[nDim];
     RDouble *cellCenterX = grid->GetCellCenterX();
     RDouble *cellCenterY = grid->GetCellCenterY();
     RDouble *cellCenterZ = grid->GetCellCenterZ();
 
-    int **cellNodeIndexContainer = grid->GetCell2NodeArray();
-    int *cellNodeNumberContainer = grid->GetNodeNumberOfEachCell();
-
-    for (int iCell = 0; iCell < numberOfCells; ++iCell)
+    int isOversetSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isOversetSlip");
+    if (isOversetSlip)
     {
-        if (keyActiveOfCells[iCell] == ACTIVE)
+        return;
+    }
+    else 
+    {
+        if (hasActiveCells && !cellKDTree)
         {
-            nodeCoordinate[0] = cellCenterX[iCell];
-            nodeCoordinate[1] = cellCenterY[iCell];
-            if (nDim == 3)nodeCoordinate[2] = cellCenterZ[iCell];
+            //!There is a memory leak in the cellKDTree, which needs to be addressed
+            cellKDTree = CreatKDTree(nDim); 
+        }
 
-            KDInsert(cellKDTree, nodeCoordinate, iCell);
+        for (int iCell = 0; iCell < numberOfCells; ++iCell)
+        {
+            if (keyActiveOfCells[iCell] == ACTIVE)
+            {
+                nodeCoordinate[0] = cellCenterX[iCell];
+                nodeCoordinate[1] = cellCenterY[iCell];
+                if (nDim == 3)nodeCoordinate[2] = cellCenterZ[iCell];
+        
+                KDInsert(cellKDTree, nodeCoordinate, iCell);
+            }
         }
     }
 
-    delete [] nodeCoordinate;    nodeCoordinate = nullptr;
+    DelPointer(nodeCoordinate);
 }
 
-RDouble OversetConfig::ComputeDistanceInDonorZone(RDouble *nodeCoordinateIn, int donorCell)
+void OversetConfig::SearchZonesSearchNodesInLineBox()
+{
+    int blockIndex = grid->GetIBlock();
+    int numberOfCells = grid->GetNTotalCell();
+    int **cellFaceIndexContainer  = grid->GetCell2Face();
+    int * cellFaceNumberContainer = grid->GetFaceNumberOfEachCell();
+
+    minBoxOfLine = new RDouble[geometricDimension];
+    maxBoxOfLine = new RDouble[geometricDimension];
+
+    RDouble *minBoxOfTemp = new RDouble[geometricDimension];
+    RDouble *maxBoxOfTemp = new RDouble[geometricDimension];
+
+    int numberOfNodes = grid->GetNTotalNode();
+    int *keyActiveOfCells = GetKeyActiveOfCells();
+
+    SetField(keyActiveOfNodes, 1, numberOfNodes);
+    SetField(keyActiveOfCells, 0, numberOfCells);
+
+    vector< RDouble * > nodeCoordinate;
+    RDouble *x = grid->GetX();
+    nodeCoordinate.push_back(x);
+    RDouble *y = grid->GetY();
+    nodeCoordinate.push_back(y);
+    RDouble *z = grid->GetZ();
+    nodeCoordinate.push_back(z);
+
+    Vector3D s1P0, s1P1, s2P0, s2P1;
+    RDouble eps = GetToleranceForOversetBox();
+    //RDouble eps = 0.0;
+    int **faceNodeIndex = grid->GetFace2NodeArray();
+    int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
+
+    ZoneSearchNodes **zonesSearchNodes = GetOversetConfigFactoryMulti()->GetZonesSearchNodes();
+    OversetConfig **oversetConfigMultiZone = GetOversetConfigFactoryMulti()->GetOversetConfig();
+
+    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    {
+        ZoneSearchNodes *&zoneSearchNodes = zonesSearchNodes[iZone];
+        OversetConfig *&oversetConfig = oversetConfigMultiZone[iZone];
+
+        UnstructGrid *otherGrid = oversetConfig->GetGrid(); 
+        int numberOfBoundary = otherGrid->GetNBoundFace();
+        UnstructBCSet **unstructBCSet = otherGrid->GetBCRecord();
+        int *NodeNumber = otherGrid->GetNodeNumberOfEachFace();
+        int **NodeIndex = otherGrid->GetFace2NodeArray();
+        int *nLayerOfCellsFromWall = oversetConfig->GetLayerOfCells(); 
+        int nTotalCells = otherGrid->GetNTotalCell();
+        int **cellToFace = otherGrid->GetCell2Face();
+        int *faceNumberOfEachCell = otherGrid->GetFaceNumberOfEachCell();
+
+        int nodeID = 0;
+        if (blockIndex != zoneSearchNodes->GetBlockIndex())
+        {
+            vector< RDouble * > otherNodeCoordinate;
+            RDouble *x = otherGrid->GetX();
+            otherNodeCoordinate.push_back(x);
+            RDouble *y = otherGrid->GetY();
+            otherNodeCoordinate.push_back(y);
+            RDouble *z = otherGrid->GetZ();
+            otherNodeCoordinate.push_back(z);
+
+            for (int iCell = 0; iCell < numberOfCells; ++iCell)
+            {
+                if (keySearchOfCellsByLayer[iCell])
+                {
+                    for(int iFace = 0; iFace < cellFaceNumberContainer[ iCell ]; ++ iFace)
+                    {
+                        SetField(minBoxOfLine, LARGE, geometricDimension);
+                        SetField(maxBoxOfLine, - LARGE, geometricDimension);
+
+                        int faceIndex = cellFaceIndexContainer[iCell][iFace];
+                        int nNode = faceNodeNumber[faceIndex];
+                        for (int iDimension = 0; iDimension < geometricDimension; ++iDimension)
+                        {
+                            RDouble &minInThisDimension = minBoxOfLine[iDimension];
+                            RDouble &maxInThisDimension = maxBoxOfLine[iDimension];
+                            for (int iNode = 0; iNode < nNode; ++iNode)
+                            {
+                                nodeID = faceNodeIndex[faceIndex][iNode];
+                                RDouble &nodeCoordinateInThisDimension = nodeCoordinate[iDimension][nodeID];
+                                minInThisDimension = MIN(minInThisDimension, nodeCoordinateInThisDimension);
+                                maxInThisDimension = MAX(maxInThisDimension, nodeCoordinateInThisDimension);
+                            }
+                            minInThisDimension -= eps;
+                            maxInThisDimension += eps;
+                        }
+
+                        s1P0.x = nodeCoordinate[0][faceNodeIndex[faceIndex][0]];
+                        s1P0.y = nodeCoordinate[1][faceNodeIndex[faceIndex][0]];
+                        s1P1.x = nodeCoordinate[0][faceNodeIndex[faceIndex][1]];
+                        s1P1.y = nodeCoordinate[1][faceNodeIndex[faceIndex][1]];
+
+                        if (nLayerOfCellsOfCutting == 0)
+                        {
+                            for (int jFace = 0; jFace < numberOfBoundary; ++jFace)
+                            {
+                                int bcType = unstructBCSet[jFace]->GetKey();
+                                if (bcType == PHENGLEI::SOLID_SURFACE)
+                                {
+                                    SetField(minBoxOfTemp, LARGE, geometricDimension);
+                                    SetField(maxBoxOfTemp, - LARGE, geometricDimension);
+                                    int &numberOfNodesInThisFace = NodeNumber[jFace];
+                                    for (int iDimension = 0; iDimension < geometricDimension; ++iDimension)
+                                    {
+                                        RDouble &minInThisDimension = minBoxOfTemp[iDimension];
+                                        RDouble &maxInThisDimension = maxBoxOfTemp[iDimension];
+                                        for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
+                                        {
+                                            RDouble &nodeCoordinateInThisDimension = otherNodeCoordinate[iDimension][NodeIndex[jFace][iNode]];
+                                            minInThisDimension = MIN(minInThisDimension, nodeCoordinateInThisDimension);
+                                            maxInThisDimension = MAX(maxInThisDimension, nodeCoordinateInThisDimension);
+                                        }
+                                        minInThisDimension -= eps;
+                                        maxInThisDimension += eps;
+                                    }
+                                    if (IfWallFacesIntersectionWithThisZone(minBoxOfTemp,maxBoxOfTemp))
+                                    {
+                                        s2P0.x = otherNodeCoordinate[0][NodeIndex[jFace][0]];
+                                        s2P0.y = otherNodeCoordinate[1][NodeIndex[jFace][0]];
+                                        s2P1.x = otherNodeCoordinate[0][NodeIndex[jFace][1]];
+                                        s2P1.y = otherNodeCoordinate[1][NodeIndex[jFace][1]];
+
+                                        if (IfWallFaceIntersectionWithThisZone(s1P0 ,s1P1, s2P0, s2P1))
+                                        {
+                                            keyActiveOfNodes[faceNodeIndex[faceIndex][0]] = 0;
+                                            keyActiveOfNodes[faceNodeIndex[faceIndex][1]] = 0;
+                                            intersectLinesWithWall.insert(faceIndex);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            for (int iCellInOtherGrid = 0; iCellInOtherGrid < nTotalCells; iCellInOtherGrid++)
+                            {
+                                if (nLayerOfCellsFromWall[iCellInOtherGrid] == nLayerOfCellsOfCutting)
+                                {
+                                    for (int iFace = 0; iFace < faceNumberOfEachCell[iCellInOtherGrid]; ++iFace)
+                                    {
+                                        SetField(minBoxOfTemp, LARGE, geometricDimension);
+                                        SetField(maxBoxOfTemp, - LARGE, geometricDimension);
+
+                                        int jFace = cellToFace[iCellInOtherGrid][iFace];
+                                        int &numberOfNodesInThisFace = NodeNumber[jFace];
+
+                                        for (int iDimension = 0; iDimension < geometricDimension; ++iDimension)
+                                        {
+                                            RDouble& minInThisDimension = minBoxOfTemp[iDimension];
+                                            RDouble& maxInThisDimension = maxBoxOfTemp[iDimension];
+                                            for (int iNode = 0; iNode < numberOfNodesInThisFace; ++iNode)
+                                            {
+                                                RDouble& nodeCoordinateInThisDimension = otherNodeCoordinate[iDimension][NodeIndex[jFace][iNode]];
+                                                minInThisDimension = MIN(minInThisDimension, nodeCoordinateInThisDimension);
+                                                maxInThisDimension = MAX(maxInThisDimension, nodeCoordinateInThisDimension);
+                                            }
+                                            minInThisDimension -= eps;
+                                            maxInThisDimension += eps;
+                                        }
+                                        if (IfWallFacesIntersectionWithThisZone(minBoxOfTemp,maxBoxOfTemp))
+                                        {
+                                            s2P0.x = otherNodeCoordinate[0][NodeIndex[jFace][0]];
+                                            s2P0.y = otherNodeCoordinate[1][NodeIndex[jFace][0]];
+                                            s2P1.x = otherNodeCoordinate[0][NodeIndex[jFace][1]];
+                                            s2P1.y = otherNodeCoordinate[1][NodeIndex[jFace][1]];
+
+                                            if (IfWallFaceIntersectionWithThisZone(s1P0, s1P1, s2P0, s2P1))
+                                            {
+                                                keyActiveOfNodes[faceNodeIndex[faceIndex][0]] = 0;
+                                                keyActiveOfNodes[faceNodeIndex[faceIndex][1]] = 0;
+                                                intersectLinesWithWall.insert(faceIndex);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }  
+        }
+    }
+
+    DelPointer(minBoxOfLine);
+    DelPointer(maxBoxOfLine);
+
+    DelPointer(minBoxOfTemp);
+    DelPointer(maxBoxOfTemp);
+}
+
+void OversetConfig::SearchZonesSearchNodesInLineBoxByLayer()
+{
+
+}
+
+void OversetConfig::CollectEffectiveDonorCell()
+{
+    int nBoundaryFace = grid->GetNBoundFace();
+    int nTotalFace = grid->GetNTotalFace();
+
+    int *leftCellofFace  = grid->GetLeftCellOfFace();
+    int *rightCellofFace = grid->GetRightCellOfFace();
+    int *keyActiveOfCells = grid->GetBlankIndex();
+
+    int isOversetSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isOversetSlip");
+    if (isOversetSlip)
+    {
+        return;
+    }
+    else 
+    {
+
+        for (int iFace = 0; iFace < nBoundaryFace; iFace++)
+        {
+            int le = leftCellofFace[iFace];
+            int re = rightCellofFace[iFace];
+            if (keyActiveOfCells[re] == INTERPOLATION && keyActiveOfCells[le] == ACTIVE)
+            {
+                interpolateExpendList.insert(le);
+            }
+        }
+
+        for (int iFace = nBoundaryFace; iFace < nTotalFace; iFace++)
+        {
+            int le = leftCellofFace[iFace];
+            int re = rightCellofFace[iFace];
+            if (keyActiveOfCells[re] == INTERPOLATION && keyActiveOfCells[le] == ACTIVE)
+            {
+                interpolateExpendList.insert(le);
+            }
+
+            if (keyActiveOfCells[le] == INTERPOLATION && keyActiveOfCells[re] == ACTIVE)
+            {
+                interpolateExpendList.insert(re);
+            }
+        }
+    }
+}
+
+RDouble OversetConfig::ComputeDistanceInDonorZone(RDouble *nodeCoordinateIn, int donorCell, bool wallDist)
 {
     if (donorCell < 0)
     {
         return LARGE;
     }
-
-    int **cellNodeIndexContainer = grid->GetCell2NodeArray();
-    int *cellNodeNumberContainer = grid->GetNodeNumberOfEachCell();
-
-    RDouble *coordinateX = grid->GetX();
-    RDouble *coordinateY = grid->GetY();
-    RDouble *coordinateZ = grid->GetZ();
-
-    int &numberOfNodeInCell = cellNodeNumberContainer[donorCell];
-
-    RDouble weightDist = 0.0;
-    RDouble weight = 0.0;
-
-    for (int iNode = 0; iNode < numberOfNodeInCell; ++iNode)
+    if (!wallDist)
     {
-        int &nodeIndex = cellNodeIndexContainer[donorCell][iNode];
+        RDouble *coorX = grid->GetCellCenterX();
+        RDouble *coorY = grid->GetCellCenterY();
+        RDouble *coorZ = grid->GetCellCenterZ();
 
-        RDouble dx = nodeCoordinateIn[0] - coordinateX[nodeIndex];
-        RDouble dy = nodeCoordinateIn[1] - coordinateY[nodeIndex];
-        RDouble dz = nodeCoordinateIn[2] - coordinateZ[nodeIndex];
-        RDouble dist = DISTANCE(dx, dy, dz) + TINY;
+        RDouble dx = nodeCoordinateIn[0] - coorX[donorCell];
+        RDouble dy = nodeCoordinateIn[1] - coorY[donorCell];
+        RDouble dz = nodeCoordinateIn[2] - coorZ[donorCell];
+        RDouble dist = DISTANCE(dx, dy, dz);
 
-        weight += 1.0 / dist;
-        weightDist += 1.0 / dist * nodesMinDistanceInThisBlock[nodeIndex];
+        return dist;
     }
+    else
+    {
+        int **cellNodeIndexContainer = grid->GetCell2NodeArray();
+        int *cellNodeNumberContainer = grid->GetNodeNumberOfEachCell();
 
-    weightDist /= ( weight + TINY );
+        RDouble *coordinateX = grid->GetX();
+        RDouble *coordinateY = grid->GetY();
+        RDouble *coordinateZ = grid->GetZ();
 
-    return weightDist;
+        int &numberOfNodeInCell = cellNodeNumberContainer[donorCell];
+
+        RDouble weightDist = 0.0;
+        RDouble weight = 0.0;
+
+        for (int iNode = 0; iNode < numberOfNodeInCell; ++iNode)
+        {
+            int &nodeIndex = cellNodeIndexContainer[donorCell][iNode];
+
+            RDouble dx = nodeCoordinateIn[0] - coordinateX[nodeIndex];
+            RDouble dy = nodeCoordinateIn[1] - coordinateY[nodeIndex];
+            RDouble dz = nodeCoordinateIn[2] - coordinateZ[nodeIndex];
+            RDouble dist = DISTANCE(dx, dy, dz) + TINY;
+
+            weight += 1.0 / dist;
+            weightDist += 1.0 / dist * nodesMinDistanceInThisBlock[nodeIndex];
+        }
+
+        weightDist /= ( weight + TINY );
+
+        return weightDist;
+    }
 }
 
+RDouble OversetConfig::ComputeDistanceInDonorZoneForFace(RDouble* nodeCoordinateIn, int donorFace)
+{
+    RDouble *coorX = grid->GetFaceCenterX();
+    RDouble *coorY = grid->GetFaceCenterY();
+    RDouble *coorZ = grid->GetFaceCenterZ();
+
+    RDouble dx = nodeCoordinateIn[0] - coorX[donorFace];
+    RDouble dy = nodeCoordinateIn[1] - coorY[donorFace];
+    RDouble dz = nodeCoordinateIn[2] - coorZ[donorFace];
+    RDouble dist = DISTANCE(dx, dy, dz);
+
+    return dist;
+
+}
 //! Interpolation boundary is determined according to the local distance and neighbor distance.
 //! Overset boundary can be ignored.
 void OversetConfig::SpecifyInitialInterNodesByDistance()
@@ -3380,8 +3933,7 @@ void OversetConfig::SpecifyInitialInterNodesByDistance()
         }
     }
 
-    delete [] nodesMinDistanceInOtherBlock;
-    nodesMinDistanceInOtherBlock = NULL;
+    DelPointer(nodesMinDistanceInOtherBlock);
 }
 
 //! Any two points of an cell pass through the physical plane, the cell is a boundary cell.
@@ -3444,7 +3996,8 @@ void OversetConfig::SpecifySpecicalCellsInteractWithWallBoundary()
             }
         }
     }
-    delete [] innerCellOrNot;
+
+    DelPointer(innerCellOrNot);
 }
 
 void OversetConfig::SetNegativeForBufferRegion()
@@ -3570,6 +4123,135 @@ void OversetConfig::SetSearchRegionByActiveProperty()
     SetField(keySearchOfCells, keyActiveOfCells, numberOfCells);
 }
 
+void OversetConfig::DefineInterCellsByBoundary()
+{
+    int numberOfCells = grid->GetNTotalCell();
+    int nBoundaryFace = grid->GetNBoundFace();
+    int nTotal = numberOfCells + nBoundaryFace;;
+
+    UnstructBCSet **unstructBCSet = grid->GetBCRecord();
+    int *rightCellofFace = grid->GetRightCellOfFace();
+
+    int *keyActiveOfCells = this->GetKeyActiveOfCells();
+
+    SetField(keyActiveOfCells, ACTIVE, nTotal);
+
+    for (int iFace = 0; iFace < nBoundaryFace; iFace++)
+    {
+        int bcType = unstructBCSet[iFace]->GetKey();
+        if (bcType == PHENGLEI::OVERSET)
+        {
+            int re = rightCellofFace[iFace];
+            keyActiveOfCells[re] = INTERPOLATION;
+            interpolateCellList.push_back(re);
+            interpolateFaceList.push_back(iFace);
+        }
+    }
+}
+
+void OversetConfig::DefineActCellsByBoundary()
+{
+    int numberOfCells = grid->GetNTotalCell();
+    int nBoundaryFace = grid->GetNBoundFace();
+
+    UnstructBCSet **unstructBCSet = grid->GetBCRecord();
+    int *rightCellofFace = grid->GetRightCellOfFace();
+    int *keyActiveOfCells = this->GetKeyActiveOfCells();
+
+    for (int iFace = 0; iFace < nBoundaryFace; iFace++)
+    {
+        int bcType = unstructBCSet[iFace]->GetKey();
+        if (bcType == PHENGLEI::OVERSET)
+        {
+            int re = rightCellofFace[iFace];
+            keyActiveOfCells[re] = ACTIVE;
+        }
+    }
+}
+
+void OversetConfig::ResetCellCentersByInterCell()
+{
+    OversetDataProxy *oversetDataProxy = oversetInformationProxy->GetOversetDataProxyForSend();
+    int numberOfNeighbors = oversetDataProxy->GetNumberOfNeighbors();
+    if (numberOfNeighbors == 0)
+    {
+        return;
+    }
+
+    PHVector1D < OversetCell * > *oversetCellContainer = oversetInformationProxy->GetOversetCellContainer();
+
+    RDouble *xcc, *ycc, *zcc, *vol;
+    xcc = grid->GetCellCenterX();
+    ycc = grid->GetCellCenterY();
+    zcc = grid->GetCellCenterZ();
+    vol = grid->GetCellVolume();
+
+    int nTotalCell = grid->GetNTotalCell();
+    int nBoundFace = grid->GetNBoundFace();
+    int **cell2Face = grid->GetCell2Face();
+    int *faceNumberOfEachCell = grid->GetFaceNumberOfEachCell();
+    int *rightCellofFace = grid->GetRightCellOfFace();
+    int *leftCellofFace = grid->GetLeftCellOfFace();
+
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighbors; ++ iNeighbor)
+    {
+        int  numberOfCells        = oversetDataProxy->GetNumberOfCells(iNeighbor);
+        int *cellIndexContainer   = oversetDataProxy->GetCellIndexContainer(iNeighbor);
+        RDouble *interCellCenterX = oversetDataProxy->GetInterCellCenterX(iNeighbor);
+        RDouble *interCellCenterY = oversetDataProxy->GetInterCellCenterY(iNeighbor);
+        RDouble *interCellCenterZ = oversetDataProxy->GetInterCellCenterZ(iNeighbor);
+        RDouble *interCellVolume  = oversetDataProxy->GetInterCellVolume(iNeighbor);
+        for (int iCell = 0; iCell < numberOfCells; ++ iCell)
+        {
+            int cellIndex = cellIndexContainer[iCell];
+
+            for (int j = 0; j < faceNumberOfEachCell[cellIndex]; ++j)
+            {
+                int face = cell2Face[cellIndex][j];
+                if (nBoundFace <= face)
+                {
+                    continue;
+                }
+
+                UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[face]);
+                int bcType = bcRegion->GetBCType();
+                if (bcType != PHENGLEI::OVERSET)
+                {
+                    continue;
+                }
+                int le = leftCellofFace[face];
+                int re = rightCellofFace[face];
+
+                xcc[re] = interCellCenterX[iCell];
+                ycc[re] = interCellCenterY[iCell];
+                zcc[re] = interCellCenterZ[iCell];
+                vol[re] = interCellVolume[iCell];
+            }
+        }
+    }
+}
+
+void OversetConfig::FindInterpolateExpend()
+{
+    int numberOfCells = grid->GetNTotalCell();
+    int nBoundaryFace = grid->GetNBoundFace();
+    int *leftCellofFace = grid->GetLeftCellOfFace();
+
+    UnstructBCSet **unstructBCSet = grid->GetBCRecord();
+    for (int iFace = 0; iFace < nBoundaryFace; iFace++)
+    {
+        int bcType = unstructBCSet[iFace]->GetKey();
+        if (bcType == PHENGLEI::OVERSET)
+        {
+            int le = leftCellofFace[iFace];
+            donorFaceList.insert(iFace);
+        }
+    }
+}
+
 //! It is an active cell if the all cell nodes are 1.
 void OversetConfig::FindActiveCells()
 {
@@ -3635,8 +4317,7 @@ void OversetConfig::SearchZonesSearchNodesInKDTree()
         }
     }
 
-    delete [] nodeCoordinate;
-    nodeCoordinate = NULL;
+    DelPointer(nodeCoordinate);
 }
 
 int OversetConfig::FindDonorCell(RDouble *nodeCoordinateIn)
@@ -3682,17 +4363,15 @@ void OversetConfig::FindInterCells()
 void OversetConfig::InitializeOversetInformation()
 {
     //! Movement of the mesh, because of the ressembly of the mesh, it is necessary to delete oversetInformationProxy and regenerate it.
-    if (oversetInformationProxy != 0)
+    if (oversetInformationProxy != nullptr)
     {
-        delete oversetInformationProxy;
-        oversetInformationProxy = 0;
+        FreePointer(oversetInformationProxy);
     }
 
     oversetInformationProxy = new OversetInformationProxy();
     oversetInformationProxy->SetGrid(grid);
     grid->SetOversetInformationProxy(oversetInformationProxy);
 
-    //
     PHVector1D < OversetCell * > *oversetCellContainer = new PHVector1D < OversetCell * >();
 
     InterCells **zonesInterpolateCells = GetOversetConfigFactoryMulti()->GetZonesInterpolateCells();
@@ -3757,6 +4436,29 @@ void OversetConfig::CalLocalToGlobalInterfaceNodes(int iBlock, vector< int > &ke
     }
 }
 
+void OversetConfig::SetCellLayersByActiveNodes()
+{
+    int numberOfCells = grid->GetNTotalCell();
+
+    int **cellNodeIndex = grid->GetCell2NodeArray();
+    int *cellNodeNumber = grid->GetNodeNumberOfEachCell();
+
+    int *keyActiveOfCells = this->GetKeyActiveOfCells();
+
+    for (int iCell = 0; iCell < numberOfCells; ++iCell)
+    {
+        int &numberOfNodeInCell = cellNodeNumber[iCell];
+        for (int iNode = 0; iNode < numberOfNodeInCell; ++iNode)
+        {
+            if (keyActiveOfNodes[cellNodeIndex[iCell][iNode]])
+            {
+                keyActiveOfCells[iCell] = 1;
+                break;
+            }
+        }
+    }
+}
+
 //! If a cell has a node of 1, its attributes is 1, otherwise it is 0.
 void OversetConfig::CharacterNodeToCell()
 {
@@ -3766,7 +4468,6 @@ void OversetConfig::CharacterNodeToCell()
     int *cellNodeNumber = grid->GetNodeNumberOfEachCell();
 
     int *keyActiveOfCells = this->GetKeyActiveOfCells();
-    //SetField(keyActiveOfCells, 0, numberOfCells);
 
     for (int iCell = 0; iCell < numberOfCells; ++iCell)
     {
@@ -3904,9 +4605,9 @@ void OversetConfig::CheckInterpolateRelationship(int iBlockIn,
 {
     if (iBlockIn == zoneInterpolateCellsIn->GetBlockIndex())
     {
-        int        zoneIndex = grid->GetZoneID();
+        int zoneIndex = grid->GetZoneID();
 
-        int        numberOfInterpolateCells = zoneInterpolateCellsIn->GetNumberOfInterCells();
+        int numberOfInterpolateCells = zoneInterpolateCellsIn->GetNumberOfInterCells();
 
         int *donorLevel = zoneInterpolateCellsIn->GetKey();
 
@@ -3924,42 +4625,18 @@ void OversetConfig::CheckInterpolateRelationship(int iBlockIn,
             int &donorLevelOfThisCell = donorLevel[iCell];
             switch (donorLevelOfThisCell)
             {
-            case -3:
-                ++numberOfNegativeCellsInThisBlock_3In;
-                /*cout << "ERROR: Don't find any donorCells " << endl;
-                cout << "DonorLevel  = " << donorLevelOfThisCell << endl;
-                cout << "Interpolate = " << " zoneIndex : " << zoneIndex << " cellIndex : " << interpolateCellList[iCell] << endl;
-                cout << "Donor       = " << " donorZoneIndex : " << donorZoneIndex[iCell] << " donorCellIndex : " << donorCellIndex[iCell] << endl;
-                cout << "InterpolateCell Postion     = " << setprecision(8) << setw(12)
-                     << interpolateCellCenterX[iCell] << " "
-                     << interpolateCellCenterY[iCell] << " "
-                     << interpolateCellCenterZ[iCell] << endl;*/
-                isDefectCell[iCell] = 1;
-                break;
-            case -2:
-                ++numberOfNegativeCellsInThisBlock_2In;
-                /* cout << "ERROR: the level of donorCells is INACTIVE:" << endl;
-                cout << "DonorLevel  = " << donorLevelOfThisCell << endl;
-                cout << "Interpolate = " << " zoneIndex : " << zoneIndex << " cellIndex : " << interpolateCellList[iCell] << endl;
-                cout << "Donor       = " << " donorZoneIndex : " << donorZoneIndex[iCell] << " donorCellIndex : " << donorCellIndex[iCell] << endl;
-                cout << "InterpolateCell Postion     = " << setprecision(8) << setw(12)
-                    << interpolateCellCenterX[iCell] << " "
-                    << interpolateCellCenterY[iCell] << " "
-                    << interpolateCellCenterZ[iCell] << endl;*/
-                isDefectCell[iCell] = 1;
-                break;
-            case -1:
-                ++numberOfNegativeCellsInThisBlock_1In;
-                /*cout << "WARNING: the level of donorCells is INTERPOLATION:" << endl;
-                cout << "DonorLevel  = " << donorLevelOfThisCell << endl;
-                cout << "Interpolate = " << " zoneIndex : " << zoneIndex << " cellIndex : " << interpolateCellList[iCell] << endl;
-                cout << "Donor       = " << " donorZoneIndex : " << donorZoneIndex[iCell] << " donorCellIndex : " << donorCellIndex[iCell] << endl;
-                cout << "InterpolateCell Postion     = " << setprecision(8) << setw(12)
-                << interpolateCellCenterX[iCell] << " "
-                << interpolateCellCenterY[iCell] << " "
-                << interpolateCellCenterZ[iCell] << endl;*/
-                isDefectCell[iCell] = 1;
-                break;
+                case -3:
+                    ++numberOfNegativeCellsInThisBlock_3In;
+                    isDefectCell[iCell] = 1;
+                    break;
+                case -2:
+                    ++numberOfNegativeCellsInThisBlock_2In;
+                    isDefectCell[iCell] = 1;
+                    break;
+                case -1:
+                    ++numberOfNegativeCellsInThisBlock_1In;
+                    isDefectCell[iCell] = 1;
+                    break;
             }
         }
     }
@@ -3967,14 +4644,14 @@ void OversetConfig::CheckInterpolateRelationship(int iBlockIn,
 
 void OversetConfig::DownInterfaceNodeCharacter()
 {
-    int    blockIndex = grid->GetIBlock();
+    int blockIndex = grid->GetIBlock();
     int **keyOfInterfaceNodesInBlocks = GetOversetConfigFactoryMulti()->GetKeyOfInterfaceNodesInBlocks();
 
     int numberOfInterfaceBoundaryNodes = static_cast<int>(interfaceBoundaryNodeList.size());
     for (int iNode = 0; iNode < numberOfInterfaceBoundaryNodes; ++ iNode)
     {
         keyActiveOfNodes[interfaceBoundaryNodeList[iNode]] =
-            keyOfInterfaceNodesInBlocks[blockIndex][localToGlobalInterfaceNodesMap[iNode]];
+        keyOfInterfaceNodesInBlocks[blockIndex][localToGlobalInterfaceNodesMap[iNode]];
     }
 }
 
@@ -4121,7 +4798,7 @@ void OversetConfig::ShowBoundaryCells()
     int numberOfWordsInEachLine = 5;
     int iPrint = 0;
 
-    //nodes coordinate x
+    //! nodes coordinate x
     for (int iNode = 0; iNode < numberOfNodes; ++iNode)
     {
         if (keyNodes[iNode] != 1) continue;
@@ -4131,7 +4808,7 @@ void OversetConfig::ShowBoundaryCells()
     }
     if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
 
-    //nodes coordinate y
+    //! nodes coordinate y
     iPrint = 0;
     for (int iNode = 0; iNode < numberOfNodes; ++iNode)
     {
@@ -4142,7 +4819,7 @@ void OversetConfig::ShowBoundaryCells()
     }
     if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
 
-    //nodes coordinate z
+    //! nodes coordinate z
     iPrint = 0;
     for (int iNode = 0; iNode < numberOfNodes; ++iNode)
     {
@@ -4153,7 +4830,7 @@ void OversetConfig::ShowBoundaryCells()
     }
     if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
 
-    //face nodes number
+    //! face nodes number
     iPrint = 0;
     if (PHSPACE::GetDim() == THREE_D)
     {
@@ -4167,7 +4844,7 @@ void OversetConfig::ShowBoundaryCells()
         if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
     }
 
-    //face nodes list
+    //! face nodes list
     int count = 0;
     iPrint = 0;
     for (int iFace = 0; iFace < numberOfFaces; ++iFace)
@@ -4190,7 +4867,7 @@ void OversetConfig::ShowBoundaryCells()
     }
     if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
 
-    //left cell
+    //! left cell
     iPrint = 0;
     for (int iFace = 0; iFace < numberOfFaces; ++iFace)
     {
@@ -4203,7 +4880,7 @@ void OversetConfig::ShowBoundaryCells()
     }
     if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
 
-    //right cell
+    //! right cell
     iPrint = 0;
     for (int iFace = 0; iFace < numberOfFaces; ++iFace)
     {
@@ -4227,6 +4904,600 @@ void OversetConfig::ShowBoundaryCells()
     if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
 
     PHSPACE::CloseFile(file);
+}
+
+void OversetConfig::ShowDifferentLayersCell(int iLayer)
+{
+    string fileName = AddSymbolToFileName("./results/layerCells.dat", iLayer);
+
+    fstream file;
+
+    PHSPACE::OpenFile(file, fileName, ios_base::out);
+
+    int numberOfNodes = grid->GetNTotalNode();
+    int numberOfFaces = grid->GetNTotalFace();
+    int numberOfCells = grid->GetNTotalCell();
+
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
+
+    int *faceNodeNumberContainer = grid->GetNodeNumberOfEachFace();
+    int *faceNodeIndexContainer = grid->GetFace2Node();
+    int *leftCellIndexContainer = grid->GetLeftCellOfFace();
+    int *rightCellIndexContainer = grid->GetRightCellOfFace();
+
+    int numberOfNodesInZone = 0;
+    int numberOfFacesInZone = 0;
+    int numberOfCellsInZone = 0;
+
+    vector< int > keyNodes;
+    vector< int > keyFaces;
+    vector< int > nodeList;
+    vector< int > cellList;
+
+    keyNodes.resize(numberOfNodes);
+    keyFaces.resize(numberOfFaces);
+    nodeList.resize(numberOfNodes);
+    cellList.resize(numberOfCells);
+
+    SetField(keyNodes, 0, numberOfNodes);
+    SetField(keyFaces, 0, numberOfFaces);
+    SetField(nodeList, -1, numberOfNodes);
+    SetField(cellList, 0, numberOfCells);
+
+    int **cellNodeIndexContainer = grid->GetCell2NodeArray();
+    int *cellNodeNumberContainer = grid->GetNodeNumberOfEachCell();
+
+    int **cellFaceIndexContainer = grid->GetCell2Face();
+
+    int *cellFaceNumberContainer = grid->GetFaceNumberOfEachCell();
+
+    for (int iCell = 0; iCell < numberOfCells; ++iCell)
+    {
+        bool innerCellOrNot = false;
+
+        if (hasBeenSearched(iCell))
+        {
+            innerCellOrNot = true;
+        }
+        if (innerCellOrNot)
+        {
+            numberOfCellsInZone++;
+            cellList[iCell] = numberOfCellsInZone;
+
+            for (int iNodes = 0; iNodes < cellNodeNumberContainer[iCell]; ++iNodes)
+            {
+                keyNodes[cellNodeIndexContainer[iCell][iNodes]] = 1;
+            }
+
+            for (int iFaces = 0; iFaces < cellFaceNumberContainer[iCell]; ++iFaces)
+            {
+                keyFaces[cellFaceIndexContainer[iCell][iFaces]] = 1;
+            }
+        }
+    }
+
+    for (int iNode = 0; iNode < numberOfNodes; ++iNode)
+    {
+        if (keyNodes[iNode] == 1)
+        {
+            numberOfNodesInZone++;
+            nodeList[iNode] = numberOfNodesInZone;
+        }
+    }
+
+    for (int iFace = 0; iFace < numberOfFaces; ++iFace)
+    {
+        if (keyFaces[iFace] == 1)
+        {
+            numberOfFacesInZone++;
+        }
+    }
+
+    if (numberOfCellsInZone == 0)
+    {
+        return;
+    }
+
+    file << "title     = \"overset grid \"\n";
+    file << "variables = \"x\" \"y\" \"z\"\n";
+    file << "ZONE T=\" Cells' Layer "<< iLayer <<"\"\n";
+    if (PHSPACE::GetDim() == THREE_D)
+    {
+        file << "ZoneType = FEPolyhedron\n";
+    }
+    else
+    {
+        file << "ZoneType = FEPolygon\n";
+    }
+
+    int totalNumFaceNodes = 0;
+
+    for (int iFace = 0; iFace < numberOfFaces; ++iFace)
+    {
+        if (keyFaces[iFace] != 1) continue;
+        totalNumFaceNodes += faceNodeNumberContainer[iFace];
+    }
+
+    file << "Nodes    = " << numberOfNodesInZone << "\n";
+    file << "Faces    = " << numberOfFacesInZone << "\n";
+    file << "Elements = " << numberOfCellsInZone << "\n";
+    file << "TotalNumFaceNodes = " << totalNumFaceNodes << "\n";
+    file << "NumConnectedBoundaryFaces = 0\n";
+    file << "TotalNumBoundaryConnections = 0\n";
+
+    int numberOfWordsInEachLine = 5;
+    int iPrint = 0;
+
+    //! nodes coordinate x
+    for (int iNode = 0; iNode < numberOfNodes; ++iNode)
+    {
+        if (keyNodes[iNode] != 1) continue;
+        file << x[iNode] << " ";
+        iPrint++;
+        if (iPrint % numberOfWordsInEachLine == 0) file << "\n";
+    }
+    if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
+
+    //! nodes coordinate y
+    iPrint = 0;
+    for (int iNode = 0; iNode < numberOfNodes; ++iNode)
+    {
+        if (keyNodes[iNode] != 1) continue;
+        file << y[iNode] << " ";
+        iPrint++;
+        if (iPrint % numberOfWordsInEachLine == 0) file << "\n";
+    }
+    if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
+
+    //! nodes coordinate z
+    iPrint = 0;
+    for (int iNode = 0; iNode < numberOfNodes; ++iNode)
+    {
+        if (keyNodes[iNode] != 1) continue;
+        file << z[iNode] << " ";
+        iPrint++;
+        if (iPrint % numberOfWordsInEachLine == 0) file << "\n";
+    }
+    if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
+
+    //! face nodes number
+    iPrint = 0;
+    if (PHSPACE::GetDim() == THREE_D)
+    {
+        for (int iFace = 0; iFace < numberOfFaces; ++iFace)
+        {
+            if (keyFaces[iFace] != 1) continue;
+            file << faceNodeNumberContainer[iFace] << " ";
+            iPrint++;
+            if (iPrint % numberOfWordsInEachLine == 0) file << "\n";
+        }
+        if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
+    }
+
+    //! face nodes list
+    int count = 0;
+    iPrint = 0;
+    for (int iFace = 0; iFace < numberOfFaces; ++iFace)
+    {
+        int faceNodeNumber = faceNodeNumberContainer[iFace];
+
+        if (keyFaces[iFace] == 0)
+        {
+            count += faceNodeNumber;
+            continue;
+        }
+
+        for (int iNode = 0; iNode < faceNodeNumberContainer[iFace]; ++iNode)
+        {
+            int nodeIndex = nodeList[faceNodeIndexContainer[count++]];
+            file << nodeIndex << " ";
+            iPrint++;
+            if (iPrint % numberOfWordsInEachLine == 0) file << "\n";
+        }
+    }
+    if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
+
+    //! left cell
+    iPrint = 0;
+    for (int iFace = 0; iFace < numberOfFaces; ++iFace)
+    {
+        if (keyFaces[iFace] == 0) continue;
+
+        int cellIndex = cellList[leftCellIndexContainer[iFace]];
+        file << cellIndex << " ";
+        iPrint++;
+        if (iPrint % numberOfWordsInEachLine == 0) file << "\n";
+    }
+    if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
+
+    //! right cell
+    iPrint = 0;
+    for (int iFace = 0; iFace < numberOfFaces; ++iFace)
+    {
+        int cellIndex;
+        if (keyFaces[iFace] == 0) continue;
+        int rightCell = rightCellIndexContainer[iFace];
+
+        if (rightCell >= numberOfCells || rightCell < 0)
+        {
+            cellIndex = 0;
+        }
+        else
+        {
+            cellIndex = cellList[rightCellIndexContainer[iFace]];
+        }
+
+        file << cellIndex << " ";
+        iPrint++;
+        if (iPrint % numberOfWordsInEachLine == 0) file << "\n";
+    }
+    if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
+
+    PHSPACE::CloseFile(file);
+}
+
+void OversetConfig::ShowIntersectCells()
+{
+    string fileName = AddSymbolToFileName("./results/boundaryCells.dat", zoneIndex);
+
+    fstream file;
+
+    PHSPACE::OpenFile(file, fileName, ios_base::out);
+
+    int numberOfNodes = grid->GetNTotalNode();
+    int numberOfFaces = grid->GetNTotalFace();
+    int numberOfCells = grid->GetNTotalCell();
+
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
+
+    int *faceNodeNumberContainer = grid->GetNodeNumberOfEachFace();
+    int *faceNodeIndexContainer = grid->GetFace2Node();
+    int *leftCellIndexContainer = grid->GetLeftCellOfFace();
+    int *rightCellIndexContainer = grid->GetRightCellOfFace();
+
+    int numberOfNodesInZone = 0;
+    int numberOfFacesInZone = 0;
+    int numberOfCellsInZone = 0;
+
+    vector< int > keyNodes;
+    vector< int > keyFaces;
+    vector< int > nodeList;
+    vector< int > cellList;
+
+    keyNodes.resize(numberOfNodes);
+    keyFaces.resize(numberOfFaces);
+    nodeList.resize(numberOfNodes);
+    cellList.resize(numberOfCells);
+
+    SetField(keyNodes, 0, numberOfNodes);
+    SetField(keyFaces, 0, numberOfFaces);
+    SetField(nodeList, -1, numberOfNodes);
+    SetField(cellList, 0, numberOfCells);
+
+    int **cellNodeIndexContainer = grid->GetCell2NodeArray();
+    int *cellNodeNumberContainer = grid->GetNodeNumberOfEachCell();
+
+    int **cellFaceIndexContainer = grid->GetCell2Face();
+
+    int *cellFaceNumberContainer = grid->GetFaceNumberOfEachCell();
+
+    for (int iCell = 0; iCell < numberOfCells; ++iCell)
+    {
+        bool innerCellOrNot = false;
+        for (int iNode = 0; iNode < cellNodeNumberContainer[iCell]; ++iNode)
+        {
+            int nodeIndex = cellNodeIndexContainer[iCell][iNode];
+            if (keyActiveOfNodes[nodeIndex] == 0)
+            {
+                innerCellOrNot = true;
+                continue;
+            }
+        }
+        if (innerCellOrNot)
+        {
+            numberOfCellsInZone++;
+            cellList[iCell] = numberOfCellsInZone;
+
+            for (int iNodes = 0; iNodes < cellNodeNumberContainer[iCell]; ++iNodes)
+            {
+                keyNodes[cellNodeIndexContainer[iCell][iNodes]] = 1;
+            }
+
+            for (int iFaces = 0; iFaces < cellFaceNumberContainer[iCell]; ++iFaces)
+            {
+                keyFaces[cellFaceIndexContainer[iCell][iFaces]] = 1;
+            }
+        }
+    }
+
+    for (int iNode = 0; iNode < numberOfNodes; ++iNode)
+    {
+        if (keyNodes[iNode] == 1)
+        {
+            numberOfNodesInZone++;
+            nodeList[iNode] = numberOfNodesInZone;
+        }
+    }
+
+    for (int iFace = 0; iFace < numberOfFaces; ++iFace)
+    {
+        if (keyFaces[iFace] == 1)
+        {
+            numberOfFacesInZone++;
+        }
+    }
+
+    if (numberOfCellsInZone == 0)
+    {
+        return;
+    }
+
+    file << "title     = \"overset grid \"\n";
+    file << "variables = \"x\" \"y\" \"z\"\n";
+
+    file << "ZONE T=\"Boundary Cells\" \n";
+
+    if (PHSPACE::GetDim() == THREE_D)
+    {
+        file << "ZoneType = FEPolyhedron\n";
+    }
+    else
+    {
+        file << "ZoneType = FEPolygon\n";
+    }
+
+    int totalNumFaceNodes = 0;
+
+    for (int iFace = 0; iFace < numberOfFaces; ++iFace)
+    {
+        if (keyFaces[iFace] != 1) continue;
+        totalNumFaceNodes += faceNodeNumberContainer[iFace];
+    }
+
+    file << "Nodes    = " << numberOfNodesInZone << "\n";
+    file << "Faces    = " << numberOfFacesInZone << "\n";
+    file << "Elements = " << numberOfCellsInZone << "\n";
+    file << "TotalNumFaceNodes = " << totalNumFaceNodes << "\n";
+    file << "NumConnectedBoundaryFaces = 0\n";
+    file << "TotalNumBoundaryConnections = 0\n";
+
+    int numberOfWordsInEachLine = 5;
+    int iPrint = 0;
+
+    //! nodes coordinate x
+    for (int iNode = 0; iNode < numberOfNodes; ++iNode)
+    {
+        if (keyNodes[iNode] != 1) continue;
+        file << x[iNode] << " ";
+        iPrint++;
+        if (iPrint % numberOfWordsInEachLine == 0) file << "\n";
+    }
+    if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
+
+    //! nodes coordinate y
+    iPrint = 0;
+    for (int iNode = 0; iNode < numberOfNodes; ++iNode)
+    {
+        if (keyNodes[iNode] != 1) continue;
+        file << y[iNode] << " ";
+        iPrint++;
+        if (iPrint % numberOfWordsInEachLine == 0) file << "\n";
+    }
+    if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
+
+    //! nodes coordinate z
+    iPrint = 0;
+    for (int iNode = 0; iNode < numberOfNodes; ++iNode)
+    {
+        if (keyNodes[iNode] != 1) continue;
+        file << z[iNode] << " ";
+        iPrint++;
+        if (iPrint % numberOfWordsInEachLine == 0) file << "\n";
+    }
+    if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
+
+    //! face nodes number
+    iPrint = 0;
+    if (PHSPACE::GetDim() == THREE_D)
+    {
+        for (int iFace = 0; iFace < numberOfFaces; ++iFace)
+        {
+            if (keyFaces[iFace] != 1) continue;
+            file << faceNodeNumberContainer[iFace] << " ";
+            iPrint++;
+            if (iPrint % numberOfWordsInEachLine == 0) file << "\n";
+        }
+        if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
+    }
+
+    //! face nodes list
+    int count = 0;
+    iPrint = 0;
+    for (int iFace = 0; iFace < numberOfFaces; ++iFace)
+    {
+        int faceNodeNumber = faceNodeNumberContainer[iFace];
+
+        if (keyFaces[iFace] == 0)
+        {
+            count += faceNodeNumber;
+            continue;
+        }
+
+        for (int iNode = 0; iNode < faceNodeNumberContainer[iFace]; ++iNode)
+        {
+            int nodeIndex = nodeList[faceNodeIndexContainer[count++]];
+            file << nodeIndex << " ";
+            iPrint++;
+            if (iPrint % numberOfWordsInEachLine == 0) file << "\n";
+        }
+    }
+    if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
+
+    //! left cell
+    iPrint = 0;
+    for (int iFace = 0; iFace < numberOfFaces; ++iFace)
+    {
+        if (keyFaces[iFace] == 0) continue;
+
+        int cellIndex = cellList[leftCellIndexContainer[iFace]];
+        file << cellIndex << " ";
+        iPrint++;
+        if (iPrint % numberOfWordsInEachLine == 0) file << "\n";
+    }
+    if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
+
+    //! right cell
+    iPrint = 0;
+    for (int iFace = 0; iFace < numberOfFaces; ++iFace)
+    {
+        int cellIndex;
+        if (keyFaces[iFace] == 0) continue;
+        int rightCell = rightCellIndexContainer[iFace];
+
+        if (rightCell >= numberOfCells || rightCell < 0)
+        {
+            cellIndex = 0;
+        }
+        else
+        {
+            cellIndex = cellList[rightCellIndexContainer[iFace]];
+        }
+
+        file << cellIndex << " ";
+        iPrint++;
+        if (iPrint % numberOfWordsInEachLine == 0) file << "\n";
+    }
+    if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
+
+    PHSPACE::CloseFile(file);
+}
+
+void OversetConfig::ShowIntersectLines(fstream& flowFile)
+{
+    int nTotalNode = grid->GetNTotalNode();
+    int numberOfFaces = grid->GetNTotalFace();
+    int numberOfCells = grid->GetNTotalCell();
+    int numberOfBoundary = grid->GetNBoundFace();
+
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
+
+    RDouble *xfc = grid->GetFaceCenterX();
+    RDouble *yfc = grid->GetFaceCenterY();
+    RDouble *zfc = grid->GetFaceCenterZ();
+
+    UnstructBCSet **unstructBCSet = grid->GetBCRecord();
+
+    int **cellFaceIndexContainer = grid->GetCell2Face();
+    int *cellFaceNumberContainer = grid->GetFaceNumberOfEachCell();
+    int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
+    int **faceNodeIndex = grid->GetFace2NodeArray();
+
+    vector<vector<int> > face2nodelist(numberOfBoundary);
+    vector<int> linkmap;
+    pair<int, string> iter;
+    for (int jFace = 0; jFace < numberOfBoundary; ++jFace)
+    {
+        int bcType = unstructBCSet[jFace]->GetKey();
+        string bcName = unstructBCSet[jFace]->GetBCName();
+        if (bcType == PHENGLEI::SOLID_SURFACE)
+        {
+            (iter).first = bcType;
+            (iter).second = bcName;
+        }
+    }
+
+    GetFace2NodeListForLine(grid, iter, linkmap, face2nodelist, intersectLinesWithWall);
+    int NumPts = static_cast<int>(linkmap.size());
+    int numElements = static_cast<int>(face2nodelist.size());
+
+    RDouble *xBoundary = new RDouble [NumPts];
+    RDouble *yBoundary = new RDouble [NumPts];
+    RDouble *zBoundary = new RDouble [NumPts];
+    RDouble *valueBoundary = new RDouble [NumPts];
+    for (int iNode = 0; iNode < NumPts; ++ iNode)
+    {
+        int nodeIndex = linkmap[iNode];
+
+        if (nodeIndex < nTotalNode)
+        {
+            xBoundary[iNode] = x[nodeIndex];
+            yBoundary[iNode] = y[nodeIndex];
+            zBoundary[iNode] = z[nodeIndex];
+            valueBoundary[iNode] = keyActiveOfNodes[nodeIndex];
+        }
+    }
+
+    int *cell2node = new int [numElements * 4];
+    int *node_number_of_each_cell = new int [numElements];
+
+    int count = 0;
+    for (std::size_t i = 0; i < face2nodelist.size(); ++ i)
+    {
+        node_number_of_each_cell[i] = 4;
+        uint_t np = face2nodelist[i].size();
+        int index0 = face2nodelist[i][0];
+        for (int ip = 0; ip < np; ++ ip)
+        {
+            cell2node[count] = face2nodelist[i][ip];
+            count ++;
+        }
+
+        for (uint_t ip = np; ip < 4; ++ ip)
+        {
+            cell2node[count] = index0;
+            count ++;
+        }
+    }
+    if (NumPts == 0)
+    {
+        DelPointer(xBoundary);
+        DelPointer(yBoundary);
+        DelPointer(zBoundary);
+        DelPointer(valueBoundary);
+        DelPointer(cell2node);
+        DelPointer(node_number_of_each_cell);
+
+        return;
+    }
+    flowFile << "N = " << NumPts << "\n";
+    flowFile << "E = " << numElements << "\n";
+    flowFile << "f = FEPOINT" << "\n";
+    flowFile << "ET = quadrilateral" << "\n";
+
+    int wordWidth = 20;
+    for (int iNode = 0; iNode < NumPts; ++ iNode)
+    {
+        flowFile << setw(wordWidth) << xBoundary[iNode]
+            << setw(wordWidth) << yBoundary[iNode]
+            << setw(wordWidth) << zBoundary[iNode]
+            << setw(wordWidth) << valueBoundary[iNode];
+        flowFile << "\n";
+    }
+
+    count = 0;
+    for (int iCell = 0; iCell < numElements; ++ iCell)
+    {
+        for (int iNode = 0; iNode < 4; ++ iNode)
+        {
+            flowFile << cell2node[count] + 1 << "  ";
+            count ++;
+        }
+        flowFile << "\n";
+    }
+    flowFile << endl;
+
+    DelPointer(xBoundary);
+    DelPointer(yBoundary);
+    DelPointer(zBoundary);
+    DelPointer(valueBoundary);
+    DelPointer(cell2node);
+    DelPointer(node_number_of_each_cell);
 }
 
 void OversetConfig::OutPutOversetVisualization(const string &name)
@@ -4345,12 +5616,12 @@ void OversetConfig::OutPutOversetVisualizationPoint(fstream &file)
 
 void OversetConfig::OutPutOversetVisualizationTail(fstream &file)
 {
-    int    numberOfFaces = grid->GetNTotalFace();
-    int    numberOfCells = grid->GetNTotalCell();
+    int numberOfFaces = grid->GetNTotalFace();
+    int numberOfCells = grid->GetNTotalCell();
 
     int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
     int **faceNodeIndex = grid->GetFace2NodeArray();
-    int *leftCellIndex = grid->GetLeftCellOfFace();
+    int *leftCellIndex  = grid->GetLeftCellOfFace();
     int *rightCellIndex = grid->GetRightCellOfFace();
 
     if (THREE_D == geometricDimension)
@@ -4415,7 +5686,6 @@ void OversetConfig::ShowGrid()
     PrintGridByOverSetConditionCell(file, ACTIVE);
     PrintGridByOverSetConditionCell(file, INACTIVE);
     PrintGridByOverSetConditionCell(file, INTERPOLATION);
-    //PrintGridByOverSetConditionCell(file, DONORCELL);
 
     PHSPACE::CloseFile(file);
 }
@@ -4551,7 +5821,7 @@ void OversetConfig::PrintGridByOverSetConditionCell(fstream &file, int key)
     int numberOfWordsInEachLine = 5;
     int iPrint = 0;
 
-    //nodes coordinate x
+    //! nodes coordinate x
     for (int iNode = 0; iNode < numberOfNodes; ++iNode)
     {
         if (keyNodes[iNode] != 1) continue;
@@ -4561,7 +5831,7 @@ void OversetConfig::PrintGridByOverSetConditionCell(fstream &file, int key)
     }
     if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
 
-    //nodes coordinate y
+    //! nodes coordinate y
     iPrint = 0;
     for (int iNode = 0; iNode < numberOfNodes; ++iNode)
     {
@@ -4572,7 +5842,7 @@ void OversetConfig::PrintGridByOverSetConditionCell(fstream &file, int key)
     }
     if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
 
-    //nodes coordinate z
+    //! nodes coordinate z
     iPrint = 0;
     for (int iNode = 0; iNode < numberOfNodes; ++iNode)
     {
@@ -4583,7 +5853,7 @@ void OversetConfig::PrintGridByOverSetConditionCell(fstream &file, int key)
     }
     if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
 
-    //face nodes number
+    //! face nodes number
     iPrint = 0;
     if (PHSPACE::GetDim() == THREE_D)
     {
@@ -4597,7 +5867,7 @@ void OversetConfig::PrintGridByOverSetConditionCell(fstream &file, int key)
         if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
     }
 
-    //face nodes list
+    //! face nodes list
     int count = 0;
     iPrint = 0;
     for (int iFace = 0; iFace < numberOfFaces; ++iFace)
@@ -4620,7 +5890,7 @@ void OversetConfig::PrintGridByOverSetConditionCell(fstream &file, int key)
     }
     if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
 
-    //left cell
+    //! left cell
     iPrint = 0;
     for (int iFace = 0; iFace < numberOfFaces; ++iFace)
     {
@@ -4633,7 +5903,7 @@ void OversetConfig::PrintGridByOverSetConditionCell(fstream &file, int key)
     }
     if (iPrint % numberOfWordsInEachLine != 0) file << "\n";
 
-    //right cell
+    //! right cell
     iPrint = 0;
     for (int iFace = 0; iFace < numberOfFaces; ++iFace)
     {
@@ -4783,14 +6053,24 @@ RDouble GetToleranceForOversetBox()
     return GlobalDataBase::GetDoubleParaFromDB("toleranceForOversetBox");
 }
 
-int GetTwoOrderInterpolationOrNot()
+int GetKeyEnlargeOfInterBoundary()
 {
-    return GlobalDataBase::GetIntParaFromDB("twoOrderInterpolationOrNot");
+    return GlobalDataBase::GetIntParaFromDB("keyEnlargeOfInterBoundary");
+}
+
+int GetNCommunicateCellIBlank()
+{
+    return GlobalDataBase::GetIntParaFromDB("nCommunicateCellIBlank");
 }
 
 int GetKeyEnlargeOfNodes()
 {
-    return GlobalDataBase::GetIntParaFromDB("keyEnlargeOfActiveNodes");
+    return GlobalDataBase::GetIntParaFromDB("keyEnlargeOfBufferNodes");
+}
+
+int GetKeyEnlargeOfSearchNodes()
+{
+    return GlobalDataBase::GetIntParaFromDB("keyEnlargeOfSearchNodes");
 }
 
 int GetReadInAuxiliaryInnerGrid()

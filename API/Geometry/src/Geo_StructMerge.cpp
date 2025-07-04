@@ -802,6 +802,7 @@ OriginalStructGridMerge::OriginalStructGridMerge()
     nIFace            = 0;
     interfaceInfo     = 0;
     nTotalblock       = 0;
+    nDim              = 0;
 }
 
 OriginalStructGridMerge::~OriginalStructGridMerge()
@@ -809,31 +810,35 @@ OriginalStructGridMerge::~OriginalStructGridMerge()
     nTotalZone = 0;
     if (mergegrid)
     {
-        delete [] mergegrid;     mergegrid    = nullptr;
-        delete [] ni;            ni           = nullptr;
-        delete [] nj;            nj           = nullptr;
-        delete [] nk;            nk           = nullptr;
-        delete [] nTotalNode;    nTotalNode   = nullptr;
-        delete [] nTotalFace;    nTotalFace   = nullptr;
-        delete [] nTotalCell;    nTotalCell   = nullptr;
+        DelPointer2(mergegrid);
+        DelPointer(ni);
+        DelPointer(nj);
+        DelPointer(nk);
+        DelPointer(nTotalNode);
+        DelPointer(nTotalFace);
+        DelPointer(nTotalCell);
+
         for (int iBlock = 0; iBlock < nTotalblock; ++ iBlock)
         {
-            delete [] coordinates[iBlock];    coordinates[iBlock] = nullptr;
+            DelPointer2(coordinates[iBlock]);
         }
-        delete [] coordinates;          coordinates       = nullptr;
-        delete [] nBCRegion;            nBCRegion         = nullptr;
-        delete [] compositeBCRegion;    compositeBCRegion = nullptr;
-        delete [] nIFace;               nIFace            = nullptr;
-        delete [] interfaceInfo;        interfaceInfo     = nullptr;
+
+        DelPointer3(coordinates);
+        DelPointer(nBCRegion);
+        DelPointer2(compositeBCRegion);
+        DelPointer(nIFace);
+        DelPointer2(interfaceInfo);
     }
     nTotalblock = 0;
+    nDim        = 0;
 }
 
-void OriginalStructGridMerge::Initial(vector < vector < StructGrid* > > originalgridofBlock, int nTotalblock, int nTotalZone)
+void OriginalStructGridMerge::Initial(vector < vector < Grid* > > originalgridofBlockIn, int nTotalblock, int nTotalZone, int nDim)
 {
-    this->originalgridofBlock = originalgridofBlock;
     this->nTotalblock         = nTotalblock;
     this->nTotalZone          = nTotalZone;
+    originalgridofBlock.resize(nTotalblock);
+    this->nDim = nDim;
 
     vector < vector < int > > oriEndIndexIDir;
     oriEndIndexIDir.resize(nTotalblock);
@@ -916,9 +921,14 @@ void OriginalStructGridMerge::Initial(vector < vector < StructGrid* > > original
 
     for (int iBlock = 0; iBlock < nTotalblock; ++ iBlock)
     {
-        if(!originalgridofBlock[iBlock].size())
+        if(!originalgridofBlockIn[iBlock].size())
         {
             continue;
+        }
+
+        for (int iZone = 0; iZone < originalgridofBlockIn[iBlock].size(); ++ iZone)
+        {
+            originalgridofBlock[iBlock].push_back(StructGridCast(originalgridofBlockIn[iBlock][iZone]));
         }
 
         //! Calculaete ni¡¢nj¡¢nk of every block.
@@ -991,9 +1001,9 @@ void OriginalStructGridMerge::Initial(vector < vector < StructGrid* > > original
             coordinates[iBlock][2][iNode] = mergegridZ[iNode];
         }
 
-        delete [] mergegridX;    mergegridX = nullptr;
-        delete [] mergegridY;    mergegridY = nullptr;
-        delete [] mergegridZ;    mergegridZ = nullptr;
+        DelPointer(mergegridX);
+        DelPointer(mergegridY);
+        DelPointer(mergegridZ);
 
         nBCRegion[iBlock]         = 0;
         nOriginalBCRegion[iBlock] = 0;
@@ -1020,8 +1030,11 @@ void OriginalStructGridMerge::Initial(vector < vector < StructGrid* > > original
         SelectDivideMerge(0, ni[iBlock], dumpOriginalBCRegion[iBlock], nOriginalBCRegion[iBlock], bcRegionMergedIDirectionEnd[iBlock], nBCTypeIDirectionEnd[iBlock], numberofEveryTypeIEnd[iBlock]);
         SelectDivideMerge(1, 1, dumpOriginalBCRegion[iBlock], nOriginalBCRegion[iBlock], bcRegionMergedJDirectionStart[iBlock], nBCTypeJDirectionStart[iBlock], numberofEveryTypeJStart[iBlock]);
         SelectDivideMerge(1, nj[iBlock], dumpOriginalBCRegion[iBlock], nOriginalBCRegion[iBlock], bcRegionMergedJDirectionEnd[iBlock], nBCTypeJDirectionEnd[iBlock], numberofEveryTypeJEnd[iBlock]);
-        SelectDivideMerge(2, 1, dumpOriginalBCRegion[iBlock], nOriginalBCRegion[iBlock], bcRegionMergedKDirectionStart[iBlock], nBCTypeKDirectionStart[iBlock], numberofEveryTypeKStart[iBlock]);
-        SelectDivideMerge(2, nk[iBlock], dumpOriginalBCRegion[iBlock], nOriginalBCRegion[iBlock], bcRegionMergedKDirectionEnd[iBlock], nBCTypeKDirectionEnd[iBlock], numberofEveryTypeKEnd[iBlock]);
+        if (nDim != TWO_D)
+        {
+            SelectDivideMerge(2, 1, dumpOriginalBCRegion[iBlock], nOriginalBCRegion[iBlock], bcRegionMergedKDirectionStart[iBlock], nBCTypeKDirectionStart[iBlock], numberofEveryTypeKStart[iBlock]);
+            SelectDivideMerge(2, nk[iBlock], dumpOriginalBCRegion[iBlock], nOriginalBCRegion[iBlock], bcRegionMergedKDirectionEnd[iBlock], nBCTypeKDirectionEnd[iBlock], numberofEveryTypeKEnd[iBlock]);
+        }
 
         //! Calculate the number of total of boundaries of every block.
         nBCRegion[iBlock] = 0;
@@ -1041,13 +1054,16 @@ void OriginalStructGridMerge::Initial(vector < vector < StructGrid* > > original
         {
             nBCRegion[iBlock] = nBCRegion[iBlock] + numberofEveryTypeJEnd[iBlock][iBctype];
         }
-        for (int iBctype = 0; iBctype < nBCTypeKDirectionStart[iBlock]; ++ iBctype)
+        if (nDim != TWO_D)
         {
-            nBCRegion[iBlock] = nBCRegion[iBlock] + numberofEveryTypeKStart[iBlock][iBctype];
-        }
-        for (int iBctype = 0; iBctype < nBCTypeKDirectionEnd[iBlock]; ++ iBctype)
-        {
-            nBCRegion[iBlock] = nBCRegion[iBlock] + numberofEveryTypeKEnd[iBlock][iBctype];
+            for (int iBctype = 0; iBctype < nBCTypeKDirectionStart[iBlock]; ++iBctype)
+            {
+                nBCRegion[iBlock] = nBCRegion[iBlock] + numberofEveryTypeKStart[iBlock][iBctype];
+            }
+            for (int iBctype = 0; iBctype < nBCTypeKDirectionEnd[iBlock]; ++iBctype)
+            {
+                nBCRegion[iBlock] = nBCRegion[iBlock] + numberofEveryTypeKEnd[iBlock][iBctype];
+            }
         }
 
         //! Construct of StructBCset
@@ -1086,31 +1102,34 @@ void OriginalStructGridMerge::Initial(vector < vector < StructGrid* > > original
                 ++ iBCCount;
             }
         }
-        for (int iBCType = 0; iBCType < nBCTypeKDirectionStart[iBlock]; ++ iBCType)
+        if (nDim != TWO_D)
         {
-            for (int iBC = 0; iBC < numberofEveryTypeKStart[iBlock][iBCType]; ++ iBC)
+            for (int iBCType = 0; iBCType < nBCTypeKDirectionStart[iBlock]; ++iBCType)
             {
-                compositeBCRegion[iBlock]->SetBCRegion(iBCCount, bcRegionMergedKDirectionStart[iBlock][iBCType][iBC]);
-                ++ iBCCount;
+                for (int iBC = 0; iBC < numberofEveryTypeKStart[iBlock][iBCType]; ++iBC)
+                {
+                    compositeBCRegion[iBlock]->SetBCRegion(iBCCount, bcRegionMergedKDirectionStart[iBlock][iBCType][iBC]);
+                    ++iBCCount;
+                }
             }
-        }
-        for (int iBCType = 0; iBCType < nBCTypeKDirectionEnd[iBlock]; ++ iBCType)
-        {
-            for (int iBC = 0; iBC < numberofEveryTypeKEnd[iBlock][iBCType]; ++ iBC)
+            for (int iBCType = 0; iBCType < nBCTypeKDirectionEnd[iBlock]; ++iBCType)
             {
-                compositeBCRegion[iBlock]->SetBCRegion(iBCCount, bcRegionMergedKDirectionEnd[iBlock][iBCType][iBC]);
-                ++ iBCCount;
+                for (int iBC = 0; iBC < numberofEveryTypeKEnd[iBlock][iBCType]; ++iBC)
+                {
+                    compositeBCRegion[iBlock]->SetBCRegion(iBCCount, bcRegionMergedKDirectionEnd[iBlock][iBCType][iBC]);
+                    ++iBCCount;
+                }
             }
         }
     }
 
-    delete [] nOriginalBCRegion;         nOriginalBCRegion      = nullptr;
-    delete [] nBCTypeIDirectionStart;    nBCTypeIDirectionStart = nullptr;
-    delete [] nBCTypeIDirectionEnd;      nBCTypeIDirectionEnd   = nullptr;
-    delete [] nBCTypeJDirectionStart;    nBCTypeJDirectionStart = nullptr;
-    delete [] nBCTypeJDirectionEnd;      nBCTypeJDirectionEnd   = nullptr;
-    delete [] nBCTypeKDirectionStart;    nBCTypeKDirectionStart = nullptr;
-    delete [] nBCTypeKDirectionEnd;      nBCTypeKDirectionEnd   = nullptr;
+    DelPointer(nOriginalBCRegion);
+    DelPointer(nBCTypeIDirectionStart);
+    DelPointer(nBCTypeIDirectionEnd);
+    DelPointer(nBCTypeJDirectionStart);
+    DelPointer(nBCTypeJDirectionEnd);
+    DelPointer(nBCTypeKDirectionStart);
+    DelPointer(nBCTypeKDirectionEnd);
 }
 
 void OriginalStructGridMerge::Run()
@@ -1124,7 +1143,7 @@ void OriginalStructGridMerge::Run()
         }
 
         GridID *index = new GridID(iBlock);
-        mergegrid[iBlock] = StructGridCast(CreateGridGeneral(STRUCTGRID, index, 0, 3));
+        mergegrid[iBlock] = StructGridCast(CreateGridGeneral(STRUCTGRID, index, 0, nDim));
         mergegrid[iBlock]->SetNI(ni[iBlock]);
         mergegrid[iBlock]->SetNJ(nj[iBlock]);
         mergegrid[iBlock]->SetNK(nk[iBlock]);

@@ -1552,14 +1552,14 @@ void SampleLocationSearch::CompressProbesData(DataContainer *cdata)
 void SampleLocationSearch::DecompressProbesData(DataContainer *cdata)
 {
     cdata->MoveToBegin();
-
-    for (int iProbes = 0; iProbes < probeDataList.size(); ++iProbes)
-    {
-        if (probeDataList[iProbes])
-        {
-            delete probeDataList[iProbes];
-        }
-    }
+    // Memory cleaning may cause communication problems and the cause has not been found yet.
+    //for (int iProbes = 0; iProbes < probeDataList.size(); ++iProbes)
+    //{
+    //    if (probeDataList[iProbes])
+    //    {
+    //        delete probeDataList[iProbes];
+    //    }
+    //}
     probeDataList.resize(0);
 
     int nTotalProbesRecv;

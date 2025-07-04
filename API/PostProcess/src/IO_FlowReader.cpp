@@ -45,11 +45,11 @@ void IO_FlowReader::Init()
     this->nEquation         = nNSEquation + nChemical + nTemperatureModel - 1;
 
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
-    if (viscousType == 3)
+    if (viscousType == ONE_EQU)
     {
         this->nTurbulenceEquation = 1;
     }
-    else if (viscousType == 4)
+    else if (viscousType == TWO_EQU)
     {
         this->nTurbulenceEquation = 2;
         int transitionType = GlobalDataBase::GetIntParaFromDB("transitionType");

@@ -2821,6 +2821,38 @@ void NSSolverStruct::ReadRestartH5(ActionKey *actkey)
         ReadData(grploc, &temperatures(iCellStart, jCellStart, kCellStart, mst), "t");
     }
     //}
+    using namespace IDX;
+    int isRestartChangeInflow = parameters->GetIsRestartChangeInflow();
+    if (isRestartChangeInflow)
+    {
+        RDouble AoA = parameters->GetAoA();
+        RDouble attack = AoA * PI / 180.0;
+        RDouble angleSlide = parameters->GetAngleOfSlide();
+        RDouble sideslip = angleSlide * PI / 180.0;
+        RDouble coefficientofStateEquation = gas->GetCoefficientOfStateEquation();
+
+        for (int k = kCellStart; k <= kCellEnd; ++k)
+        {
+            for (int j = jCellStart; j <= jCellEnd; ++j)
+            {
+                for (int i = iCellStart; i <= iCellEnd; ++i)
+                {
+                    RDouble &density = primitiveVariables(i, j, k, IR);
+                    RDouble &velocityX = primitiveVariables(i, j, k, IU);
+                    RDouble &velocityY = primitiveVariables(i, j, k, IV);
+                    RDouble &velocityZ = primitiveVariables(i, j, k, IW);
+                    RDouble temperature = temperatures(i, j, k, ITT);
+
+                    RDouble velocity = sqrt(velocityX * velocityX + velocityY * velocityY + velocityZ * velocityZ);
+
+                    primitiveVariables(i, j, k, IU) = velocity * cos(attack) * cos(sideslip);
+                    primitiveVariables(i, j, k, IV) = velocity * sin(attack) * cos(sideslip);
+                    primitiveVariables(i, j, k, IW) = velocity * sin(sideslip);
+                    primitiveVariables(i, j, k, IP) = coefficientofStateEquation * density * temperature;
+                }
+            }
+        }
+    }
     if (nWallBC > 0)    //! The wall boundary condition exists.
     {
         //! Write the temperature on wall.
@@ -10588,6 +10620,7 @@ void NSSolverStruct::MassFlowInletBC(Grid *gridIn, StructBC *structBC)
                     q(it, jt, kt, IR) = q(is, js, ks, IR);
                     RDouble Vnb = massFlow / (refDimensionalDensity * refDimensionalSonicSpeed * refMachNumber) / q(is, js, ks, IR);  //ע�⣺�˴�massFlowΪ��λ�������
 
+
                     q(it, jt, kt, IU) = Vnb * direction_inlet[0];
                     q(it, jt, kt, IV) = Vnb * direction_inlet[1];
                     q(it, jt, kt, IW) = Vnb * direction_inlet[2];
@@ -11112,10 +11145,6 @@ void NSSolverStruct::ComputePreconditionCoefficient(Grid *gridIn)
     RDouble3D &gamma = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
     RDouble3D &preconCoefficient = *reinterpret_cast< RDouble3D *> (grid->GetDataPtr("preconCoefficient"));
 
-    RDouble3D &dt = *reinterpret_cast< RDouble3D * > (grid->GetDataPtr("dt"));
-    RDouble3D &timeCoefficient = *reinterpret_cast< RDouble3D * > (grid->GetDataPtr("timeCoefficient"));
-    RDouble3D &timeCoefficientInverse = *reinterpret_cast< RDouble3D * > (grid->GetDataPtr("timeCoefficientInverse"));
-
     Param_NSSolverStruct *parameters = GetControlParameters();
     RDouble refMachNumber = parameters->GetRefMachNumber();
     RDouble kPreconCoeff = parameters->GetPreconCoefficient();
@@ -11146,17 +11175,9 @@ void NSSolverStruct::ComputePreconditionCoefficient(Grid *gridIn)
                 RDouble v2 = um * um + vm * vm + wm * wm;
                 RDouble mach2 = v2 / c2;
                 RDouble machPrec2 = MIN(MAX(mach2, kPreconCoeff * machinf2),1.0);
-                if (!isUnsteady)
-                {
+
                     preconCoefficient(i, j, k) = machPrec2;
                 }
-                else
-                {
-                    timeCoefficient(i, j, k) = 1.0 + 2.0 / 3.0 * dt(i, j, k) / physicalTimeStep;
-                    timeCoefficientInverse(i, j, k) = 1.0 / timeCoefficient(i, j, k);
-                    preconCoefficient(i, j, k) = machPrec2 / (timeCoefficientInverse(i, j, k) + (1.0 - timeCoefficientInverse(i, j, k)) * machPrec2);
-                }
-            }
         }
     }
 
@@ -11171,6 +11192,12 @@ void NSSolverStruct::ComputePreconditionCoefficientUnsteady(Grid *gridIn)
     int nk = grid->GetNK();
 
     RDouble3D &vol = *(grid->GetCellVolume());
+    RDouble3D &cellVelocityX = *(grid->GetCellVelocityX());
+    RDouble3D &cellVelocityY = *(grid->GetCellVelocityY());
+    RDouble3D &cellVelocityZ = *(grid->GetCellVelocityZ());
+
+    RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble3D &gamma = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
 
     RDouble3D &dt = *reinterpret_cast< RDouble3D * > (grid->GetDataPtr("dt"));
     RDouble3D &timeCoefficient = *reinterpret_cast< RDouble3D * > (grid->GetDataPtr("timeCoefficient"));
@@ -11178,11 +11205,23 @@ void NSSolverStruct::ComputePreconditionCoefficientUnsteady(Grid *gridIn)
     RDouble3D &timeCoefficientInverse = *reinterpret_cast< RDouble3D * > (grid->GetDataPtr("timeCoefficientInverse"));
 
     Param_NSSolverStruct *parameters = GetControlParameters();
-    RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
-    int ifLocalTimeStep = parameters->GetIfLocalTimeStep();
+    RDouble refMachNumber = parameters->GetRefMachNumber();
+    RDouble kPreconCoeff = parameters->GetPreconCoefficient();
+    RDouble machinf2Pre = kPreconCoeff * refMachNumber * refMachNumber;
 
-    SpectrumRadius(grid);
-    TimeStep(grid);
+    RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
+    RDouble timeAccuracyLowPre = 0.5;
+    RDouble machUsteady2 = GlobalDataBase::GetDoubleParaFromDB("preconCoeffConst");
+
+    RDouble maxTimeCoeff = 0.1667;
+    if (GlobalDataBase::IsExist("maxTimeCoeff", PHINT, 1))
+    {
+        GlobalDataBase::GetData("maxTimeCoeff", &maxTimeCoeff, PHINT, 1);
+    }
+    else
+    {
+        GlobalDataBase::UpdateData("maxTimeCoeff", &maxTimeCoeff, PHINT, 1);
+    }
 
     int iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd;
     grid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd);
@@ -11195,22 +11234,45 @@ void NSSolverStruct::ComputePreconditionCoefficientUnsteady(Grid *gridIn)
         {
             for (int i = iCellStart; i <= iCellEnd; ++ i)
             {
-                RDouble dtemp = dt(i, j, k);
-                if (ifLocalTimeStep != 0)
+                RDouble rm = q(i, j, k, IR);
+                RDouble um = q(i, j, k, IU);
+                RDouble vm = q(i, j, k, IV);
+                RDouble wm = q(i, j, k, IW);
+                RDouble pm = q(i, j, k, IP);
+                RDouble gama = gamma(i, j, k);
+
+                RDouble ucc = cellVelocityX(i, j, k);
+                RDouble vcc = cellVelocityY(i, j, k);
+                RDouble wcc = cellVelocityZ(i, j, k);
+
+                RDouble c2 = gama * pm / rm;
+                RDouble v2 = (um - ucc) * (um - ucc) + (vm - vcc) * (vm - vcc) + (wm - wcc) * (wm - wcc);
+                RDouble mach2 = v2 / c2;
+
+                RDouble machPrec2 = MIN(MAX(MAX(mach2, machUsteady2), machinf2Pre), 1.0);
+                preconCoefficient(i, j, k) = machPrec2;
+
+                RDouble dtemp = dt(i, j, k) * vol(i, j, k);
+                RDouble ratioDt = dtemp / physicalTimeStep;
+
+                if (ratioDt > maxTimeCoeff)
                 {
-                    dtemp = dt(i, j, k) * vol(i, j, k);
+                    RDouble dt_max_lim = maxTimeCoeff * physicalTimeStep;
+                    dtemp = MIN(dtemp, dt_max_lim);
+                    dt(i, j, k) = dtemp / (vol(i, j, k) + SMALL);
                 }
-                timeCoefficient(i, j, k) = 1.0 + 2.0 / 3.0 * dtemp / physicalTimeStep;
-                timeCoefficientInverse(i, j, k) = 1.0 / timeCoefficient(i, j, k);
+
+                timeCoefficient(i, j, k) = (1.0 + timeAccuracyLowPre) * dtemp / physicalTimeStep;
+                timeCoefficientInverse(i, j, k) = 1.0 / (1.0 + timeCoefficient(i, j, k));
                 preconCoefficient(i, j, k) = preconCoefficient(i, j, k) / (timeCoefficientInverse(i, j, k) + (1.0 - timeCoefficientInverse(i, j, k)) * preconCoefficient(i, j, k));
 
             }
         }
     }
 
-    GhostCell3D(timeCoefficient, ni, nj, nk);
-    GhostCell3D(preconCoefficient, ni, nj, nk);
-    GhostCell3D(timeCoefficientInverse, ni, nj, nk);
+    grid->GhostCell3DExceptInterface(timeCoefficient);
+    grid->GhostCell3DExceptInterface(preconCoefficient);
+    grid->GhostCell3DExceptInterface(timeCoefficientInverse);
 }
 
 void NSSolverStruct::ComputeMinTimeStep(Grid *gridIn, RDouble &minDt, RDouble &maxDt)
@@ -11449,6 +11511,7 @@ void NSSolverStruct::SpectrumRadiusInviscid(Grid *gridIn)
     RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("rtem"));
 
     Param_NSSolverStruct *parameters = GetControlParameters();
+    int isUnsteady = parameters->GetIsUnsteady();
     int ifLowSpeedPrecon = parameters->GetIfLowSpeedPrecon();
 
     RDouble3D *timeCoefficientInverse = NULL;
@@ -11456,8 +11519,11 @@ void NSSolverStruct::SpectrumRadiusInviscid(Grid *gridIn)
 
     if (ifLowSpeedPrecon != 0)
     {
-        timeCoefficientInverse = reinterpret_cast< RDouble3D *> (grid->GetDataPtr("timeCoefficientInverse"));
         preconCoefficient = reinterpret_cast< RDouble3D *> (grid->GetDataPtr("preconCoefficient"));
+        if (isUnsteady)
+        {
+            timeCoefficientInverse = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("timeCoefficientInverse"));
+        }
     }
 
     invSpectralRadius = 0.0;
@@ -11498,10 +11564,16 @@ void NSSolverStruct::SpectrumRadiusInviscid(Grid *gridIn)
                     if(ifLowSpeedPrecon != 0)
                     {
                         RDouble c2 = gama(i, j, k) * pm / rm;
-                        RDouble timeCoeff = (*timeCoefficientInverse)(i, j, k);
                         RDouble preconCoeff = (*preconCoefficient)(i, j, k);
-                        vn = half * timeCoeff * vn * (1.0 + preconCoeff);
-                        cm = half * timeCoeff * sqrt(((1.0 - preconCoeff) * vn) * ((1.0 - preconCoeff) * vn) + 4.0 * preconCoeff * c2);
+                        cm = half * sqrt(((1.0 - preconCoeff) * vn) * ((1.0 - preconCoeff) * vn) + 4.0 * preconCoeff * c2);
+                        vn = half * vn * (1.0 + preconCoeff);
+
+                        if (isUnsteady)
+                        {
+                            RDouble timeCoeff = (*timeCoefficientInverse)(i, j, k);
+                            cm *= timeCoeff;
+                            vn *= timeCoeff;
+                        }
                     }
 
                     invSpectralRadius(i, j, k, iSurface - 1) = ABS(vn) + cm * ns;
@@ -17016,7 +17088,7 @@ void NSSolverStruct::ZeroResidualOfSpecialCells(Grid *gridIn)    //! Added by Gu
         {
             for (int i = iCellStart; i <= iCellEnd; ++ i)
             {
-                if (iBlank[cellLabel] != GENERIC_COLOR)
+                if (iBlank[cellLabel] != ACTIVE)
                 {
                     for (int iEquation = 0; iEquation < nEquation; ++ iEquation)
                     {
@@ -17950,22 +18022,27 @@ bool NSSolverStruct::GetInviscidFaceValue(Grid *gridIn, FaceProxy *faceProxy, St
     RDouble leftTemperature[3], rightTemperature[3];
 
     int ifLowSpeedPrecon = parameters->GetIfLowSpeedPrecon();
+    int isUnsteady = parameters->GetIsUnsteady();
+
     RDouble3D *timeCoefficientInverse = nullptr;
     RDouble3D *preconCoefficient = nullptr;
     RDouble *timeCoeffL = nullptr;
     RDouble *timeCoeffR = nullptr;
     RDouble *preconCoeffL = nullptr;
     RDouble *preconCoeffR = nullptr;
-    if (ifLowSpeedPrecon != 0)
+
+    if (ifLowSpeedPrecon)
     {
-        timeCoefficientInverse = reinterpret_cast< RDouble3D *> (grid->GetDataPtr("timeCoefficientInverse"));
-        preconCoefficient = reinterpret_cast< RDouble3D *> (grid->GetDataPtr("preconCoefficient"));
-        timeCoeffL = faceProxy->GetTimeCoefficientL();
-        timeCoeffR = faceProxy->GetTimeCoefficientR();
+        preconCoefficient = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("preconCoefficient"));
+        if (isUnsteady)
+        {
+            timeCoefficientInverse = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("timeCoefficientInverse"));
+            timeCoeffL = faceProxy->GetTimeCoefficientL();
+            timeCoeffR = faceProxy->GetTimeCoefficientR();
+        }
         preconCoeffL = faceProxy->GetPreconCoefficientL();
         preconCoeffR = faceProxy->GetPreconCoefficientR();
     }
-
     bool flag = false;
 
     int i = structIter->i0;
@@ -18010,8 +18087,11 @@ bool NSSolverStruct::GetInviscidFaceValue(Grid *gridIn, FaceProxy *faceProxy, St
 
         if (ifLowSpeedPrecon != 0)
         {
-            timeCoeffL[ix] = (*timeCoefficientInverse)(i, j, k);
-            timeCoeffR[ix] = (*timeCoefficientInverse)(il, jl, kl);
+            if (isUnsteady)
+            {
+                timeCoeffL[ix] = (*timeCoefficientInverse)(i, j, k);
+                timeCoeffR[ix] = (*timeCoefficientInverse)(il, jl, kl);
+            }
             preconCoeffL[ix] = (*preconCoefficient)(i, j, k);
             preconCoeffR[ix] = (*preconCoefficient)(il, jl, kl);
         }
@@ -18705,7 +18785,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
             {
                 int im1 = i - 1;
                 int cellLabel = (ni - 1) * (nj - 1) * (k - 1) + (ni - 1) * (j - 1) + (i - 1);
-                if (iBlank[cellLabel] == IN_HOLE_COLOR)
+                if (iBlank[cellLabel] != ACTIVE)
                 {
                     for (int m = 0; m < nl; ++ m)
                     {
@@ -19009,7 +19089,7 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
                 int ip1 = i + 1;
                 int ip1p1 = ip1 + 1;
                 int cellLabel = (ni - 1) * (nj - 1) * (k - 1) + (ni - 1) * (j - 1) + (i - 1);
-                if (iBlank[cellLabel] == IN_HOLE_COLOR)
+                if (iBlank[cellLabel] != ACTIVE)
                 {
                     for (int m = 0; m < nl; ++ m)
                     {
@@ -19270,6 +19350,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
         viscousTurbulence = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("vist"));
     }
 
+    int isUnsteady = parameters->GetIsUnsteady();
     int ifLowSpeedPrecon = parameters->GetIfLowSpeedPrecon();
     RDouble3D *timeCoefficientInverse = nullptr;
     RDouble3D *preconCoefficient = nullptr;
@@ -19281,13 +19362,16 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
 
     if (ifLowSpeedPrecon != 0)
     {
-        timeCoefficientInverse = reinterpret_cast< RDouble3D *> (grid->GetDataPtr("timeCoefficientInverse"));
         preconCoefficient = reinterpret_cast< RDouble3D *> (grid->GetDataPtr("preconCoefficient"));
         preconMatrix = reinterpret_cast< RDouble4D *> (grid->GetDataPtr("preconMatrix"));
         nElement = nEquation * nEquation;
         dqTry = new RDouble[nEquation];
         preconMatrixNeighbor = new RDouble [nElement];
         preconMatrixTemp = new RDouble [nElement];
+        if (isUnsteady)
+        {
+            timeCoefficientInverse = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("timeCoefficientInverse"));
+        }
     }
 
     int nDim = GetDim();
@@ -19299,7 +19383,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
             for (int i = iCellStart; i <= iCellEnd; ++ i)
             {
                 int cellLabel = (ni - 1) * (nj - 1) * (k - 1) + (ni - 1) * (j - 1) + (i - 1);
-                if (iBlank[cellLabel] == IN_HOLE_COLOR)
+                if (iBlank[cellLabel] != ACTIVE)
                 {
                     for (int m = 0; m < nEquation; ++ m)
                     {
@@ -19396,9 +19480,17 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
                     }
                     else
                     {
-                        RDouble preconCoeff = (*preconCoefficient)(il, jl, kl);
-                        RDouble timeCoeff = (*timeCoefficientInverse)(il, jl, kl);
-                        PreconMatrixFreeDF(qNeighbor, dqNeighbor, nxyz, preconMatrixNeighbor, gama, preconCoeff, timeCoeff, df, nNSEquation, nLaminar, 1);
+                        if (!isUnsteady)
+                        {
+                            RDouble preconCoeff = (*preconCoefficient)(il, jl, kl);
+                            PreconMatrixFreeDF(qNeighbor, dqNeighbor, nxyz, preconMatrixNeighbor, gama, preconCoeff, df, nNSEquation, nLaminar, 1);
+                        }
+                        else
+                        {
+                            RDouble preconCoeff = (*preconCoefficient)(il, jl, kl);
+                            RDouble timeCoeff = (*timeCoefficientInverse)(il, jl, kl);
+                            PreconMatrixFreeDF(qNeighbor, dqNeighbor, nxyz, preconMatrixNeighbor, gama, preconCoeff, timeCoeff, df, nNSEquation, nLaminar, 1);
+                        }
                     }
 
                     //! Add Flux together.
@@ -19433,8 +19525,15 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
                         preconMatrixTemp[m] = (*preconMatrix)(i, j, k, m);
                     }
 
-                    RDouble timeCoeffTemp = (*timeCoefficientInverse)(i, j, k);
-                    ConservativePreconMatrixVariables(dqTry, preconMatrixTemp, timeCoeffTemp, nEquation);
+                    if (!isUnsteady)
+                    {
+                        ConservativePreconMatrixVariables(dqTry, preconMatrixTemp, nLaminar);
+                    }
+                    else
+                    {
+                        RDouble timeCoeffTemp = (*timeCoefficientInverse)(i, j, k);
+                        ConservativePreconMatrixVariables(dqTry, preconMatrixTemp, timeCoeffTemp, nEquation);
+                    }
 
                     for (int m = 0; m < nEquation; ++ m)
                     {
@@ -19570,6 +19669,7 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
         viscousTurbulence = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("vist"));
     }
 
+    int isUnsteady = parameters->GetIsUnsteady();
     int ifLowSpeedPrecon = parameters->GetIfLowSpeedPrecon();
     RDouble3D *timeCoefficientInverse = nullptr;
     RDouble3D *preconCoefficient = nullptr;
@@ -19582,13 +19682,16 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
 
     if (ifLowSpeedPrecon != 0)
     {
-        timeCoefficientInverse = reinterpret_cast< RDouble3D *> (grid->GetDataPtr("timeCoefficientInverse"));
         preconCoefficient = reinterpret_cast< RDouble3D *> (grid->GetDataPtr("preconCoefficient"));
         preconMatrix = reinterpret_cast< RDouble4D *> (grid->GetDataPtr("preconMatrix"));
         nElement = nEquation * nEquation;
         dqTry = new RDouble[nEquation];
         preconMatrixNeighbor = new RDouble [nElement];
         preconMatrixTemp = new RDouble [nElement];
+        if (isUnsteady)
+        {
+            timeCoefficientInverse = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("timeCoefficientInverse"));
+        }
     }
 
     int nDim = GetDim();
@@ -19600,7 +19703,7 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
             for (int i = iCellEnd; i >= iCellStart; --i)
             {
                 int cellLabel = (ni - 1) * (nj - 1) * (k - 1) + (ni - 1) * (j - 1) + (i - 1);
-                if (iBlank[cellLabel] == IN_HOLE_COLOR)
+                if (iBlank[cellLabel] != ACTIVE)
                 {
                     for (int m = 0; m < nEquation; ++ m)
                     {
@@ -19694,9 +19797,17 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
                     }
                     else
                     {
-                        RDouble preconCoeff = (*preconCoefficient)(il, jl, kl);
-                        RDouble timeCoeff = (*timeCoefficientInverse)(il, jl, kl);
-                        PreconMatrixFreeDF(qNeighbor, dqNeighbor, nxyz, preconMatrixNeighbor, gama, preconCoeff, timeCoeff, df, nNSEquation, nLaminar, -1);
+                        if (!isUnsteady)
+                        {
+                            RDouble preconCoeff = (*preconCoefficient)(il, jl, kl);
+                            PreconMatrixFreeDF(qNeighbor, dqNeighbor, nxyz, preconMatrixNeighbor, gama, preconCoeff, df, nNSEquation, nLaminar, -1);
+                        }
+                        else
+                        {
+                            RDouble preconCoeff = (*preconCoefficient)(il, jl, kl);
+                            RDouble timeCoeff = (*timeCoefficientInverse)(il, jl, kl);
+                            PreconMatrixFreeDF(qNeighbor, dqNeighbor, nxyz, preconMatrixNeighbor, gama, preconCoeff, timeCoeff, df, nNSEquation, nLaminar, -1);
+                    }
                     }
 
                     //! Add Flux together.
@@ -19731,8 +19842,15 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
                         preconMatrixTemp[m] = (*preconMatrix)(i, j, k, m);
                     }
 
-                    RDouble timeCoeffTemp = (*timeCoefficientInverse)(i, j, k);
-                    ConservativePreconMatrixVariables(dqTry, preconMatrixTemp, timeCoeffTemp, nEquation);
+                    if (!isUnsteady)
+                    {
+                        ConservativePreconMatrixVariables(dqTry, preconMatrixTemp, nLaminar);
+                    }
+                    else
+                    {
+                        RDouble timeCoeffTemp = (*timeCoefficientInverse)(i, j, k);
+                        ConservativePreconMatrixVariables(dqTry, preconMatrixTemp, timeCoeffTemp, nEquation);
+                    }
 
                     for (int m = 0; m < nEquation; ++ m)
                     {

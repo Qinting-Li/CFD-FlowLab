@@ -81,6 +81,8 @@ private:
     BCType_t *bocoType;
     cgsize_t_60000 *pnts;
     string *bcName;
+    string  volumeName;
+    int vcType;
     int *lab1, *lab2;
     int ier;
     cgsize_t **srange, **donor_range;
@@ -129,6 +131,12 @@ public:
 
     void SetNBCRegions(int nBCRegions_in) { this->nBCRegions = nBCRegions_in; }
     int GetNBCRegions() { return nBCRegions; }
+
+    string GetVCName() { return volumeName; }
+    void SetVCName(string nameIn) { volumeName = nameIn; }
+
+    int  GetVCType() { return vcType; }
+    void SetVCType(int vcTypeIn) { vcType = vcTypeIn; }
 
     void SetN1to1(int n1to1_in) { this->n1to1 = n1to1_in; }
     int GetN1to1() { return n1to1; }

@@ -42,7 +42,7 @@ private:
     void Conversion();
 
 private:
-    CGNSFactory *factory_cgns;
+    CGNSFactory *factoryCGNS;
 };
 
 namespace FIELDVIEW_SPACE

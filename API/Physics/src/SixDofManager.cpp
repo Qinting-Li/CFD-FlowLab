@@ -954,8 +954,12 @@ void SixDofSolver::RotationInXDirection()
 
     int aleDirection  = PHSPACE::GetIntegerParameterFromDataBase( bodyIndex, "direction" );
     RDouble aleRotateFrequency = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "rotateFrequency");
+    RDouble referenceVelocity = GlobalDataBase::GetDoubleParaFromDB("referenceVelocity");
+    aleRotateFrequency /=  referenceVelocity;
 
     RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
+    RDouble dimensionalReferenceTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalReferenceTime");
+    aleSimulationTime /= dimensionalReferenceTime;
 
     RDouble deltGama =  2.0 * PI * aleRotateFrequency * aleDirection;
     RDouble gama = aleSimulationTime * deltGama;
@@ -1004,6 +1008,8 @@ void SixDofSolver::RotationInZDirection()
 
     int aleDirection = PHSPACE::GetIntegerParameterFromDataBase(bodyIndex, "direction");
     RDouble aleRotateFrequency = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "rotateFrequency");
+    RDouble referenceVelocity = GlobalDataBase::GetDoubleParaFromDB("referenceVelocity");
+    aleRotateFrequency /=  referenceVelocity;
 
     RDouble deltAlpha =  2.0 * PI * aleRotateFrequency * aleDirection;
     RDouble alpha = deltAlpha * aleSimulationTime; 

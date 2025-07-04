@@ -1045,6 +1045,23 @@ void Controller::UpdateResiduals(int iSolver, int level)
 
     int nLocalZones = GetNumberofLocalZones();
 
+    //!Overset communications for independent variables such sa gradients.
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(zoneID, level);
+        PHSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->CommunicationOversetSlipData();
+    }
+
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
@@ -3576,9 +3593,9 @@ void Controller::MatrixLUSGS(int iSolver, int level)
         RDouble sweepNormal = 0.0;
         ForwardSweepMatrixLUSGS(iSolver, level, dqProxy, LUplusDQ, sweepNormal,iSweep);
 
-		CommunicationDQ(iSolver, level, dqProxy);
+        CommunicationDQ(iSolver, level, dqProxy);
 
-        BackwardSweepMatrixLUSGS(iSolver, level, dqProxy, LUplusDQ, sweepNormal);		
+        BackwardSweepMatrixLUSGS(iSolver, level, dqProxy, LUplusDQ, sweepNormal);
 
         if (nLUSGSSweeps > 1)
         {
@@ -3605,7 +3622,7 @@ void Controller::MatrixLUSGS(int iSolver, int level)
         }
     }
 
-	UpdateFlowField(iSolver, level, dqProxy);
+    UpdateFlowField(iSolver, level, dqProxy);
 
     for (int iLocalZone = 0; iLocalZone < nLocalZones; ++ iLocalZone)
     {
@@ -3644,7 +3661,7 @@ void Controller::ForwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **dq
         }
 
         zoneNormal[izone] = 0.0;
-		solver->SolveMatrixLUSGSForward(grid, dqProxy[izone], LUplusDQ[izone], zoneNormal[izone]); //! The Matrix LU-SGS method.
+        solver->SolveMatrixLUSGSForward(grid, dqProxy[izone], LUplusDQ[izone], zoneNormal[izone]); //! The Matrix LU-SGS method.
     }
 
     //! Sum the zone normal, which is to void OMP data competition.

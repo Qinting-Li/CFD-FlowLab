@@ -410,8 +410,9 @@ LIB_EXPORT void Grid::InitMovingGrids()
 LIB_EXPORT void Grid::GridValidityCheck()
 {
     //! Interface check.
+    int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
     int nIFace = this->GetNIFace();
-    if (PHMPI::GetNumberOfProcessor() > 1 && nIFace == 0)
+    if (PHMPI::GetNumberOfProcessor() > 1 && nIFace == 0 && isOverset == 0)
     {
         //! Parallel computing, but without any interface faces.
         ostringstream oss;
@@ -548,11 +549,6 @@ int GetCellType(int dimension, int nodeNumberOfCell)
             default:
                 break;
         }
-    }
-
-    if (cellType == -1)
-    {
-        PrintToWindow("This cell type is not supported!\n");
     }
 
     return cellType;

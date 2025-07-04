@@ -57,7 +57,7 @@ LIB_EXPORT void Param_CFDSolver::Init()
     {
         statisticMethod = GlobalDataBase::GetIntParaFromDB("statisticMethod");
     }
-
+    isRestartChangeInflow     = GlobalDataBase::GetIntParaFromDB("isRestartChangeInflow");
     CFLStart                  = GlobalDataBase::GetDoubleParaFromDB("CFLStart");
     CFLEnd                    = GlobalDataBase::GetDoubleParaFromDB("CFLEnd");
 
@@ -120,6 +120,7 @@ LIB_EXPORT void Param_CFDSolver::Init()
     }
 
     skewnessAngle = GlobalDataBase::GetDoubleParaFromDB("skewnessAngle");
+    turbSkewnessAngle = GlobalDataBase::GetDoubleParaFromDB("turbSkewnessAngle");
 
     nDiagonalModifiedTurb = 0;
 

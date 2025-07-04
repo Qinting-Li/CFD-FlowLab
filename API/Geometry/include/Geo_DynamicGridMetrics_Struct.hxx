@@ -4,6 +4,9 @@ inline void Geo_DynamicGridMetrics_Struct::DeallocateAll()
     if (xfv  != NULL) { delete xfv;    xfv  = NULL; }
     if (yfv  != NULL) { delete yfv;    yfv  = NULL; }
     if (zfv  != NULL) { delete zfv;    zfv  = NULL; }
+    if (xcv  != NULL) { delete xcv;    xcv  = NULL; }
+    if (ycv  != NULL) { delete ycv;    ycv  = NULL; }
+    if (zcv  != NULL) { delete zcv;    zcv  = NULL; }
     if (vgn  != NULL) { delete vgn;    vgn  = NULL; }
 }
 
@@ -32,6 +35,21 @@ inline RDouble4D * Geo_DynamicGridMetrics_Struct::GetFaceVelocityZ() const
     return zfv;
 }
 
+inline RDouble3D *Geo_DynamicGridMetrics_Struct::GetCellVelocityX() const
+{
+    return xcv;
+}
+
+inline RDouble3D *Geo_DynamicGridMetrics_Struct::GetCellVelocityY() const
+{
+    return ycv;
+}
+
+inline RDouble3D *Geo_DynamicGridMetrics_Struct::GetCellVelocityZ() const
+{
+    return zcv;
+}
+
 inline void Geo_DynamicGridMetrics_Struct::SetFaceVelocityX(RDouble4D *xfv)
 {
     if (this->xfv && this->xfv != xfv)
@@ -57,6 +75,33 @@ inline void Geo_DynamicGridMetrics_Struct::SetFaceVelocityZ(RDouble4D *zfv)
         delete this->zfv;
     }
     this->zfv = zfv;
+}
+
+inline void Geo_DynamicGridMetrics_Struct::SetCellVelocityX(RDouble3D *xcv)
+{
+    if (this->xcv && this->xcv != xcv)
+    {
+        delete this->xcv;
+    }
+    this->xcv = xcv;
+}
+
+inline void Geo_DynamicGridMetrics_Struct::SetCellVelocityY(RDouble3D *ycv)
+{
+    if (this->ycv && this->ycv != ycv)
+    {
+        delete this->ycv;
+    }
+    this->ycv = ycv;
+}
+
+inline void Geo_DynamicGridMetrics_Struct::SetCellVelocityZ(RDouble3D *zcv)
+{
+    if (this->zcv && this->zcv != zcv)
+    {
+        delete this->zcv;
+    }
+    this->zcv = zcv;
 }
 
 inline void Geo_DynamicGridMetrics_Struct::SetCellVolumeOld(RDouble3D *voln)

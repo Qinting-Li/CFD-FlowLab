@@ -73,72 +73,71 @@ void Post_WriteTecplot::StoreVisualizationData()
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         DataContainer *cdata = new DataContainer();
+        DataContainer *cBlkData = new DataContainer();    //! Seperate surface and block data into two different cdata elements.
         cdata->MoveToBegin();
+        cBlkData->MoveToBegin();
 
         int send_proc = GetZoneProcessorID(iZone);
         int recv_proc = GetZoneFileID(iZone);
 
         if (myid == send_proc)
         {
-            StoreVisualizationData(iZone, cdata);
+            StoreVisualizationData(iZone, cdata, cBlkData);
         }
 
         PH_Trade(cdata, send_proc, recv_proc, iZone);
+        PH_Trade(cBlkData, send_proc, recv_proc, iZone);
 
         if (myid == recv_proc)
         {
             visualDataList.push_back(cdata);
+            visualDataList.push_back(cBlkData);
         }
         else
         {
-            delete cdata;    cdata = nullptr;
+            delete cdata;       cdata = nullptr;
+            delete cBlkData;    cBlkData = nullptr;
         }
     }
 }
 
-void Post_WriteTecplot::StoreVisualizationData(int zoneIndex, DataContainer *cdata)
+void Post_WriteTecplot::StoreVisualizationData(int zoneIndex, DataContainer *cdata, DataContainer *cBlkData)
 {
     Grid *grid = flowFieldDataOnNode[zoneIndex]->GetGrid();
+
+    int gridID = grid->GetZoneID();
+    int dimension = grid->GetDim();
+    int type = grid->Type();
+
+    PHWrite(cdata, gridID);
+    PHWrite(cdata, dimension);
+    PHWrite(cdata, type);
+    PHWrite(cBlkData, gridID);
+    PHWrite(cBlkData, dimension);
+    PHWrite(cBlkData, type);
+
     if (grid->Type() == UNSTRUCTGRID)
     {
-        int gridID = grid->GetZoneID();
-        int dimension = grid->GetDim();
-        int type = grid->Type();
-
-        PHWrite(cdata, gridID);
-        PHWrite(cdata, dimension);
-        PHWrite(cdata, type);
-
         StoreUnsBoundaryVisualData(zoneIndex, cdata);
 
         if (WantVisualField(grid))
         {
-            StoreUnsFieldVisualData(zoneIndex, cdata);
+            StoreUnsFieldVisualData(zoneIndex, cBlkData);
         }
-
-        int TecioMission = Writecomplete;
-        PHWrite(cdata, TecioMission);
     }
     else
     {
-        int gridID = grid->GetZoneID();
-        int dimension = grid->GetDim();
-        int type = grid->Type();
-
-        PHWrite(cdata, gridID);
-        PHWrite(cdata, dimension);
-        PHWrite(cdata, type);
-
         StoreStrBoundaryVisualData(zoneIndex, cdata);
 
         if (WantVisualField(grid))
         {
-            StoreStrFieldVisualData(zoneIndex, cdata);
+            StoreStrFieldVisualData(zoneIndex, cBlkData);
         }
-
-        int TecioMission = Writecomplete;
-        PHWrite(cdata, TecioMission);
     }
+
+    int TecioMission = Writecomplete;
+    PHWrite(cdata, TecioMission);
+    PHWrite(cBlkData, TecioMission);
 }
 
 void Post_WriteTecplot::StoreStrBoundaryVisualData(int zoneIndex, DataContainer *cdata)
@@ -1931,6 +1930,14 @@ void Post_WriteTecplotByOriginalGrid::PostWrite(ActionKey *actKey)
     using namespace PHMPI;
     int myid = GetCurrentProcessorID();
 
+    if (true == actKey->GetVTKVisual() && vtkDataList.size() > 0)
+    {
+        bool CharacteristicBoundary = false;
+        DumpToVTK DumpToVTK(vtkDataList, actKey->GetFileName(), CharacteristicBoundary, 0);
+        DumpToVTK.Run();
+        WriteSentinelFile();
+    }
+
     if (dataList.size() > 0)
     {
         int visualFileType = GlobalDataBase::GetIntParaFromDB("visualfileType");
@@ -2036,7 +2043,7 @@ void Post_WriteTecplotByOriginalGrid::CollectUnstructedData(ActionKey *actKey, P
     DataContainer *cData = actKey->GetData();
     int nTotalNodeOfParGrid;
     PHRead(cData, nTotalNodeOfParGrid);
-    int *nodeIndex = new int[nTotalNodeOfParGrid];
+    int *nodeIndex = new int [nTotalNodeOfParGrid];
     PHRead(cData, nodeIndex, nTotalNodeOfParGrid);
 
     int nVarPlot         = postVisualization->GetNumberofVisualVariables();

@@ -105,7 +105,7 @@ void TurbSolver::Solve()
         ActionKey *actkeyDumpRestartData = new ActionKey();
         FillActionKey(actkeyDumpRestartData, DUMP_RESTART, 0);
         DumpRestartData(actkeyDumpRestartData);
-        delete actkeyDumpRestartData;
+        FreePointer(actkeyDumpRestartData);
     }
 
     int intervalStepRes;
@@ -116,7 +116,7 @@ void TurbSolver::Solve()
         ActionKey *actkeyDumpResidual = new ActionKey();
         FillActionKey(actkeyDumpResidual, DUMP_RESIDUAL, 0);
         DumpResidual(actkeyDumpResidual);
-        delete actkeyDumpResidual;
+        FreePointer(actkeyDumpResidual);
     }
 }
 
@@ -154,7 +154,7 @@ void TurbSolver::DumpResultFile(Grid *grid, int level)
             ActionKey *actkeyDumpRestartData = new ActionKey();
             FillActionKey(actkeyDumpRestartData, DUMP_RESTART, 0);
             DumpRestartData(actkeyDumpRestartData);
-            delete actkeyDumpRestartData;
+            FreePointer(actkeyDumpRestartData);
         }
         else
         {
@@ -162,7 +162,7 @@ void TurbSolver::DumpResultFile(Grid *grid, int level)
             ActionKey *actkeyDumpRestartData = new ActionKey();
             FillActionKey(actkeyDumpRestartData, DUMP_RESTART, level);
             DumpTurbProtectData(actkeyDumpRestartData, RestartFile);
-            delete actkeyDumpRestartData;
+            FreePointer(actkeyDumpRestartData);
 
             if (outnstep > 1)
             {
@@ -200,7 +200,7 @@ void TurbSolver::DumpResultFile(Grid *grid, int level)
         ActionKey *actkeyDumpResidual = new ActionKey();
         FillActionKey(actkeyDumpResidual, DUMP_RESIDUAL, level);
         DumpResidual(actkeyDumpResidual);
-        delete actkeyDumpResidual;    actkeyDumpResidual = nullptr;
+        FreePointer(actkeyDumpResidual);
     }
 }
 
@@ -210,7 +210,7 @@ void TurbSolver::Post()
     ActionKey *actkeyDumpRestartData = new ActionKey();
     FillActionKey(actkeyDumpRestartData, DUMP_RESTART, 0);
     DumpRestartData(actkeyDumpRestartData);
-    delete actkeyDumpRestartData;
+    FreePointer(actkeyDumpRestartData);
 }
 
 void TurbSolver::RegisterCFDSolverInterfaceField()
@@ -244,12 +244,38 @@ void TurbSolver::RegisterOversetField()
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
 
     CFDSolver::RegisterOversetField("turb::q", PHDOUBLE, nTurbulenceEquation);
+    CFDSolver::RegisterOversetField("vist", PHDOUBLE, 1);
+
+    int isOversetSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isOversetSlip");
+    int isCommGradientforSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isCommGradientforSlip");
+    if (isOversetSlip && isCommGradientforSlip)
+    {
+        CFDSolver::RegisterOversetField("turb::dqdx", PHDOUBLE, nTurbulenceEquation);
+        CFDSolver::RegisterOversetField("turb::dqdy", PHDOUBLE, nTurbulenceEquation);
+        CFDSolver::RegisterOversetField("turb::dqdz", PHDOUBLE, nTurbulenceEquation);
+    }
 }
 
 void TurbSolver::DeAllocateOversetInterfaceVar(Data_ParamFieldSuite *dataStore)
 {
     RDouble **q = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("turb::q"));
     DelPointer2(q);
+
+    RDouble **vist = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("vist"));
+    DelPointer2(vist);
+
+    int isOversetSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isOversetSlip");
+    int isCommGradientforSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isCommGradientforSlip");
+    if (isOversetSlip && isCommGradientforSlip)
+    {
+        RDouble **gradientTurbulenceX = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("turb::dqdx"));
+        RDouble **gradientTurbulenceY = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("turb::dqdy"));
+        RDouble **gradientTurbulenceZ = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("turb::dqdz"));
+
+        DelPointer2(gradientTurbulenceX);
+        DelPointer2(gradientTurbulenceY);
+        DelPointer2(gradientTurbulenceZ);
+    }
 }
 
 void TurbSolver::PrepareOversetInterfaceData(Data_ParamFieldSuite *datastore, InterfaceDataProxy *interfaceDataProxy)
@@ -258,12 +284,32 @@ void TurbSolver::PrepareOversetInterfaceData(Data_ParamFieldSuite *datastore, In
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
 
     RDouble **qTurbulence = reinterpret_cast<RDouble **> (datastore->GetDataPtr("turb::q"));
+    RDouble **viscousTurbulence = reinterpret_cast<RDouble **> (datastore->GetDataPtr("vist"));
 
     vector<RDouble **> &vectorData = interfaceDataProxy->GetVectorData();
     vector<int>   &vectorDimension = interfaceDataProxy->GetVectorDimension();
 
+    int isSolve = GlobalDataBase::GetIntParaFromDB("isSolve");
+    if (!isSolve)
+    {
     vectorDimension.push_back(nTurbulenceEquation);
     vectorData.push_back(qTurbulence);
+
+        vectorDimension.push_back(1);
+        vectorData.push_back(viscousTurbulence);
+    }
+    else
+    {
+        RDouble **gradientTurbulenceX = reinterpret_cast <RDouble**> (datastore->GetDataPtr("turb::dqdx"));
+        RDouble **gradientTurbulenceY = reinterpret_cast <RDouble**> (datastore->GetDataPtr("turb::dqdy"));
+        RDouble **gradientTurbulenceZ = reinterpret_cast <RDouble**> (datastore->GetDataPtr("turb::dqdz"));
+        vectorDimension.push_back(nTurbulenceEquation);
+        vectorData.push_back(gradientTurbulenceX);
+        vectorDimension.push_back(nTurbulenceEquation);
+        vectorData.push_back(gradientTurbulenceY);
+        vectorDimension.push_back(nTurbulenceEquation);
+        vectorData.push_back(gradientTurbulenceZ);
+    }
 }
 
 //! Drive functions to calculate residuals for different orders and dimensions.

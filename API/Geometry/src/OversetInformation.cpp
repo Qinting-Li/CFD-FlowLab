@@ -162,7 +162,10 @@ RDouble *OversetDataProxy::GetInterCellCenterZ(int neighborIndex)
 {
     return oversetSwapManager->GetOversetDonorCellManager()->GetInterCellCenterZ(neighborIndex);
 }
-
+RDouble *OversetDataProxy:: GetInterCellVolume(int neighborIndex)
+{
+    return oversetSwapManager->GetOversetDonorCellManager()->GetInterCellVolume(neighborIndex);
+}
 int *OversetDataProxy::GetCellIndexContainer(int neighborIndex)
 {
     if (sendReceiveFlag == 0)     //! Send.
@@ -250,10 +253,10 @@ OversetInformationProxy::OversetInformationProxy()
 OversetInformationProxy::~OversetInformationProxy()
 {
     FreeOversetCellContainer(oversetCellContainer);
-    delete oversetSwapManager;
 
-    delete oversetDataProxyForSend;
-    delete oversetDataProxyForReceive;
+    FreePointer(oversetSwapManager);
+    FreePointer(oversetDataProxyForSend);
+    FreePointer(oversetDataProxyForReceive);
 }
 
 int OversetInformationProxy::GetZoneIndex()
@@ -274,6 +277,7 @@ void OversetInformationProxy::FreeOversetCellContainer(PHVector1D < OversetCell 
     for (int iElement = 0; iElement < numberOfElements; ++ iElement)
     {
         delete (* oversetCellContainer)[iElement];
+
     }
     delete oversetCellContainer;
 }
@@ -312,31 +316,69 @@ void OversetInformationProxy::GetCellIndexContainer(int donorZoneIndexIn, PHVect
 void OversetInformationProxy::GetDonorCellIndexContainer(int donorZoneIndexIn, PHVectorInt1D &donorCellIndexContainer,
     PHVectorRDouble1D &interCellCenterX,
     PHVectorRDouble1D &interCellCenterY,
-    PHVectorRDouble1D &interCellCenterZ)
+    PHVectorRDouble1D &interCellCenterZ,
+    PHVectorRDouble1D &interCellVolume)
 {
     //! Need further revise for structure mesh.
     UnstructGrid *unstructuredGrid = PHSPACE::UnstructGridCast(grid);
     RDouble *xc = unstructuredGrid->GetCellCenterX();
     RDouble *yc = unstructuredGrid->GetCellCenterY();
     RDouble *zc = unstructuredGrid->GetCellCenterZ();
+    RDouble *vol  = unstructuredGrid->GetCellVolume();
+
+    int nBoundaryFace = unstructuredGrid->GetNBoundFace();
+    int *leftCellofFace  = unstructuredGrid->GetLeftCellOfFace();
+    int *rightCellofFace = unstructuredGrid->GetRightCellOfFace();
+    UnstructBCSet **unstructBCSet = unstructuredGrid->GetBCRecord();
 
     PHVector1D < OversetCell * > *oversetCellContainer = this->GetOversetCellContainer();
     donorCellIndexContainer.resize(0);
 
     uint_t numberOfElements = oversetCellContainer->size();
-    for (int iElement = 0; iElement < numberOfElements; ++ iElement)
-    {
-        OversetCell *oversetCell = (* oversetCellContainer)[iElement];
-        int cellIndex = oversetCell->GetCellIndex();
-        int donorCellIndex = oversetCell->GetDonorCellIndex();
-        int donorZoneIndex = oversetCell->GetDonorZoneIndex();
 
-        if (donorZoneIndex == donorZoneIndexIn)
+    int isOversetSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isOversetSlip");
+    int count = 0;
+    if (isOversetSlip)
+    {
+        for (int iFace = 0; iFace < nBoundaryFace; iFace++)
         {
-            donorCellIndexContainer.push_back(donorCellIndex);
-            interCellCenterX.push_back(xc[cellIndex]);
-            interCellCenterY.push_back(yc[cellIndex]);
-            interCellCenterZ.push_back(zc[cellIndex]);
+            int bcType = unstructBCSet[iFace]->GetKey();
+            if (bcType == PHENGLEI::OVERSET)
+            {
+                int le = leftCellofFace[iFace];
+                OversetCell *oversetCell = (* oversetCellContainer)[count];
+                int donorCellIndex = oversetCell->GetDonorCellIndex();
+                int donorZoneIndex = oversetCell->GetDonorZoneIndex();
+
+                if (donorZoneIndex == donorZoneIndexIn)
+                {
+                    donorCellIndexContainer.push_back(donorCellIndex);
+                    interCellCenterX.push_back(xc[le]);
+                    interCellCenterY.push_back(yc[le]);
+                    interCellCenterZ.push_back(zc[le]);
+                    interCellVolume.push_back(vol[le]);
+                }
+                count++;
+            }
+        }
+    }
+    else 
+    {
+        for (int iElement = 0; iElement < numberOfElements; ++ iElement)
+        {
+            OversetCell *oversetCell = (* oversetCellContainer)[iElement];
+            int cellIndex = oversetCell->GetCellIndex();
+            int donorCellIndex = oversetCell->GetDonorCellIndex();
+            int donorZoneIndex = oversetCell->GetDonorZoneIndex();
+
+            if (donorZoneIndex == donorZoneIndexIn)
+            {
+                donorCellIndexContainer.push_back(donorCellIndex);
+                interCellCenterX.push_back(xc[cellIndex]);
+                interCellCenterY.push_back(yc[cellIndex]);
+                interCellCenterZ.push_back(zc[cellIndex]);
+                interCellVolume.push_back(vol[cellIndex]);
+            }
         }
     }
 }
@@ -570,11 +612,11 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
 
             dataContainerGlobal->Write(dataContainerRevc);
 
-            delete dataContainerRevc;
+            FreePointer(dataContainerRevc);
         }
     }
 
-    delete dataContainerLocal;
+    FreePointer(dataContainerLocal);
 
     PHMPI::PH_BcastByServerSepMode(dataContainerGlobal);
     dataContainerGlobal->MoveToBegin();
@@ -601,7 +643,7 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
         }
     }
 
-    delete dataContainerGlobal;
+    FreePointer(dataContainerGlobal);
 }
 
 OversetCell::OversetCell()
@@ -621,7 +663,7 @@ OversetInterplateCell::OversetInterplateCell()
 
 OversetInterplateCell::~OversetInterplateCell()
 {
-    delete dataStorage;
+    FreePointer(dataStorage);
 }
 
 void OversetInterplateCell::EncodeOversetInterplateCellInformation(DataContainer *dataContainer)
@@ -671,7 +713,7 @@ OversetDonorCell::OversetDonorCell()
 
 OversetDonorCell::~OversetDonorCell()
 {
-    delete dataStorage;
+    FreePointer(dataStorage);
 }
 
 void OversetDonorCell::EncodeOversetDonorCellInformation(DataContainer *dataContainer)
@@ -739,7 +781,7 @@ OversetInterplateCellManager::~OversetInterplateCellManager()
     {
         delete oversetInterplateCellContainer[i];
     }
-    delete dataStorage;
+    FreePointer(dataStorage);
 }
 
 int OversetInterplateCellManager::GetNumberOfOversetInterplateCells(int iNeighbor)
@@ -887,7 +929,11 @@ RDouble *OversetDonorCellManager::GetInterCellCenterZ(int iNeighbor)
     PHVectorRDouble1D &interCellCenterZ = oversetDonorCellContainer[iNeighbor]->GetInterCellCenterZ();
     return & interCellCenterZ[0];
 }
-
+RDouble *OversetDonorCellManager::GetInterCellVolume(int iNeighbor)
+{
+    PHVectorRDouble1D &interCellVolume = oversetDonorCellContainer[iNeighbor]->GetInterCellVolume();
+    return & interCellVolume[0];
+}
 int *OversetDonorCellManager::GetDonorCellStorageIndex(int iNeighbor)
 {
     PHVectorInt1D &storageIndexContainer = oversetDonorCellContainer[iNeighbor]->GetStorageIndexContainer();

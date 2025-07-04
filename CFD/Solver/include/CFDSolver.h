@@ -339,6 +339,12 @@ public:
     //! Get the file name for Restart info dumping.
     virtual const string GetRestartFileName();
 
+    //! Get the grid file name for Restart info by interpolated.
+    virtual const string GetRestartGridFileName();
+
+    //! Get the flow file name for Restart info by interpolated.
+    virtual const string GetRestartFlowFileName();
+
     //! Get the file name for AirCoef dumping.
     virtual const string GetAirCoefFileName();
 
@@ -369,6 +375,7 @@ public:
     //! for turbulent solver, the turbulent variables are store in turb.dat.
     virtual void InitFlowAsReadingRestart();
     virtual void InitFlowAsReadingRestart(ActionKey *actkey);
+    virtual void InitFlowByReadingInterpolate(ActionKey *actkey);
 
     virtual void InitFlowAsReadingProtectedRestart(ActionKey *actkey);
 
@@ -416,6 +423,7 @@ public:
     void DownloadInterpointData();
     void CommunicationInterpointWeight();
 
+    void CommunicationOversetSlipData();
     //! Overset information exchange controller process, including 3 steps: \n
     //! 1. Upload Overset Data. \n
     //! 2. Update Overset Data. \n
@@ -429,7 +437,7 @@ public:
 
     virtual void DumpRestartH5(ActionKey *actkey);
     virtual void ReadRestartH5(ActionKey *actkey);
-
+    virtual void InterpolateFromRestartH5(ActionKey *actkey);
     virtual void FillField(Grid *grid, FieldProxy *fieldProxy, RDouble value);
     virtual void FillField(Grid *grid, FieldProxy *field1Proxy, FieldProxy *field2Proxy);
 
@@ -452,7 +460,7 @@ protected:
 
     virtual bool JudgeIfReadAverage();
     virtual bool JudgeIfRestart();
-
+    virtual bool JudgeIfInterpolate();
     virtual bool JudgeIfProtectedRestart();
 
     virtual void InitCoarseGridsFlow();
@@ -478,7 +486,7 @@ protected:
 
     void DeAllocateOversetInterfaceVar(Grid *grid);
 
-    void DeAllocateOversetInterfaceVar(OversetInfoProxy *oversetInfoProxy);
+    void DeAllocateOversetInterfaceVar(OversetInformationProxy *oversetInformationProxy);
 
     virtual void DeAllocateOversetInterfaceVar(Data_ParamFieldSuite *dataStore);
 

@@ -316,9 +316,16 @@ public:
     void GetUnsBCInfo(int zoneIndex, int dataSize, UnstructBCSet **bcInfoOut);
     void GetUnsBCName(int zoneIndex, int dataSize, UnstructBCSet **bcInfoOut);
 
+    //! Get ordinary grid information(Structed grid)
     void ReadStrOrdinaryGridIndex(int zoneIndex, int &ordinaryGridIndexOut);
     void ReadStrOrdinaryDimStart(int zoneIndex, int *ordinaryDimStartOut);
     void ReadStrOrdinaryDimEnd(int zoneIndex, int *ordinaryDimEndOut);
+
+    //! Get ordinary grid information(Unstructed grid)
+    void ReadUnsOrdinaryGridIndex(int zoneIndex, int &ordinaryGridIndexOut);
+    void ReadUnsOrdinaryNodeIndex(int zoneIndex, int *ordinaryNodeIndexOut, int nTotalNode);
+    void ReadUnsOrdinaryFaceIndex(int zoneIndex, int *ordinaryFaceIndexOut, int nTotalFace);
+    void ReadUnsOrdinaryCellIndex(int zoneIndex, int *ordinaryCellIndexOut, int nTotalCell);
 
 private:
     void GetStructGridInfo(Grid *gridOut);

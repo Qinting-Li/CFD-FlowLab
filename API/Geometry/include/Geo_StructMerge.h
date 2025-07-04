@@ -43,13 +43,14 @@ private:
     StructBCSet                     **compositeBCRegion;
     int                             *nIFace;
     InterfaceInfo                   **interfaceInfo;
+    int                             nDim;
 public:
     OriginalStructGridMerge();
 
     ~OriginalStructGridMerge();
 
     //! Initial all information need to merge.
-    void Initial(vector < vector < StructGrid* > > originalgridofBlock, int nTotalblock, int nTotalZone);
+    void Initial(vector < vector < Grid* > > originalgridofBlockIn, int nTotalblock, int nTotalZone, int nDim);
 
     //! Compute the mergegrid.
     void Run();

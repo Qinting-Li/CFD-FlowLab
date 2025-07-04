@@ -52,9 +52,6 @@ private:
     //! The work flow to convert, partition and compute.
     void RunIntegrativeSolver();
 
-    //! Check the .fts grid.
-    void RunGridCheckSolver();
-
     //! Run SpecDiffHyb solver.
 #ifdef USE_SpecDiffHybSolver
     void RunSpecDiffHybSolver();

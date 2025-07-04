@@ -59,6 +59,9 @@ public:
     //! Outflow Boundary condition, suitable for mass out, pressure out, and velocity out in turbulence flows.
     void OutflowBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct);
 
+    //! Overlapping boundary : The flow field variables are interpolated from the interpolating cell to the invalid cell 
+    void ReSetOversetBoundary(Grid* gridIn);
+
     //! Inflow Boundary condition, suitable for mass in, pressure in, and velocity in for turbulence flows.
     void InflowBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct);
     

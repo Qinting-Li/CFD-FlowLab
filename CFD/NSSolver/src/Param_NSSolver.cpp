@@ -208,7 +208,7 @@ LIB_EXPORT void Param_NSSolver::Init()
         isUseNoneqCond = GlobalDataBase::GetIntParaFromDB("isUseNoneqCond");
     }
 
-    if (isPorousZone != 0)
+    if (isPorousZone != NON_POROUS)
     {
         GlobalDataBase::GetData("viscousResistanceCoeff", &viscousResistanceCoeff, PHDOUBLE, 3);
         GlobalDataBase::GetData("inertialResistanceCoeff", &inertialResistanceCoeff, PHDOUBLE, 3);

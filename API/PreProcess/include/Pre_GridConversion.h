@@ -56,6 +56,8 @@ public:
     //! Warning: if this function is executed, the converted computational grids would be deleted.
     LIB_EXPORT void Clear();
 
+    void WriteVolumeName(const string &out_grid_file, Grid **grids_in);
+
 private:
     virtual void ReadGrid() = 0;
     virtual void Conversion() = 0;
@@ -63,7 +65,6 @@ private:
 protected:
     void WriteFaceBC(const string &out_grid_file, Grid **grids_in);
     void WriteFaceBoundaryName(const string &out_grid_file, Grid **grids_in);
-    void WriteVolumeName(const string &out_grid_file, Grid **grids_in);
     void WriteCellToNode(const string &targetGridFileName, Grid **grids_in);
 };
 
@@ -90,6 +91,7 @@ LIB_EXPORT void DumpFaceBC(const string &gridFileName, Grid **grids, int nBlocks
 
 //! Dump Characteristic Boundary to file.
 void DumpCharacteristicBoundary(const string &gridFileName, Grid **grids, int nBlocks);
+void WriteVolumeInfo(Grid **grids_in, int nBlocks);
 void WriteBoundaryInfo(Grid **grids_in, int nBlocks);
 void DumpBoundaryInfo(const set< pair<int, string> > &bcNamePairSet);
 
@@ -100,7 +102,7 @@ void DumpVCNameFile(const set< pair<int, string> > &vcNamePairSet, const string 
 void DumpVolumeConditionFile(const set< pair<int, string> > &vcNamePairSet);
 
 void ComputeCharacteristicBoundary(Grid *grid_in, DataContainer *data);
-void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data);
+void ComputeCharacteristicBoundaryUns(Grid *gridIn, DataContainer *data);
 void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data);
 
 #include "Pre_GridConversion.hxx"

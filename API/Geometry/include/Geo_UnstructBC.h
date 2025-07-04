@@ -112,12 +112,12 @@ public:
     ~UnstructBCSet()
    {
        if (bcRegions)
-	   {
-		   for (std::size_t i = 0; i < bcRegions->size(); ++i)
-		   {
-			   delete (*bcRegions)[i];
-		   }
-	   }
+       {
+           for (std::size_t i = 0; i < bcRegions->size(); ++i)
+           {
+               delete (*bcRegions)[i];
+           }
+       }
        delete bcRegions;    bcRegions = NULL;
 
        if (bcRegionIDofBCFace != NULL)

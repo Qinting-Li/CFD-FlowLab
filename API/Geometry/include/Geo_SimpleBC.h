@@ -365,7 +365,6 @@ public:
     static void SetBCInitialValuesByDensity(Data_Param *bcParamDB, RDouble *primitiveVar);
 
     static void SetBCInitialValuesByPressure(Data_Param *bcParamDB, RDouble *primitiveVar);
-    static void SetBCInitialValuesByProfile(Data_Param *bcParamDB, RDouble *primitiveVar);
 
     static void SetBCInitialValuesByTotalPressure(Data_Param *bcParamDB, RDouble *primitiveVar);
 

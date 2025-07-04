@@ -199,6 +199,11 @@ inline int Param_CFDSolver::GetIfStaticsFlowField() const
     return ifStaticsFlowField;
 }
 
+inline int Param_CFDSolver::GetIsRestartChangeInflow() const
+{
+    return isRestartChangeInflow;
+}
+
 inline int Param_CFDSolver::GetIfStaticsReynoldsStress() const
 {
     return ifStaticsReynoldsStress;
@@ -217,6 +222,10 @@ inline int Param_CFDSolver::GetIsOverLapping() const
 inline RDouble Param_CFDSolver::GetSkewnessAngle() const
 {
     return skewnessAngle;
+}
+inline RDouble Param_CFDSolver::GetTurbSkewnessAngle() const
+{
+    return turbSkewnessAngle;
 }
 inline int Param_CFDSolver::GetnDiagonalModifiedTurb() const
 {

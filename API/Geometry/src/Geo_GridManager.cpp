@@ -139,6 +139,24 @@ void GridManager::DeAllocateMetrics()
     {
         delete [] oldFaceNormalZ;
     }
+
+    if (oldFaceCenterX)
+    {
+        delete [] oldFaceCenterX;
+    }
+    if (oldFaceCenterY)
+    {
+        delete [] oldFaceCenterY;
+    }
+    if (oldFaceCenterZ)
+    {
+        delete [] oldFaceCenterZ;
+    }
+
+    if (oldFaceArea)
+    {
+        delete [] oldFaceArea;
+    }
 }
 
 void GridManager::AllocateALEMetrics()

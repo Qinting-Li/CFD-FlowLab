@@ -240,6 +240,11 @@ const int VISUAL_WALL_RE       = 23;
 const int VISUAL_WALL_KN       = 24; //The Knudsen number.
 //! The code number must be less than VISUAL_SPECIES_START.
 
+//! A controller to select BLK data or surface data as output data generating tecplot binary files
+//! in the condition of THREE_D mode and FieldVisual type.
+const int OUTPUT_SURFACE       = 0;
+const int OUTPUT_BLK           = 1;
+
 class Post_VisualWall
 {
 public:
@@ -331,7 +336,7 @@ public:
 
 private:
     void WriteGridFilm_old();
-    void WriteGridFilm();
+    void WriteGridFilm(int isOutputBLK = OUTPUT_SURFACE);
     void WriteSliceFilm();
     void InitVariables();
 

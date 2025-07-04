@@ -94,6 +94,8 @@ void ComputeAerodynamicForceForALE()
 
     //! Third: Collecting AirForceCoef on Each Zone to serve.
     PHSPACE::CollectAerodynamicForceOfAllProcessors();
+
+    delete actkeyComputeAirForceCoef;
 }
 
 void AddAerodynamicForce(ActionKey *actionKey)

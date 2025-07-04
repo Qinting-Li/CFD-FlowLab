@@ -70,7 +70,7 @@ void ShowWelcomeTitle()
         oss << "$#       Computational Aerodynamics Institute          #$" << endl;
         oss << "$#  China Aerodynamics Research and Development Center #$" << endl;
         oss << "$#            (C) Copyright, Since 2010                #$" << endl;
-        oss << "$#                  PHengLEI 2412                      #$" << endl;
+        oss << "$#                  PHengLEI 2506                      #$" << endl;
         oss << "$#                                                     #$" << endl;
         oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
 
@@ -83,6 +83,16 @@ void ParametersSelfCheckForCFD()
     //! Is in Multi-Grid initialization state.
     int isInMGIniting = 0;
     GlobalDataBase::UpdateData("isInMGIniting", &isInMGIniting, PHINT, 1);
+
+    int isSolve = 0;
+    GlobalDataBase::UpdateData("isSolve", &isSolve, PHINT, 1);
+
+    int isOversetSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isOversetSlip");
+    if (isOversetSlip)
+    {
+        int oversetInterpolationMethod = 0;
+        GlobalDataBase::UpdateData("oversetInterpolationMethod", &oversetInterpolationMethod, PHINT, 1);
+    }
 
     //! Is in fine-Grid initialization state.
     int isInIniting = 1;
@@ -221,7 +231,7 @@ void ParametersSelfCheckForCFD()
                 ostringstream oss;
                 oss << "The array \"visualVariables\" is error. The solver cannot export the data \"Tv,Te,Ev,Ee,Ne\" related to Chemical Non-equilibrium" << endl;
                 TK_Exit::ExceptionExit(oss);
-    }
+            }
         }
 
         if (visualVariables[i] == VISUAL_GAMA || visualVariables[i] == VISUAL_DAMKOHLER_NUMBER || visualVariables[i] == VISUAL_VIBNONEQ_NUMBER)
@@ -252,7 +262,7 @@ void ParametersSelfCheckForCFD()
         }
     }
 
-    delete [] visualVariables;    visualVariables = nullptr;
+    DelPointer(visualVariables);
 
     //! The parameters selfcheck of VisualWallVariables in wall_aircoef.dat.
     for (int i = 0; i < nVisualWallVariables; ++i)
@@ -289,7 +299,7 @@ void ParametersSelfCheckForCFD()
         }
     }
 
-    delete [] visualWallVariables;    visualWallVariables = nullptr;
+    DelPointer(visualWallVariables);
 
     if (isUnsteady)
     {
@@ -321,7 +331,7 @@ void ParametersSelfCheckForCFD()
         if (ifLowSpeedPrecon)
         {
             RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
-            RDouble referenceLength  = GlobalDataBase::GetDoubleParaFromDB("referenceLength");
+            RDouble referenceLength  = GlobalDataBase::GetDoubleParaFromDB("refLengthOfLowSpeed");
             RDouble gridScaleFactor  = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
             RDouble refMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
 

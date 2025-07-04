@@ -54,6 +54,11 @@ inline int Grid::GetNTotalCell() const
     return nTotalCell;
 }
 
+inline int Grid::GetNTotalLine() const
+{
+    return nTotalLine;
+}
+
 inline int Grid::GetNBoundFace() const
 { 
     return nBoundFace;

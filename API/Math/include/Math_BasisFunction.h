@@ -108,6 +108,17 @@ inline RDouble DISTANCE(RDouble *point1, RDouble *point2)
                 (point1[2] - point2[2]) * (point1[2] - point2[2]));
 }
 
+inline RDouble DistSQ(RDouble *a1, RDouble *a2, int dim)
+{
+    RDouble distSQ = 0.0;
+    while (--dim >= 0)
+    {
+        RDouble diff = a1[dim] - a2[dim];
+        distSQ += diff * diff;
+    }
+    return distSQ;
+}
+
 //! Swap the two input values.
 template < typename T >
 inline void SWAP(T &a, T &b)

@@ -35,6 +35,7 @@ private:
 
 private:
     void SetCoordinate();
+    void SetVolumeInfo();
     void SetBCInfo();
     void CheckMeshMultigrid();
 

@@ -946,7 +946,6 @@ void DumpToVTK::WriteVTKFilm()
         while (true)
         {
             if (TecioMission == Writecomplete) break;
-
             if (TecioMission != WriteBoundary && TecioMission != WriteBlock)
             {
                 TK_Exit::ExceptionExit("Error: vtkwrite code is wrong!");
@@ -1100,11 +1099,12 @@ DumpToTecio::~DumpToTecio()
 void DumpToTecio::Run()
 {
     InitVariables();
-    WriteGridFilm();
+    WriteGridFilm(OUTPUT_SURFACE);
+    WriteGridFilm(OUTPUT_BLK);    //! Seperate surface and BLK data into two different files.
     WriteSliceFilm();
 }
 
-void DumpToTecio::WriteGridFilm()
+void DumpToTecio::WriteGridFilm(int isOutputBLK)
 {
     if (GetFilename() == "")
     {
@@ -1112,16 +1112,50 @@ void DumpToTecio::WriteGridFilm()
     }
 
     ostringstream oss0;
-    if (! PHMPI::IsParallelRun())
+    if (GetDim() == THREE_D && GlobalDataBase::GetIntParaFromDB("plotFieldType") == TEC_SPACE::FieldVisual)
     {
-        oss0 << GetFilename();
+        if (OUTPUT_BLK == isOutputBLK)
+        {
+            if (! PHMPI::IsParallelRun())
+            {
+                oss0 << PHSPACE::AddSymbolToFileName(GetFilename(), '_', "BLK");
+            }
+            else
+            {
+                int fileID = PHMPI::GetFileIndexofCurrentProcessor();
+                string finalFileName = PHSPACE::AddSymbolToFileName(GetFilename(), "_BLK_", fileID);
+                oss0 << finalFileName;
+            }
+        }
+        else
+        {
+            if (!PHMPI::IsParallelRun())
+            {
+                oss0 << GetFilename();
+            }
+            else
+            {
+                int fileID = PHMPI::GetFileIndexofCurrentProcessor();
+                string finalFileName = PHSPACE::AddSymbolToFileName(GetFilename(), '_', fileID);
+                oss0 << finalFileName;
+            }
+        }
     }
     else
     {
-        int fileID = PHMPI::GetFileIndexofCurrentProcessor();
-        string finalFileName = PHSPACE::AddSymbolToFileName(GetFilename(), '_', fileID);
-        oss0 << finalFileName;
-    }
+        if (OUTPUT_BLK == isOutputBLK) return;    //! Write a single file in Two_D mode or when plotFieldType set to 0.
+
+        if (! PHMPI::IsParallelRun())
+        {
+            oss0 << GetFilename();
+        }
+        else
+        {
+            int fileID = PHMPI::GetFileIndexofCurrentProcessor();
+            string finalFileName = PHSPACE::AddSymbolToFileName(GetFilename(), '_', fileID);
+            oss0 << finalFileName;
+        }
+    }    
 
     string pltname = oss0.str();
     const char *filenames = pltname.c_str();
@@ -1164,7 +1198,8 @@ void DumpToTecio::WriteGridFilm()
     for (int iZone = 0; iZone < nzones; ++ iZone)
     {
         DataContainer *cdata = datalist[iZone];
-        
+        cdata->MoveToBegin();
+
         INTEGER4 IMxOrNumPts, JMxOrNumElements, KMxOrNumFaces;
         INTEGER4 ZoneType;
                /*ZoneType:      0 -- Ordered
@@ -1186,6 +1221,22 @@ void DumpToTecio::WriteGridFilm()
 
         int TecioMission;
         PHRead(cdata, &TecioMission, 1);
+
+        if (GetDim() == THREE_D && GlobalDataBase::GetIntParaFromDB("plotFieldType") == TEC_SPACE::FieldVisual)
+        {
+            if (OUTPUT_BLK == isOutputBLK)
+            {
+                if (TecioMission != WriteBlock) continue;    //! Output BLK data only.
+            }
+            else
+            {
+                if (TecioMission == WriteBlock) continue;    //! Output surface data.
+            }
+        }
+        else
+        {
+            //! BLK and surface are merged to output in the other cases.
+        }
 
         while (true)
         {
@@ -1317,7 +1368,7 @@ void DumpToTecio::WriteGridFilm()
             I = TECDAT112(&nTotalNode, x, &IsDouble);
             I = TECDAT112(&nTotalNode, y, &IsDouble);
             I = TECDAT112(&nTotalNode, z, &IsDouble);
-
+            
             int nvarplot = GetNvarplot();
 
             for (int m = 0; m < nvarplot; ++ m)
@@ -1601,17 +1652,22 @@ void DumpToTecplotASCII::WriteFlowFilm()
     }
 
     ostringstream ossFileName;
+    ostringstream ossBlockFileName;    //! Seperate boundary and block data to two different files.
     if (! PHMPI::IsParallelRun())
     {
         ossFileName << GetFilename();
+        ossBlockFileName << PHSPACE::AddSymbolToFileName(GetFilename(), '_', "BLK");
     }
     else
     {
         int fileID = PHMPI::GetFileIndexofCurrentProcessor();
         string finalFileName = PHSPACE::AddSymbolToFileName(GetFilename(), '_', fileID);
+        string finalBlockFileName = PHSPACE::AddSymbolToFileName(GetFilename(), "_BLK_", fileID);
         ossFileName << finalFileName;
+        ossBlockFileName << finalBlockFileName;
     }
     string flowFileName = ossFileName.str();
+    string flowBlockFileName = ossBlockFileName.str();
 
     fstream flowFile;
     OpenFile(flowFile, flowFileName, ios_base::out|ios_base::trunc);
@@ -1619,6 +1675,16 @@ void DumpToTecplotASCII::WriteFlowFilm()
     flowFile << setiosflags(ios::scientific);
     flowFile << setprecision(10);
     flowFile << Variables << endl;
+
+    fstream flowBlockFile;
+    if (GetDim() == THREE_D && GlobalDataBase::GetIntParaFromDB("plotFieldType") == TEC_SPACE::FieldVisual)
+    {
+        OpenFile(flowBlockFile, flowBlockFileName, ios_base::out|ios_base::trunc);
+        flowBlockFile << setiosflags(ios::left);
+        flowBlockFile << setiosflags(ios::scientific);
+        flowBlockFile << setprecision(10);
+        flowBlockFile << Variables << endl;
+    }
 
     map <int, string> bcNameMap;
     bcNameMap.insert(pair<int, string>(0 , "NO_BOUNDARY_CONDITION"));
@@ -1682,7 +1748,21 @@ void DumpToTecplotASCII::WriteFlowFilm()
 
             if (type == PHSPACE::STRUCTGRID)
             {
-                DumpOrderedFlow(flowFile, cdata, ossZoneTitle.str());
+                if (dumpMission == WriteBlock)
+                {
+                    if (GetDim() == THREE_D)
+                    {
+                        DumpOrderedFlow(flowBlockFile, cdata, ossZoneTitle.str());
+                    }
+                    else
+                    {
+                        DumpOrderedFlow(flowFile, cdata, ossZoneTitle.str());
+                    }
+                }
+                else
+                {
+                    DumpOrderedFlow(flowFile, cdata, ossZoneTitle.str());
+                }
             }
             else if (type == PHSPACE::UNSTRUCTGRID)
             {
@@ -1692,7 +1772,14 @@ void DumpToTecplotASCII::WriteFlowFilm()
                 }
                 else
                 {
-                    DumpFlowByFaceTopo(flowFile, cdata, ossZoneTitle.str());
+                    if (GetDim() == THREE_D)
+                    {
+                        DumpFlowByFaceTopo(flowBlockFile, cdata, ossZoneTitle.str());
+                    }
+                    else
+                    {
+                        DumpFlowByFaceTopo(flowFile, cdata, ossZoneTitle.str());
+                    }
                 }
             }
             else
@@ -1705,6 +1792,10 @@ void DumpToTecplotASCII::WriteFlowFilm()
     }
 
     CloseFile(flowFile);
+    if (GetDim() == THREE_D && GlobalDataBase::GetIntParaFromDB("plotFieldType") == TEC_SPACE::FieldVisual)
+    {
+        CloseFile(flowBlockFile);
+    }
 }
 
 void DumpToTecplotASCII::DumpFlowByFaceTopo(fstream &flowFile, DataContainer *data, string zoneTitle)
