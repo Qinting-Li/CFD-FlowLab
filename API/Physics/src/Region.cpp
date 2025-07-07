@@ -1157,7 +1157,7 @@ void Region::InitOriginalGrid()
         }
         writeTecplotByOriginalGrid->SetOriginalGrid(grids);
         writeTecplotByOriginalGrid->Initialize();
-        DelPointer2(mergegrid);
+        DelPointer(mergegrid);
     }
     else if (STRUCTGRID == systemGridType)
     {
@@ -1180,7 +1180,7 @@ void Region::InitOriginalGrid()
         }
         writeTecplotByOriginalGrid->SetOriginalGrid(grids);
         writeTecplotByOriginalGrid->Initialize();
-        DelPointer2(mergegrid);
+        DelPointer(mergegrid);
     }
 
     DelPointer(ordinaryGridIndexOfEachZoneGlobal);

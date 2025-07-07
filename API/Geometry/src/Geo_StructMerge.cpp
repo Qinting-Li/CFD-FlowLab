@@ -810,7 +810,7 @@ OriginalStructGridMerge::~OriginalStructGridMerge()
     nTotalZone = 0;
     if (mergegrid)
     {
-        DelPointer2(mergegrid);
+        DelPointer(mergegrid);
         DelPointer(ni);
         DelPointer(nj);
         DelPointer(nk);
@@ -820,14 +820,14 @@ OriginalStructGridMerge::~OriginalStructGridMerge()
 
         for (int iBlock = 0; iBlock < nTotalblock; ++ iBlock)
         {
-            DelPointer2(coordinates[iBlock]);
+            DelPointer(coordinates[iBlock]);
         }
 
-        DelPointer3(coordinates);
+        DelPointer(coordinates);
         DelPointer(nBCRegion);
-        DelPointer2(compositeBCRegion);
+        DelPointer(compositeBCRegion);
         DelPointer(nIFace);
-        DelPointer2(interfaceInfo);
+        DelPointer(interfaceInfo);
     }
     nTotalblock = 0;
     nDim        = 0;

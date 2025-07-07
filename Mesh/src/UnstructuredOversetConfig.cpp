@@ -183,10 +183,10 @@ OversetConfigFactoryMulti::~OversetConfigFactoryMulti()
         zonesInterpolateCells[iZone] = nullptr;
     }
 
-    DelPointer2(oversetConfigMultiZone);
-    DelPointer2(zonesSearchNodes);
-    DelPointer2(zonesSearchLines);
-    DelPointer2(zonesInterpolateCells);
+    DelPointer(oversetConfigMultiZone);
+    DelPointer(zonesSearchNodes);
+    DelPointer(zonesSearchLines);
+    DelPointer(zonesInterpolateCells);
 
     for (unsigned iBlock = 0; iBlock < innerGrid.size(); ++iBlock)
     {
