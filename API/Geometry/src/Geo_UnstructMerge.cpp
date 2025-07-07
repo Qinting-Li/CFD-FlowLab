@@ -53,28 +53,28 @@ OriginalUnstructGridMerge::~OriginalUnstructGridMerge()
     nTotalZone = 0;
     if (mergegrid)
     {
-        DelPointer2(mergegrid);
+        DelPointer(mergegrid);
         DelPointer(nTotalNode);
         DelPointer(nTotalFace);
         DelPointer(nTotalCell);
         for (int iBlock = 0; iBlock < nTotalBlock; ++ iBlock)
         {
-            DelPointer2(coordinates[iBlock]);
+            DelPointer(coordinates[iBlock]);
         }
 
-        DelPointer3(coordinates);
+        DelPointer(coordinates);
 
-        DelPointer2(nodeNumberOfEachFace);
-        DelPointer2(face2Node);
-        DelPointer2(leftCellOfFace);
-        DelPointer2(rightCellOfFace);
-        DelPointer2(nodeNumberOfEachCell);
-        DelPointer2(keyActiveOfCells);
-        DelPointer2(cell2Node);
+        DelPointer(nodeNumberOfEachFace);
+        DelPointer(face2Node);
+        DelPointer(leftCellOfFace);
+        DelPointer(rightCellOfFace);
+        DelPointer(nodeNumberOfEachCell);
+        DelPointer(keyActiveOfCells);
+        DelPointer(cell2Node);
         DelPointer(nIFace);
-        DelPointer2(interfaceInfo);
+        DelPointer(interfaceInfo);
         DelPointer(nBoundFace);
-        DelPointer3(bcInfo);
+        DelPointer(bcInfo);
     }
 }
 

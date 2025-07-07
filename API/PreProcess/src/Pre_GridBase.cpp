@@ -1632,7 +1632,7 @@ void CGNSBase::ComputeCellToNode(Base_Grid_Conn *gConn, BaseElement *baseElem)
             DelPointer(bcConnList[iBCRegion]);
         }
     }
-    DelPointer2(bcConnList);
+    DelPointer(bcConnList);
 
     DelPointer(iStart);
     DelPointer(iEnd);
