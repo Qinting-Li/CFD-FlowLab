@@ -6,7 +6,7 @@
 
 ## 1.软件简介
 
-&ensp;&ensp;&ensp;&ensp;风雷软件<sup>[1,2]</sup>（PHengLEI，Platform for Hybrid ENGineering simulation of flows）是中国空气动力研究与发展中心（CARDC）研发的面向流体工程的混合CFD平台。平台以面向对象的设计理念，采用C++语言编程。2020年12月，风雷软件正式面向全国开源，与其他开源CFD软件相比，风雷软件具有扩展能力强、开发难度低、计算效率高等特点。（更多介绍请阅读PHengLEI/Documents文件夹下的**《风雷软件应用与开发指南》**）
+&ensp;&ensp;&ensp;&ensp;风雷软件<sup>[1,2]</sup>（PHengLEI，Platform for Hybrid ENGineering simulation of flows）是中国空气动力研究与发展中心（CARDC）研发的面向流体工程的混合CFD平台。平台以面向对象的设计理念，采用C++语言编程。2020年12月，风雷软件正式面向全国开源，与其他开源CFD软件相比，风雷软件具有扩展能力强、开发难度低、计算效率高等特点。（更多介绍请阅读PHengLEI/Documents文件夹下的《风雷软件应用与开发指南》）
 
 &ensp;&ensp;&ensp;&ensp;风雷软件更多动态和Demo请登录以下网址查看：
 
@@ -14,11 +14,7 @@
 - 代码库地址：https://forge.osredm.com/PHengLEI/PHengLEI
 - 算例库地址：https://forge.osredm.com/PHengLEI/PHengLEI-TestCases
 - 论坛（常见问题、算例展示、技术分享）地址：https://osredm.com/forums/theme/38
-
-&ensp;&ensp;&ensp;&ensp;风雷软件用户录制视频教程地址：
-
-- 视频教程：https://www.bilibili.com/video/BV1eX4y1T7yW?from=search&seid=9482198996609923785
-
+- 风雷软件用户录制视频教程地址：https://www.bilibili.com/video/BV1eX4y1T7yW
 [1] 赵钟,等.风雷（PHengLEI）通用CFD软件设计[J]. 计算机工程与科学, 2020, 42(2): 210-219.( ZHAO Zhong, et al. Design of general CFD software PHengLEI [J]. Computer Engineering & Science, 2020, 42(2): 210-219. (in Chinese) )
 [2] 赵钟,等.适用于任意网格的大规模并行CFD计算框架PHengLEI[J]. 计算机学报, 2019, 42(11):2368
 -2383. ( ZHAO Zhong, et al. PHengLEI: A Large Scale Parallel CFD Framework for Arbitrary Grids [J]. Chinese Journal of Computers, 2019, 42(11): 2368-2383. (in Chinese) )
@@ -27,7 +23,7 @@
 
 ## 2.软件功能
 
-&ensp;&ensp;&ensp;&ensp;风雷软件是一款结构/非结构通用CFD软件，计算范围覆盖低速、亚跨声速和高超声速。软件采用有限体积法求解定常/非定常的雷诺平均NS方程（RANS方程），集成了典型湍流模型，如SA、SST模型等；无粘项采用Roe、Vanleer、AUSM、Steger-Warming等格式；粘性项采用中心格式，时间推进采用LU-SGS或Block LU-SGS隐式方法求解；非定常计算时，采用双时间步方法。针对大规模问题，软件支持分区并行计算，并且使用多重网格技术加速收敛。同时，风雷软件也提供常用前/后置接口，如Gridgen、ICEM-CFD、FieldView、Tecplot、Ensight、ParaView等。
+&ensp;&ensp;&ensp;&ensp;风雷软件是一款结构/非结构通用CFD软件，计算范围覆盖低速、亚跨和高速；发展面向多区域多算法融合的混合计算框架，支持结构/非结构不同网格类型混合，二阶/高阶不同求解精度混合，可压/不可压不同求解器类型混合等多种混合策略；构建适配任意硬件架构的多层级混合并行模型，支持MPI、MPI/OpenMP、MPI/CUDA等多种同构及异构并行策略，具备百亿网格百万核并行模拟能力；发展多种高效计算加速策略，支持LUSGS/GMRES等多种高效隐式加速算法、具备湍流AI预测能力；支持高精度方法、SIMPLE不可压、多组分计算、多孔介质模拟，提供SA/SST/湍流壁面函数等多种湍流模型、具备RANS/DES/LES的定常/非定常湍流模拟能力，可满足常规工程应用需求；支持网格加密、网格变形、重叠网格、动网格等多种网格功能；支持LBM、基于LBM的浸入边界流固耦合方法，可满足用户多样化需求。同时，风雷软件也提供常用前、后置软件接口，如Gridgen、Pointwise、ICEM-CFD、FieldView、Tecplot、Ensight、ParaView等。
 
 
 ## 3.代码获取
@@ -54,15 +50,44 @@
 
 ### 4.2 Linux环境配置
 
-&ensp;&ensp;&ensp;&ensp;Linux环境配置的简要步骤如下：
+#### 4.2.1 本地构建模式
 
-1. 安装Cmake；
-2. 安装MPICH3库；
-3. 编译HDF5库；
-4. 编译CGNS库；
-5. 编译metis库和parmetis库。
+1. 安装基础工具链：
+•	GCC 编译器
+•	MPICH3 库（MPI 实现）
+•	CMake（最低版本要求 3.18）
+2. 将上述工具的可执行路径添加至环境变量（如 ~/.bashrc 或~/.zshrc）
+3. 在项目根目录 PHengLEI/ 下执行make config
+此命令触发：
+•	第三方依赖库的自动化编译
+•	风雷求解器的一键构建
+**注意：**
+&ensp;&ensp;&ensp;&ensp;构建系统集成编译环境自检功能。若检测到非推荐环境（如低版本编译器），需手动确认（输入 y + 回车）方可继续。
 
-**备注：**Linux环境配置的具体步骤请阅读《风雷软件应用与开发指南》。
+#### 4.2.2 预配置超算构建模式
+
+1. 在项目根目录 PHengLEI/ 下执行：
+<BASH>
+sh ./hpc_build.sh
+2. 根据提示选择目标超算平台及编译环境，当前支持：
+
+| 超算平台 | 编译环境 |
+|:------------:|:------------:|
+| 成都超算中心   | GCC/Intel   |
+| 天津超算中心   | ARM       |
+| 广州超算中心   | GCC   |
+| 无锡超算中心   | GCC   |
+| 济南超算中心   | Intel   |
+
+**注意：**
+&ensp;&ensp;&ensp;&ensp;构建完成后，必须执行以下命令激活环境配置：
+&ensp;&ensp;&ensp;&ensp;<BASH>
+&ensp;&ensp;&ensp;&ensp;source env.sh
+&ensp;&ensp;&ensp;&ensp;否则后续作业提交可能因环境变量未加载而失败。
+
+**附加说明**
+•	本系统同时支持逐步手动编译流程，详见PHengLEI/Documents文件夹下的《风雷软件应用与开发指南》。
+•	自动化构建基于 Makefile 统一构建系统，实现依赖解析、环境检测与编译流程集成。
 
 ## 5.如何贡献
 
