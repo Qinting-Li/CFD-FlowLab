@@ -32,8 +32,8 @@ OversetSwapManager::OversetSwapManager()
 
 OversetSwapManager::~OversetSwapManager()
 {
-    delete oversetInterplateCellManager;
-    delete oversetDonorCellManager;
+    FreePointer(oversetInterplateCellManager);
+    FreePointer(oversetDonorCellManager);
 };
 
 void OversetSwapManager::AddOversetInterplateCell(OversetInterplateCell *oversetInterplateCell)
@@ -276,10 +276,10 @@ void OversetInformationProxy::FreeOversetCellContainer(PHVector1D < OversetCell 
     uint_t numberOfElements = oversetCellContainer->size();
     for (int iElement = 0; iElement < numberOfElements; ++ iElement)
     {
-        delete (* oversetCellContainer)[iElement];
+        FreePointer((*oversetCellContainer)[iElement]);
 
     }
-    delete oversetCellContainer;
+    FreePointer(oversetCellContainer);
 }
 
 void OversetInformationProxy::EncodeOversetInformation(DataContainer *dataContainer)
@@ -642,7 +642,6 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
             }
         }
     }
-
     FreePointer(dataContainerGlobal);
 }
 
@@ -779,7 +778,7 @@ OversetInterplateCellManager::~OversetInterplateCellManager()
 {
     for (unsigned int i = 0; i < oversetInterplateCellContainer.size(); ++ i)
     {
-        delete oversetInterplateCellContainer[i];
+        FreePointer(oversetInterplateCellContainer[i]);
     }
     FreePointer(dataStorage);
 }
@@ -896,9 +895,9 @@ OversetDonorCellManager::~OversetDonorCellManager()
 {
     for (unsigned int i = 0; i < oversetDonorCellContainer.size(); ++ i)
     {
-        delete oversetDonorCellContainer[i];
+        FreePointer(oversetDonorCellContainer[i]);
     }
-    delete dataStorage;
+    FreePointer(dataStorage);
 }
 
 int OversetDonorCellManager::GetNumberOfOversetDonorCells(int iNeighbor)

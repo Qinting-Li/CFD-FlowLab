@@ -23,31 +23,30 @@ using namespace YHAMG;
 #endif
 namespace PHSPACE
 {
-    
-    class yhamgCalculator : public LinearEquationSystemCalculator
-    {
+class yhamgCalculator : public LinearEquationSystemCalculator
+{
 #ifdef USE_YhamgLib
-    private:
-        Grid *grid;
-        ParOperator *A;
-        ParOperator **PrecondList;
-        vector<int> *ColVectors;
-        int *exter_colind2Face;
+private:
+    Grid *grid;
+    ParOperator *A;
+    ParOperator **PrecondList;
+    vector<int> *ColVectors;
+    int *exter_colind2Face;
 
-        ParVector *b;
-        ParVector *x;
+    ParVector *b;
+    ParVector *x;
 #endif
 
-    public:
-        // constructor & destructor
-        yhamgCalculator();
+public:
+    // constructor & destructor
+    yhamgCalculator();
 
-        virtual ~yhamgCalculator();
+    virtual ~yhamgCalculator();
 
-    public:
-        void mathLibSolveInit(Grid *gridIn);
-        void mathLibSolve(Grid *gridIn, int iEquation, RDouble *x, RDouble *diagCoef, RDouble *b, RDouble *upACOFFace, RDouble *downACOFFace);
-        void mathLibSolveFinalize();
+public:
+    void mathLibSolveInit(Grid *gridIn);
+    void mathLibSolve(Grid *gridIn, int iEquation, RDouble *x, RDouble *diagCoef, RDouble *b, RDouble *upACOFFace, RDouble *downACOFFace);
+    void mathLibSolveFinalize();
 
     };
 

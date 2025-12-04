@@ -20,6 +20,12 @@ namespace PHSPACE
 {
 class TurbSolverStrFD : public TurbSolverStr
 {
+private:
+    //! Resolved control fuction of SATESXXX, such as SATESSMAG.
+    RDouble3D *SATESFr;
+    RDouble3D *SATESCx;
+    RDouble3D *LESRate;
+
 public:
     TurbSolverStrFD();
     ~TurbSolverStrFD();
@@ -57,6 +63,34 @@ private:
     void DecompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *gridIn, const int &zoneIndex, const int &neighborZoneIndex, const int &nEquation);
     void SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
     void SolveLUSGSBackward(Grid *gridIn, FieldProxy * dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
+
+    //! Interface: To define the fr for SATES simulation.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    void ComputeSATESFr(Grid *gridIn);
+
+    //! Interface: To define the model coefficient for SATES simulation.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    void ComputeSATESCx(Grid *gridIn);
+
+    //! Interface: To define the model coefficient of Smagorinsky model for SATES simulation.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    void ComputeSATESSMAG(Grid *gridIn);
+
+    //! Interface: To compute the modulus of symmetric tensors for SATES simulation.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    void ComputeSMAGRate(Grid *gridIn);
+
+    //! To get the resolved control function for two equation model turbulent simulation.
+    RDouble3D *GetSATESFr() { return this->SATESFr; }
+    void SetSATESFr(RDouble3D *Fr) { this->SATESFr = Fr; }
+
+    //! To get the coefficient of cutoff length scale.
+    RDouble3D *GetSATESCx() { return this->SATESCx; }
+    void SetSATESCx(RDouble3D *Cx) { this->SATESCx = Cx; }
+
+    //! To get the coefficient of cutoff length scale.
+    RDouble3D *GetLESRate() { return this->LESRate; }
+    void SetLESRate(RDouble3D *Rate) { this->LESRate = Rate; }
 };
 
 }

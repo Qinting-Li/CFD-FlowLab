@@ -27,21 +27,21 @@ void unapCalculator::mathLibSolveInit(Grid *gridIn)
     int nTotalFace = grid->GetNTotalFace();
     int *leftCellOfFace = grid->GetLeftCellOfFace();
     int *rightCellOfFace = grid->GetRightCellOfFace();
-    
+
     int nInternalFaces = nTotalFace - nBoundFace;
-    
+
 #if defined(REORDER)
 #else
     initUtility();
 #endif
-    
+
     Communicator* comm = &COMM::getGlobalComm();
-    
+
     using namespace UNAP;
-    
+
     label nProcs = comm->getMySize();
     label myId = comm->getMyId();
-    
+
     lduA = new LduMatrix(comm);
     upperAddr = new labelVector(nInternalFaces, comm);
     lowerAddr = new labelVector(nInternalFaces, comm);
@@ -50,17 +50,17 @@ void unapCalculator::mathLibSolveInit(Grid *gridIn)
     diag  = new scalarVector(nTotalCell, comm);
     b = new scalarVector(nTotalCell, comm);
     x = new scalarVector(nTotalCell, 1.0, comm);
-    
+
     for (int iFace = nBoundFace; iFace < nTotalFace; iFace++)
     {
         int le = leftCellOfFace[iFace];
         int re = rightCellOfFace[iFace];
         int jFace = iFace - nBoundFace;
-    
+
         (*lowerAddr)[jFace] = le;
         (*upperAddr)[jFace] = re;
     }
-    
+
     lduA->setMatrixTopology(nTotalCell, *upperAddr, *lowerAddr, false);
 
     int *localCell2GlobalMap = grid->GetLocalCell2GlobalMap();
@@ -149,14 +149,14 @@ void unapCalculator::mathLibSolve(Grid *gridIn, int iEquation, RDouble *fi, RDou
         (*lower)[jFace] = dnNeighCoef[iFace]; 
         (*upper)[jFace] = upNeighCoef[iFace];
     }
-    
+
     for (int iCell = 0; iCell < nTotalCell; iCell++)
     {
         (*diag)[iCell] = diagCoef[iCell];
         (*b)[iCell] = binput[iCell];
         (*x)[iCell] = 1.0;
     }
-    
+
     lduA->setMatrixCoeffients(*diag, *upper, *lower, false);
     
     InterfaceInfo * interfaceInfo= grid->GetInterfaceInfo();
@@ -202,7 +202,7 @@ void unapCalculator::mathLibSolve(Grid *gridIn, int iEquation, RDouble *fi, RDou
     {
         //precond = new LduBJacobiPrecond(*lduA);
     }
-    
+
     #if defined(DSWACC)
     lduA->constructRSSIterator();
     #endif
@@ -219,7 +219,7 @@ void unapCalculator::mathLibSolve(Grid *gridIn, int iEquation, RDouble *fi, RDou
         unapSolver->SET_ifPrint(isPrintLinearSolver);
         unapSolver->SET_relTol(iterTol);
         unapSolver->SET_tolerance(tol);
-    
+
         solverPerf = static_cast<GMRES *>(unapSolver)->solve(*x, *lduA, *b);
         static_cast<GMRES*>(unapSolver)->~GMRES();
     }
@@ -231,7 +231,7 @@ void unapCalculator::mathLibSolve(Grid *gridIn, int iEquation, RDouble *fi, RDou
         unapSolver->SET_ifPrint(isPrintLinearSolver);
         unapSolver->SET_relTol(iterTol);
         unapSolver->SET_tolerance(tol);
-    
+
         solverPerf = unapSolver->solve(*x, *lduA, *b);
         static_cast<PBiCGStab*>(unapSolver)->~PBiCGStab();
     }
@@ -241,7 +241,7 @@ void unapCalculator::mathLibSolve(Grid *gridIn, int iEquation, RDouble *fi, RDou
         aggl.SET_maxLevels(50);
         aggl.SET_rowSizeInCoarsestLevel(200);
         aggl.agglomerate();
-        
+
         //unapSolver = new MGSolver(*lduA, aggl);
 
         unapSolver->SET_tolerance(tol);
@@ -254,7 +254,7 @@ void unapCalculator::mathLibSolve(Grid *gridIn, int iEquation, RDouble *fi, RDou
         static_cast<MGSolver*>(unapSolver)->initSmoothers();
         static_cast<MGSolver*>(unapSolver)->setUp();
         solverPerf = static_cast<MGSolver*>(unapSolver)->solve(*x, *lduA, *b);
-        
+
         static_cast<MGSolver*>(unapSolver)->~MGSolver();
     }
     else if (linearSolverID[iEquation] == PCGMethod) 
@@ -265,11 +265,10 @@ void unapCalculator::mathLibSolve(Grid *gridIn, int iEquation, RDouble *fi, RDou
         unapSolver->SET_ifPrint(isPrintLinearSolver);
         unapSolver->SET_tolerance(tol);
         unapSolver->SET_relTol(iterTol);
-        
+
         solverPerf = static_cast<PCG *>(unapSolver)->solve(*x, *lduA, *b);
         static_cast<PCG*>(unapSolver)->~PCG();
     }
-    
 
     RDouble timeEndSolve = PHSPACE::TIME_SPACE::GetWallTime();
     //ActualIterStepNum[constVarNumToSolveVarNum[iEquation]] = solverPerf.nIterations();

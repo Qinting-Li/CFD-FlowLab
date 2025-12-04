@@ -36,8 +36,6 @@ void RunUnstructuredOversetGridConfig();    //! Perform an oversetConfig individ
 
 void InitializeOversetGridConfig();
 
-void InitializeExplicitMethod();
-
 void ReConfigUnstructOversetGrid();
 
 void ConfigOversetSlip();
@@ -736,8 +734,7 @@ public:    //! Check&Output.
             RDouble dv = Dot(v,v);
             if (du==0 && dv==0)
             {   //! both segments are points
-                //! they are distinct points
-                if (s1P0 != s2P0)
+                if (s1P0 != s2P0)    //! they are distinct points
                 {
                     return 0;
                 }
@@ -937,15 +934,10 @@ public:    //! Check&Output.
             return 1;
         }
 
-        delete [] minBoxOfTemp;    minBoxOfTemp = nullptr;
-        delete [] maxBoxOfTemp;    maxBoxOfTemp = nullptr;
-
-        delete [] fnTemp;    fnTemp = nullptr;
-        delete [] fnTemp;    fnTemp = nullptr;
-
-        delete [] tnTemp;    tnTemp = nullptr;
-        delete [] tnTemp;    tnTemp = nullptr;
-
+        DelPointer(minBoxOfTemp);
+        DelPointer(maxBoxOfTemp);
+        DelPointer(fnTemp);
+        DelPointer(tnTemp);
     }
     inline RDouble ComputeTriangleArea(Vector3D face2Node1, Vector3D face2Node2, Vector3D face2Node3, Vector3D fn,  RDouble* fnTemp)
     {
@@ -1108,7 +1100,7 @@ private:
         if (iPrint % numberOfWordsInEachLine != 0) file << endl;
         file << endl;
 
-        delete [] valueFull;    valueFull = nullptr;
+        DelPointer(valueFull);
     }
 
     template < typename T >

@@ -31,6 +31,11 @@
 #ifdef USE_INCOMSOLVER
 #include "IncomUnstructSolver.h"
 #endif
+#ifdef USE_LagrangianParticle
+#include "ParticleSolver.h"
+#include "ParticlePointSolverParallelDomain.h"
+#endif
+
 #ifdef USE_SpecDiffHybSolver
 #include "SpecDiffHybSolver.h"
 #include "SpecSolver.h"
@@ -1167,6 +1172,24 @@ void Simulation::DefineAndCreateSolvers()
                 solverList.push_back(solver);
             }
         }
+#ifdef USE_LagrangianParticle
+        int iParticleModel = 0;
+
+        bool useParSolver = GlobalDataBase::IsExist("iParticleModel", PHINT, 1);
+
+        if (useParSolver)
+        {
+            zone->GetData("iParticleModel", &iParticleModel, PHINT, 1);
+            if (iParticleModel == 1)
+            {
+                PHSolver* solver = new ParticlePointSolverParallelDomain();
+                solverList.push_back(solver);
+                solver->SetName("ParticlePointSolverParallelDomain");
+            }
+        }
+
+#endif
+
 #endif
 
         //! Finally, push the solvers into the list.
@@ -1640,6 +1663,13 @@ void Simulation::SolveUnsteady()
         for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
         {
             Controller *controller = new Controller(iSolver, this->region);
+            
+            if (this->isParticleSolver(nSolver, iSolver))
+            {
+                controller->SolverMultiphaseFlow(iSolver);
+                delete controller;
+                continue;
+            }
 
             controller->SolveSteadyField();
 
@@ -1705,6 +1735,28 @@ bool Simulation::IsSubIterationConvergence(const int &innerIterStep, const int &
     return isSubIterationConvergence;
 }
 
+bool Simulation::isParticleSolver(int& nSolver, int& iSolver)
+{
+    bool isParticleSolver = false;
+#ifdef USE_LagrangianParticle
+    int iParticleModel = 0;
+    bool useParSolver = GlobalDataBase::IsExist("iParticleModel", PHINT, 1);
+    if (useParSolver)
+    {
+        iParticleModel = GlobalDataBase::GetIntParaFromDB("iParticleModel");
+        if (iParticleModel == 1)
+        {
+            int indexSolver = iSolver + 1;
+            int numSolver = nSolver;
+            if (indexSolver == numSolver)
+            {
+                isParticleSolver = true;
+            }
+        }
+    }
+#endif
+    return isParticleSolver;
+}
 
 }
 

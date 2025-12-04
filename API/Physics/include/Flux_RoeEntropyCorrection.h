@@ -28,7 +28,7 @@ typedef Sacado::Fad::DFad<RDouble> ADReal;
 //! The entropy correction (fix) in Roe scheme of inviscid flux, which is used to limit the magnitude of the three eigenvalue.\n
 //!    @param[in] eigv1,2,3                    The three eigenvalue, which are V/V+c/V-c on the face. They will be corrected and returned.\n
 //!    @param[in] vn                           The normal velocity on the face.\n
-//!    @param[in] absVel                       The absolute velocity on the face.\n
+//!    @param[in] absVel                   The absolute velocity on the face.\n
 //!    @param[in] RoeEntropyCorrectionMethod   The Roe entropy correction method.\n
 //!    @param[in] entropyCorrectionCoef        The Roe entropy correction coefficient.\n
 template <typename T>

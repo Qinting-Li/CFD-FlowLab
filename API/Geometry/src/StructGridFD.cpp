@@ -401,14 +401,14 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
     int j2ed = nj2;
     int k2st =   1;
     int k2ed = nk2;
-    
-    RDouble3D &x2 = * new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
-    RDouble3D &y2 = * new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
-    RDouble3D &z2 = * new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
-    
-    RDouble3D &xx = * this->GetStructX();
-    RDouble3D &yy = * this->GetStructY();
-    RDouble3D &zz = * this->GetStructZ();
+
+    RDouble3D &x2 = *new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
+    RDouble3D &y2 = *new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
+    RDouble3D &z2 = *new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
+
+    RDouble3D &xx = *this->GetStructX();
+    RDouble3D &yy = *this->GetStructY();
+    RDouble3D &zz = *this->GetStructZ();
 
     //! grid refined block by block
 
@@ -485,11 +485,11 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
 
     //! calculate mesh transform metrics
 
-    RDouble2D * lineData1,* lineData2;
+    RDouble2D *lineData1,*lineData2;
 
     //! calculate mesh transform metrics : first grid delta
 
-    RDouble4D &gridDeltaFirst = * new RDouble4D(Range(1, 9), Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
+    RDouble4D &gridDeltaFirst = *new RDouble4D(Range(1, 9), Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
 
     //! calculate mesh transform metrics : first grid delta (I direction)
 
@@ -500,14 +500,13 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
     {
         for (j2 = j2st; j2 <= j2ed; ++ j2)
         {
-            
             for (i2 = i2st; i2 <= i2ed; ++ i2)
             {
                 (*lineData1)(1, i2) = x2(i2, j2, k2);
                 (*lineData1)(2, i2) = y2(i2, j2, k2);
                 (*lineData1)(3, i2) = z2(i2, j2, k2);
             }
-            
+
             GridDelta(Range(1, 3), Range(1, ni2), lineData1, lineData2);
 
             for (i2 = i2st; i2 <= i2ed; ++ i2)
@@ -516,7 +515,6 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
                 gridDeltaFirst(2, i2, j2, k2) = (*lineData2)(2, i2);
                 gridDeltaFirst(3, i2, j2, k2) = (*lineData2)(3, i2);
             }
-
         }
     }
 
@@ -532,14 +530,13 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
     {
         for (i2 = i2st; i2 <= i2ed; ++ i2)
         {
-            
             for (j2 = j2st; j2 <= j2ed; ++ j2)
             {
                 (*lineData1)(1, j2) = x2(i2, j2, k2);
                 (*lineData1)(2, j2) = y2(i2, j2, k2);
                 (*lineData1)(3, j2) = z2(i2, j2, k2);
             }
-            
+
             GridDelta(Range(1, 3), Range(1, nj2), lineData1, lineData2);
 
             for (j2 = j2st; j2 <= j2ed; ++ j2)
@@ -548,7 +545,6 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
                 gridDeltaFirst(5, i2, j2, k2) = (*lineData2)(2, j2);
                 gridDeltaFirst(6, i2, j2, k2) = (*lineData2)(3, j2);
             }
-
         }
     }
 
@@ -564,14 +560,13 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
     {
         for (i2 = i2st; i2 <= i2ed; ++ i2)
         {
-            
             for (k2 = k2st; k2 <= k2ed; ++ k2)
             {
                 (*lineData1)(1, k2) = x2(i2, j2, k2);
                 (*lineData1)(2, k2) = y2(i2, j2, k2);
                 (*lineData1)(3, k2) = z2(i2, j2, k2);
             }
-            
+
             GridDelta(Range(1, 3), Range(1, nk2), lineData1, lineData2);
 
             for (k2 = k2st; k2 <= k2ed; ++ k2)
@@ -580,7 +575,6 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
                 gridDeltaFirst(8, i2, j2, k2) = (*lineData2)(2, k2);
                 gridDeltaFirst(9, i2, j2, k2) = (*lineData2)(3, k2);
             }
-
         }
     }
 
@@ -590,7 +584,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
     //! calculate mesh transform metrics : second grid delta
 
     RDouble4D &gridDeltaSecond = * new RDouble4D(Range(1, 18), Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
-    
+
     //! calculate mesh transform metrics : second grid delta (I direction)
 
     lineData1 = new RDouble2D(Range(1, 6), Range(1, ni2), fortranArray);
@@ -600,7 +594,6 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
     {
         for (j2 = j2st; j2 <= j2ed; ++ j2)
         {
-            
             for (i2 = i2st; i2 <= i2ed; ++ i2)
             {
                 (*lineData1)(1, i2) = half * (z2(i2, j2, k2) * gridDeltaFirst(8, i2, j2, k2) - y2(i2, j2, k2) * gridDeltaFirst(9, i2, j2, k2));
@@ -610,7 +603,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
                 (*lineData1)(5, i2) = half * (z2(i2, j2, k2) * gridDeltaFirst(4, i2, j2, k2) - x2(i2, j2, k2) * gridDeltaFirst(6, i2, j2, k2));
                 (*lineData1)(6, i2) = half * (x2(i2, j2, k2) * gridDeltaFirst(5, i2, j2, k2) - y2(i2, j2, k2) * gridDeltaFirst(4, i2, j2, k2));
             }
-            
+
             GridDelta(Range(1, 6), Range(1, ni2), lineData1, lineData2);
 
             for (i2 = i2st; i2 <= i2ed; ++ i2)
@@ -620,7 +613,6 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
                     gridDeltaSecond(n, i2, j2, k2) = (*lineData2)(n, i2);
                 }
             }
-
         }
     }
 
@@ -636,7 +628,6 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
     {
         for (i2 = i2st; i2 <= i2ed; ++ i2)
         {
-            
             for (j2 = j2st; j2 <= j2ed; ++ j2)
             {
                 (*lineData1)(1, j2) = half * (y2(i2, j2, k2) * gridDeltaFirst(9, i2, j2, k2) - z2(i2, j2, k2) * gridDeltaFirst(8, i2, j2, k2));
@@ -646,7 +637,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
                 (*lineData1)(5, j2) = half * (x2(i2, j2, k2) * gridDeltaFirst(3, i2, j2, k2) - z2(i2, j2, k2) * gridDeltaFirst(1, i2, j2, k2));
                 (*lineData1)(6, j2) = half * (y2(i2, j2, k2) * gridDeltaFirst(1, i2, j2, k2) - x2(i2, j2, k2) * gridDeltaFirst(2, i2, j2, k2));
             }
-            
+
             GridDelta(Range(1, 6), Range(1, nj2), lineData1, lineData2);
 
             for (j2 = j2st; j2 <= j2ed; ++ j2)
@@ -656,7 +647,6 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
                     gridDeltaSecond(n + 6, i2, j2, k2) = (*lineData2)(n, j2);
                 }
             }
-
         }
     }
 
@@ -681,7 +671,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
                 (*lineData1)(5, k2) = half * (z2(i2, j2, k2) * gridDeltaFirst(1, i2, j2, k2) - x2(i2, j2, k2) * gridDeltaFirst(3, i2, j2, k2));
                 (*lineData1)(6, k2) = half * (x2(i2, j2, k2) * gridDeltaFirst(2, i2, j2, k2) - y2(i2, j2, k2) * gridDeltaFirst(1, i2, j2, k2));
             }
-            
+
             GridDelta(Range(1, 6), Range(1, nk2), lineData1, lineData2);
 
             for (k2 = k2st; k2 <= k2ed; ++ k2)
@@ -691,7 +681,6 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
                     gridDeltaSecond(n + 12, i2, j2, k2) = (*lineData2)(n, k2);
                 }
             }
-
         }
     }
 
@@ -732,7 +721,6 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
 
             for (i = 1; i <= ni; ++ i)
             {
-
                 i2 = 2 * i - 1;
 
                 vkc[0] = gridDeltaSecond(7, i2, j2, k2) + gridDeltaSecond(13, i2, j2, k2);
@@ -749,7 +737,6 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
                 xfn (i, j, k, IDX::IKES) = vkcn[0];
                 yfn (i, j, k, IDX::IKES) = vkcn[1];
                 zfn (i, j, k, IDX::IKES) = vkcn[2];
-
             }
         }
     }
@@ -766,7 +753,6 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
 
             for (j = 1; j <= nj; ++ j)
             {
-
                 j2 = 2 * j - 1;
 
                 vet[0] = gridDeltaSecond(1, i2, j2, k2) + gridDeltaSecond(16, i2, j2, k2);
@@ -783,13 +769,11 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
                 xfn (i, j, k, IDX::IETA) = vetn[0];
                 yfn (i, j, k, IDX::IETA) = vetn[1];
                 zfn (i, j, k, IDX::IETA) = vetn[2];
-
             }
         }
     }
 
     //! calculate mesh transform metrics by second grid delta (K direction)
-
     for (j = 1; j <= nj - 1; ++ j)
     {
         j2 = 2 * j;
@@ -800,7 +784,6 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
 
             for (k = 1; k <= nk; ++ k)
             {
-
                 k2 = 2 * k - 1;
 
                 vct[0] = gridDeltaSecond(4, i2, j2, k2) + gridDeltaSecond(10, i2, j2, k2);
@@ -817,17 +800,14 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
                 xfn (i, j, k, IDX::IZTA) = vctn[0];
                 yfn (i, j, k, IDX::IZTA) = vctn[1];
                 zfn (i, j, k, IDX::IZTA) = vctn[2];
-
             }
         }
     }
 
     //! calculate mesh transform Jacobian : third grid delta
-
     RDouble4D &gridDeltaThird = * new RDouble4D(Range(1, 3), Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
 
     //! calculate mesh transform Jacobian : third grid delta (I direction)
-
     lineData1 = new RDouble2D(Range(1, 1), Range(1, ni2), fortranArray);
     lineData2 = new RDouble2D(Range(1, 1), Range(1, ni2), fortranArray);
 
@@ -835,21 +815,19 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
     {
         for (j2 = j2st; j2 <= j2ed; ++ j2)
         {
-            
             for (i2 = i2st; i2 <= i2ed; ++ i2)
             {
                 (*lineData1)(1, i2) =   x2(i2, j2, k2) * (gridDeltaSecond(7, i2, j2, k2) + gridDeltaSecond(13, i2, j2, k2))
                                      + y2(i2, j2, k2) * (gridDeltaSecond(8, i2, j2, k2) + gridDeltaSecond(14, i2, j2, k2))
                                      + z2(i2, j2, k2) * (gridDeltaSecond(9, i2, j2, k2) + gridDeltaSecond(15, i2, j2, k2));
             }
-            
+
             GridDelta(Range(1, 1), Range(1, ni2), lineData1, lineData2);
 
             for (i2 = i2st; i2 <= i2ed; ++ i2)
             {
                 gridDeltaThird(1, i2, j2, k2) = (*lineData2)(1, i2);
             }
-
         }
     }
 
@@ -857,7 +835,6 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
     delete lineData2;
 
     //! calculate mesh transform Jacobian : third grid delta (J direction)
-
     lineData1 = new RDouble2D(Range(1, 1), Range(1, nj2), fortranArray);
     lineData2 = new RDouble2D(Range(1, 1), Range(1, nj2), fortranArray);
 
@@ -865,21 +842,19 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
     {
         for (i2 = i2st; i2 <= i2ed; ++ i2)
         {
-            
             for (j2 = j2st; j2 <= j2ed; ++ j2)
             {
                 (*lineData1)(1, j2) =   x2(i2, j2, k2) * (gridDeltaSecond(1, i2, j2, k2) + gridDeltaSecond(16, i2, j2, k2))
                                      + y2(i2, j2, k2) * (gridDeltaSecond(2, i2, j2, k2) + gridDeltaSecond(17, i2, j2, k2))
                                      + z2(i2, j2, k2) * (gridDeltaSecond(3, i2, j2, k2) + gridDeltaSecond(18, i2, j2, k2));
             }
-            
+
             GridDelta(Range(1, 1), Range(1, nj2), lineData1, lineData2);
 
             for (j2 = j2st; j2 <= j2ed; ++ j2)
             {
                 gridDeltaThird(2, i2, j2, k2) = (*lineData2)(1, j2);
             }
-
         }
     }
 
@@ -887,7 +862,6 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
     delete lineData2;
 
     //! calculate mesh transform Jacobian : third grid delta (K direction)
-
     lineData1 = new RDouble2D(Range(1, 1), Range(1, nk2), fortranArray);
     lineData2 = new RDouble2D(Range(1, 1), Range(1, nk2), fortranArray);
 
@@ -895,27 +869,25 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
     {
         for (i2 = i2st; i2 <= i2ed; ++ i2)
         {
-            
             for (k2 = k2st; k2 <= k2ed; ++ k2)
             {
                 (*lineData1)(1, k2) =   x2(i2, j2, k2) * (gridDeltaSecond(4, i2, j2, k2) + gridDeltaSecond(10, i2, j2, k2))
                                      + y2(i2, j2, k2) * (gridDeltaSecond(5, i2, j2, k2) + gridDeltaSecond(11, i2, j2, k2))
                                      + z2(i2, j2, k2) * (gridDeltaSecond(6, i2, j2, k2) + gridDeltaSecond(12, i2, j2, k2));
             }
-            
+
             GridDelta(Range(1, 1), Range(1, nk2), lineData1, lineData2);
 
             for (k2 = k2st; k2 <= k2ed; ++ k2)
             {
                 gridDeltaThird(3, i2, j2, k2) = (*lineData2)(1, k2);
             }
-
         }
     }
 
     delete lineData1;
     delete lineData2;
-    
+
     delete &x2;
     delete &y2;
     delete &z2;
@@ -923,11 +895,10 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
     delete &gridDeltaSecond;
 
     //! calculate mesh transform Jacobian by third grid delta
-
     RDouble3D &vol = * this->GetCellVolume();
     int ZoneID = this->GetZoneID();
     int imin, jmin, kmin, imax, jmax, kmax;
-    RDouble vv,volmin,volmax;
+    RDouble vv, volmin, volmax;
 
     volmin =   LARGE;
     volmax = - LARGE;
@@ -967,7 +938,6 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
                     jmax = j;
                     kmax = k;
                 }
-
             }
         }
     }
@@ -986,9 +956,9 @@ void StructGrid::GridDelta(const Range &NP, const Range &NI, RDouble2D *lineData
     int ned = NP.last();
     int ist = NI.first();
     int ied = NI.last();
-    
+
     int i, n;
-    
+
     i = ist;
     for (n = nst; n <= ned; ++ n)
     {
@@ -1011,14 +981,12 @@ void StructGrid::GridDelta(const Range &NP, const Range &NI, RDouble2D *lineData
     {
         for (n = nst; n <= ned; ++ n)
         {
-            
             //! 2nd order
             //(*lineData2)(n, i) = (*lineData1)(n, i + 1) - (*lineData1)(n, i - 1);
-            
+
             //! 4th order
             (*lineData2)(n, i) =   9.0 * ((*lineData1)(n, i + 1) - (*lineData1)(n, i - 1)) /  8.0
                                -         ((*lineData1)(n, i + 3) - (*lineData1)(n, i - 3)) / 24.0;
-        
         }
     }
 
@@ -1039,7 +1007,6 @@ void StructGrid::GridDelta(const Range &NP, const Range &NI, RDouble2D *lineData
     {
         (*lineData2)(n, i) = 3.0 * (*lineData1)(n, i) - 4.0 * (*lineData1)(n, i - 1) + (*lineData1)(n, i - 2);
     }
-
 }
 
 void StructGrid::ComputeMetricsStructHighOrder2D_HDCS()
@@ -1239,9 +1206,9 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS()
     RDouble4D &yfv  = *(this->GetFaceVectorY());
     RDouble4D &zfv  = *(this->GetFaceVectorZ());
 
-    RDouble3D &xx = * this->GetStructX();
-    RDouble3D &yy = * this->GetStructY();
-    RDouble3D &zz = * this->GetStructZ();
+    RDouble3D &xx = *this->GetStructX();
+    RDouble3D &yy = *this->GetStructY();
+    RDouble3D &zz = *this->GetStructZ();
 
     const RDouble alfa_sixth =  64.0 / 45.0;
     const RDouble    a_sixth = - 2.0 / 9.0;
@@ -1250,26 +1217,26 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS()
     int ni = this->GetNI();
     int nj = this->GetNJ();
     int nk = this->GetNK();  
-    RDouble3D &xA    = *new RDouble3D(Range(1, ni - 1), Range(-1, nj + 2), Range(-1, nk + 2), fortranArray);
-    RDouble3D &yA    = *new RDouble3D(Range(1, ni - 1), Range(-1, nj + 2), Range(-1, nk + 2), fortranArray);
-    RDouble3D &zA    = *new RDouble3D(Range(1, ni - 1), Range(-1, nj + 2), Range(-1, nk + 2), fortranArray);
-    RDouble3D &xkxi  = *new RDouble3D(Range(1, ni - 1), Range(-1, nj + 2), Range(-1, nk + 2), fortranArray);
-    RDouble3D &ykxi  = *new RDouble3D(Range(1, ni - 1), Range(-1, nj + 2), Range(-1, nk + 2), fortranArray);
-    RDouble3D &zkxi  = *new RDouble3D(Range(1, ni - 1), Range(-1, nj + 2), Range(-1, nk + 2), fortranArray);
+    RDouble3D &xA   = *new RDouble3D(Range(1, ni - 1), Range(-1, nj + 2), Range(-1, nk + 2), fortranArray);
+    RDouble3D &yA   = *new RDouble3D(Range(1, ni - 1), Range(-1, nj + 2), Range(-1, nk + 2), fortranArray);
+    RDouble3D &zA   = *new RDouble3D(Range(1, ni - 1), Range(-1, nj + 2), Range(-1, nk + 2), fortranArray);
+    RDouble3D &xkxi = *new RDouble3D(Range(1, ni - 1), Range(-1, nj + 2), Range(-1, nk + 2), fortranArray);
+    RDouble3D &ykxi = *new RDouble3D(Range(1, ni - 1), Range(-1, nj + 2), Range(-1, nk + 2), fortranArray);
+    RDouble3D &zkxi = *new RDouble3D(Range(1, ni - 1), Range(-1, nj + 2), Range(-1, nk + 2), fortranArray);
 
-    RDouble3D &xB    = *new RDouble3D(Range(-1, ni + 2), Range(1, nj - 1), Range(-1, nk + 2), fortranArray);
-    RDouble3D &yB    = *new RDouble3D(Range(-1, ni + 2), Range(1, nj - 1), Range(-1, nk + 2), fortranArray);
-    RDouble3D &zB    = *new RDouble3D(Range(-1, ni + 2), Range(1, nj - 1), Range(-1, nk + 2), fortranArray);
-    RDouble3D &xeta  = *new RDouble3D(Range(-1, ni + 2), Range(1, nj - 1), Range(-1, nk + 2), fortranArray);
-    RDouble3D &yeta  = *new RDouble3D(Range(-1, ni + 2), Range(1, nj - 1), Range(-1, nk + 2), fortranArray);
-    RDouble3D &zeta  = *new RDouble3D(Range(-1, ni + 2), Range(1, nj - 1), Range(-1, nk + 2), fortranArray);
+    RDouble3D &xB   = *new RDouble3D(Range(-1, ni + 2), Range(1, nj - 1), Range(-1, nk + 2), fortranArray);
+    RDouble3D &yB   = *new RDouble3D(Range(-1, ni + 2), Range(1, nj - 1), Range(-1, nk + 2), fortranArray);
+    RDouble3D &zB   = *new RDouble3D(Range(-1, ni + 2), Range(1, nj - 1), Range(-1, nk + 2), fortranArray);
+    RDouble3D &xeta = *new RDouble3D(Range(-1, ni + 2), Range(1, nj - 1), Range(-1, nk + 2), fortranArray);
+    RDouble3D &yeta = *new RDouble3D(Range(-1, ni + 2), Range(1, nj - 1), Range(-1, nk + 2), fortranArray);
+    RDouble3D &zeta = *new RDouble3D(Range(-1, ni + 2), Range(1, nj - 1), Range(-1, nk + 2), fortranArray);
 
-    RDouble3D &xC    = *new RDouble3D(Range(-1, ni + 2), Range(-1, nj + 2), Range(1, nk - 1), fortranArray);
-    RDouble3D &yC    = *new RDouble3D(Range(-1, ni + 2), Range(-1, nj + 2), Range(1, nk - 1), fortranArray);
-    RDouble3D &zC    = *new RDouble3D(Range(-1, ni + 2), Range(-1, nj + 2), Range(1, nk - 1), fortranArray);
-    RDouble3D &xcta  = *new RDouble3D(Range(-1, ni + 2), Range(-1, nj + 2), Range(1, nk - 1), fortranArray);
-    RDouble3D &ycta  = *new RDouble3D(Range(-1, ni + 2), Range(-1, nj + 2), Range(1, nk - 1), fortranArray);
-    RDouble3D &zcta  = *new RDouble3D(Range(-1, ni + 2), Range(-1, nj + 2), Range(1, nk - 1), fortranArray);
+    RDouble3D &xC   = *new RDouble3D(Range(-1, ni + 2), Range(-1, nj + 2), Range(1, nk - 1), fortranArray);
+    RDouble3D &yC   = *new RDouble3D(Range(-1, ni + 2), Range(-1, nj + 2), Range(1, nk - 1), fortranArray);
+    RDouble3D &zC   = *new RDouble3D(Range(-1, ni + 2), Range(-1, nj + 2), Range(1, nk - 1), fortranArray);
+    RDouble3D &xcta = *new RDouble3D(Range(-1, ni + 2), Range(-1, nj + 2), Range(1, nk - 1), fortranArray);
+    RDouble3D &ycta = *new RDouble3D(Range(-1, ni + 2), Range(-1, nj + 2), Range(1, nk - 1), fortranArray);
+    RDouble3D &zcta = *new RDouble3D(Range(-1, ni + 2), Range(-1, nj + 2), Range(1, nk - 1), fortranArray);
 
     for (int i = 1; i <= ni - 1; ++ i)
     {
@@ -1346,7 +1313,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS()
             }
         }
     }
-    
+
     for (int k = 1; k <= nk - 1; ++ k)
     {
         for (int i = -1; i <= ni + 2; ++ i)
@@ -1415,7 +1382,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS()
                 RDouble sz_fR  =         xeta(i, j, k + 1)                      *  yB(i, j, k + 1)                    -         xB(i, j, k + 1)                    *  yeta(i, j, k + 1)                     ;
                 RDouble sz_CR1 = 0.25 * (xeta(i, j, k + 1) + xeta(i, j, k + 2)) * (yB(i, j, k + 1) + yB(i, j, k + 2)) - 0.25 * (xB(i, j, k + 1) + xB(i, j, k + 2)) * (yeta(i, j, k + 1) + yeta(i, j, k + 2));
                 RDouble sz_CR2 = 0.25 * (xeta(i, j, k + 2) + xeta(i, j, k + 3)) * (yB(i, j, k + 2) + yB(i, j, k + 3)) - 0.25 * (xB(i, j, k + 2) + xB(i, j, k + 3)) * (yeta(i, j, k + 2) + yeta(i, j, k + 3));
-                
+
                 KX += half * (alfa_sixth * (sx_fR - sx_fL) + a_sixth * (sx_CR1 - sx_CL1) + b_sixth * (sx_CR2 - sx_CL2));
                 KY += half * (alfa_sixth * (sy_fR - sy_fL) + a_sixth * (sy_CR1 - sy_CL1) + b_sixth * (sy_CR2 - sy_CL2));
                 KZ += half * (alfa_sixth * (sz_fR - sz_fL) + a_sixth * (sz_CR1 - sz_CL1) + b_sixth * (sz_CR2 - sz_CL2));
@@ -1488,7 +1455,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS()
                 RDouble sz_fR  =         xcta(i + 1, j, k)                      *  yC(i + 1, j, k)                    -         xC(i + 1, j, k)                    *  ycta(i + 1, j, k)                     ;
                 RDouble sz_CR1 = 0.25 * (xcta(i + 1, j, k) + xcta(i + 2, j, k)) * (yC(i + 1, j, k) + yC(i + 2, j, k)) - 0.25 * (xC(i + 1, j, k) + xC(i + 2, j, k)) * (ycta(i + 1, j, k) + ycta(i + 2, j, k));
                 RDouble sz_CR2 = 0.25 * (xcta(i + 2, j, k) + xcta(i + 3, j, k)) * (yC(i + 2, j, k) + yC(i + 3, j, k)) - 0.25 * (xC(i + 2, j, k) + xC(i + 3, j, k)) * (ycta(i + 2, j, k) + ycta(i + 3, j, k));
-                
+
                 KX += half * (alfa_sixth * (sx_fR - sx_fL) + a_sixth * (sx_CR1 - sx_CL1) + b_sixth * (sx_CR2 - sx_CL2));
                 KY += half * (alfa_sixth * (sy_fR - sy_fL) + a_sixth * (sy_CR1 - sy_CL1) + b_sixth * (sy_CR2 - sy_CL2));
                 KZ += half * (alfa_sixth * (sz_fR - sz_fL) + a_sixth * (sz_CR1 - sz_CL1) + b_sixth * (sz_CR2 - sz_CL2));
@@ -1513,7 +1480,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS()
                 sz_fR  =         ykxi(i, j, k + 1)                      *  xA(i, j, k + 1)                    -         yA(i, j, k + 1)                    *  xkxi(i, j, k + 1)                     ;
                 sz_CR1 = 0.25 * (ykxi(i, j, k + 1) + ykxi(i, j, k + 2)) * (xA(i, j, k + 1) + xA(i, j, k + 2)) - 0.25 * (yA(i, j, k + 1) + yA(i, j, k + 2)) * (xkxi(i, j, k + 1) + xkxi(i, j, k + 2));
                 sz_CR2 = 0.25 * (ykxi(i, j, k + 2) + ykxi(i, j, k + 3)) * (xA(i, j, k + 2) + xA(i, j, k + 3)) - 0.25 * (yA(i, j, k + 2) + yA(i, j, k + 3)) * (xkxi(i, j, k + 2) + xkxi(i, j, k + 3));
-                
+
                 KX += half * (alfa_sixth * (sx_fR - sx_fL) + a_sixth * (sx_CR1 - sx_CL1) + b_sixth * (sx_CR2 - sx_CL2));
                 KY += half * (alfa_sixth * (sy_fR - sy_fL) + a_sixth * (sy_CR1 - sy_CL1) + b_sixth * (sy_CR2 - sy_CL2));
                 KZ += half * (alfa_sixth * (sz_fR - sz_fL) + a_sixth * (sz_CR1 - sz_CL1) + b_sixth * (sz_CR2 - sz_CL2));
@@ -1561,7 +1528,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS()
                 RDouble sz_fR  =         xkxi(i, j + 1, k)                      *  yA(i, j + 1, k)                    -         xA(i, j + 1, k)                    *  ykxi(i, j + 1, k)                     ;
                 RDouble sz_CR1 = 0.25 * (xkxi(i, j + 1, k) + xkxi(i, j + 2, k)) * (yA(i, j + 1, k) + yA(i, j + 2, k)) - 0.25 * (xA(i, j + 1, k) + xA(i, j + 2, k)) * (ykxi(i, j + 1, k) + ykxi(i, j + 2, k));
                 RDouble sz_CR2 = 0.25 * (xkxi(i, j + 2, k) + xkxi(i, j + 3, k)) * (yA(i, j + 2, k) + yA(i, j + 3, k)) - 0.25 * (xA(i, j + 2, k) + xA(i, j + 3, k)) * (ykxi(i, j + 2, k) + ykxi(i, j + 3, k));
-                
+
                 KX += half * (alfa_sixth * (sx_fR - sx_fL) + a_sixth * (sx_CR1 - sx_CL1) + b_sixth * (sx_CR2 - sx_CL2));
                 KY += half * (alfa_sixth * (sy_fR - sy_fL) + a_sixth * (sy_CR1 - sy_CL1) + b_sixth * (sy_CR2 - sy_CL2));
                 KZ += half * (alfa_sixth * (sz_fR - sz_fL) + a_sixth * (sz_CR1 - sz_CL1) + b_sixth * (sz_CR2 - sz_CL2));
@@ -1586,7 +1553,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS()
                 sz_fR  =         yeta(i + 1, j, k)                      *  xB(i + 1, j, k)                    -         yB(i + 1, j, k)                    *  xeta(i + 1, j, k)                     ;
                 sz_CR1 = 0.25 * (yeta(i + 1, j, k) + yeta(i + 2, j, k)) * (xB(i + 1, j, k) + xB(i + 2, j, k)) - 0.25 * (yB(i + 1, j, k) + yB(i + 2, j, k)) * (xeta(i + 1, j, k) + xeta(i + 2, j, k));
                 sz_CR2 = 0.25 * (yeta(i + 2, j, k) + yeta(i + 3, j, k)) * (xB(i + 2, j, k) + xB(i + 3, j, k)) - 0.25 * (yB(i + 2, j, k) + yB(i + 3, j, k)) * (xeta(i + 2, j, k) + xeta(i + 3, j, k));
-                
+
                 KX += half * (alfa_sixth * (sx_fR - sx_fL) + a_sixth * (sx_CR1 - sx_CL1) + b_sixth * (sx_CR2 - sx_CL2));
                 KY += half * (alfa_sixth * (sy_fR - sy_fL) + a_sixth * (sy_CR1 - sy_CL1) + b_sixth * (sy_CR2 - sy_CL2));
                 KZ += half * (alfa_sixth * (sz_fR - sz_fL) + a_sixth * (sz_CR1 - sz_CL1) + b_sixth * (sz_CR2 - sz_CL2));
@@ -1789,7 +1756,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS()
                 KX += half * (alfa_sixth * (sx_fR - sx_fL) + a_sixth * (sx_CR1 - sx_CL1) + b_sixth * (sx_CR2 - sx_CL2));
                 KY += half * (alfa_sixth * (sy_fR - sy_fL) + a_sixth * (sy_CR1 - sy_CL1) + b_sixth * (sy_CR2 - sy_CL2));
                 KZ += half * (alfa_sixth * (sz_fR - sz_fL) + a_sixth * (sz_CR1 - sz_CL1) + b_sixth * (sz_CR2 - sz_CL2));
-                
+
                 Cellxfv(i, j, k, 3) = KX;
                 Cellyfv(i, j, k, 3) = KY;
                 Cellzfv(i, j, k, 3) = KZ;
@@ -1881,7 +1848,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS()
                 RDouble z2 = zz(i + 1, j, k);
                 RDouble z3 = zz(i,     j, k + 1);
                 RDouble z4 = zz(i + 1, j, k + 1);
-                
+
                 xfaceJ(i, j, k) = 0.25 * (x1 + x2 + x3 + x4);
                 yfaceJ(i, j, k) = 0.25 * (y1 + y2 + y3 + y4);
                 zfaceJ(i, j, k) = 0.25 * (z1 + z2 + z3 + z4);
@@ -1933,7 +1900,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS()
                 RDouble kxi_fR  = half * (xfaceI(i + 1, j, k) + xfaceI(i + 1, j, k)) *     xfv(i + 1, j, k, 1) + half * (yfaceI(i + 1, j, k) + yfaceI(i + 1, j, k)) *     yfv(i + 1, j, k, 1) + half * (zfaceI(i + 1, j, k) + zfaceI(i + 1, j, k)) *     zfv(i + 1, j, k, 1);
                 RDouble kxi_CR1 = half * (xfaceI(i + 1, j, k) + xfaceI(i + 2, j, k)) * Cellxfv(i + 1, j, k, 1) + half * (yfaceI(i + 1, j, k) + yfaceI(i + 2, j, k)) * Cellyfv(i + 1, j, k, 1) + half * (zfaceI(i + 1, j, k) + zfaceI(i + 2, j, k)) * Cellzfv(i + 1, j, k, 1);
                 RDouble kxi_CR2 = half * (xfaceI(i + 2, j, k) + xfaceI(i + 3, j, k)) * Cellxfv(i + 2, j, k, 1) + half * (yfaceI(i + 2, j, k) + yfaceI(i + 3, j, k)) * Cellyfv(i + 2, j, k, 1) + half * (zfaceI(i + 2, j, k) + zfaceI(i + 3, j, k)) * Cellzfv(i + 2, j, k, 1);
-                
+
                 vol_kxi = alfa_sixth * (kxi_fR - kxi_fL) + a_sixth * (kxi_CR1 - kxi_CL1) + b_sixth * (kxi_CR2 - kxi_CL2);
 
                 RDouble eta_CL2 = half * (xfaceJ(i, j - 1, k) + xfaceJ(i, j - 2, k)) * Cellxfv(i, j - 2, k, 2) + half * (yfaceJ(i, j - 1, k) + yfaceJ(i, j - 2, k)) * Cellyfv(i, j - 2, k, 2) + half * (zfaceJ(i, j - 1, k) + zfaceJ(i, j - 2, k)) * Cellzfv(i, j - 2, k, 2);
@@ -1942,18 +1909,18 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS()
                 RDouble eta_fR  = half * (xfaceJ(i, j + 1, k) + xfaceJ(i, j + 1, k)) *     xfv(i, j + 1, k, 2) + half * (yfaceJ(i, j + 1, k) + yfaceJ(i, j + 1, k)) *     yfv(i, j + 1, k, 2) + half * (zfaceJ(i, j + 1, k) + zfaceJ(i, j + 1, k)) *     zfv(i, j + 1, k, 2);
                 RDouble eta_CR1 = half * (xfaceJ(i, j + 1, k) + xfaceJ(i, j + 2, k)) * Cellxfv(i, j + 1, k, 2) + half * (yfaceJ(i, j + 1, k) + yfaceJ(i, j + 2, k)) * Cellyfv(i, j + 1, k, 2) + half * (zfaceJ(i, j + 1, k) + zfaceJ(i, j + 2, k)) * Cellzfv(i, j + 1, k, 2);
                 RDouble eta_CR2 = half * (xfaceJ(i, j + 2, k) + xfaceJ(i, j + 3, k)) * Cellxfv(i, j + 2, k, 2) + half * (yfaceJ(i, j + 2, k) + yfaceJ(i, j + 3, k)) * Cellyfv(i, j + 2, k, 2) + half * (zfaceJ(i, j + 2, k) + zfaceJ(i, j + 3, k)) * Cellzfv(i, j + 2, k, 2);
-                
+
                 vol_eta = alfa_sixth * (eta_fR - eta_fL) + a_sixth * (eta_CR1 - eta_CL1) + b_sixth * (eta_CR2 - eta_CL2);
-                
+
                 RDouble cta_CL2 = half * (xfaceK(i, j, k - 1) + xfaceK(i, j, k - 2)) * Cellxfv(i, j, k - 2, 3) + half * (yfaceK(i, j, k - 1) + yfaceK(i, j, k - 2)) * Cellyfv(i, j, k - 2, 3) + half * (zfaceK(i, j, k - 1) + zfaceK(i, j, k - 2)) * Cellzfv(i, j, k - 2, 3);
                 RDouble cta_CL1 = half * (xfaceK(i, j, k   ) + xfaceK(i, j, k - 1)) * Cellxfv(i, j, k - 1, 3) + half * (yfaceK(i, j, k   ) + yfaceK(i, j, k - 1)) * Cellyfv(i, j, k - 1, 3) + half * (zfaceK(i, j, k   ) + zfaceK(i, j, k - 1)) * Cellzfv(i, j, k - 1, 3);
                 RDouble cta_fL  = half * (xfaceK(i, j, k   ) + xfaceK(i, j, k   )) *     xfv(i, j, k    , 3) + half * (yfaceK(i, j, k   ) + yfaceK(i, j, k   )) *     yfv(i, j, k    , 3) + half * (zfaceK(i, j, k   ) + zfaceK(i, j, k   )) *     zfv(i, j, k    , 3);
                 RDouble cta_fR  = half * (xfaceK(i, j, k + 1) + xfaceK(i, j, k + 1)) *     xfv(i, j, k + 1, 3) + half * (yfaceK(i, j, k + 1) + yfaceK(i, j, k + 1)) *     yfv(i, j, k + 1, 3) + half * (zfaceK(i, j, k + 1) + zfaceK(i, j, k + 1)) *     zfv(i, j, k + 1, 3);
                 RDouble cta_CR1 = half * (xfaceK(i, j, k + 1) + xfaceK(i, j, k + 2)) * Cellxfv(i, j, k + 1, 3) + half * (yfaceK(i, j, k + 1) + yfaceK(i, j, k + 2)) * Cellyfv(i, j, k + 1, 3) + half * (zfaceK(i, j, k + 1) + zfaceK(i, j, k + 2)) * Cellzfv(i, j, k + 1, 3);
                 RDouble cta_CR2 = half * (xfaceK(i, j, k + 2) + xfaceK(i, j, k + 3)) * Cellxfv(i, j, k + 2, 3) + half * (yfaceK(i, j, k + 2) + yfaceK(i, j, k + 3)) * Cellyfv(i, j, k + 2, 3) + half * (zfaceK(i, j, k + 2) + zfaceK(i, j, k + 3)) * Cellzfv(i, j, k + 2, 3);
-                
+
                 vol_cta = alfa_sixth * (cta_fR - cta_fL) + a_sixth * (cta_CR1 - cta_CL1) + b_sixth * (cta_CR2 - cta_CL2);
-                
+
                 RDouble vol_FD = (vol_kxi + vol_eta + vol_cta) / 3.0;
 
                 if (vol_FD < SMALL)
@@ -2053,7 +2020,7 @@ void StructGrid::GhostMetricsStructHighOrder3D()
     RDouble3D &xcc = *(this->GetCellCenterX());
     RDouble3D &ycc = *(this->GetCellCenterY());
     RDouble3D &zcc = *(this->GetCellCenterZ());
-    
+
     for (int layer = 1; layer <= 4; ++layer)
     {
         for (int k = 1; k <= nk - 1; ++k)
@@ -2062,37 +2029,37 @@ void StructGrid::GhostMetricsStructHighOrder3D()
             {
                 vol(    1 - layer, j, k) = vol(    layer, j, k);
                 vol(ni - 1 + layer, j, k) = vol(ni - layer, j, k);
-                
+
                 int nsurf = 1;
                 RDouble xfc, yfc, zfc;
-                
+
                 FaceCoor(1, j, k, nsurf, xfc, yfc, zfc); 
                 xcc(1-layer,j,k) = two * xfc - xcc(layer,j,k);
                 ycc(1-layer,j,k) = two * yfc - ycc(layer,j,k);
                 zcc(1-layer,j,k) = two * zfc - zcc(layer,j,k);
-                
+
                 FaceCoor(ni, j, k, nsurf, xfc, yfc, zfc);
                 xcc(ni-1+layer,j,k) = two * xfc - xcc(ni-layer,j,k);
                 ycc(ni-1+layer,j,k) = two * yfc - ycc(ni-layer,j,k);
                 zcc(ni-1+layer,j,k) = two * zfc - zcc(ni-layer,j,k);
             }
         }
-        
+
         for (int k = 1; k <= nk - 1; ++k)
         {
             for (int i = 1; i <= ni - 1; ++i)
             {
                 vol(i,      1 - layer, k) = vol(i,      layer, k);
                 vol(i, nj - 1 + layer, k) = vol(i, nj - layer, k);
-                
+
                 int nsurf = 2;
                 RDouble xfc, yfc, zfc;
-                
+
                 FaceCoor(i, 1, k, nsurf, xfc, yfc, zfc);
                 xcc(i,1-layer,k) = two * xfc - xcc(i,layer,k);
                 ycc(i,1-layer,k) = two * yfc - ycc(i,layer,k);
                 zcc(i,1-layer,k) = two * zfc - zcc(i,layer,k);
-                
+
                 FaceCoor(i, nj, k, nsurf, xfc, yfc, zfc);
                 xcc(i,nj-1+layer,k) = two * xfc - xcc(i,nj-layer,k);
                 ycc(i,nj-1+layer,k) = two * yfc - ycc(i,nj-layer,k);
@@ -2106,23 +2073,22 @@ void StructGrid::GhostMetricsStructHighOrder3D()
             {
                 vol(i, j,      1 - layer) = vol(i, j,      layer);
                 vol(i, j, nk - 1 + layer) = vol(i, j, nk - layer);
-                
+
                 int nsurf = 3;
                 RDouble xfc, yfc, zfc;
-                
+
                 FaceCoor(i, j, 1, nsurf, xfc, yfc, zfc);
                 xcc(i,j,1-layer) = two * xfc - xcc(i,j,layer);
                 ycc(i,j,1-layer) = two * yfc - ycc(i,j,layer);
                 zcc(i,j,1-layer) = two * zfc - zcc(i,j,layer);
-                
+
                 FaceCoor(i, j, nk, nsurf, xfc, yfc, zfc);
                 xcc(i,j,nk-1+layer) = two * xfc - xcc(i,j,nk-layer);
                 ycc(i,j,nk-1+layer) = two * yfc - ycc(i,j,nk-layer);
                 zcc(i,j,nk-1+layer) = two * zfc - zcc(i,j,nk-layer);
             }
         }
-        
-    }    
+    }
 }
 
 void StructGrid::InitialDiffOrderforStructHighOrder()

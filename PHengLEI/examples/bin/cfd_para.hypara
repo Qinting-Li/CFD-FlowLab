@@ -8,7 +8,7 @@
 //          Platform for Hybrid Engineering Simulation of Flows           +
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
-//                         PHengLEI 2506                                  +
+//                         PHengLEI 2512                                  +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ###########################################################################
 #                       Default parameters for Grid conversion            #
@@ -539,8 +539,9 @@ double AusmpwPlusLimiter = 1.0;
 // iSimplifyViscousTerm: Simplify the computation of viscous term in the Block LU-SGS method. The default value assigns 1 that could speed up the computation.
 //                       Otherwise, the viscous Jacobian matrix Mv should be computed that will increase the memory and time in iteration of the BLUSGS method.
 // CFLMethod: The method to compute cfl number.
-//                 0 -- Linear change.
-//                 1 -- Exponential change.
+//                 0 -- Linear change:standard method, iterationStep = “innstep” in Unsteady simulation)
+//                 1 -- Linear change:quick method, iterationStep = "MIN (outnstep, CFLVaryStep)" in Unsteady simulation. A larger CFLVaryStep value correspondsto a larger CFL number, leading to faster computational convergence.
+//                 2 -- Exponential change.
 // CFLStart: Started cfl number.
 // CFLEnd: End cfl number.
 // CFLVaryStep: The number of step when cfl increase from CFLStart to CFLEnd.
@@ -592,7 +593,7 @@ int    ifLocalTimeStep = 0;
 int    isUseLocalCFL = 0;
 int    isUsePreTwall = 0;
 
-int    cflMethod   = 0;
+int    CFLMethod   = 0;
 double CFLStart    = 0.01;
 double CFLEnd      = 10.0;
 int    CFLVaryStep = 500;
@@ -873,6 +874,19 @@ int qTurbLimit      = 0;
 // maximum eddy viscosity (myt/my) max.
 double eddyViscosityLimit = 1.0e10;
 int monitor_vistmax = 0;
+
+#************************************************************************
+#                          SATES Parameter                              *
+#************************************************************************
+// SATESType: cutoff length scale coefficient based on different SGS model.
+//            Using this when 2eq-kw-menter-bsl or 2eq-kw-menter-sst is choiced.
+//            0 -- "RANS"--default
+//            1 -- "smagorinsky" 
+// SmagType: The type of Smagorinsky model
+//            when SmagType = 0, model coefficient Cx = 0.61;(default)
+//            when SmagType = 1, model coefficient Cx is non-equilibrium formulation based on dynamic SGS coefficient;(recommendation for high Re)
+int SATESType = 0;
+int SmagType = 0;
 
 #************************************************************************
 #                           LES Parameter                               *
@@ -1329,6 +1343,15 @@ string zoneInverseFileName = "./grid/zoneInverseMapping.inp";
 //                    -- "roe", "steger".
 // structhighordergradient:
 //                    -- "conservation", "chain_rule".
+// str_highorder_weight_type:
+//                    -- 0(Linear), 1(JS), 2(Z), 3(T), 4(ST).
+// str_highorder_penalty_level: Penalty level of smoothness measurement in JS type.
+                  1 -- Level 1 : power p = 1 (weak penalty, lower numerical dissipation).
+                  2 -- Level 2 : power p = 2 (moderate penalty, balanced dissipation).
+// str_highorder_teno_separation_scale: CT is scale separation criterion in TENO weighted interpolation, bigger CT, robuster for shock-detecting,
+//                                      smaller CT, low-dissipation for low-wave.
+//                    -- "default", CT=1.0e-5;
+//                    -- "adaptive shock-detecting", when CT<0.0;
 int    isFVMOrFDM                          = 0;
 string str_highorder_solver                = "WCNS";
 int    SolverStructOrder                   = 0;
@@ -1336,6 +1359,9 @@ double str_highorder_interpolation_epsilon = 1.0e-6;
 string str_highorder_interpolation_type    = "test";
 string str_highorder_flux_name             = "steger";
 string structhighordergradient             = "conservation";
+int    str_highorder_weight_type           = 1;
+int    str_highorder_penalty_level         = 2;
+double str_highorder_teno_separation_scale = 1.0e-5;
 double coefofstrflux        = 0.5;
 double limitcoefofinterface = 0.0;
 
@@ -1523,6 +1549,13 @@ string shroud[] = "shroud";
 
 // nSpanSection: number of spanwise section used for mixing plane.
 int nSpanSection = 0;
+
+#########################################################################
+#                         ParticlePointSolver Parameter                      #
+#########################################################################
+int isCrossZones = 0;
+int ZoneIDAfterCrossZones = 0;
+int particleCalculationStep = 0;
 
 // ---------------- ATP read --------------------------------------------
 //@int    inflowParaType = 0;

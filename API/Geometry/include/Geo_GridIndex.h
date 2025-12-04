@@ -21,6 +21,7 @@
 #include "DataContainer.h"
 #include "Geo_Interface.h"
 #include "Geo_Interpoint.h"
+#include "ZoneCorner.h"
 
 namespace PHSPACE
 {
@@ -304,12 +305,14 @@ public:
     { 
         numberOfZones = 0;
         zoneNeighbor  = 0;
+        zoneCorner = 0;
     };
     ~ZoneConnectivity()
     {
         for (int iZone = 0; iZone < numberOfZones; ++ iZone)
         {
             delete zoneNeighbor[iZone];
+            delete zoneCorner[iZone];
         }
         delete [] zoneNeighbor;
     }
@@ -319,15 +322,19 @@ public:
     {
         SetNumberOfZones(nZones);
         zoneNeighbor = new ZoneNeighbor *[nZones];
+        zoneCorner   = new ZoneCorner   *[numberOfZones];
         for (int iZone = 0; iZone < nZones; ++ iZone)
         {
             zoneNeighbor[iZone] = new ZoneNeighbor();
+            zoneCorner[iZone]   = new ZoneCorner();
         } 
     }
-    ZoneNeighbor * GetZoneNeighbor(int iZone) const { return zoneNeighbor[iZone]; }
+    ZoneNeighbor *GetZoneNeighbor(int iZone) const { return zoneNeighbor[iZone]; }
+    ZoneCorner *GetZoneCorner(int iZone) const { return zoneCorner[iZone]; }
 private:
     int numberOfZones;
     ZoneNeighbor **zoneNeighbor;
+    ZoneCorner **zoneCorner;
 };
 
 //! @brief the zone connectivity for point.\n

@@ -46,19 +46,6 @@ void hypreCalculator::mathLibSolveInit(Grid *gridIn)
     colValueOfOneRow = new RDouble [100];
     colNumberOfOneRow = new int [100];
 
-    //HYPRE_IJMatrixCreate(MPI_COMM_WORLD, ilower, iupper, ilower, iupper, &A_hypre);
-    //HYPRE_IJMatrixSetObjectType(A_hypre, HYPRE_PARCSR);
-    //HYPRE_IJMatrixInitialize(A_hypre);
-
-    ///* Create the rhs and solution */
-    //HYPRE_IJVectorCreate(MPI_COMM_WORLD, ilower, iupper, &b_hypre);
-    //HYPRE_IJVectorSetObjectType(b_hypre, HYPRE_PARCSR);
-    //HYPRE_IJVectorInitialize(b_hypre);
-
-    //HYPRE_IJVectorCreate(MPI_COMM_WORLD, ilower, iupper, &x_hypre);
-    //HYPRE_IJVectorSetObjectType(x_hypre, HYPRE_PARCSR);
-    //HYPRE_IJVectorInitialize(x_hypre);
-
     int linearSolverSize = 50;
     int *precondID = reinterpret_cast <int *>(GlobalDataBase::GetDataPtr("precondMethodOfLinEqSystem"));
     precondList = new HYPRE_Solver * [linearSolverSize];
@@ -103,6 +90,9 @@ void hypreCalculator::mathLibSolveInit(Grid *gridIn)
         else if (precondType == iAMG)
         {
             HYPRE_BoomerAMGCreate(&(*precond));
+            HYPRE_BoomerAMGSetCoarsenType((*precond), 10);
+            HYPRE_BoomerAMGSetInterpType((*precond), 6);
+            HYPRE_BoomerAMGSetStrongThreshold((*precond), 0.3);
             HYPRE_BoomerAMGSetTol            ((*precond), 0.0); // Only the number of iteration is important
             HYPRE_BoomerAMGSetMaxIter        ((*precond), 1);   // Do only one iteration
             HYPRE_BoomerAMGSetLogging(*precond, 0);
@@ -143,9 +133,6 @@ void hypreCalculator::mathLibSolveInit(Grid *gridIn)
         {
             HYPRE_EuclidCreate(MPI_COMM_WORLD, &(*precond));
 
-            // Hardcoded parameters
-            //HYPRE_EuclidSetSparseA ((*precond), 0.1);
-            //HYPRE_EuclidSetRowScale((*precond), 1);
             SolvePtr[iSolver] = (HYPRE_PtrToSolverFcn) HYPRE_EuclidSolve;
             SetupPtr[iSolver] = (HYPRE_PtrToSolverFcn) HYPRE_EuclidSetup;
         }
@@ -218,8 +205,10 @@ void hypreCalculator::mathLibSolveInit(Grid *gridIn)
         else if (linearSolver == BicgstabMethod)
         {
             HYPRE_ParCSRBiCGSTABCreate(MPI_COMM_WORLD, &(*solver));
-            HYPRE_ParCSRBiCGSTABSetMaxIter((*solver), maxIterStep);
-            HYPRE_ParCSRBiCGSTABSetTol((*solver), iterTol);
+            //HYPRE_ParCSRBiCGSTABSetMaxIter((*solver), maxIterStep);
+            HYPRE_BiCGSTABSetMaxIter((*solver), maxIterStep);
+            //HYPRE_ParCSRBiCGSTABSetTol((*solver), iterTol);
+            HYPRE_BiCGSTABSetTol((*solver), iterTol);
             HYPRE_ParCSRBiCGSTABSetPrintLevel((*solver), 0);
             HYPRE_ParCSRBiCGSTABSetLogging((*solver), 0);
 
@@ -286,26 +275,12 @@ void hypreCalculator::mathLibSolveInit(Grid *gridIn)
         }
         else if (linearSolver == COGMRESMethod)
         {
-
             HYPRE_ParCSRCOGMRESCreate(MPI_COMM_WORLD, solver);
             HYPRE_ParCSRCOGMRESSetTol((*solver), iterTol);
             HYPRE_ParCSRCOGMRESSetMaxIter((*solver), maxIterStep);
-
-            //if (precondID[iSolver] > 0)
-            //{
-            //    HYPRE_ParCSRCOGMRESSetPrecond((*solver), SolvePtr[iSolver], 
-            //        SetupPtr[iSolver], *(precondList[iSolver]));
-            //}
         }
         else if (linearSolver == CGNRMethod)
         {
-            //HYPRE_ParCSRCGNRCreate(MPI_COMM_WORLD, solver);
-            //HYPRE_ParCSRCGNRSetLogging(*solver,0);
-            //if (precondID[iSolver] > 0)
-            //{
-            //    HYPRE_CGNRSetPrecond((*solver), SolvePtr[iSolver], SolvePtr[iSolver], 
-            //        SetupPtr[iSolver], *(precondList[iSolver]));
-            //}
         }
         else if (linearSolver == MGRMethod)
         {
@@ -336,8 +311,6 @@ void hypreCalculator::mathLibSolveInit(Grid *gridIn)
             HYPRE_ParCSRHybridSetTol(*solver, iterTol);
             if (precondID[iSolver] > 0)
             {
-                //HYPRE_ParCSRHybridSetPrecond((*solver), SolvePtr[iSolver], SolvePtr[iSolver], 
-                //    SetupPtr[iSolver], *(precondList[iSolver]));
             }
         }
         else
@@ -410,7 +383,6 @@ void hypreCalculator::mathLibSolve(Grid *gridIn, int iEquation, RDouble *fi, RDo
     int *localCell2GlobalMap = grid->GetLocalCell2GlobalMap();
     RDouble GlobalTotalCells = GlobalDataBase::GetDoubleParaFromDB("GlobalTotalCells");
     
-    //int *constVarNumToSolveVarNum = reinterpret_cast<int *>(grid->GetDataPtr("constVarNumToSolveVarNum"));
     HYPRE_Solver *solver = solverList[iEquation];
     int *linearSolverID = reinterpret_cast <int *>(GlobalDataBase::GetDataPtr("solMethodOfLinEqSystem"));
     int linearSolver = linearSolverID[iEquation];
@@ -424,10 +396,6 @@ void hypreCalculator::mathLibSolve(Grid *gridIn, int iEquation, RDouble *fi, RDo
 
     int maxIterStep = maxIterOfEachEq[iEquation];
     RDouble iterTol = iterTolOfEachEq[iEquation];
-    //int *ActualIterStepNum = reinterpret_cast <int * > (GlobalDataBase::GetDataPtr("ActualIterStepNum"));
-    //RDouble *ActualIterTol = reinterpret_cast <RDouble * > (GlobalDataBase::GetDataPtr("ActualIterTol"));
-    //RDouble *ActualSolveTime = reinterpret_cast <RDouble * > (GlobalDataBase::GetDataPtr("ActualSolveTime"));
-    ////RDouble timeStartSolve = PHSPACE::TIME_SPACE::GetWallTime();
 
     int num_iterations;
     RDouble residual;
@@ -512,11 +480,6 @@ void hypreCalculator::mathLibSolve(Grid *gridIn, int iEquation, RDouble *fi, RDo
     int *precondID = reinterpret_cast <int *>(GlobalDataBase::GetDataPtr("precondID"));
     HYPRE_Solver *precond = precondList[iEquation];
 
-    //if (precondID[iEquation] == iAMGDD)
-    //{
-    //    destoryTempDataInAMGDD(*precond);
-    //}
-
     RDouble timeStartSolve = PHSPACE::TIME_SPACE::GetWallTime();
     if (linearSolver == GaussSeidelMethod) 
     {
@@ -537,7 +500,8 @@ void hypreCalculator::mathLibSolve(Grid *gridIn, int iEquation, RDouble *fi, RDo
         HYPRE_ParCSRBiCGSTABSolve((*solver), parcsr_A_hypre, par_b_hypre, par_x_hypre);
         HYPRE_IJVectorGetValues(x_hypre, localSize, rows, fi);
         
-        HYPRE_ParCSRBiCGSTABGetNumIterations((*solver), &num_iterations);
+        // HYPRE_ParCSRBiCGSTABGetNumIterations((*solver), &num_iterations);
+        HYPRE_BiCGSTABGetNumIterations((*solver), &num_iterations);
         HYPRE_ParCSRBiCGSTABGetFinalRelativeResidualNorm((*solver), &residual);
     }
     else if (linearSolver == AMGMethod)
@@ -639,13 +603,9 @@ void hypreCalculator::mathLibSolve(Grid *gridIn, int iEquation, RDouble *fi, RDo
 
     if (precondID[iEquation] == iAMGDD)
     {
-        //HYPRE_BoomerAMGDDDestroy(AMGDDPrecond);
     }
 
     RDouble timeEndSolve = PHSPACE::TIME_SPACE::GetWallTime();
-    //ActualIterStepNum[iEquation] = num_iterations;
-    //ActualIterTol[iEquation] = residual;
-    //ActualSolveTime[iEquation] = timeEndSolve - timeStartSolve;
 
     for (int iCell = 0; iCell < localSize; iCell++)
     {
@@ -694,7 +654,6 @@ void hypreCalculator::mathLibSolveFinalize()
         }
         else if (linearSolver == AMGDDMethod)
         {
-            //HYPRE_BoomerAMGDDDestroy((*solver));
         }
         else if (linearSolver == PCGMethod)
         {

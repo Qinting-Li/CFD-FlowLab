@@ -57,7 +57,7 @@ namespace Reorder
     //! Find the smallest degree in cellIDSortCur
     int FindMinCellIDSortCur(const int numSortCur, const int *cellIDSortCur, const int *nFaceOfEachCell);
     
-    //! Get current level of rStart for reOrder, the difference from  GetCurrentLevel    is that cancel the set of reorderCell by 1.
+    //! Get current level of rStart for reOrder, the difference from  GetCurrentLevel is that cancel the set of reorderCell by 1.
     void GetCurrentLevelForReOrder(int rStart, const int *nFaceOfEachCell, const int *cell2Cell, const int *offsetCell2Cell, int *reorderCell, int &numSortCur, int *cellIDSortCur);
     
     //! Arrange cellIDSortCur by Ascending order

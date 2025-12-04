@@ -52,6 +52,10 @@ if(BUILD_SpecDiffHybSolver)
   message(STATUS "BUILD_SpecDiffHybSolver is turned on!")
   add_definitions(-DUSE_SpecDiffHybSolver)
 endif()
+if(USE_LagrangianParticle)
+  message(STATUS "USE_LagrangianParticle is turned on")
+  add_definitions(-DUSE_LagrangianParticle)
+endif()
 
 if(BUILD_IncomSolver)
   message(STATUS "BUILD_IncomSolver is turned on!")
@@ -443,6 +447,28 @@ ${SpecDiffHybSolver_CPP_PATH}/Param_SpecDiffHybSolver.cpp
 source_group(SpecDiffHybSolver\\src FILES ${SpecDiffHybSolver_CPP_LIST})
 endif(BUILD_SpecDiffHybSolver)
 
+# set directory of ParticleSolver:
+if(USE_LagrangianParticle)
+    set(ParticleSolver_H_PATH ParticleSolver/include)
+    set(ParticleSolver_H_LIST
+    ${ParticleSolver_H_PATH}/ParticleSolver.h
+    ${ParticleSolver_H_PATH}/ParticlePointSolverParallelDomain.h
+    ${ParticleSolver_H_PATH}/Param_ParticleSolver.h
+    ${ParticleSolver_H_PATH}/Param_ParticlePointSolverParallelDomain.h
+    )
+    source_group(ParticleSolver\\include FILES ${ParticleSolver_H_LIST}) 
+    include_directories(${ParticleSolver_H_PATH})
+
+    set(ParticleSolver_CPP_PATH ParticleSolver/src)
+    set(ParticleSolver_CPP_LIST
+    ${ParticleSolver_CPP_PATH}/ParticleSolver.cpp
+    ${ParticleSolver_CPP_PATH}/ParticlePointSolverParallelDomain.cpp
+    ${ParticleSolver_CPP_PATH}/Param_ParticleSolver.cpp
+    ${ParticleSolver_CPP_PATH}/Param_ParticlePointSolverParallelDomain.cpp
+    )
+    source_group(ParticleSolver\\src FILES ${ParticleSolver_CPP_LIST})
+endif(USE_LagrangianParticle)
+
 # set directory of DemoSolver:
 if(BUILD_DEMOSOLVER)
 set(DEMOSOLVER_H_PATH DemoSolver/include)
@@ -542,6 +568,11 @@ if(BUILD_IncomSolver)
 list(APPEND CFD_HEAD_LIST ${INCOMSOLVER_H_LIST})
 endif()
 
+# add ParticleSolver_H_LISY
+if(USE_LagrangianParticle)
+  list(APPEND CFD_HEAD_LIST ${ParticleSolver_H_LIST})
+endif()
+
 # add SpecDiffHybSolver_H_LIST
 if(BUILD_SpecDiffHybSolver)
 list(APPEND CFD_HEAD_LIST ${SpecDiffHybSolver_H_LIST})
@@ -571,6 +602,11 @@ ${SpecDiffHybSolver_CPP_LIST}
 ${HOSOLVERUNSTRUCT_CPP_LIST}
 ${DEMOSOLVER_CPP_LIST}
 )
+# add ParticleSolver_CPP_LIST
+if(USE_LagrangianParticle)
+  list(APPEND CFD_CPP_LIST ${ParticleSolver_CPP_LIST})
+endif(USE_LagrangianParticle)
+
 # add SpecDiffHybSolver_CPP_LIST
 if(BUILD_SpecDiffHybSolver)
 list(APPEND CFD_CPP_LIST ${SpecDiffHybSolver_CPP_LIST})

@@ -116,6 +116,7 @@ const int MAXCELLLAYER        = 1024;
 const int NS_EQUATION         = 1;
 const int TURBULENCE          = 2;
 const int TRANSITION          = 3;
+const int PARTICLE            = 4;
 
 const int NONDIMENSIONCONDITION = 0;
 const int FLIGHTCONDITION       = 1;

@@ -498,51 +498,54 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
     RDouble refVelocity = refParam.GetVelocity();
     RDouble refVicosity = refParam.GetViscosity();
     RDouble refSoundSpeed = refParam.GetSoundVelocity();
-
-    PrintToWindow("Inflow Conditions", "\n");
-    PrintToWindow("  Gama                     :    ", refGama      ,           "\n");
-    PrintToWindow("  Mach Number              :    ", refMachNumber,           "\n");
-    PrintToWindow("  Attack Angle             :    ", attackd      , "degree", "\n");
-    PrintToWindow("  Sideslip Angle           :    ", angleSlide   , "degree", "\n");
- 
-    int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
-    if (viscousType)
+    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+    if(COMPRESSIBLE == compressible)
     {
-        if (inflowParaType == FLIGHTCONDITION)
-        {
-            RDouble height = GlobalDataBase::GetDoubleParaFromDB("height");
-            PrintToWindow("  Fly Height               :    ", height, "km", "\n");
-        }
-        PrintToWindow("  Reynolds Number          :    ", refReNumber,               " 1/m",   "\n");
-        PrintToWindow("  Dimensional Pressure     :    ", refDimensionalPressure,    " Pa",    "\n");
-        PrintToWindow("  Dimensional Density      :    ", refDimensionalDensity,     " kg/m^3", "\n");
-        PrintToWindow("  Dimensional Temperature  :    ", refDimensionalTemperature, " K",     "\n");
+        PrintToWindow("Inflow Conditions", "\n");
+        PrintToWindow("  Gama                     :    ", refGama      ,           "\n");
+        PrintToWindow("  Mach Number              :    ", refMachNumber,           "\n");
+        PrintToWindow("  Attack Angle             :    ", attackd      , "degree", "\n");
+        PrintToWindow("  Sideslip Angle           :    ", angleSlide   , "degree", "\n");
 
-        int metabolicWallTemperature = -1;
-        GlobalDataBase::GetData("metabolicWallTemperature", &metabolicWallTemperature, PHINT, 1);
-
-        if (metabolicWallTemperature == 0)
+        int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+        if (viscousType)
         {
-            for (int i = 0; i < WallT.size(); ++i)
+            if (inflowParaType == FLIGHTCONDITION)
             {
-                if (WallT[i] < 0.0)
-                {
-                    PrintToWindow("  Temperature of Wall",WallNumber[i],"   :    ",  "Adiabatic Wall", "\n");
-                }
-                else if (WallT[i] == 0.0)
-                {
-                    PrintToWindow("  Temperature of Wall",WallNumber[i],"   :    ", "Radiation balance Wall", "\n");
-                }
-                else
-                {
-                    PrintToWindow("  Temperature of Wall",WallNumber[i],"   :    ", WallT[i], "K", "\n");
-                }
+                RDouble height = GlobalDataBase::GetDoubleParaFromDB("height");
+                PrintToWindow("  Fly Height               :    ", height, "km", "\n");
             }
+            PrintToWindow("  Reynolds Number          :    ", refReNumber,               " 1/m",   "\n");
+            PrintToWindow("  Dimensional Pressure     :    ", refDimensionalPressure,    " Pa",    "\n");
+            PrintToWindow("  Dimensional Density      :    ", refDimensionalDensity,     " kg/m^3", "\n");
+            PrintToWindow("  Dimensional Temperature  :    ", refDimensionalTemperature, " K",     "\n");
 
+            int metabolicWallTemperature = -1;
+            GlobalDataBase::GetData("metabolicWallTemperature", &metabolicWallTemperature, PHINT, 1);
+
+            if (metabolicWallTemperature == 0)
+            {
+                for (int i = 0; i < WallT.size(); ++i)
+                {
+                    if (WallT[i] < 0.0)
+                    {
+                        PrintToWindow("  Temperature of Wall",WallNumber[i],"   :    ",  "Adiabatic Wall", "\n");
+                    }
+                    else if (WallT[i] == 0.0)
+                    {
+                        PrintToWindow("  Temperature of Wall",WallNumber[i],"   :    ", "Radiation balance Wall", "\n");
+                    }
+                    else
+                    {
+                        PrintToWindow("  Temperature of Wall",WallNumber[i],"   :    ", WallT[i], "K", "\n");
+                    }
+                }
+
+            }
+            PrintToWindow("  Dimensional Sound Speed  :    ", refSoundSpeed,               " m/s",    "\n");
+            PrintToWindow("  Dimensional Velocity     :    ", refVelocity,               " m/s",      "\n");
+            PrintToWindow("  Dimensional Viscosity    :    ", refVicosity,               " kg/(m*s)", "\n");
         }
-        PrintToWindow("  Dimensional Sound Speed  :    ", refSoundSpeed,               " m/s",    "\n");
-        PrintToWindow("  Dimensional Velocity     :    ", refVelocity,               " m/s",      "\n");
-        PrintToWindow("  Dimensional Viscosity    :    ", refVicosity,               " kg/(m*s)", "\n");
     }
 
     PrintToWindow("Geometry Informations"           ,                                     "\n");

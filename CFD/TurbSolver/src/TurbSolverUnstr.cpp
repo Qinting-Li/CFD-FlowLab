@@ -1585,7 +1585,7 @@ void TurbSolverUnstr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, Fiel
             int le    = leftCellOfFace  [face];
             int re    = rightCellOfFace [face];
 
-            if (iBlank[le] == INTERPOLATION || iBlank[re] == INTERPOLATION) continue; 
+            if (iBlank[le] == INTERPOLATION || iBlank[re] == INTERPOLATION) continue;
 
             //! One of le and re must be cell itself.
             if (le < iCell || re < iCell) continue;
@@ -6142,11 +6142,11 @@ void TurbSolverUnstr::WallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct)
             int re = rightCellOfFace[iFace];
 
             viscousTurbulence[re] = -viscousTurbulence[le];
-            if (viscousType == ONE_EQU)
+        if (viscousType == ONE_EQU)
             {
                 qTurbulence[ISA][re] = - qTurbulence[ISA][le];
             }
-            else if (viscousType == TWO_EQU)
+        else if (viscousType == TWO_EQU)
             {
                 RDouble beta1 = 0.075;
                 RDouble rho   = q[IR][le];
@@ -6594,8 +6594,8 @@ void TurbSolverUnstr::FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruc
             win = q[IW][le];
             pin = q[IP][le];
 
-        vno = nxs[iFace] * uoo + nys[iFace] * voo + nzs[iFace] * woo - vgn[iFace];
-        vni = nxs[iFace] * uin + nys[iFace] * vin + nzs[iFace] * win - vgn[iFace];
+            vno = nxs[iFace] * uoo + nys[iFace] * voo + nzs[iFace] * woo - vgn[iFace];
+            vni = nxs[iFace] * uin + nys[iFace] * vin + nzs[iFace] * win - vgn[iFace];
             vei = sqrt(uin * uin + vin * vin + win * win);
 
             RDouble gama = gamma[le];
@@ -6928,6 +6928,7 @@ void TurbSolverUnstr::Viscosity(Grid *gridIn)
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
     RDouble eddyViscosityLimit = parameters->GetEddyViscosityLimit();
     int monitorViscousTurbulenceMax = GlobalDataBase::GetIntParaFromDB("monitor_vistmax");
+
     string viscousName  = parameters->GetViscousName();
     RDouble refReNumber = parameters->GetRefReNumber();
     RDouble reynoldsSquare = refReNumber * refReNumber;

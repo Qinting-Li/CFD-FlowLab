@@ -52,3 +52,4 @@ inline int Param_NSSolverStruct::GetIniSpeedMode() const
 {
     return iniSpeedMode;
 }
+

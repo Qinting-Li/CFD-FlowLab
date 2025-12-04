@@ -197,6 +197,8 @@ const int VISUAL_KNUDSEN_NUMBER        = 60;  //! Useless.
 const int VISUAL_DAMKOHLER_NUMBER      = 61;
 const int VISUAL_VIBNONEQ_NUMBER       = 62;
 const int VISUAL_VELOCITY_MAGNITUDE    = 63;
+const int VISUAL_SATES_Fr              = 64;
+const int VISUAL_SATES_Cx              = 65;
 
 const int VISUAL_IBLANK                = 81;
 //const int VISUAL_O2                    = 15;

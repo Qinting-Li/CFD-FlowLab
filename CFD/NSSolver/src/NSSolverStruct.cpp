@@ -6337,6 +6337,43 @@ void NSSolverStruct::ComputeCp(Grid *gridIn, RDouble4D *&pressureCoef)
     }
 }
 
+void NSSolverStruct::ComputeCpAverage(Grid *gridIn, RDouble4D *&pressureCoef)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    Range I, J, K;
+    GetRange(ni, nj, nk, -2, 1, I, J, K);
+
+    Range M(0, 0);
+
+    pressureCoef = new RDouble4D(I, J, K, M, fortranArray);
+
+    int iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd;
+    grid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, TWO_GHOST_LAYER);
+
+    RDouble4D &qAverage = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qAverage"));
+
+    using namespace IDX;
+    Param_NSSolverStruct *parameters = GetControlParameters();
+    RDouble *primitiveVarFarfield = parameters->GetPrimitiveVarFarfield();
+    RDouble presureFarfield = primitiveVarFarfield[IP];
+
+    int m = 0;
+    for (int k = kCellStart; k <= kCellEnd; ++k)
+    {
+        for (int j = jCellStart; j <= jCellEnd; ++j)
+        {
+            for (int i = iCellStart; i <= iCellEnd; ++i)
+            {
+                (*pressureCoef)(i, j, k, m) = two * (qAverage(i, j, k, IP) - presureFarfield);
+            }
+        }
+    }
+}
+
     RDouble4D *NSSolverStruct::ComputePrimitiveVariablesWithMoleFraction(Grid *gridIn)
     {
         StructGrid *grid = StructGridCast(gridIn);
@@ -12251,6 +12288,46 @@ void NSSolverStruct::DualTimeSource(Grid *gridIn)
 void NSSolverStruct::ChemicalSource(Grid *gridIn)
 {
 
+}
+
+void NSSolverStruct::ParticleSource(Grid* gridIn)
+{
+    Param_NSSolverStruct* parameters = GetControlParameters();
+    int isUnsteady = parameters->GetIsUnsteady();
+    if (isUnsteady == 0) return;
+
+    StructGrid* grid = StructGridCast(gridIn);
+
+    int nLayers = 0;
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, nLayers);
+
+    RDouble4D& residual = *reinterpret_cast <RDouble4D*> (grid->GetDataPtr("res"));
+
+    RDouble4D& sourceParticle2Flow = *reinterpret_cast <RDouble4D*> (grid->GetDataPtr("sourceParticle2Flow"));
+
+    RDouble particleBackCoupingCoeff = GlobalDataBase::GetDoubleParaFromDB("particleBackCoupingCoeff");
+
+    int nDimVar = 3;
+
+    for (int k = kst; k <= ked; ++k)
+    {
+        for (int j = jst; j <= jed; ++j)
+        {
+            for (int i = ist; i <= ied; ++i)
+            {
+                //! Note iDim = 0 is mass equation.
+                for (int iDim = 1; iDim <= nDimVar; ++iDim)
+                {
+
+                    residual(i, j, k, iDim) += sourceParticle2Flow(i, j, k, iDim - 1) * particleBackCoupingCoeff;
+                }
+                //! temperature.
+
+                residual(i, j, k, 4) += sourceParticle2Flow(i, j, k, 4 - 1) * particleBackCoupingCoeff;
+            }
+        }
+    }
 }
 
 //! Compute the distance between the center of the grid cell on the first layer and the center of the surface cell.
@@ -21285,6 +21362,12 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
         varName = postVisualization->GetVariableName(PHSPACE::VISUAL_PRESSURE);
         postVisualization->UpdateVisualNodeVarPtr(varName, qAverage, IDX::IP);
 
+        varName = postVisualization->GetVariableName(PHSPACE::VISUAL_CP);
+        RDouble4D *cp = nullptr;
+        ComputeCpAverage(grid, cp);
+        postVisualization->UpdateVisualNodeVarPtr(varName, *cp, 0);
+        delete cp;
+
         return;
     }
 
@@ -21486,6 +21569,18 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
             {
                 string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_MODELED_DISSIPATION);
                 postVisualization->UpdateVisualNodeVarPtr(varName, q_turb, IDX::IKW);
+            }
+            if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_SATES_Fr))
+            {
+                RDouble3D &SATES_Fr = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("SATES_Fr"));    //! for resolved control function Fr of SATES
+                string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_SATES_Fr);
+                postVisualization->UpdateVisualNodeVarPtr(varName, SATES_Fr);
+            }
+            if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_SATES_Cx))
+            {
+                RDouble3D &SATES_Cx = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("SATES_Cx"));    //! for cutoff length scale of SATES
+                string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_SATES_Cx);
+                postVisualization->UpdateVisualNodeVarPtr(varName, SATES_Cx);
             }
             if (viscousName.substr(0, 17) == "2eq-kw-menter-sst")    //! for blending function F1 and F2.
             {

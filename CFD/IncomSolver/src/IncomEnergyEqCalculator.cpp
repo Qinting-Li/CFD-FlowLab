@@ -23,11 +23,13 @@ void IncomEnergyEqCalculator::CalcGrad(Grid *gridIn)
     int solverIndex = GetSolverIndex();
     string varName = varNameIncom[solverIndex];
 
-    GradientCalculation(grid, "T", "d" + varName + "dx", "d" + varName + "dy", "d" + varName + "dz");
+    string GradCalcMethod = GlobalDataBase::GetStrParaFromDB("GradCalcMethod");
+
+    GradientCalculation(grid, "T", "d" + varName + "dx", "d" + varName + "dy", "d" + varName + "dz", GradCalcMethod);
 }
 
 void IncomEnergyEqCalculator::calWallBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
-    RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
+    RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff, int iVariable)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
@@ -283,8 +285,8 @@ void IncomEnergyEqCalculator::calFarfieldBC(Grid *gridIn, vector<int> *faceIndex
     }
 }
 
-void IncomEnergyEqCalculator::calInterfaceBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
-    RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
+void IncomEnergyEqCalculator::calInterfaceBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *upperMatrixCoeff, RDouble *bCoeff, RDouble *q,
+    RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff, int iVariable)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
@@ -300,8 +302,6 @@ void IncomEnergyEqCalculator::calInterfaceBC(Grid *gridIn, vector<int> *faceInde
     RDouble *ycc = grid->GetCellCenterY();
     RDouble *zcc = grid->GetCellCenterZ();
     RDouble *faceWeightOfLeftCell = reinterpret_cast<RDouble *>(grid->GetDataPtr("faceWeightOfLeftCell"));
-    RDouble *upperMatrixCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("upperMatrixCoeff"));
-    RDouble *lowerMatrixCoeff = reinterpret_cast<RDouble *>(grid->GetDataPtr("lowerMatrixCoeff"));
     RDouble *FaceFlux = reinterpret_cast<RDouble *>(grid->GetDataPtr("FaceFlux"));
     RDouble *cp = reinterpret_cast<RDouble *>(grid->GetDataPtr("cp"));
 
@@ -315,28 +315,28 @@ void IncomEnergyEqCalculator::calInterfaceBC(Grid *gridIn, vector<int> *faceInde
         RDouble dx = xcc[re] - xcc[le];
         RDouble dy = ycc[re] - ycc[le];
         RDouble dz = zcc[re] - zcc[le];
-        RDouble area2 = muLocal * 
-            area[iFacelocal] / (xfn[iFacelocal] * dx + yfn[iFacelocal] * dy + zfn[iFacelocal] * dz);
+        RDouble area2 = muLocal * area[iFacelocal] / (xfn[iFacelocal] * dx + yfn[iFacelocal] * dy + zfn[iFacelocal] * dz);
         RDouble ax = muLocal * xfn[iFacelocal] * area[iFacelocal] - dx * area2;
         RDouble ay = muLocal * yfn[iFacelocal] * area[iFacelocal] - dy * area2;
         RDouble az = muLocal * zfn[iFacelocal] * area[iFacelocal] - dz * area2;
 
-
         diagMatrixCoeff[le] = diagMatrixCoeff[le] + area2 / cp[re] * matrixCoeff;
         upperMatrixCoeff[iFacelocal] = upperMatrixCoeff[iFacelocal] - area2 / cp[re] * matrixCoeff;
 
-        RDouble a12 = MAX(FaceFlux[iFacelocal], 0.0);
-        RDouble a21 = a12 - FaceFlux[iFacelocal];
-
-        diagMatrixCoeff[le] = diagMatrixCoeff[le] + a21 * matrixCoeff;
-        upperMatrixCoeff[iFacelocal] = upperMatrixCoeff[iFacelocal] - a21 * matrixCoeff;
+        if (FaceFlux[iFacelocal] > 0.0) 
+        {
+            diagMatrixCoeff[le] += FaceFlux[iFacelocal] * matrixCoeff;
+        }
+        else
+        {
+            upperMatrixCoeff[iFacelocal] += FaceFlux[iFacelocal] * matrixCoeff;
+        }
 
         RDouble sLR = ax * (faceWeightOfLeftCell[iFace] * dqdx[le] + (1.0 - faceWeightOfLeftCell[iFace]) * dqdx[re]) +
             ay * (faceWeightOfLeftCell[iFace] * dqdy[le] + (1.0 - faceWeightOfLeftCell[iFace]) * dqdy[re]) +
             az * (faceWeightOfLeftCell[iFace] * dqdz[le] + (1.0 - faceWeightOfLeftCell[iFace]) * dqdz[re]);
 
         bCoeff[le] += sLR;
-
     }
 }
 
@@ -369,11 +369,6 @@ void IncomEnergyEqCalculator::CalcOtherbCoeff(Grid *gridIn, int iEquation)
     RDouble *dwdy  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdy"));
     RDouble *dwdz  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dWdz"));
     RDouble *faceWeightOfLeftCell  = reinterpret_cast<RDouble *>(grid->GetDataPtr("faceWeightOfLeftCell"));
-    RDouble **tau1 = NewPointer2<RDouble> (3, 3);
-    RDouble **tau2 = NewPointer2<RDouble> (3, 3);
-    RDouble *tauu1 = new double [3];
-    RDouble *tauu2 = new double [3];
-    RDouble *sf = new double [3];
 
     RDouble *vol = grid->GetCellVolume();
     RDouble *dpdx = reinterpret_cast<RDouble *>(grid->GetDataPtr("dpdx"));
@@ -381,95 +376,37 @@ void IncomEnergyEqCalculator::CalcOtherbCoeff(Grid *gridIn, int iEquation)
     RDouble *dpdz = reinterpret_cast<RDouble *>(grid->GetDataPtr("dpdz"));
     RDouble *p = reinterpret_cast<RDouble *>(grid->GetDataPtr("P"));
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-    UnstructBCSet **bcr = grid->GetBCRecord();
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+
+    for (int iCell = 0; iCell < nTotalCell; ++iCell)
     {
-        int bcType = bcr[iFace]->GetKey();
-        if (bcType != PHENGLEI::INTERFACE)
+        RDouble dudxTmp = dudx[iCell];
+        RDouble dudyTmp = dudy[iCell];
+        RDouble dudzTmp = dudz[iCell];
+        RDouble dvdxTmp = dvdx[iCell];
+        RDouble dvdyTmp = dvdy[iCell];
+        RDouble dvdzTmp = dvdz[iCell];
+        RDouble dwdxTmp = dwdx[iCell];
+        RDouble dwdyTmp = dwdy[iCell];
+        RDouble dwdzTmp = dwdz[iCell];
+
+        bCoeff[iCell] += mu[iCell] * (2.0 * (pow(dudxTmp, 2) + pow(dvdyTmp, 2) + pow(dwdzTmp, 2)) +
+            pow((dvdxTmp + dudyTmp), 2) + pow((dwdxTmp + dudzTmp), 2) + pow((dwdyTmp + dvdzTmp), 2));
+    }
+
+    string flowSolverName = GlobalDataBase::GetStrParaFromDB("flowSolverName");
+    if (flowSolverName == "CompressibleSIMPLE")
+    {
+        for (int iCell = 0; iCell < nTotalCell; ++iCell)
         {
-            continue;
+            bCoeff[iCell] -= (2.0 / 3.0) * mu[iCell] * pow((dudx[iCell] + dvdy[iCell] + dwdz[iCell]),2);
         }
-        int le = leftCellOfFace[iFace];
-        int re = rightCellOfFace[iFace];
-        RDouble muf = faceWeightOfLeftCell[iFace] * mu[le] + (1.0 - faceWeightOfLeftCell[iFace]) * mu[re];
-        tau1[0][0] = 2 * dudx[le];
-        tau1[1][1] = 2 * dvdy[le];
-        tau1[2][2] = 2 * dwdz[le];
-        tau1[0][1] = dudy[le] + dvdx[le];
-        tau1[1][0] = tau1[0][1];
-        tau1[0][2] = dudz[le] + dwdx[le];
-        tau1[2][0] = tau1[0][2];
-        tau1[1][2] = dvdz[le] + dwdy[le];
-        tau1[2][1] = tau1[1][2];
-        tauu1[0] = tau1[0][0] * u[le] + tau1[0][1] * v[le] + tau1[0][2] * w[le];
-        tauu1[1] = tau1[1][0] * u[le] + tau1[1][1] * v[le] + tau1[1][2] * w[le];
-        tauu1[2] = tau1[1][0] * u[le] + tau1[2][1] * v[le] + tau1[2][2] * w[le];
-
-        tau2[0][0] = 2 * dudx[re];
-        tau2[1][1] = 2 * dvdy[re];
-        tau2[2][2] = 2 * dwdz[re];
-        tau2[0][1] = dudy[re] + dvdx[re];
-        tau2[1][0] = tau2[0][1];
-        tau2[0][2] = dudz[re] + dwdx[re];
-        tau2[2][0] = tau2[0][2];
-        tau2[1][2] = dvdz[re] + dwdy[re];
-        tau2[2][1] = tau2[1][2];
-        tauu2[0] = tau2[0][0] * u[re] + tau2[0][1] * v[re] + tau2[0][2] * w[re];
-        tauu2[1] = tau2[1][0] * u[re] + tau2[1][1] * v[re] + tau2[1][2] * w[re];
-        tauu2[2] = tau2[1][0] * u[re] + tau2[2][1] * v[re] + tau2[2][2] * w[re];
-
-        sf[0] = faceWeightOfLeftCell[iFace] * tauu1[0] + (1.0 - faceWeightOfLeftCell[iFace]) * tauu2[0];
-        sf[1] = faceWeightOfLeftCell[iFace] * tauu1[1] + (1.0 - faceWeightOfLeftCell[iFace]) * tauu2[1];
-        sf[2] = faceWeightOfLeftCell[iFace] * tauu1[2] + (1.0 - faceWeightOfLeftCell[iFace]) * tauu2[2];
-
-        RDouble s1 = muf * (xfn[iFace] * sf[0] + yfn[iFace] * sf[1] + zfn[iFace] * sf[2]) * area[iFace];
-        bCoeff[le] += s1;
     }
 
-
-    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
-    {
-        int le = leftCellOfFace[iFace];
-        int re = rightCellOfFace[iFace];
-        RDouble muf = faceWeightOfLeftCell[iFace] * mu[le] + (1.0 - faceWeightOfLeftCell[iFace]) * mu[re];
-        tau1[0][0] = 2 * dudx[le];
-        tau1[1][1] = 2 * dvdy[le];
-        tau1[2][2] = 2 * dwdz[le];
-        tau1[0][1] = dudy[le] + dvdx[le];
-        tau1[1][0] = tau1[0][1];
-        tau1[0][2] = dudz[le] + dwdx[le];
-        tau1[2][0] = tau1[0][2];
-        tau1[1][2] = dvdz[le] + dwdy[le];
-        tau1[2][1] = tau1[1][2];
-        tauu1[0] = tau1[0][0] * u[le] + tau1[0][1] * v[le] + tau1[0][2] * w[le];
-        tauu1[1] = tau1[1][0] * u[le] + tau1[1][1] * v[le] + tau1[1][2] * w[le];
-        tauu1[2] = tau1[1][0] * u[le] + tau1[2][1] * v[le] + tau1[2][2] * w[le];
-
-        tau2[0][0] = 2 * dudx[re];
-        tau2[1][1] = 2 * dvdy[re];
-        tau2[2][2] = 2 * dwdz[re];
-        tau2[0][1] = dudy[re] + dvdx[re];
-        tau2[1][0] = tau2[0][1];
-        tau2[0][2] = dudz[re] + dwdx[re];
-        tau2[2][0] = tau2[0][2];
-        tau2[1][2] = dvdz[re] + dwdy[re];
-        tau2[2][1] = tau2[1][2];
-        tauu2[0] = tau2[0][0] * u[re] + tau2[0][1] * v[re] + tau2[0][2] * w[re];
-        tauu2[1] = tau2[1][0] * u[re] + tau2[1][1] * v[re] + tau2[1][2] * w[re];
-        tauu2[2] = tau2[1][0] * u[re] + tau2[2][1] * v[re] + tau2[2][2] * w[re];
-
-        sf[0] = faceWeightOfLeftCell[iFace] * tauu1[0] + (1.0 - faceWeightOfLeftCell[iFace]) * tauu2[0];
-        sf[1] = faceWeightOfLeftCell[iFace] * tauu1[1] + (1.0 - faceWeightOfLeftCell[iFace]) * tauu2[1];
-        sf[2] = faceWeightOfLeftCell[iFace] * tauu1[2] + (1.0 - faceWeightOfLeftCell[iFace]) * tauu2[2];
-
-        RDouble s1 = muf * (xfn[iFace] * sf[0] + yfn[iFace] * sf[1] + zfn[iFace] * sf[2]) * area[iFace];
-        bCoeff[le] += s1;
-        bCoeff[re] -= s1;
-    }
     for (int iCell = 0; iCell < nTotalCell; ++iCell)
     {
         bCoeff[iCell] += (u[iCell] * dpdx[iCell] + v[iCell] * dpdy[iCell] + w[iCell] * dpdz[iCell]) * vol[iCell];
     }
+
     if (isUnsteady==1)
     {
         RDouble dt = GlobalDataBase::GetDoubleParaFromDB("dt");
@@ -480,11 +417,6 @@ void IncomEnergyEqCalculator::CalcOtherbCoeff(Grid *gridIn, int iEquation)
             bCoeff[iCell] += ((p[iCell]-pOld[iCell])/dt) * vol[iCell];
         }
     }
-    DelPointer2(tau1);
-    DelPointer2(tau2);
-    delete [] tauu1;
-    delete [] tauu2;
-    delete [] sf;
 }
 
 void IncomEnergyEqCalculator::GetResidual(Grid *gridIn, vector<RDouble>& res)
@@ -580,7 +512,7 @@ void IncomEnergyEqCalculator::UpdateBCValue(Grid *gridIn)
 
         if (bcType == PHENGLEI::SOLID_SURFACE)
         {
-            RDouble spBound;
+            RDouble spBound = 273.15;
 
             for (std::size_t iFace = 0; iFace < faceIndex->size(); ++iFace)
             {
@@ -611,7 +543,7 @@ void IncomEnergyEqCalculator::UpdateBCValue(Grid *gridIn)
         }
         else if (bcType == PHENGLEI::FARFIELD)
         {
-            RDouble spBound;
+            RDouble spBound = 273.15;
             if (bcData->IsExist("initT", PHDOUBLE, 1))
             {
                 bcData->GetData("initT", &spBound, PHDOUBLE, 1);
@@ -640,7 +572,7 @@ void IncomEnergyEqCalculator::UpdateBCValue(Grid *gridIn)
         }
         else if (bcType == PHENGLEI::INFLOW)
         {
-            RDouble spBound;
+            RDouble spBound = 273.15;
 
             if (bcData->IsExist("initT", PHDOUBLE, 1))
             {
@@ -676,7 +608,7 @@ void IncomEnergyEqCalculator::UpdateBCValue(Grid *gridIn)
         }
         else if (bcType == PHENGLEI::OUTFLOW)
         {
-            RDouble spBound;
+            RDouble spBound = 273.15;
 
             if (bcData->IsExist("initT", PHDOUBLE, 1))
             {
@@ -699,7 +631,7 @@ void IncomEnergyEqCalculator::UpdateBCValue(Grid *gridIn)
         }
         else if (bcType == PHENGLEI::PRESSURE_INLET)
         {
-            RDouble spBound;
+            RDouble spBound = 273.15;
             if (bcData->IsExist("initT", PHDOUBLE, 1))
             {
                 bcData->GetData("initT", &spBound, PHDOUBLE, 1);
@@ -734,7 +666,7 @@ void IncomEnergyEqCalculator::UpdateBCValue(Grid *gridIn)
         }
         else if (bcType == PHENGLEI::PRESSURE_OUTLET)
         {
-            RDouble spBound;
+            RDouble spBound = 273.15;
 
             if (bcData->IsExist("initT", PHDOUBLE, 1))
             {

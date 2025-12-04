@@ -1997,6 +1997,8 @@ void MixedGas::ComputeReferenceViscosityDimensionalChemical()
     }
 
     referenceParameterDimensional.SetViscosity(reference_viscosity_dimensional);
+
+    GlobalDataBase::UpdateData("refDynamicViscosityDimensional", &reference_viscosity_dimensional, PHDOUBLE, 1);
 }
 
 void MixedGas::ComputeReferenceViscosityDimensionalNoChemical()
@@ -2832,6 +2834,11 @@ void MixedGas::InitGlobalParameterOfNSEquation()
     GlobalBoundaryCondition::InitMassFlowBoundary();
 
     GlobalBoundaryCondition::SetBCDataBaseByGlobalBC();
+
+    //! Init particle boundary condtion.
+    GlobalBoundaryCondition::ReadGlobalParticleBoundaryCondition();
+
+    GlobalBoundaryCondition::SetParticleBCTypeByGlobalBC();
 }
 
 void MixedGas::ComputeReferencePrimitive()

@@ -5809,7 +5809,7 @@ void WalldistStatics()
 
     RDouble minWalldist = PHSPACE::LARGE;
     RDouble maxWalldist = PHSPACE::SMALL;
-    
+
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int proc = GetZoneProcessorIDSepMode(iZone);

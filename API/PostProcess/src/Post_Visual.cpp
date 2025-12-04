@@ -108,6 +108,8 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
     visualVariablesMap.insert(pair<int, string>(VISUAL_CFL1               , "localCFL"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_CFL2               , "minCFL"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_STREAMLINE_MACH    , "streamline_mach"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_SATES_Fr           , "SATESFr"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_SATES_Cx           , "SATESCx"));
 
     int compressible = COMPRESSIBLE;
     compressible = GlobalDataBase::GetIntParaFromDB("compressible");

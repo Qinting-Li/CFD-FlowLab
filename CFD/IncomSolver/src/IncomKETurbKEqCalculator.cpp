@@ -24,11 +24,12 @@ void IncomKETurbKEqCalculator::InitFlowAsRestart(Grid *gridIn)
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
+    RDouble initKinetic = GlobalDataBase::GetDoubleParaFromDB("initKinetic");
+
     string *varNameIncom = reinterpret_cast <string *> (GlobalDataBase::GetDataPtr("varNameIncom"));
     int solverIndex = GetSolverIndex();
-    RDouble initPhi = GlobalDataBase::GetDoubleParaFromDB("init" + varNameIncom[solverIndex]);
-    RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(varNameIncom[solverIndex]));
-    PHSPACE::SetField(phi, initPhi, nTotal);
+    RDouble *kinetic = reinterpret_cast<RDouble *>(grid->GetDataPtr(varNameIncom[solverIndex]));
+    PHSPACE::SetField(kinetic, initKinetic, nTotal);
 
     RDouble *visl = reinterpret_cast<RDouble *> (grid->GetDataPtr("visl"));
     PHSPACE::SetField(visl, 0.0, nTotal);
@@ -95,16 +96,12 @@ void IncomKETurbKEqCalculator::IncompressibleInitial(Grid * gridIn)
     RDouble cmu = 0.09; 
     RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
     RDouble *mu = reinterpret_cast<RDouble *>(grid->GetDataPtr("mu"));
+    RDouble *FaceFlux = reinterpret_cast<RDouble*>(grid->GetDataPtr("FaceFlux"));
 
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        vist[iCell] = rho[iCell] * cmu * k[iCell] * k[iCell] / Epsilon[iCell];
         visl[iCell] = mu[iCell];
-        
-        if (vist[iCell] > 1e5 * visl[iCell])
-        {
-            vist[iCell] = visl[iCell] * 1e5;
-        }
+        vist[iCell] = rho[iCell] * cmu * k[iCell] * k[iCell] / Epsilon[iCell];
     }
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
@@ -142,7 +139,255 @@ void IncomKETurbKEqCalculator::IncompressibleInitial(Grid * gridIn)
         }
     }
   
-    UpdateBCValue(grid);
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    {
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        Data_Param *bcData = bcRegion->GetBCParamDataBase();
+
+        if (bcType == PHENGLEI::SOLID_SURFACE)
+        {
+            for (size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
+            {
+                int iFacelocal = (*faceIndex)[iFace];
+                int le = leftCellOfFace[iFacelocal];
+                int re = rightCellOfFace[iFacelocal];
+                k[re] = k[le];
+                Epsilon[re] = Epsilon[le];
+            }
+        }
+        else if (bcType == PHENGLEI::SYMMETRY)
+        {
+            for (size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
+            {
+                int iFacelocal = (*faceIndex)[iFace];
+                int le = leftCellOfFace[iFacelocal];
+                int re = rightCellOfFace[iFacelocal];
+                k[re] = k[le];
+                Epsilon[re] = Epsilon[le];
+            }
+        }
+        else if (bcType == PHENGLEI::FARFIELD)
+        {
+            RDouble kb = 0.0;
+            RDouble epsilonb = 0.0;
+            for (std::size_t iFace = 0; iFace < faceIndex->size(); ++iFace)
+            {
+                int iFacelocal = (*faceIndex)[iFace];
+
+                if (bcData)
+                {
+                    if (bcData->IsExist("initKinetic", PHDOUBLE, 1))
+                    {
+                        bcData->GetData("initKinetic", &kb, PHDOUBLE, 1);
+                    }
+                }
+                else
+                {
+                    std::cout << " No initial value has assigned to the boundary " << std::endl;
+                }
+
+                if (bcData)
+                {
+                    if (bcData->IsExist("initEpsilon", PHDOUBLE, 1))
+                    {
+                        bcData->GetData("initEpsilon", &epsilonb, PHDOUBLE, 1);
+                    }
+                }
+                else
+                {
+                    std::cout << "Please assign a value of Epsilon on farield" << std::endl;;
+                }
+            }
+            for (int iFace = 0; iFace < faceIndex->size(); ++iFace)
+            {
+                int iFacelocal = (*faceIndex)[iFace];
+                int le = leftCellOfFace[iFacelocal];
+                int re = rightCellOfFace[iFacelocal];
+                if (FaceFlux[iFacelocal] < 0)
+                {
+
+                    k[re] = kb;
+                    Epsilon[re] = epsilonb;
+                }
+                else
+                {
+
+                    k[re] = k[le];
+                    Epsilon[re] = Epsilon[le];
+                }
+            }
+        }
+        else if (bcType == PHENGLEI::INFLOW)
+        {
+            RDouble initKinetic = 0.0;
+            RDouble initEpsilon = 0.0;
+
+            for (std::size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
+            {
+                int iFacelocal = (*faceIndex)[iFace];
+                int le = leftCellOfFace[iFacelocal];
+                int re = rightCellOfFace[iFacelocal];
+
+                if (bcData)
+                {
+                    if (bcData->IsExist("initKinetic", PHDOUBLE, 1))
+                    {
+                        bcData->GetData("initKinetic", &initKinetic, PHDOUBLE, 1);
+                    }
+                }
+                else
+                {
+                    std::cout << " No initKinetic initial value has assigned to the inlet boundary " << std::endl;
+                }
+
+                if (bcData)
+                {
+                    if (bcData->IsExist("initEpsilon", PHDOUBLE, 1))
+                    {
+                        bcData->GetData("initEpsilon", &initEpsilon, PHDOUBLE, 1);
+                    }
+                }
+                else
+                {
+                    std::cout << "Please assign a value of Epsilon on inlet" << std::endl;;
+                }
+
+                if (FaceFlux[iFacelocal] < 0.0)
+                {
+
+                    k[re] = initKinetic;
+                    Epsilon[re] = initEpsilon;
+                }
+                else
+                {
+
+                    k[re] = k[le];
+                    Epsilon[re] = Epsilon[le];
+                }
+            }
+        }
+        else if (bcType == PHENGLEI::OUTFLOW)
+        {
+            RDouble initKinetic = 0.0;
+            RDouble initEpsilon = 0.0;
+
+            for (std::size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
+            {
+                int iFacelocal = (*faceIndex)[iFace];
+                int le = leftCellOfFace[iFacelocal];
+                int re = rightCellOfFace[iFacelocal];
+
+                if (bcData)
+                {
+                    if (bcData->IsExist("initKinetic", PHDOUBLE, 1))
+                    {
+                        bcData->GetData("initKinetic", &initKinetic, PHDOUBLE, 1);
+                    }
+                }
+                else
+                {
+                    std::cout << " No initKinetic initial value has assigned to the boundary " << std::endl;
+                }
+
+                if (bcData)
+                {
+                    if (bcData->IsExist("initEpsilon", PHDOUBLE, 1))
+                    {
+                        bcData->GetData("initEpsilon", &initEpsilon, PHDOUBLE, 1);
+                    }
+                }
+                else
+                {
+                    std::cout << "Please assign a value of Epsilon on inlet" << std::endl;;
+                }
+
+                if (FaceFlux[iFacelocal] > 0.0)
+                {
+                    k[re] = initKinetic;
+                    Epsilon[re] = initEpsilon;
+                }
+                else
+                {
+                    k[re] = k[le];
+                    Epsilon[re] = Epsilon[le];
+                }
+            }
+        }
+        else if (bcType == PHENGLEI::PRESSURE_INLET)
+        {
+            RDouble kb = 0.0;
+            for (std::size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
+            {
+                int iFacelocal = (*faceIndex)[iFace];
+                int le = leftCellOfFace[iFacelocal];
+                int re = rightCellOfFace[iFacelocal];
+                if (bcData)
+                {
+                    if (bcData->IsExist("initKinetic", PHDOUBLE, 1))
+                    {
+                        bcData->GetData("initKinetic", &kb, PHDOUBLE, 1);
+                    }
+                }
+                else
+                {
+                    std::cout << " No initial value has assigned to the boundary " << std::endl;
+                }
+                if (FaceFlux[iFacelocal] < 0)
+                {
+                    k[re] = kb;
+                }
+                else
+                {
+                    k[re] = k[le];
+                }
+            }
+        }
+        else if (bcType == PHENGLEI::PRESSURE_OUTLET)
+        {
+            RDouble kb = 0.0;
+            for (std::size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
+            {
+                int iFacelocal = (*faceIndex)[iFace];
+                int le = leftCellOfFace[iFacelocal];
+                int re = rightCellOfFace[iFacelocal];
+
+                if (FaceFlux[iFacelocal] < 0.0)
+                {
+                    if (bcData)
+                    {
+                        if (bcData->IsExist("initKinetic", PHDOUBLE, 1))
+                        {
+                            bcData->GetData("initKinetic", &kb, PHDOUBLE, 1);
+                            k[re] = RDouble(kb);
+                        }
+                        else
+                        {
+                            std::cout << " Please assign a value " << std::endl;
+                        }
+                    }
+                }
+                else
+                {
+                    k[re] = k[le];
+                }
+            }
+        }
+        else 
+        {
+            for (size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
+            {
+                int iFacelocal = (*faceIndex)[iFace];
+                int le = leftCellOfFace[iFacelocal];
+                int re = rightCellOfFace[iFacelocal];
+                k[re] = k[le];
+                Epsilon[re] = Epsilon[le];
+            }
+        }
+    }
+    CommunicateAnInterfaceVar(k);
+    CommunicateAnInterfaceVar(Epsilon);
 
     InitialUnsteadyVar(grid);
 }
@@ -191,37 +436,16 @@ void IncomKETurbKEqCalculator::UpdateProperties(Grid *gridIn)
     RDouble cmu = 0.09; 
     RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
     RDouble *mu  = reinterpret_cast<RDouble *>(grid->GetDataPtr("mu"));
-    for (int iCell = 0; iCell < nTotalCell; iCell++)
-    {
-        if (fabs(k[iCell]) < 1e-14)
-        {
-            k[iCell] = 1e-14;
-        }
-        else if (k[iCell] < 0.0)
-        {
-            k[iCell] = -k[iCell];
-        }
-
-        vist[iCell] = rho[iCell] * cmu * k[iCell] * k[iCell] / Epsilon[iCell];
-
-        mu[iCell] = visl[iCell] + vist[iCell];
-
-        if (mu[iCell] > 1e5 * visl[iCell])
-        {
-            mu[iCell] = visl[iCell] * 1e5;
-            vist[iCell] = visl[iCell] * 1e5;
-        }
-    }
 
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
 
-        vector<int>* faceIndex = bcRegion->GetFaceIndex();
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
         Data_Param* bcData = bcRegion->GetBCParamDataBase();
 
         if (bcType == PHENGLEI::SOLID_SURFACE)
@@ -232,19 +456,54 @@ void IncomKETurbKEqCalculator::UpdateProperties(Grid *gridIn)
 
             RDouble *mu = reinterpret_cast<RDouble *>(grid->GetDataPtr("mu"));
             RDouble *nu_eff_w = reinterpret_cast<RDouble *>(grid->GetDataPtr("nu_eff")) + nTotalCell;
+            RDouble *WD = reinterpret_cast<RDouble *>(grid->GetDataPtr("wd"));
+
+            RDouble cmu = 0.09;
+            RDouble cmu75_ = std::pow(cmu, 0.75);
+            RDouble cmu25_ = std::pow(cmu, 0.25);
+            RDouble cappa_ = 0.41;
+            RDouble yptr_ = 11.06;
 
             for (int iFace = 0; iFace < faceIndex->size(); ++ iFace)
             {
                 int iFacelocal = (*faceIndex)[iFace];
                 int le = leftCellOfFace[iFacelocal];
                 int re = rightCellOfFace[iFacelocal];
-                mu[re] = nu_eff_w[iFacelocal];
+
+                RDouble wd = WD[re];
+                RDouble cmute = cmu25_ * sqrt(k[le]);
+                RDouble yplus = rho[le] * wd * cmute / visl[le];
+
+                if(yplus > yptr_)
+                {
+                    vist[re] = (yplus / (log(yplus) / cappa_ + 5.25) - 1.0) * visl[le];
+                    if(vist[re] < 0.0)
+                    {
+                        vist[re] = 0.0;
+                    }
+                    mu[re] = visl[le] + vist[re];
+                }
+                else
+                {
+                    vist[re] = 0.0;
+                    mu[re] = visl[le];
+                }
+            }
+        }
+        else if(bcType == PHENGLEI::SYMMETRY || bcType == PHENGLEI::INFLOW || bcType == PHENGLEI::OUTFLOW)
+        {
+            for (int iFace = 0; iFace < faceIndex->size(); ++ iFace)
+            {
+                int iFacelocal = (*faceIndex)[iFace];
+                int le = leftCellOfFace[iFacelocal];
+                int re = rightCellOfFace[iFacelocal];
+                vist[re] = vist[le];
+                mu[re] = visl[le] + vist[re];
             }
         }
     }
 
     CommunicateAnInterfaceVar(mu);
-    CommunicateAnInterfaceVar(visl);
     CommunicateAnInterfaceVar(vist);
 }
 
@@ -350,14 +609,48 @@ void IncomKETurbKEqCalculator::UpdateBCValue(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn); 
     int nTotalCell = grid->GetNTotalCell();
-    string varName = "Kinetic";
+    int nTotalFace = grid->GetNTotalFace();
+    int nBoundFace = grid->GetNBoundFace();
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
-    RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr("Kinetic"));
+    int *rightCellOfFace = grid->GetRightCellOfFace();
+
+    string varNameK = "Kinetic";
+    string varNameE = "Epsilon";
+
+    RDouble *kinetic = reinterpret_cast<RDouble *>(grid->GetDataPtr("Kinetic"));
+    RDouble *epsilon = reinterpret_cast<RDouble *>(grid->GetDataPtr("Epsilon"));
+    RDouble *visl = reinterpret_cast<RDouble *>(grid->GetDataPtr("visl"));
+    RDouble *vist = reinterpret_cast<RDouble *>(grid->GetDataPtr("vist"));
+    RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
+    RDouble *mu  = reinterpret_cast<RDouble *>(grid->GetDataPtr("mu"));
     RDouble *FaceFlux = reinterpret_cast<RDouble *>(grid->GetDataPtr("FaceFlux"));
-    
+    RDouble *wd = reinterpret_cast<RDouble *>(grid->GetDataPtr("wd"));
+    RDouble cmu = 0.09;
+
+    for (int iCell = 0; iCell < nTotalCell; iCell++)
+    {
+        if (kinetic[iCell] < 1e-14)
+        {
+            kinetic[iCell] = 1e-14;
+        }
+
+        if (epsilon[iCell] < 1e-20)
+        {
+            epsilon[iCell] = 1e-20;
+        }
+
+        vist[iCell] = rho[iCell] * cmu * kinetic[iCell] * kinetic[iCell] / epsilon[iCell];
+        
+        if(vist[iCell] > 1e5 * visl[iCell])
+        {
+            vist[iCell] = 1e5 * visl[iCell];
+        }
+        mu[iCell] = visl[iCell] + vist[iCell];
+    }
+
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
-    int *rightCellOfFace = grid->GetRightCellOfFace();
+
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
         UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
@@ -372,12 +665,25 @@ void IncomKETurbKEqCalculator::UpdateBCValue(Grid *gridIn)
                 int iFacelocal = (*faceIndex)[iFace];
                 int le = leftCellOfFace[iFacelocal];
                 int re = rightCellOfFace[iFacelocal];
-                phi[re] = phi[le];
+                kinetic[re] = 0.0;
+                epsilon[re] = 2.0 * visl[le] * kinetic[le] / rho[le] / pow(wd[re],2.0);
+            }
+        }
+        else if (bcType == PHENGLEI::SYMMETRY)
+        {
+            for (size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
+            {
+                int iFacelocal = (*faceIndex)[iFace];
+                int le = leftCellOfFace[iFacelocal];
+                int re = rightCellOfFace[iFacelocal];
+                kinetic[re] = kinetic[le];
+                epsilon[re] = epsilon[le];
             }
         }
         else if (bcType == PHENGLEI::FARFIELD)
         {
             RDouble kb = 0.0;
+            RDouble epsilonb = 0.0;
             for (std::size_t iFace = 0; iFace < faceIndex->size(); ++iFace)
             {
                 int iFacelocal = (*faceIndex)[iFace];
@@ -393,6 +699,18 @@ void IncomKETurbKEqCalculator::UpdateBCValue(Grid *gridIn)
                 {
                     std::cout << " No initial value has assigned to the boundary " << std::endl;
                 }
+
+                if (bcData)
+                {
+                    if (bcData->IsExist("initEpsilon", PHDOUBLE, 1))
+                    {
+                        bcData->GetData("initEpsilon", &epsilonb, PHDOUBLE, 1);
+                    }
+                }
+                else
+                {
+                    std::cout << "Please assign a value of Epsilon on farield" << std::endl;;
+                }
             }
             for (int iFace = 0; iFace < faceIndex->size(); ++iFace)
             {
@@ -402,80 +720,110 @@ void IncomKETurbKEqCalculator::UpdateBCValue(Grid *gridIn)
                 if (FaceFlux[iFacelocal] < 0)
                 {
 
-                    phi[re] = kb;
+                    kinetic[re] = kb;
+                    epsilon[re] = epsilonb;
                 }
                 else
                 {
 
-                    phi[re] = phi[le];
+                    kinetic[re] = kinetic[le];
+                    epsilon[re] = epsilon[le];
                 }
             }
         }
         else if (bcType == PHENGLEI::INFLOW)
         {
-            RDouble kb = 0.0;
+            RDouble initKinetic = 0.0;
+            RDouble initEpsilon = 0.0;
+
             for (std::size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
             {
                 int iFacelocal = (*faceIndex)[iFace];
                 int le = leftCellOfFace[iFacelocal];
                 int re = rightCellOfFace[iFacelocal];
+
                 if (bcData)
                 {
                     if (bcData->IsExist("initKinetic", PHDOUBLE, 1))
                     {
-                        bcData->GetData("initKinetic", &kb, PHDOUBLE, 1);
+                        bcData->GetData("initKinetic", &initKinetic, PHDOUBLE, 1);
                     }
                 }
                 else
                 {
-                    std::cout << " No initial value has assigned to the boundary " << std::endl;
+                    std::cout << " No initKinetic initial value has assigned to the inlet boundary " << std::endl;
                 }
-                if (FaceFlux[iFacelocal] < 0)
+
+                if (bcData)
                 {
-                    phi[re] = kb;
+                    if (bcData->IsExist("initEpsilon", PHDOUBLE, 1))
+                    {
+                        bcData->GetData("initEpsilon", &initEpsilon, PHDOUBLE, 1);
+                    }
                 }
                 else
                 {
-                    phi[re] = phi[le];
+                    std::cout << "Please assign a value of Epsilon on inlet" << std::endl;;
+                }
+
+                if (FaceFlux[iFacelocal] < 0.0)
+                {
+
+                    kinetic[re] = initKinetic;
+                    epsilon[re] = initEpsilon;
+                }
+                else
+                {
+
+                    kinetic[re] = kinetic[le];
+                    epsilon[re] = epsilon[le];
                 }
             }
         }
         else if (bcType == PHENGLEI::OUTFLOW)
         {
-            int nTotalCell = grid->GetNTotalCell();
-            int *leftCellOfFace = grid->GetLeftCellOfFace();
+            RDouble initKinetic = 0.0;
+            RDouble initEpsilon = 0.0;
 
-            RDouble *xfc = grid->GetFaceCenterX();
-            RDouble *yfc = grid->GetFaceCenterY();
-            RDouble *zfc = grid->GetFaceCenterZ();
-            RDouble *xcc = grid->GetCellCenterX();
-            RDouble *ycc = grid->GetCellCenterY();
-            RDouble *zcc = grid->GetCellCenterZ();
-
-            RDouble kb = 0.0;
             for (std::size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
             {
                 int iFacelocal = (*faceIndex)[iFace];
                 int le = leftCellOfFace[iFacelocal];
                 int re = rightCellOfFace[iFacelocal];
-                if (FaceFlux[iFacelocal] < 0.0)
+
+                if (bcData)
                 {
-                    if (bcData)
+                    if (bcData->IsExist("initKinetic", PHDOUBLE, 1))
                     {
-                        if (bcData->IsExist("init" + varName, PHDOUBLE, 1))
-                        {
-                            bcData->GetData("init" + varName, &kb, PHDOUBLE, 1);
-                            phi[re] = RDouble(kb);
-                        }
-                        else
-                        {
-                            std::cout << " Please assign a value " << std::endl;
-                        }
+                        bcData->GetData("initKinetic", &initKinetic, PHDOUBLE, 1);
                     }
                 }
                 else
                 {
-                    phi[re] = phi[le];
+                    std::cout << " No initKinetic initial value has assigned to the boundary " << std::endl;
+                }
+
+                if (bcData)
+                {
+                    if (bcData->IsExist("initEpsilon", PHDOUBLE, 1))
+                    {
+                        bcData->GetData("initEpsilon", &initEpsilon, PHDOUBLE, 1);
+                    }
+                }
+                else
+                {
+                    std::cout << "Please assign a value of Epsilon on inlet" << std::endl;;
+                }
+
+                if (FaceFlux[iFacelocal] > 0.0)
+                {
+                    kinetic[re] = initKinetic;
+                    epsilon[re] = initEpsilon;
+                }
+                else
+                {
+                    kinetic[re] = kinetic[le];
+                    epsilon[re] = epsilon[le];
                 }
             }
         }
@@ -500,11 +848,11 @@ void IncomKETurbKEqCalculator::UpdateBCValue(Grid *gridIn)
                 }
                 if (FaceFlux[iFacelocal] < 0)
                 {
-                    phi[re] = kb;
+                    kinetic[re] = kb;
                 }
                 else
                 {
-                    phi[re] = phi[le];
+                    kinetic[re] = kinetic[le];
                 }
             }
         }
@@ -521,10 +869,10 @@ void IncomKETurbKEqCalculator::UpdateBCValue(Grid *gridIn)
                 {
                     if (bcData)
                     {
-                        if (bcData->IsExist("init" + varName, PHDOUBLE, 1))
+                        if (bcData->IsExist("init" + varNameK, PHDOUBLE, 1))
                         {
-                            bcData->GetData("init" + varName, &kb, PHDOUBLE, 1);
-                            phi[re] = RDouble(kb);
+                            bcData->GetData("init" + varNameK, &kb, PHDOUBLE, 1);
+                            kinetic[re] = RDouble(kb);
                         }
                         else
                         {
@@ -534,7 +882,7 @@ void IncomKETurbKEqCalculator::UpdateBCValue(Grid *gridIn)
                 }
                 else
                 {
-                    phi[re] = phi[le];
+                    kinetic[re] = kinetic[le];
                 }
             }
         }
@@ -545,11 +893,18 @@ void IncomKETurbKEqCalculator::UpdateBCValue(Grid *gridIn)
                 int iFacelocal = (*faceIndex)[iFace];
                 int le = leftCellOfFace[iFacelocal];
                 int re = rightCellOfFace[iFacelocal];
-                phi[re] = phi[le];
+                kinetic[re] = kinetic[le];
+                epsilon[re] = epsilon[le];
             }
         }
     }
-    CommunicateAnInterfaceVar(phi);
+    CommunicateAnInterfaceVar(kinetic);
+    CommunicateAnInterfaceVar(epsilon);
 }
 
+void IncomKETurbKEqCalculator::calWallBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+                                        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff, int iVariable)
+{
+    
+}
 }

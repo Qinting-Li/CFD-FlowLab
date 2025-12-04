@@ -139,7 +139,9 @@ private:
 
     //!
     bool IsSubIterationConvergence(const int &innerIterStep, const int &minSubIteration, const int &maxSubIteration, const RDouble &tolalSubIteration, const RDouble &averageQuotientMaxInSolvers);
-
+    
+    //! 
+    bool isParticleSolver(int &nSolver, int &iSolver);
 };
 }
 

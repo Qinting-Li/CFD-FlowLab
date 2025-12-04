@@ -39,12 +39,12 @@ LIB_EXPORT Region::~Region()
 {
     for (std::size_t iZone = 0; iZone < zoneContainer->size(); ++ iZone)
     {
-        delete (*zoneContainer)[iZone];    (*zoneContainer)[iZone] = NULL;
+        FreePointer((*zoneContainer)[iZone]);
         (*GlobalZones)[iZone] = NULL;
     }
 
-    delete zoneContainer;    zoneContainer = NULL;
-    delete GlobalZones;    GlobalZones = NULL;
+    FreePointer(zoneContainer);
+    FreePointer(GlobalZones);
 
     DeleteLabelContainer();
 }
@@ -207,7 +207,7 @@ LIB_EXPORT void Region::BuildAndDumpMixedGrid()
     DumpGrid(outGridFile, gridArray, nZones);
     WriteFaceBoundaryName(gridArray, nZones, outGridFile);
 
-    delete [] gridArray;
+    DelPointer(gridArray);
 }
 
 void Region::CreateGridFileNameList(vector< string > &filenamelist)
@@ -323,7 +323,7 @@ void Region::InitZoneLayoutInformation(vector< string > &filenamelist)
 
         if (PHMPI::IsParallelRun())
         {
-            // For self mode, only read the first file to get number of zones.
+            //! For self mode, only read the first file to get number of zones.
             break;
         }
     }
@@ -338,16 +338,16 @@ LIB_EXPORT void Region::PreprocessLayoutInformation(vector< string > &filenameli
 
 LIB_EXPORT void Region::ReadOrdinaryGridP2PMode(PHVectorString1D &gridGroupNameList)
 {
-    // Read Grid from file to grid group.
+    //! Read Grid from file to grid group.
     IO_GridReader *gridReader = new IO_GridReader(gridGroupNameList, PHSPACE::GetDim());
 
     gridReader->ReadGridsByP2PMode();
     
-    // Classify the grid system type: unstructured, structured and mixed.\n
-    // Based on the block type.
-    //ClassifyGridSystem(); // The grid type has been classified by GridReader.
+    //! Classify the grid system type: unstructured, structured and mixed.\n
+    //! Based on the block type.
+    //ClassifyGridSystem();    //! The grid type has been classified by GridReader.
     
-    // Create Zones from grid group which is included in the Grid Reader.
+    //! Create Zones from grid group which is included in the Grid Reader.
     //CreateZonesFromGridReader(gridReader);
     CreateZonesFromGridGroups(gridReader);
 
@@ -362,7 +362,7 @@ LIB_EXPORT void Region::ReadOrdinaryGridP2PMode(PHVectorString1D &gridGroupNameL
         gridReader->ReadFaceBCByP2PMode();
     }
 
-    delete gridReader;
+    FreePointer(gridReader);
 
 }
 
@@ -372,7 +372,7 @@ LIB_EXPORT void Region::ReadOrdinaryGridCSMode(PHVectorString1D &gridGroupNameLi
 
     gridReader->ReadGridsByCSMode();
 
-    //ClassifyGridSystem();  // The grid type has been classified by GridReader.
+    //ClassifyGridSystem();    //! The grid type has been classified by GridReader.
     
     CreateZonesFromGridGroups(gridReader);
 
@@ -389,7 +389,7 @@ LIB_EXPORT void Region::ReadOrdinaryGridCSMode(PHVectorString1D &gridGroupNameLi
         gridReader->ReadFaceBcDirByCSMode();
     }
 
-    delete gridReader;
+    FreePointer(gridReader);
 }
 
 void Region::ReadUnstructuredOversetGrid()
@@ -428,7 +428,7 @@ void Region::ReadUnstructuredOversetGrid()
             UnstructGridCast(GetGrid(iZone, 0))->Decode(dataContainer, 1);
         }
 
-        delete dataContainer;
+        FreePointer(dataContainer);
     }
 
     if (currentProcessor == serverProcesspr)
@@ -534,17 +534,11 @@ void Region::ReadGridTopologyData(const string &fileName)
         delete [] linkMap[iDirection];
     }
 
-    delete [] linkMap;
-    delete [] characterPointContainer;
-    delete [] cellCenterXContainer;
-    delete [] cellCenterYContainer;
-    delete [] cellCenterZContainer;
-
-    linkMap = NULL;
-    characterPointContainer = NULL;
-    cellCenterXContainer = NULL;
-    cellCenterYContainer = NULL;
-    cellCenterZContainer = NULL;
+    DelPointer(linkMap);
+    DelPointer(characterPointContainer);
+    DelPointer(cellCenterXContainer);
+    DelPointer(cellCenterYContainer);
+    DelPointer(cellCenterZContainer);
 }
 
 void Region::DeleteLabelContainer()
@@ -727,7 +721,7 @@ void Region::ReadSingleOversetGrid(fstream &file, int iZone)
         grid->Decode(cdata, 1);
     }
 
-    delete cdata;    cdata = nullptr;
+    FreePointer(cdata);
 }
 
 void Region::CreateZonesFromGridReader(IO_GridReader *gridReader)
@@ -1099,7 +1093,6 @@ void Region::InitOriginalGrid()
             {
                 fileIDOfEachZone[blockIdx[iZone]] = iFile;
             }
-
             DelPointer(blockIdx);
             reader->CloseFile();
             FreePointer(reader);
@@ -1215,6 +1208,7 @@ void Region::MultiBlocksInterface()
 {
     InitZoneNeighborsInformation();
     SwapZoneNeighborsInformation();
+    InitZoneCornerInformation();
 }
 
 void Region::MultiBlocksInterpoint()
@@ -1308,6 +1302,178 @@ void Region::InitZoneNeighborsInformation()
             zoneNeighbor->AddZoneIndexOfNeighbor(interfaceInfo->GetZoneIndexOfNeighbor(iNeighbor));
         }
     }
+}
+
+void Region::InitZoneCornerInformation()
+{
+#ifdef USE_LagrangianParticle
+    bool useParSolver = GlobalDataBase::IsExist("iParticleModel", PHINT, 1);
+    if (useParSolver)
+    {
+        int iParticleModel = GlobalDataBase::GetIntParaFromDB("iParticleModel");
+        if (iParticleModel == 1)
+        {
+            using namespace PHMPI;
+            int currentProcessorID = GetCurrentProcessorID();
+
+            int nZones = GetNumberofGlobalZones();
+
+            //! Use for corner zone information.
+            //! Step 1. find the neighbor zone of neigbor zone around the center zone global id.
+            //! izone -- global zone index.
+            for (int iZone = 0; iZone < nZones; ++iZone)
+            {
+                ostringstream ossLog;
+
+                //! Note that ZoneNeighbor must have already experienced MPI communication.
+                ZoneNeighbor *zoneNeighbor = zoneConnectivity->GetZoneNeighbor(iZone);
+                ZoneCorner *zoneCorner = zoneConnectivity->GetZoneCorner(iZone);
+
+                int numberOfNeighborForCenterZone = zoneNeighbor->GetNumberOfNeighbor();
+
+                zoneCorner->SetGlobalZoneIndex(iZone);
+
+                ossLog << " --- Check global zone index's Neighbor and Neighbor's neighbor --- " << "\n";
+                ossLog << " izone " << iZone << " numberOfNeighbor " << numberOfNeighborForCenterZone << "\n";
+
+                //! Add set into each map.
+                //! Loop for neighbor zone for current izone.
+                for (int iNeighbor = 0; iNeighbor < numberOfNeighborForCenterZone; ++iNeighbor)
+                {
+                    //! The global index of neighbor fot izone.
+                    int iNeighborZone = zoneNeighbor->GetZoneIndexOfNeighbor(iNeighbor);
+
+                    //! The number of neghbor.
+                    //int numberOfNeighborOfNeighbor = iinfoNeighbor->GetNumberOfNeighbor().
+                    ZoneNeighbor *zoneNeighborNeighbor = zoneConnectivity->GetZoneNeighbor(iNeighborZone);
+                    int numberOfNeighborOfNeighbor = zoneNeighborNeighbor->GetNumberOfNeighbor();
+
+                    //! Note that this data should be inserted in the same order as the InterfaceInfo. 
+                    set<int> indexOfNeighbor;
+
+                    ossLog << "  neighborZoneOfCenter global index " << iNeighborZone << "\n";
+                    ossLog << "  num NeighborOfNeighbor " << numberOfNeighborOfNeighbor << "\n";
+                    ossLog << "   iNeighborZoneNeighborZone ";
+
+                    //! Loop for the neighbor of neighbor zoen.
+                    for (int iNeighborOfNeighbor = 0; iNeighborOfNeighbor < numberOfNeighborOfNeighbor;
+                        ++iNeighborOfNeighbor)
+                    {
+                        //! The global index of neighbor of neighbor fot izone.
+                        int iNeighborZoneNeighborZone =
+                            zoneNeighborNeighbor->GetZoneIndexOfNeighbor(iNeighborOfNeighbor);
+                        indexOfNeighbor.insert(iNeighborZoneNeighborZone);
+
+                        ossLog << "   " << iNeighborZoneNeighborZone;
+                    }
+                    ossLog << " \n";
+                    zoneCorner->AddNeighborOfNeighbor(iNeighborZone, indexOfNeighbor);
+                }
+
+                //! Find and add zone index which is corner.
+                zoneCorner->CalcCornerIndex();
+
+                //! Note that, for unstruct grid, the number of corners may need further replenishment.
+                if (zoneConnectivityForPoint)
+                {
+                    ZoneNeighbor *zoneNeighborForPoint = zoneConnectivityForPoint->GetZoneNeighborForPoint(iZone);
+                    zoneCorner->AddCornerIndexForPoint(zoneNeighborForPoint);
+                }
+                ossLog << endl;
+                bool writeEachProcessor = true;
+                WriteLogFile(ossLog, writeEachProcessor);
+                //PrintToWindow(ossLog);
+            }
+
+            //! Step 2. Init the corner Index.
+            for (int iZone = 0; iZone < nZones; ++iZone)
+            {
+                ZoneCorner *zoneCorner = zoneConnectivity->GetZoneCorner(iZone);
+
+                //! Judge the zones on current processor.
+                int recvProcess = GetZoneProcessorID(iZone);
+
+                //! The loop for zone on current processor.
+                if (currentProcessorID != recvProcess)
+                {
+                    continue;
+                }
+
+                Grid *grid = GetGrid(iZone);
+                int gridType = grid->Type();
+                zoneCorner->SetZoneCornerIndexGridType(gridType);
+                zoneCorner->SetZoneCornerIndexByGrid(grid);
+
+                //! === Check corner and neighbor on windows or Log ===.
+                //! Get grid, parameter and particlePointGroup.
+                //! Get the neighbor of current zone (center).
+                ZoneNeighbor *zoneNeighbor = zoneConnectivity->GetZoneNeighbor(iZone);
+                map<int, ZoneCornerIndex> cornerInfo = zoneCorner->GetCornerInfo();
+                map<int, set<int> > neighborOfNeighbor = zoneCorner->GetSetIndexNeighborOfNeighbor();
+                //! The global zone id.
+                int zoneIDGlobal = grid->GetZoneID();
+                int zoneProcessorID = GetZoneProcessorID(zoneIDGlobal);
+                int currentProcessorID = GetCurrentProcessorID();
+                //! The local zone id on current processer.
+                int zoneIDLocal = grid->GetZoneLocalID();
+                ostringstream ossCorner;
+                ossCorner << " --- Check Grid Corner And Neighbor ---" << "\n";
+                ossCorner << " zone ID Global :" << zoneIDGlobal;
+                ossCorner << " zone ID Local :" << zoneIDLocal << endl;
+                ossCorner << " zone ProcessorID : " << zoneProcessorID << "\n";
+                //! zoneCorner's neighbor should be consistent with zoneNeighbor's neighbor.
+                //! The neighbor zone.
+                int numberOfNeighbor = zoneNeighbor->GetNumberOfNeighbor();
+                for (int ineighbor = 0; ineighbor < numberOfNeighbor; ++ineighbor)
+                {
+                    ossCorner << "  zoneNeighbor's neighbor : " << zoneNeighbor->GetZoneIndexOfNeighbor(ineighbor) << "\n";
+                }
+                for (map<int, set<int> >::iterator iter = neighborOfNeighbor.begin(); iter != neighborOfNeighbor.end(); ++iter)
+                {
+                    ossCorner << "  zoneCorner's neighbor : " << (iter->first) << "\n";
+                }
+                ossCorner << " number of Corner : " << cornerInfo.size() << "\n";
+                //! Print Corner zone Global ID.
+                //! Loop for each corner of current zone.
+                for (map<int, ZoneCornerIndex>::iterator iter = cornerInfo.begin(); iter != cornerInfo.end(); ++iter)
+                {
+                    //! The first variable represents the Corner zone index.
+                    ossCorner << "  Corner Zone Global ID : " << (iter->first) << "\n";
+                    //! Print the information of each corner.
+                    //! The second variable represents the information of each corner.
+                    ZoneCornerIndex zoneCornerIndex = iter->second;
+
+                    //! The neighbor of corner around center zone.    
+                    //! In 3d case, these may be ghost zone, so we need this
+                    //! variable to check.
+                    //! The first variable is global zone index of corner.
+                    set<int> zoneCornerNeighbor = zoneCornerIndex.GetZoneCornerNeighbor();
+                    //! Loop for neighbor of Corner zone of current zone.
+                    ossCorner << "   neighbor of Corner zone id : ";
+                    for (set<int>::iterator iterCornerNeighbor = zoneCornerNeighbor.begin();
+                        iterCornerNeighbor != zoneCornerNeighbor.end();
+                        ++iterCornerNeighbor)
+                    {
+                        ////! ZoneCornerIndex information.
+                        ossCorner << *iterCornerNeighbor << " ";
+                    }
+                    ossCorner << "\n";
+                    //! This is the information of location of corner zone.
+                    int *indexCorner = zoneCornerIndex.GetCornerGridIndex(grid);
+                    ossCorner << "   Corner index around center zone : ";
+                    ossCorner << indexCorner[0] << " ";
+                    ossCorner << indexCorner[1] << " ";
+                    ossCorner << indexCorner[2] << " ";
+                }
+                ossCorner << "\n" << endl;
+                bool writeEachProcessor = true;
+                WriteLogFile(ossCorner, writeEachProcessor);
+                //PrintToWindow(ossCorner);
+            }
+        }
+    }
+#endif 
+
 }
 
 void Region::InitZoneNeighborsForPointInformation()
@@ -1516,11 +1682,11 @@ void Region::ServerCollectionNeighborInfor()
                 PHRead(cdata, neighborZoneIndex, numberOfNeighbor);
             }
 
-            delete cdata;    cdata = nullptr;
+            FreePointer(cdata);
             cdata = new DataContainer();
         }
     }
-    delete cdata;    cdata = nullptr;
+    FreePointer(cdata);
 }
 
 void Region::ServerBcastNeighborInfor()
@@ -1575,7 +1741,7 @@ void Region::ServerBcastNeighborInfor()
         }
     }
 
-    delete cdata;    cdata = nullptr;
+    FreePointer(cdata);
 }
 
 void Region::CleanNeighborInfor()
@@ -2138,7 +2304,7 @@ void Region::SwapNeighborsSendContentNonblocking()
                 InterfaceInfo *tiinfo = GetInterfaceInfo(neighborZone, 0);
                 tiinfo->FillFaceIndexForSend(iZone, faceIndexForSend);
 
-                delete [] faceIndexForSend;
+                DelPointer(faceIndexForSend);
 
                 ++ count;
             }
@@ -2151,7 +2317,7 @@ void Region::SwapNeighborsSendContentNonblocking()
     {
         for (std::size_t jDim = 0; jDim < receivedDataBuffer[ iDim ].size(); ++ jDim)
         {
-            delete receivedDataBuffer[iDim][jDim];
+            FreePointer(receivedDataBuffer[iDim][jDim]);
         }
     }
     receivedDataBuffer.clear();
@@ -2159,7 +2325,7 @@ void Region::SwapNeighborsSendContentNonblocking()
     {
         for (std::size_t jDim = 0; jDim < sendDataBuffer[iDim].size(); ++ jDim)
         {
-            delete sendDataBuffer[iDim][jDim];
+            FreePointer(sendDataBuffer[iDim][jDim]);
         }
     }
     sendDataBuffer.clear();
@@ -2208,7 +2374,7 @@ void Region::SwapNeighborsSendContent()
             }
             if (faceIndexForSend != nullptr)
             {
-                delete [] faceIndexForSend;    faceIndexForSend = nullptr;
+                DelPointer(faceIndexForSend);
             }
         }
     }
@@ -2259,7 +2425,7 @@ void Region::SwapNeighborsSendContentForPoint()
                 interpointInformation->FillPointIndexForSend(iZone, pointIndexForSend);
             }
 
-            delete [] pointIndexForSend;    pointIndexForSend = NULL;
+            DelPointer(pointIndexForSend);
         }
     }
 }
@@ -2382,7 +2548,7 @@ void Region::DumpWallFaceCenter()
         ParallelCloseFile(actkeyDumpFaceCenter);
     }
 
-    delete actkeyDumpFaceCenter;    actkeyDumpFaceCenter = nullptr;
+    FreePointer(actkeyDumpFaceCenter);
 }
 
 void Region::SetNGrids()
@@ -2554,7 +2720,7 @@ void Region::ComputeMetrics(int level)
             WriteScreen(actkey);
         }
     }
-    delete actkey;    actkey = nullptr;
+    FreePointer(actkey);
 }
 
 void Region::GlobalGridStatic(int level)
@@ -3091,8 +3257,8 @@ void Region::buildGlobalCellsArrary(int level)
 
     GlobalDataBase::UpdateDataPtr("globalCellNoOfGlobalZones", globalCellNoOfGlobalZones);
 
-    delete [] cellNumbersOfEachZone;    cellNumbersOfEachZone = nullptr;
-    delete [] cellNumbersOfEachZoneGlobal;    cellNumbersOfEachZoneGlobal = nullptr;
+    DelPointer(cellNumbersOfEachZone);
+    DelPointer(cellNumbersOfEachZoneGlobal);
 }
 
 void Region::ComputeGlobalGridCellSize(int level)
@@ -3258,6 +3424,8 @@ LIB_EXPORT void Region::SwapGeometry()
 {
     CommunicateCellCenterData();
 
+    CommunicateCellCenterDataOnCorner();
+
     ComputeMetrics_BC();
 
     ComputeWeight();
@@ -3290,7 +3458,21 @@ void Region::CommunicateCellCenterData()
         }
 
         //delete task;
-        delete actkey;    actkey = nullptr;
+        FreePointer(actkey);
+    }
+}
+void Region::CommunicateCellCenterDataOnCorner()
+{
+    using namespace PHMPI;
+    for (int level = 0; level < nGrids; ++level)
+    {
+        ActionKey* actkey = new ActionKey();
+        actkey->action = COMMCELLCENTERDATA_ON_CORNER;
+        actkey->kind = GRID_BASED;
+        actkey->level = level;
+
+        MainTaskBlockingCorner(actkey);
+        delete actkey;
     }
 }
 
@@ -3317,7 +3499,7 @@ void Region::CommunicateCellIBlank()
         }
 
         //delete task;
-        delete actkey;    actkey = nullptr;
+        FreePointer(actkey);
     }
 }
 
@@ -3743,7 +3925,7 @@ void Region::TestReconstruction()
             grid->SkewnessSummary(actkey);
         }
     }
-    delete actkey;    actkey = nullptr;
+    FreePointer(actkey);
 }
 
 void Region::ComputeWeight()
@@ -3853,7 +4035,6 @@ LIB_EXPORT void Region::ChangeBoundaryCondition()
                     changedBC.insert(originalBC);
                 }
                 bcRegion->SetBCType(newBC);
-
             }
         }
     }
@@ -3914,8 +4095,8 @@ void Region::DumpProcessorGridNumber(void)
         }
     }
 
-    delete [] numberOfCellInProc;
-    delete [] nZonesInProc;
+    DelPointer(numberOfCellInProc);
+    DelPointer(nZonesInProc);
 }
 
 void Region::ReSetBoundaryConditionByGlobalBC()

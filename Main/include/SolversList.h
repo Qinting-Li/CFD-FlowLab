@@ -32,3 +32,8 @@
 #ifdef USE_DEMOSOLVER
 #include "DemoSolver.h"
 #endif
+
+#ifdef USE_LagrangianParticle
+#include "ParticleSolver.h"
+#include "ParticlePointSolverParallelDomain.h"
+#endif

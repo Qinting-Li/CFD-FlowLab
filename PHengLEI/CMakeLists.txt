@@ -28,6 +28,9 @@ if(WIN32)
   elseif(CMAKE_GENERATOR MATCHES "Visual Studio 17 2022")
     SET(THIRD_PARTY_COMPILER_FLAG "libwindows/libvs19")
     SET(IS_VS2019 ON)
+  elseif(CMAKE_GENERATOR MATCHES "Visual Studio 18 2026")
+    SET(THIRD_PARTY_COMPILER_FLAG "libwindows/libvs19")
+    SET(IS_VS2019 ON)
   endif()
 else(WIN32)
   SET(THIRD_PARTY_COMPILER_FLAG "Unix")
@@ -82,6 +85,7 @@ opt_build(LBMSolverOMP "Build LBM-OMP module or not" OFF) #Build LBM-OMP or not.
 opt_build(GPU "Build GPU module or not" OFF) #Build GPU or not.
 opt(Windows_X64 "Compile PHengLEI X64 on Windows platform" ON) ###
 opt(AI_RandomForestRegressor "Compile data generation interface for AI predictions of RandomForestRegressor " OFF) ###
+opt(LagrangianParticle "Build Lagrangian particle model or not" ON) #Build Particle or not
 if(WIN32)
   opt(VS2019 "Compile PHengLEI X64 with Microsoft Visual Studio 16 2019 generator" ${IS_VS2019}) # Choose VS2019 or VS2012 to build this project.
   opt(INTELMPI "Use INTELMPI module or not" OFF) #Use INTELMPI or not.
@@ -165,6 +169,11 @@ if(BUILD_GMRESSolver)
  )
  set(PETSC_Libraries ${PETSC_Lib} ${F2cblas_Lib} ${F2clapack_Lib})
 
+endif()
+
+if(USE_LagrangianParticle)
+  message(STATUS "USE_LagrangianParticle is turned on")
+  add_definitions(-DUSE_LagrangianParticle)
 endif()
 
 if(USE_OMP)
@@ -435,7 +444,9 @@ else(BUILD_CFD)
   message(STATUS "Link CFD!") 
   link_directories("${LIB_CFD_EXPORT_PATH}")  
 endif(BUILD_CFD)
-
+if(USE_LagrangianParticle)
+  include_directories(${CFD_H_PATH}/ParticleSolver/include)
+endif()
 if(BUILD_GPU)
   message(STATUS "Build GPU!")
   add_definitions(-DUSE_CUDA)
@@ -450,84 +461,84 @@ endif(BUILD_GPU)
 set(UNITTESTMODE OFF)
 
 if (GPUMODE)
-    message(STATUS "GPUMODE is turned on!")
-    #define architecture
-    set(V100MODE ON) #for Nvidia Tesla V100, else for Nvidia Tesla K80
-    set(ORGMPIMODE ON)
-    set(NEWMPIMODE OFF)
-    set(TESTMPIMODE OFF)
-    add_definitions(-DUSE_CUDA)
-    add_definitions(-DLOOPMODEOPT) #loop mode optimization for NSSolverUnstruct::ComputeNodeValue and Limiter::MinMaxDiff
-    add_definitions(-DNESTLOOPOPT) # split nested loop into separate loops
+  message(STATUS "GPUMODE is turned on!")
+  #define architecture
+  set(V100MODE ON) #for Nvidia Tesla V100, else for Nvidia Tesla K80
+  set(ORGMPIMODE ON)
+  set(NEWMPIMODE OFF)
+  set(TESTMPIMODE OFF)
+  add_definitions(-DUSE_CUDA)
+  add_definitions(-DLOOPMODEOPT) #loop mode optimization for NSSolverUnstruct::ComputeNodeValue and Limiter::MinMaxDiff
+  add_definitions(-DNESTLOOPOPT) # split nested loop into separate loops
   add_definitions(-DCUDADEBUGATOMIC)
-    add_definitions(-DCUDACOPYBACK)
+  add_definitions(-DCUDACOPYBACK)
 
-    #define compile macro for multi-color LU-SGS
-    set(MCLUSGS OFF)
-    if (MCLUSGS)
-        add_definitions(-DMCLUSGS) #Just for multi-color LU-SGS, only works at tscheme=4
-        add_definitions(-DMCLUSEPSGS) #L-SGS and U-SGS are separated
-    else(MCLUSGS) #MCLUSGS is OFF
-        add_definitions(-DGPUCPURUN) #only works in LU-SGS scheme, right hand side is calculated by GPU. LU-SGS part is calculated by CPU.
-    endif(MCLUSGS)
+  #define compile macro for multi-color LU-SGS
+  set(MCLUSGS OFF)
+  if (MCLUSGS)
+    add_definitions(-DMCLUSGS) #Just for multi-color LU-SGS, only works at tscheme=4
+    add_definitions(-DMCLUSEPSGS) #L-SGS and U-SGS are separated
+  else(MCLUSGS) #MCLUSGS is OFF
+    add_definitions(-DGPUCPURUN) #only works in LU-SGS scheme, right hand side is calculated by GPU. LU-SGS part is calculated by CPU.
+  endif(MCLUSGS)
 
-    #define compile macro for gprof
-    set(GPROF OFF)
-    if (GPROF)
-        set(CMAKE_CXX_FLAGS "$ENV{CMAKE_CXX_FLAGS} -pg")
-        set(CMAKE_C_FLAGS "$ENV{CMAKE_C_FLAGS} -pg")
-        set(CMAKE_EXE_LINKER_FLAGS "$ENV{CMAKE_EXE_LINKER_FLAGS} -pg")
-        set(CMAKE_SHARED_LINKER_FLAGS "$ENV{CMAKE_SHARED_LINKER_FLAGS} -pg")
-    endif()
-
-    if (ORGMPIMODE)
-        add_definitions(-DORGMPI) #for large MPI buffer
-        add_definitions(-DMPIBUFFERLARGE) #for large MPI buffer
-        add_definitions(-DREPLACEBUFFER) #Use only with MPIBUFFERLARGE
+  #define compile macro for gprof
+  set(GPROF OFF)
+  if (GPROF)
+    set(CMAKE_CXX_FLAGS "$ENV{CMAKE_CXX_FLAGS} -pg")
+    set(CMAKE_C_FLAGS "$ENV{CMAKE_C_FLAGS} -pg")
+    set(CMAKE_EXE_LINKER_FLAGS "$ENV{CMAKE_EXE_LINKER_FLAGS} -pg")
+    set(CMAKE_SHARED_LINKER_FLAGS "$ENV{CMAKE_SHARED_LINKER_FLAGS} -pg")
   endif()
 
-    if (NEWMPIMODE)
-        add_definitions(-DNEWMPI)
-        add_definitions(-DMPIBUFFERLARGE) #for large Host MPI buffer
-        add_definitions(-DISENDIRECVMPI) #MPI_Isend and MPI_Irecv are used. Otherwise, MPI_Sendrecv is used.
-    endif()
+  if (ORGMPIMODE)
+    add_definitions(-DORGMPI) #for large MPI buffer
+    add_definitions(-DMPIBUFFERLARGE) #for large MPI buffer
+    add_definitions(-DREPLACEBUFFER) #Use only with MPIBUFFERLARGE
+  endif()
 
-    if (TESTMPIMODE)
-        add_definitions(-DORGMPI) #for large MPI buffer
-        add_definitions(-DNEWMPI)
-        add_definitions(-DMPIBUFFERLARGE) #for large MPI buffer
-        add_definitions(-DGPUBUFFERSMALL) #for small GPU buffer, every variable owns ngbZone's buffer. Only used with ISENDIRECVMPI and MPIOVERLAP. In the future, CUDA_AWARE_MPI may be considered.
-        add_definitions(-DISENDIRECVMPI) #MPI_Isend and MPI_Irecv are used. Otherwise, MPI_Sendrecv is used.
-        add_definitions(-DMPIOVERLAP) #MPIOVERLAP mode cannot be test correctly, because test function consumes a lot time that MPI message may be passed.
-        add_definitions(-DHDCOVERLAP) # HtoD, DtoH and Computing can be overlapped together.
-        add_definitions(-DTESTNEWORGMPI) #Test CUDA_AWARE_MPI.
-    endif()
+  if (NEWMPIMODE)
+    add_definitions(-DNEWMPI)
+    add_definitions(-DMPIBUFFERLARGE) #for large Host MPI buffer
+    add_definitions(-DISENDIRECVMPI) #MPI_Isend and MPI_Irecv are used. Otherwise, MPI_Sendrecv is used.
+  endif()
+
+  if (TESTMPIMODE)
+    add_definitions(-DORGMPI) #for large MPI buffer
+    add_definitions(-DNEWMPI)
+    add_definitions(-DMPIBUFFERLARGE) #for large MPI buffer
+    add_definitions(-DGPUBUFFERSMALL) #for small GPU buffer, every variable owns ngbZone's buffer. Only used with ISENDIRECVMPI and MPIOVERLAP. In the future, CUDA_AWARE_MPI may be considered.
+    add_definitions(-DISENDIRECVMPI) #MPI_Isend and MPI_Irecv are used. Otherwise, MPI_Sendrecv is used.
+    add_definitions(-DMPIOVERLAP) #MPIOVERLAP mode cannot be test correctly, because test function consumes a lot time that MPI message may be passed.
+    add_definitions(-DHDCOVERLAP) # HtoD, DtoH and Computing can be overlapped together.
+    add_definitions(-DTESTNEWORGMPI) #Test CUDA_AWARE_MPI.
+  endif()
 endif()
 
 if (UNITTESTMODE)
   message(STATUS "UNITTESTMODE is turned on!")
-    add_definitions(-DCPURUN)
-    add_definitions(-DUSE_CUDA)
-    set(V100MODE ON) #for Nvidia Tesla V100, else for Nvidia Tesla K80
-    add_definitions(-DCUDAUNITTEST)
-    add_definitions(-DDEBUGPOW) #FOR DEBUG, cancel all of pow operations, even cpu code is modified.
-    add_definitions(-DUNITTESTOUTPUT) #Most are the successfull information in unit test.
-    add_definitions(-DDEBUGSolution) #SolutionFix makes GPUUpdateFlowFieldM1_S1 execute series.
+  add_definitions(-DCPURUN)
+  add_definitions(-DUSE_CUDA)
+  set(V100MODE ON) #for Nvidia Tesla V100, else for Nvidia Tesla K80
+  add_definitions(-DCUDAUNITTEST)
+  add_definitions(-DDEBUGPOW) #FOR DEBUG, cancel all of pow operations, even cpu code is modified.
+  add_definitions(-DUNITTESTOUTPUT) #Most are the successfull information in unit test.
+  add_definitions(-DDEBUGSolution) #SolutionFix makes GPUUpdateFlowFieldM1_S1 execute series.
   set(ORGMPIMODE OFF)
-    if (ORGMPIMODE)
-        add_definitions(-DORGMPI) #for large MPI buffer
-        add_definitions(-DMPIBUFFERLARGE) #for large MPI buffer
-        add_definitions(-DREPLACEBUFFER) #Use only with MPIBUFFERLARGE
+  if (ORGMPIMODE)
+    add_definitions(-DORGMPI) #for large MPI buffer
+    add_definitions(-DMPIBUFFERLARGE) #for large MPI buffer
+    add_definitions(-DREPLACEBUFFER) #Use only with MPIBUFFERLARGE
   endif()
 
-    #define compile macro for multi-color LU-SGS
-    set(MCLUSGS OFF)
-    if (MCLUSGS)
-        add_definitions(-DMCLUSGS) #Just for multi-color LU-SGS, only works at tscheme=4
-        add_definitions(-DMCLUSEPSGS) #L-SGS and U-SGS are separated
-    else(MCLUSGS) #MCLUSGS is OFF
-        add_definitions(-DGPUCPURUN) #only works in LU-SGS scheme, right hand side is calculated by GPU. LU-SGS part is calculated by CPU.
-    endif(MCLUSGS)
+  #define compile macro for multi-color LU-SGS
+  set(MCLUSGS OFF)
+  if (MCLUSGS)
+    add_definitions(-DMCLUSGS) #Just for multi-color LU-SGS, only works at tscheme=4
+    add_definitions(-DMCLUSEPSGS) #L-SGS and U-SGS are separated
+  else(MCLUSGS) #MCLUSGS is OFF
+    add_definitions(-DGPUCPURUN) #only works in LU-SGS scheme, right hand side is calculated by GPU. LU-SGS part is calculated by CPU.
+  endif(MCLUSGS)
 endif()
 
 if(WIN32)

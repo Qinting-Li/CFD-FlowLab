@@ -43,7 +43,8 @@ public:
     void InitialUnsteadyVar(Grid *grid);
     void UpdateUnsteadyVariable(Grid *grid);
     void UpdateBCValue(Grid *grid);
-
+    void calWallBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+                RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff, int iVariable);
 };
 
 }

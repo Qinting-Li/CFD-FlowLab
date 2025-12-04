@@ -188,7 +188,7 @@ public:
     void ComputePreconditionCoefficientUnsteady(Grid *gridIn);
     RDouble UnsteadyConvergence(Grid *gridIn);
 
-    //Compute the distance between the center of the grid cell on the first layer and the center of the surface cell.
+    //! Compute the distance between the center of the grid cell on the first layer and the center of the surface cell.
     void ComputeFirstLayerGridHeight(Grid *gridIn);
 
     void Turb_Sengy(Grid *gridIn);

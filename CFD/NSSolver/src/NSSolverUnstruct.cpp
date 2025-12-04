@@ -4759,8 +4759,8 @@ void NSSolverUnstruct::ComputeNodeValue(Grid *gridIn)
     RDouble **q = reinterpret_cast<RDouble **>(grid->GetDataPtr("q"));
     RDouble **t = reinterpret_cast<RDouble **>(grid->GetDataPtr("t"));
 
-    RDouble     **qNode = reinterpret_cast<RDouble **>(grid->GetDataPtr("qnode"));
-    RDouble     **tNode = reinterpret_cast<RDouble **>(grid->GetDataPtr("tnode"));
+    RDouble **qNode = reinterpret_cast<RDouble **>(grid->GetDataPtr("qnode"));
+    RDouble **tNode = reinterpret_cast<RDouble **>(grid->GetDataPtr("tnode"));
     RDouble *nodeWeight = reinterpret_cast<RDouble *>(grid->GetDataPtr("nodeWeight"));
 
     int nEquation = GetNumberOfEquations();
@@ -14671,7 +14671,7 @@ void NSSolverUnstruct::SetGhostDQLUSGS(Grid *gridIn, RDouble **dq, RDouble **q)
         {
             SetWallBCGhostDQLUSGS(grid, bcRegion, dq, q);
         }
-        else if (bcType == PHENGLEI::EXTRAPOLATION|| bcType == PHENGLEI::OUTFLOW)
+        else if (bcType == PHENGLEI::EXTRAPOLATION)
         {
             SetExtraBCGhostDQLUSGS(grid, bcRegion, dq, q);
         }
@@ -21174,7 +21174,7 @@ void NSSolverUnstruct::FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstru
             else
             {
                 //! Subsonic.
-            if (ifLowSpeedPrecon == 0)
+                if (ifLowSpeedPrecon == 0)
                 {
                     R_Plus  = vNormalInside + 2.0 * cInside / gamm1;
                     R_Minus = vNormalOutside - 2.0 * cOutside / gamm1;
@@ -21366,6 +21366,8 @@ void NSSolverUnstruct::InflowBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct
         bcData->GetData("refDimensionalVelocity", &localDimensionalVelocity, PHINT, 1);
         localNonDimVelocity = localDimensionalVelocity / refDimensionalVelocity;
     }
+
+
 
     int iFace, le, re;
     //! get the face indexes of this boundary condition region.

@@ -326,6 +326,10 @@ public:
 
     //! Get source boundary grid's I, J, K index.
     LIB_EXPORT void GetSourceIndexIJK(int iFace, int ipos, int &i, int &j, int &k);
+    
+    //! Grid Corner Index.
+    LIB_EXPORT void GetCornerSourceIndexIJK(int *indexStr, set<int*> &indexCorner, int &iLayer);
+    LIB_EXPORT void GetCornerTargetIndexIJK(int *indexStr, set<int*> &indexCorner, int &iLayer);
 
     //! Get source boundary grid's I, J, K index.
     LIB_EXPORT void GetSourceIndexIJK_Nsurf_LR(int iFace, int ipos, int &i, int &j, int &k, int &nsurf, int &s_lr);
@@ -602,7 +606,9 @@ private:
     void ReadNearestwallfacenormaly(RDouble *nearestwallfaceNormalyIn);
     void ReadNearestwallfacenormalz(RDouble *nearestwallfaceNormalzIn);
     void GetCellCenter(ActionKey *actkey);
+    void GetCellCenterOnCorner(ActionKey *actkey);
     void TranslateCellCenter(ActionKey *actkey);
+    void TranslateCellCenterOnCorner(ActionKey *actkey);
     bool CommunicateNodeLocation();
     void GetNodeIJKfromSourceIndex(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[4][3]);
     void GetNodeIJKfromTargetIndex(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[4][3]);
@@ -675,7 +681,7 @@ void GetRange(Range &I, Range &J, Range &K, int ist, int ied, int jst, int jed, 
 void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble4D &q, int n, bool isVelocityForPostVisual = false);
 void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble3D &q);
 
-void ModifyWallTemperature(const string& name, Grid *grid_in, RDouble4D &qn);
+void ModifyWallTemperature(const string &name, Grid *grid_in, RDouble4D &qn);
 void ModifyBoundaryNodeValue(const string &name, Grid *grid_in, RDouble4D &qn, RDouble4D &cellCenterData, int index, int bcType);
 void ModifyBoundaryNodeValue(const string &name, Grid *grid_in, RDouble4D &qn, RDouble3D &cellCenterData, int bcType);
 }

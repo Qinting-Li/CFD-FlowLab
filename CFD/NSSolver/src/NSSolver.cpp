@@ -98,7 +98,6 @@ void NSSolver::Post()
     FillActionKey(actkeyDumpRestartData, DUMP_RESTART, 0);
     DumpRestartData(actkeyDumpRestartData);
     FreePointer(actkeyDumpRestartData);
-
     //! To dump residual data.
     //ActionKey *actkeyDumpResidual = new ActionKey();
     //FillActionKey(actkeyDumpResidual, DUMP_RESIDUAL, 0);
@@ -116,7 +115,6 @@ void NSSolver::Post()
     FillActionKey(actkeyDumpWallAircoef, DUMP_CP_DISTRI, 0);
     DumpCpDistri(actkeyDumpWallAircoef);
     FreePointer(actkeyDumpWallAircoef);
-
     if (IsNeedStatistics())
     {
         //! To output Average data by tecplot format.
@@ -580,7 +578,7 @@ void NSSolver::CheckSurfaceHeatingChange(Grid *grid, int level)
         ParallelCloseFile(actkeyCheckHeatChange);
     }
 
-    delete actkeyCheckHeatChange;
+    FreePointer(actkeyCheckHeatChange);
 }
 
 void NSSolver::FillActionKey(ActionKey *actkey, int action, int level)
@@ -609,12 +607,6 @@ RDouble NSSolver::ComputeCFL(RDouble partialCFL)
         //! Coarse grid.
         GlobalDataBase::GetData("newnstep", &iterationStep, PHINT, 1);
     }
-    //! Unsteady.
-    int isUnsteady = parameters->GetIsUnsteady();
-    if (1 == isUnsteady)
-    {
-        iterationStep = GlobalDataBase::GetIntParaFromDB("innstep");
-    }
 
     int cflMethod = 0;
     if (GlobalDataBase::IsExist("CFLMethod", PHINT, 1))
@@ -626,13 +618,22 @@ RDouble NSSolver::ComputeCFL(RDouble partialCFL)
         GlobalDataBase::UpdateData("CFLMethod", &cflMethod, PHINT, 1);
     }
 
-    int cflNstep    = parameters->GetCFLVaryStep();
+    //! Unsteady.
+    int isUnsteady = parameters->GetIsUnsteady();
+    if (1 == isUnsteady)
+    {
+        if (LINEAR_QUICK != cflMethod)
+        {
+            iterationStep = GlobalDataBase::GetIntParaFromDB("innstep");
+        }
+    }
+
+    int cflNstep     = parameters->GetCFLVaryStep();
     RDouble cflStart = parameters->GetCFLStart();
     RDouble cflEnd   = parameters->GetCFLEnd();
     RDouble cfl = 0.0;
 
-    
-   int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
+    int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
     //! GMRES1st2nd
     if(tscheme != GMRES)
     {
@@ -640,20 +641,25 @@ RDouble NSSolver::ComputeCFL(RDouble partialCFL)
         {
             cflEnd = partialCFL;
         }
+
         if (iterationStep >= cflNstep)
         {
             return cflEnd;
         }
         else
         {
-            if (0 == cflMethod)
+            if (LINEAR_STANDARD == cflMethod)
             {
                 cfl = cflStart + (cflEnd - cflStart) * iterationStep / cflNstep;
+            }
+            else if (LINEAR_QUICK == cflMethod)
+            {
+                cfl = cflStart + (cflEnd - cflStart) * MIN(iterationStep, cflNstep) / cflNstep;
             }
             else
             {
                 RDouble CFLratio = cflEnd / (cflStart + TINY);
-                cfl = cflStart * pow(CFLratio, (iterationStep -1)* 1.0 / cflNstep);
+                cfl = cflStart * pow(CFLratio, (iterationStep - 1) * 1.0 / cflNstep);
             }
         }
     }
@@ -674,10 +680,25 @@ void NSSolver::SourceFlux(Grid *grid)
     int nChemicalSource = parameters->GetNChemicalSource();
     int referenceFrame = PHSPACE::GlobalDataBase::GetIntParaFromDB("referenceFrame");
 
-    if (nChemical == 1 && nChemicalSource == 1)
+    if (1 == nChemical  && 1 == nChemicalSource)
     {
         ChemicalSource(grid);
     }
+
+#ifdef USE_LagrangianParticle
+    int iParticleModel = 0;
+
+    bool useParSolver = GlobalDataBase::IsExist("iParticleModel", PHINT, 1);
+
+    if (useParSolver)
+    {
+        int iParticleModel = GlobalDataBase::GetIntParaFromDB("iParticleModel");
+        if (1 == iParticleModel)
+        {
+            this->ParticleSource(grid);
+        }
+    }
+#endif
 
     if (referenceFrame == ROTATIONAL_FRAME)
     {
@@ -868,6 +889,7 @@ void NSSolver::RegisterCFDSolverInterfaceField()
     CFDSolver::RegisterInterfaceField("v_Average_face"       , PHDOUBLE, 1);
     CFDSolver::RegisterInterfaceField("w_Average_face"       , PHDOUBLE, 1);
     CFDSolver::RegisterInterfaceField("pressure_Average_face", PHDOUBLE, 1);
+    CFDSolver::RegisterInterfaceField("cp_Average_face"      , PHDOUBLE, 1);
 
     CFDSolver::RegisterInterfaceField("tau_xx_face", PHDOUBLE, 1);
     CFDSolver::RegisterInterfaceField("tau_yy_face", PHDOUBLE, 1);
@@ -1024,7 +1046,7 @@ void NSSolver::RegisterOversetField()
 
     int isOversetSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isOversetSlip");
     int isCommGradientforSlip = PHSPACE::GlobalDataBase::GetIntParaFromDB("isCommGradientforSlip");
-    if (isOversetSlip && isCommGradientforSlip )
+    if (isOversetSlip && isCommGradientforSlip)
     {
         CFDSolver::RegisterOversetField("dqdx", PHDOUBLE, nEquation);
         CFDSolver::RegisterOversetField("dqdy", PHDOUBLE, nEquation);

@@ -22,8 +22,11 @@ namespace PHSPACE
 {
 TurbSolverStr::TurbSolverStr()
 {
-    DESLength = 0;
-    SSTLength = 0;
+    DESLength = nullptr;
+    SSTLength = nullptr;
+    SATESFr   = nullptr;
+    SATESCx   = nullptr;
+    LESRate   = nullptr;
 }
 
 TurbSolverStr::~TurbSolverStr()
@@ -31,10 +34,19 @@ TurbSolverStr::~TurbSolverStr()
     DeAllocateGlobalVariables();
 
     delete DESLength;
-    DESLength = NULL;
+    DESLength = nullptr;
 
     delete SSTLength;
-    SSTLength = NULL;
+    SSTLength = nullptr;
+
+    delete SATESFr;
+    SATESFr = nullptr;
+
+    delete SATESCx;
+    SATESCx = nullptr;
+
+    delete LESRate;
+    LESRate = nullptr;
 
     FreeControlParameters();
 }
@@ -138,6 +150,10 @@ void TurbSolverStr::AllocateGlobalVar(Grid *gridIn)
         grid->UpdateDataPtr("blend", blend);    //! For blending function F1.
         RDouble3D *SST_F2 = new RDouble3D(I, J, K, fortranArray);
         grid->UpdateDataPtr("SST_F2", SST_F2);  //! For blending function F2.
+        RDouble3D *SATES_Fr = new RDouble3D(I, J, K, fortranArray);
+        grid->UpdateDataPtr("SATES_Fr", SATES_Fr);    //! For resolved control function Fr of SATES!
+        RDouble3D *SATES_Cx = new RDouble3D(I, J, K, fortranArray);
+        grid->UpdateDataPtr("SATES_Cx", SATES_Cx);    //! For Cutoff length scale of SATES!
 
         if (transitionType == IREGAMA)
         {
@@ -243,6 +259,10 @@ void TurbSolverStr::DeAllocateGlobalVar(Grid *gridIn)
         delete blend;
         RDouble3D *SST_F2 = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("SST_F2"));
         delete SST_F2;
+        RDouble3D *SATES_Fr = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("SATES_Fr"));
+        delete SATES_Fr;
+        RDouble3D *SATES_Cx = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("SATES_Cx"));
+        delete SATES_Cx;
         if (transitionType == IREGAMA)
         {
             RDouble3D *SpSdRatio = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("SpSdRatio"));
@@ -1561,12 +1581,12 @@ void TurbSolverStr::DualTimeSource(Grid *gridIn)
         }
     }
 
-    delete [] qTurbPrimtive0;
-    delete [] qTurbPrimtive1;
-    delete [] qTurbPrimtive2;
-    delete [] qTurbConserve0;
-    delete [] qTurbConserve1;
-    delete [] qTurbConserve2;
+    delete [] qTurbPrimtive0;    qTurbPrimtive0 = nullptr;
+    delete [] qTurbPrimtive1;    qTurbPrimtive1 = nullptr;
+    delete [] qTurbPrimtive2;    qTurbPrimtive2 = nullptr;
+    delete [] qTurbConserve0;    qTurbConserve0 = nullptr;
+    delete [] qTurbConserve1;    qTurbConserve1 = nullptr;
+    delete [] qTurbConserve2;    qTurbConserve2 = nullptr;
 }
 
 RDouble TurbSolverStr::GetDistance(Grid *gridIn, int i, int j, int k)
@@ -3874,7 +3894,7 @@ void TurbSolverStr::CompVisFluxTwoEquation(Grid *gridIn, FieldProxy *fluxProxy, 
         }
     }
 
-    delete [] fvis;    fvis = NULL;
+    delete [] fvis;    fvis = nullptr;
 }
 
 void TurbSolverStr::ZeroResidualOfSpecialCells(Grid *gridIn)
@@ -4216,6 +4236,7 @@ void TurbSolverStr::Viscosity(Grid *gridIn)
     int nk = grid->GetNK();
 
     RDouble3D &wallDistant = *grid->GetWallDist();
+    RDouble3D &volume = *(grid->GetCellVolume());
 
     RDouble4D &qLaminar = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
     RDouble3D &viscousLaminar = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("visl"));
@@ -4229,10 +4250,20 @@ void TurbSolverStr::Viscosity(Grid *gridIn)
 
     int monitorVistmax = GlobalDataBase::GetIntParaFromDB("monitor_vistmax");
 
+    ComputeSATESFr(grid);
+    RDouble3D &SATES_Fr = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("SATES_Fr"));
+    RDouble3D *modelFr = this->GetSATESFr();
+
     string viscousName = parameters->GetViscousName();
 
     RDouble refReNumber = parameters->GetRefReNumber();
     RDouble reynoldsSquare = refReNumber * refReNumber;
+
+    using namespace IDX;
+    RDouble *freeStreamTurbVar = parameters->GetFreeStreamTurbVar();
+    RDouble kwoo = freeStreamTurbVar[IKW];
+    RDouble kwoo_min = 0.01 * kwoo;
+    RDouble ke_min = 0.001 * kwoo_min;
 
     RDouble viscousTurbulenceMaximum = 0.0;
     RDouble viscousTurbulenceMinimum = 1.0e30;
@@ -4275,7 +4306,84 @@ void TurbSolverStr::Viscosity(Grid *gridIn)
     else if (viscousName.substr(0, 6) == "2eq-kw")
     {
         //! Two equation models.
-        if (viscousName.substr(0, 17) == "2eq-kw-menter-sst")
+        if (viscousName.substr(0, 17) == "2eq-kw-menter-bsl")
+        {
+            Range II, JJ, KK;
+            GetRange(ni, nj, nk, -2, 1, II, JJ, KK);
+            RDouble4D &gradUVWTCellCenterX = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
+            RDouble4D &gradUVWTCellCenterY = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
+            RDouble4D &gradUVWTCellCenterZ = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
+            RDouble3D &SpSdRatio = *reinterpret_cast<RDouble3D*> (grid->GetDataPtr("SpSdRatio"));
+            for (int k = kst; k <= ked; ++k)
+            {
+                for (int j = jst; j <= jed; ++j)
+                {
+                    for (int i = ist; i <= ied; ++i)
+                    {
+                        RDouble rho = ABS(qLaminar(i, j, k, IR)) + SMALL;
+                        RDouble ke = MAX(qTurbulence(i, j, k, IDX::IKE), ke_min);
+                        RDouble kw = MAX(qTurbulence(i, j, k, IDX::IKW), kwoo_min);
+                        RDouble miuLam = viscousLaminar(i, j, k);
+                        RDouble rho3 = POWER3(rho);
+                        RDouble miuLam3 = POWER3(miuLam);
+                        RDouble ds = wallDistant(i, j, k);
+                        RDouble ds2 = ds * ds;
+
+                        RDouble dudx = gradUVWTCellCenterX(i, j, k, 0);
+                        RDouble dudy = gradUVWTCellCenterY(i, j, k, 0);
+                        RDouble dudz = gradUVWTCellCenterZ(i, j, k, 0);
+
+                        RDouble dvdx = gradUVWTCellCenterX(i, j, k, 1);
+                        RDouble dvdy = gradUVWTCellCenterY(i, j, k, 1);
+                        RDouble dvdz = gradUVWTCellCenterZ(i, j, k, 1);
+
+                        RDouble dwdx = gradUVWTCellCenterX(i, j, k, 2);
+                        RDouble dwdy = gradUVWTCellCenterY(i, j, k, 2);
+                        RDouble dwdz = gradUVWTCellCenterZ(i, j, k, 2);
+
+                        RDouble s11 = dudx;
+                        RDouble s22 = dvdy;
+                        RDouble s33 = dwdz;
+                        RDouble s12 = half * (dudy + dvdx);
+                        RDouble s13 = half * (dudz + dwdx);
+                        RDouble s23 = half * (dvdz + dwdy);
+
+                        RDouble sij2 = two * (s11 * s11 + s22 * s22 + s33 * s33 + two * (s12 * s12 + s13 * s13 + s23 * s23));    //! modulus of S.
+                        RDouble Strain = sqrt(sij2);
+
+                        RDouble part1 = two * sqrt(ke) / (0.09 * kw * ds * refReNumber);
+                        RDouble part2 = 500.0 * viscousLaminar(i, j, k) / (rho * kw * ds2 * reynoldsSquare);
+                        RDouble arg2 = MAX(part1, part2);
+                        RDouble f2 = tanh(static_cast<RDouble>(arg2 * arg2));
+                        SST_F2(i, j, k) = f2;
+
+                        //! SATESType != 0, SATESfr will be obtained.
+                        RDouble fr = (*modelFr)(i, j, k);
+                        SATES_Fr(i, j, k) = fr;
+                        RDouble &turbulentViscosity = viscousTurbulence(i, j, k);
+                        turbulentViscosity = fr * rho * ke / kw;
+
+                        turbulentViscosity = MIN(eddyViscosityLimit, turbulentViscosity);
+                        turbulentViscosity = MAX(1.E-3, turbulentViscosity);
+                        if (viscousTurbulenceMaximum < turbulentViscosity)
+                        {
+                            viscousTurbulenceMaximum = turbulentViscosity;
+                            imax = i;
+                            jmax = j;
+                            kmax = k;
+                        }
+                        if (viscousTurbulenceMinimum > turbulentViscosity)
+                        {
+                            viscousTurbulenceMinimum = turbulentViscosity;
+                            imax = i;
+                            jmax = j;
+                            kmax = k;
+                        }
+                    }
+                }
+            }
+        }
+        else if (viscousName.substr(0, 17) == "2eq-kw-menter-sst")
         {
             //! Original Menter k-w-SST model.
             RDouble SST_a1 = parameters->GetSST_a1();
@@ -4313,10 +4421,6 @@ void TurbSolverStr::Viscosity(Grid *gridIn)
                         RDouble dwdy = gradUVWTCellCenterY(i, j, k, 2);
                         RDouble dwdz = gradUVWTCellCenterZ(i, j, k, 2);
 
-                        //RDouble vort  = sqrt((dwdy - dvdz) * (dwdy - dvdz) +
-                        //    (dudz - dwdx) * (dudz - dwdx) +
-                        //    (dvdx - dudy) * (dvdx - dudy));
-
                         RDouble s11 = dudx;
                         RDouble s22 = dvdy;
                         RDouble s33 = dwdz;
@@ -4324,7 +4428,7 @@ void TurbSolverStr::Viscosity(Grid *gridIn)
                         RDouble s13 = half * (dudz + dwdx);
                         RDouble s23 = half * (dvdz + dwdy);
 
-                        RDouble sij2 = two * (s11 * s11 + s22 * s22 + s33 * s33 + two * (s12 * s12 + s13 * s13 + s23 * s23));  //! modulus of S.
+                        RDouble sij2 = two * (s11 * s11 + s22 * s22 + s33 * s33 + two * (s12 * s12 + s13 * s13 + s23 * s23));    //! modulus of S.
                         RDouble Strain = sqrt(sij2);
 
                         RDouble part1 = two * sqrt(ke) / (SST_betaStar * kw * ds * refReNumber);
@@ -4333,8 +4437,12 @@ void TurbSolverStr::Viscosity(Grid *gridIn)
                         RDouble f2 = tanh(static_cast<RDouble>(arg2 * arg2));
                         SST_F2(i, j, k) = f2;
 
+                        //! SATESType != 0, SATESfr will be obtained.
+                        RDouble fr = (*modelFr)(i, j, k);
+                        SATES_Fr(i, j, k) = fr;
                         RDouble &turbulentViscosity = viscousTurbulence(i, j, k);
-                        turbulentViscosity = rho * ke / MAX(kw, Strain * f2 / (SST_a1 * refReNumber));
+                        turbulentViscosity = fr * rho * ke / MAX(kw, Strain * f2 / (SST_a1 * refReNumber));
+
                         if (transitionType == IREGAMA)
                         {
                             turbulentViscosity = turbulentViscosity * sqrt(SpSdRatio(i, j, k));
@@ -4352,9 +4460,11 @@ void TurbSolverStr::Viscosity(Grid *gridIn)
                     }
                 }
             }
-            GhostCell3D(SST_F2, ni, nj, nk);
-            FillCornerPoint3D(SST_F2, ni, nj, nk);
         }
+    GhostCell3D(SATES_Fr, ni, nj, nk);
+    GhostCell3D(SST_F2, ni, nj, nk);
+    FillCornerPoint3D(SATES_Fr, ni, nj, nk);
+    FillCornerPoint3D(SST_F2, ni, nj, nk);
     }
 
     RDouble vist_max = viscousTurbulenceMaximum;
@@ -4486,6 +4596,16 @@ void TurbSolverStr::CornerPoint(Grid *gridIn)
 
     RDouble3D &viscousTurbulence = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("vist"));
     FillCornerPoint3D(viscousTurbulence, ni, nj, nk);
+
+    int SATESType = parameters->GetSATESType();
+    if (SATESType > NO_SATES)
+    {
+        RDouble3D &SATES_Fr = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("SATES_Fr"));
+        FillCornerPoint3D(SATES_Fr, ni, nj, nk);
+
+        RDouble3D &SATES_Cx = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("SATES_Cx"));
+        FillCornerPoint3D(SATES_Cx, ni, nj, nk);
+    }
 }
 
 void TurbSolverStr::InFlowBC(Grid *grid, StructBC *structBC)
@@ -5374,6 +5494,16 @@ void TurbSolverStr::UploadInterfaceData(ActionKey *actkey)
 
     RDouble3D *viscousTurbulence = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
     PHSPACE::UploadInterfaceValue(grid, viscousTurbulence, "vist");
+
+    int SATESType = parameters->GetSATESType();
+    if (SATESType > NO_SATES)
+    {
+        RDouble3D *SATES_Fr = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("SATES_Fr"));
+        PHSPACE::UploadInterfaceValue(grid, SATES_Fr, "SATES_Fr");
+    
+        RDouble3D *SATES_Cx = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("SATES_Cx"));
+        PHSPACE::UploadInterfaceValue(grid, SATES_Cx, "SATES_Cx");
+    }
 }
 
 void TurbSolverStr::DownloadInterfaceData(ActionKey *actkey)
@@ -5393,6 +5523,16 @@ void TurbSolverStr::DownloadInterfaceData(ActionKey *actkey)
 
     RDouble3D *viscousTurbulence = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
     PHSPACE::DownloadInterfaceValue(grid, viscousTurbulence, "vist");
+
+    int SATESType = parameters->GetSATESType();
+    if (SATESType > NO_SATES)
+    {
+        RDouble3D *SATES_Fr = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("SATES_Fr"));
+        PHSPACE::DownloadInterfaceValue(grid, SATES_Fr, "SATES_Fr");
+    
+        RDouble3D *SATES_Cx = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("SATES_Cx"));
+        PHSPACE::DownloadInterfaceValue(grid, SATES_Cx, "SATES_Cx");
+    }
 }
 
 void TurbSolverStr::UploadOversetData(ActionKey *actkey)
@@ -6294,6 +6434,312 @@ void ComputeLowReynoldsNumberCorrection(Grid *gridIn, RDouble3D *lowReynoldsNumb
             }
         }
     }
+}
+
+void ComputeSATESLength(Grid *gridIn, RDouble3D *SATESLength, int SATESType)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+
+    //! Compute LES length.
+    RDouble3D *largestGridLength = grid->GetLargestLocalGridLength();
+    for (int k = kst; k <= ked; ++k)
+    {
+        for (int j = jst; j <= jed; ++j)
+        {
+            for (int i = ist; i <= ied; ++i)
+            {
+                (*SATESLength)(i, j, k) = (*largestGridLength)(i, j, k);
+            }
+        }
+    }
+}
+
+void TurbSolverStr::ComputeSATESSMAG(Grid *gridIn)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    Range I, J, K;
+    GetRange(ni, nj, nk, 0, -1, I, J, K);
+
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+
+    Param_TurbSolverStruct *parameters = GetControlParameters();
+
+    int SmagType = parameters->GetSmagType();
+    ComputeSMAGRate(gridIn);
+    RDouble3D *Rate = this->GetLESRate();
+    RDouble refReNumber = parameters->GetRefReNumber();
+
+    RDouble3D &vol = *(grid->GetCellVolume());
+    RDouble4D &qLaminar = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble4D &qTurbulence = *reinterpret_cast<RDouble4D*> (grid->GetDataPtr("q_turb"));
+    RDouble3D &viscousLaminar = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("visl"));
+
+    Range II, JJ, KK;
+    GetRange(ni, nj, nk, -2, 1, II, JJ, KK);
+
+    //! Compute SATES Cutoff length coefficient.
+    RDouble3D *SATESCx = this->GetSATESCx();
+    if (!SATESCx)
+    {
+        SATESCx = new RDouble3D(I, J, K, fortranArray);
+    }
+    using namespace IDX;
+    for (int k = kst; k <= ked; ++k)
+    {
+        for (int j = jst; j <= jed; ++j)
+        {
+            for (int i = ist; i <= ied; ++i)
+            {
+                RDouble rho = ABS(qLaminar(i, j, k, IR)) + SMALL;
+                RDouble ke = ABS(qTurbulence(i, j, k, IDX::IKE));
+                RDouble kw = qTurbulence(i, j, k, IDX::IKW);
+                RDouble delta = pow(vol(i, j, k), third);
+                RDouble rate = (*Rate)(i, j, k);
+
+                //! SATES modleing is based on Smagorinsky SGS when SATESType = 1.
+                if (SmagType == SMAG_CONSTANT)
+                {
+                    (*SATESCx)(i, j, k) = 0.6086;
+                }
+                if (SmagType == SMAG_DYNAMIC)
+                {
+                    RDouble miuLam = viscousLaminar(i, j, k);
+                    RDouble mutsmag = rho * (0.18 * delta) * (0.18 * delta) * rate * refReNumber;
+                    RDouble Csmag = (sqrt(mutsmag * mutsmag + miuLam * miuLam) - miuLam) / 0.09 / sqrt(MAX(ke, 1.0e-8)) / delta / rho / refReNumber;
+                    (*SATESCx)(i, j, k) = MAX(Csmag, 0.01);
+                }
+            }
+        }
+    }
+    this->SetSATESCx(SATESCx);
+}
+
+void TurbSolverStr::ComputeSMAGRate(Grid *gridIn)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    Range I, J, K;
+    GetRange(ni, nj, nk, 0, -1, I, J, K);
+
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+
+    Range II, JJ, KK;
+    GetRange(ni, nj, nk, -2, 1, II, JJ, KK);
+    RDouble4D &gradUVWTCellCenterX = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
+    RDouble4D &gradUVWTCellCenterY = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
+    RDouble4D &gradUVWTCellCenterZ = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
+
+    //! Compute SATES Cutoff length coefficient.
+    RDouble3D *LESRate = this->GetLESRate();
+    if (LESRate == nullptr)
+    {
+        LESRate = new RDouble3D(I, J, K, fortranArray);
+    }
+    using namespace IDX;
+    for (int k = kst; k <= ked; ++k)
+    {
+        for (int j = jst; j <= jed; ++j)
+        {
+            for (int i = ist; i <= ied; ++i)
+            {
+                RDouble g11 = gradUVWTCellCenterX(i, j, k, 0);
+                RDouble g12 = gradUVWTCellCenterY(i, j, k, 0);
+                RDouble g13 = gradUVWTCellCenterZ(i, j, k, 0);
+
+                RDouble g21 = gradUVWTCellCenterX(i, j, k, 1);
+                RDouble g22 = gradUVWTCellCenterY(i, j, k, 1);
+                RDouble g23 = gradUVWTCellCenterZ(i, j, k, 1);
+
+                RDouble g31 = gradUVWTCellCenterX(i, j, k, 2);
+                RDouble g32 = gradUVWTCellCenterY(i, j, k, 2);
+                RDouble g33 = gradUVWTCellCenterZ(i, j, k, 2);
+
+                RDouble s11 = g11;
+                RDouble s22 = g22;
+                RDouble s33 = g33;
+                RDouble s12 = half * (g12 + g21);
+                RDouble s13 = half * (g13 + g31);
+                RDouble s23 = half * (g23 + g32);
+                RDouble sij2 = two * (SQR(s11, s22, s33) + two * SQR(s12, s13, s23));
+                RDouble Strain = sqrt(sij2);    //! modulus of S
+                (*LESRate)(i, j, k) = Strain;
+
+            }
+        }
+    }
+    this->SetLESRate(LESRate);
+}
+
+void TurbSolverStr::ComputeSATESCx(Grid *gridIn)
+{
+    Param_TurbSolverStruct *parameters = GetControlParameters();
+    int SATESType = parameters->GetSATESType();
+    if (SATESType == SATES_SMAG)
+    {
+        ComputeSATESSMAG(gridIn);
+    }
+}
+
+void TurbSolverStr::ComputeSATESFr(Grid *gridIn)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    Range I, J, K;
+    GetRange(ni, nj, nk, 0, -1, I, J, K);
+
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+
+    Param_TurbSolverStruct *parameters = GetControlParameters();
+
+    RDouble refReNumber = parameters->GetRefReNumber();
+    RDouble oRefReNumber = parameters->GetoRefReNumber();
+    RDouble reynoldsSquare = refReNumber * refReNumber;
+    RDouble SST_a1 = parameters->GetSST_a1();
+    RDouble SST_betaStar = parameters->GetSST_betaStar();
+
+    RDouble3D &vol = *(grid->GetCellVolume());
+    RDouble3D &wallDistant = *grid->GetWallDist();
+    RDouble4D &qLaminar = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble3D &viscousLaminar = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("visl"));
+    RDouble4D &qTurbulent = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_turb"));
+    RDouble3D &viscousTurbulent = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
+    RDouble4D &gradUVWTCellCenterX = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
+    RDouble4D &gradUVWTCellCenterY = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
+    RDouble4D &gradUVWTCellCenterZ = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
+    RDouble3D &SpSdRatio = *reinterpret_cast<RDouble3D*> (grid->GetDataPtr("SpSdRatio"));
+    RDouble3D &SATES_Cx = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("SATES_Cx"));
+
+    RDouble3D *SATESFr = this->GetSATESFr();
+    int SATESType = parameters->GetSATESType();
+    string viscousName = parameters->GetViscousName();
+    RDouble3D *SATESLength = new RDouble3D(I, J, K, fortranArray);
+    ComputeSATESLength(gridIn, SATESLength, SATESType);
+
+    using namespace IDX;
+    RDouble mutoo = parameters->GetFreeStreamViscosity();
+    RDouble *freeStreamTurbVar = parameters->GetFreeStreamTurbVar();
+    RDouble kwoo = freeStreamTurbVar[IKW];
+    RDouble kwoo_min = 0.01 * kwoo;
+
+    RDouble *prim_inf = reinterpret_cast<RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
+    RDouble reference_density_farfield = prim_inf[0];
+    RDouble ke_min = mutoo * kwoo_min / reference_density_farfield;
+    if (!SATESFr)
+    {
+        SATESFr = new RDouble3D(I, J, K, fortranArray);
+    }
+
+    //! To obtain coefficient of cutoff length scale in SATES simulation, correponding to different SATEStype, such as SATESSMAG.
+    using namespace IDX;
+    if (SATESType == NO_SATES)
+    {
+        for (int k = kst; k <= ked; ++k)
+        {
+            for (int j = jst; j <= jed; ++j)
+            {
+                for (int i = ist; i <= ied; ++i)
+                {
+                    (*SATESFr)(i, j, k) = 1.0;
+                }
+            }
+        }
+    }
+    if (SATESType > NO_SATES)
+    {
+        ComputeSATESCx(grid);
+        RDouble3D *modelCx = this->GetSATESCx();
+        //! To get resolved control function of SATES simulation.
+        for (int k = kst; k <= ked; ++k)
+        {
+            for (int j = jst; j <= jed; ++j)
+            {
+                for (int i = ist; i <= ied; ++i)
+                {
+                    RDouble Cx = (*modelCx)(i, j, k);
+                    const RDouble betaStar = 0.09;
+                    const RDouble betafr = 0.002;
+                    RDouble rho = ABS(qLaminar(i, j, k, IR));
+                    RDouble ke = MAX(qTurbulent(i, j, k, IDX::IKE), ke_min);
+                    RDouble kw = MAX(qTurbulent(i, j, k, IDX::IKW), kwoo_min);
+                    RDouble wallDistance = wallDistant(i, j, k);
+                    RDouble wallDistance2 = SQR(wallDistance);
+                    RDouble turbulentViscosity = MAX(viscousTurbulent(i, j, k), 0.001);
+                    RDouble miuLam = viscousLaminar(i, j, k);
+                    RDouble miuLam3 = POWER3(miuLam);
+                    RDouble rho3 = POWER3(rho);
+
+                    //! To obtain the integral length scale Li.
+                    RDouble lengthIntegral = sqrt(ke) / (betaStar * kw * refReNumber);
+
+                    //! To obtain the Kolmogorv length scale Lk.
+                    RDouble lengthKolmo = pow((miuLam3 / MAX(rho3, 1.0e-8)) / (ke * betaStar * kw), fourth) / (refReNumber);
+                    lengthKolmo = MAX(lengthKolmo, 1.0e-20);
+
+                    if (viscousName.substr(0, 17) == "2eq-kw-menter-sst")
+                    {
+                        RDouble g11 = gradUVWTCellCenterX(i, j, k, 0);
+                        RDouble g12 = gradUVWTCellCenterY(i, j, k, 0);
+                        RDouble g13 = gradUVWTCellCenterZ(i, j, k, 0);
+
+                        RDouble g21 = gradUVWTCellCenterX(i, j, k, 1);
+                        RDouble g22 = gradUVWTCellCenterY(i, j, k, 1);
+                        RDouble g23 = gradUVWTCellCenterZ(i, j, k, 1);
+
+                        RDouble g31 = gradUVWTCellCenterX(i, j, k, 2);
+                        RDouble g32 = gradUVWTCellCenterY(i, j, k, 2);
+                        RDouble g33 = gradUVWTCellCenterZ(i, j, k, 2);
+                        RDouble s11 = g11;
+                        RDouble s22 = g22;
+                        RDouble s33 = g33;
+                        RDouble s12 = half * (g12 + g21);
+                        RDouble s13 = half * (g13 + g31);
+                        RDouble s23 = half * (g23 + g32);
+
+                        RDouble sij2 = two * (s11 * s11 + s22 * s22 + s33 * s33 + two * (s12 * s12 + s13 * s13 + s23 * s23));    //! modulus of S.
+                        RDouble Strain = sqrt(sij2);
+                        RDouble ds = wallDistant(i, j, k);
+                        RDouble ds2 = ds * ds;
+                        RDouble part1 = two * sqrt(ke) / (0.09 * kw * ds * refReNumber);
+                        RDouble part2 = 500.0 * viscousLaminar(i, j, k) / (rho * kw * ds2 * reynoldsSquare);
+                        RDouble arg2 = MAX(part1, part2);
+                        RDouble f2 = tanh(static_cast<RDouble>(arg2 * arg2));
+                        RDouble pre_gama = ABS(MAX(kw, Strain * f2 / (SST_a1 * refReNumber)) / kw);
+                        Cx = Cx * MAX(sqrt(pre_gama), 1.0e-20);
+                    }
+
+                    //! To obtain the cutoff length scale Lc.
+                    RDouble lengthCutoff = Cx * pow(vol(i, j, k), third);
+
+                    RDouble kmodeled = 1.0 - exp(-betafr * lengthCutoff / MAX(1.0E-20, lengthKolmo));
+                    RDouble ktotal = 1.0 - exp(-betafr * lengthIntegral / MAX(1.0E-20, lengthKolmo));
+
+                    SATES_Cx(i, j, k) = Cx;
+                    RDouble Fr = MAX(MIN(1.0, SQR(kmodeled / MAX(ktotal, SMALL))), 1.0e-10);
+                    (*SATESFr)(i, j, k) = Fr;
+                }
+            }
+        }
+        GhostCell3D(SATES_Cx, ni, nj, nk);
+        FillCornerPoint3D(SATES_Cx, ni, nj, nk);
+    }
+    this->SetSATESFr(SATESFr);
+    delete SATESLength;
 }
 
 }

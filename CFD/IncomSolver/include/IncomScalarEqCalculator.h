@@ -43,7 +43,7 @@ public:
     virtual void solveScalarEquation(Grid *grid, int iEquation);
     virtual void constructMatrixACoeff(Grid *grid, int iEquation);
     virtual void constructBCoeff(Grid *grid, int iEquation);
-    
+
     virtual void UpdateBCValue(Grid *grid);
     virtual void UpdateProperties(Grid *grid) {};
     virtual void UpdateAfterIterloop(Grid *grid) {};
@@ -58,15 +58,15 @@ public:
     virtual void SetDiffusionCoeff(Grid *grid);
     virtual void CalcOtherMatrixACoeff(Grid *grid) {};
     virtual void CalcOtherbCoeff(Grid *grid, int iEquation) {};
-    
+
 public:
 
     void treatBC(Grid *grid, int iVariable, RDouble matrixCoeff);
 
     virtual void calWallBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
-        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff);
+        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff, int iVariable);
     virtual void calSymmetryBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
-        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff);
+        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff, int iVariable);
 
     virtual void calVelocityInletBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
         RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff);
@@ -74,8 +74,8 @@ public:
     virtual void calPressureOutletBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
         RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff);
 
-    virtual void calInterfaceBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
-        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff);
+    virtual void calInterfaceBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *upperMatrixCoeff, RDouble *bCoeff, RDouble *q,
+        RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff, int iVariable);
     
     virtual void calPressureInletBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
         RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff);
@@ -85,7 +85,7 @@ public:
 
     void calcInvisSourceTerm(Grid *grid, int solverIndex);
 
-    void FirstUpwindInvisTerm(Grid *grid);
+    void FirstUpwindInvisTerm(Grid *grid, int solverIndex);
 
     void SecondUpWindSourceTerm(Grid *grid, int solverIndex);
 
@@ -97,11 +97,11 @@ public:
 
     void VisSourceTerm(Grid *grid, int solverIndex);
 
-    void calcTransMatrixTerm(Grid *grid);
+    void calcTransMatrixTerm(Grid *grid, int solverIndex);
 
-    void TransMatrixTerm_1st(Grid *grid);
+    void TransMatrixTerm_1st(Grid *grid, int solverIndex);
 
-    void TransMatrixTerm_2nd(Grid *grid);
+    void TransMatrixTerm_2nd(Grid *grid, int solverIndex);
 
     void calcTransSourceTerm(Grid *grid, int iVariable);
 

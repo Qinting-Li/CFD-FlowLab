@@ -817,12 +817,10 @@ OriginalStructGridMerge::~OriginalStructGridMerge()
         DelPointer(nTotalNode);
         DelPointer(nTotalFace);
         DelPointer(nTotalCell);
-
         for (int iBlock = 0; iBlock < nTotalblock; ++ iBlock)
         {
             DelPointer(coordinates[iBlock]);
         }
-
         DelPointer(coordinates);
         DelPointer(nBCRegion);
         DelPointer(compositeBCRegion);

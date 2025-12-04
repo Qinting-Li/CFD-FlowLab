@@ -424,6 +424,65 @@ LIB_EXPORT void Controller::SolveUnsteadyField()
     }
 }
 
+void Controller::SolverMultiphaseFlow(int iSolver, int level)
+{
+    //! The time step in solving multiphase flow is very important.
+    //! In order to prevent user confusion, 
+    //! let's sort out the time step cycle parameters here.
+    //! In outer iter,
+    //! The loop variable is outnstep (GlobalDataBase),and Get on
+    //! int outIterStep,which is init on Zone::init() ,start from 0;
+    //! The max iter is maxSimuStep.
+    //! int outIterStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
+
+    //! In inner iter,
+    //! The loop variable is innstep (GlobalDataBase), and Get on
+    //! innerIterStep, which is init on Zone::init() ,start from 0;
+    //! The max iter is MAX(maxSubIterationNorm,subIterationNorm).
+    //! int innerIterStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("innerIterStep");
+
+    //! But for multiphase flow,the other phase's iter may not equal to flow.
+
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+    //! Get the right side for all solver.
+    //! In particle solver, is should be null.
+    FieldProxy **rhsProxy = GetRHSProxy(level);
+
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++iZone)
+    {
+        //! Get global zoneID on all zones.
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        //! Taking particle-fluid  flow as an example:
+        //! For fluid solver, the action term of particles on fluid 
+        //! needs to be calculated on this step.
+        //! For the particle solver, this step needs to calculate 
+        //! the action term of the fluid on the particles and update the particles.
+        solver->SolverMultiphaseFlow(rhsProxy[zoneID]);
+    }
+
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++iZone)
+    {
+        //! Get global zoneID on all zones.
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+        //! This step is mainly for the updating of particle number and multi zones transmission value.
+        solver->CommunicateMultiphaseFlow(rhsProxy[zoneID]);
+    }
+
+    this->PostSolve();
+}
+
 void Controller::MultiGrid(int iSolver, int level)
 {
     CreateRHSProxy(iSolver, level);
@@ -1018,23 +1077,28 @@ void Controller::UpdateResiduals(int iSolver, int level)
 
 #ifdef USE_GMRESSOLVER
     // GMRESCoupled
+    int originaltscheme = GlobalDataBase::GetIntParaFromDB("OriginalTscheme");
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
-    if( viscousType == ONE_EQU && iSolver == NS_SOLVER )
+    if (originaltscheme == GMRES)
     {
-        SetBoundaryValueOfField(NS_SOLVER, level);
-        SetBoundaryValueOfField(TURB_SOLVER, level);
+        if (viscousType == ONE_EQU && iSolver == NS_SOLVER)
+        {
+            WriteLogFile("Gmres Boundaryset");
+            SetBoundaryValueOfField(NS_SOLVER, level);
+            SetBoundaryValueOfField(TURB_SOLVER, level);
 
-        UpdateIndependentField(NS_SOLVER, level);
-        UpdateIndependentField(TURB_SOLVER, level);
+            UpdateIndependentField(NS_SOLVER, level);
+            UpdateIndependentField(TURB_SOLVER, level);
 
-        SetBoundaryValueOfField(TURB_SOLVER, level);
+            SetBoundaryValueOfField(TURB_SOLVER, level);
 
-    }
-    else if ( viscousType == INVISCID || viscousType == LAMINAR || viscousType == TWO_EQU )
-    {
-        SetBoundaryValueOfField(iSolver, level);
+        }
+        else if (viscousType == INVISCID || viscousType == LAMINAR || viscousType == TWO_EQU)
+        {
+            SetBoundaryValueOfField(iSolver, level);
 
-        UpdateIndependentField(iSolver, level);
+            UpdateIndependentField(iSolver, level);
+        }
     }
 
 #else 
@@ -1238,7 +1302,8 @@ void Controller::ComputeGradient(int iSolver, int level)
     int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     int isFVMOrFDM = GlobalDataBase::GetIntParaFromDB("isFVMOrFDM");
-    if (viscousType == INVISCID && STRUCTGRID == systemGridType)
+    bool IsPreSolvedforStructHighOrder = IsNeedMorePreparationForHighOrder(iSolver);
+    if ((viscousType == INVISCID && STRUCTGRID == systemGridType) || IsPreSolvedforStructHighOrder)
     {
         return;
     }
@@ -1356,7 +1421,8 @@ void Controller::ComputeViscousCoeff(int iSolver, int level)
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
-    if (viscousType == INVISCID)
+    bool IsPreSolvedforStructHighOrder = IsNeedMorePreparationForHighOrder(iSolver);
+    if (viscousType == INVISCID || IsPreSolvedforStructHighOrder)
     {
         return;
     }
@@ -1490,6 +1556,23 @@ void Controller::SetBoundaryValueOfField(int iSolver, int level)
     MixingPlaneBoundary(iSolver, level);
 }
 
+bool Controller::IsNeedMorePreparationForHighOrder(int iSolver)
+{
+    if (iSolver != TURB_SOLVER)
+    {
+        return false;
+    }
+    else
+    {
+        int isFVMOrFDM = GlobalDataBase::GetIntParaFromDB("isFVMOrFDM");
+        if (isFVMOrFDM == FD_METHOD)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 void Controller::PreSolveforStructHighOrder(int iSolver, int level)
 {
     //int mission_Comm(q_FD                                    ) =  5;
@@ -1547,7 +1630,7 @@ void Controller::PreSolveforStructHighOrder(int iSolver, int level)
 }
 
 void Controller::GetIndependentVariablesforStructHighOrder(int iSolver, int level)
-{    
+{
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
 
@@ -1572,7 +1655,7 @@ void Controller::GetIndependentVariablesforStructHighOrder(int iSolver, int leve
 }
 
 void Controller::GetDependentVariablesforStructHighOrder(int iSolver, int level)
-{    
+{
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
 
@@ -1593,7 +1676,7 @@ void Controller::GetDependentVariablesforStructHighOrder(int iSolver, int level)
         CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
 
         solver->GetDependentVariablesforStructHighOrder(grid);
-    }   
+    }
 }
 
 void Controller::RungeKuttaThirdTVD(int iSolver, int level)
@@ -3587,7 +3670,7 @@ void Controller::MatrixLUSGS(int iSolver, int level)
     MatrixLUSGSInitialization(iSolver, level, nLUSGSSweeps, dqProxy, LUplusDQ);
 
     RDouble sweepNormalInit = 1.0, sweepEpsilon = 1.1, globleNormal;
-    
+
     for (int iSweep = 0; iSweep < nLUSGSSweeps; ++ iSweep)
     {
         RDouble sweepNormal = 0.0;

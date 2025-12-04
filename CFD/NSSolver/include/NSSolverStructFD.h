@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      NSSolverStructFD.h
 //! @brief     NS solver for struct grid with finite difference method.
-//! @author    Min Yaobing, Ma Yankai.
+//! @author    Min Yaobing, Ma Yankai, Wu Wenchang.
 
 //! CHEN J Q, MA Y K, MIN Y B, et al. Design and development of homogeneous hybrid 
 //! solvers on National Numerical Windtunnel(NNW) PHengLEI[J]. Acta Aerodynamica Sinica,
@@ -22,6 +22,16 @@
 
 namespace PHSPACE
 {
+
+namespace PHENGLEI_HIGHORDER
+{
+    //! Types of Nonlinear Weighting Functions for High-Order Interpolation.
+    const int LINEAR  = 0;
+    const int JS_TYPE = 1;
+    const int Z_TYPE  = 2;
+    const int TENO    = 3;
+    const int S_TENO  = 4;
+}
 class NSSolverStructFD : public NSSolverStruct
 {
 public:
@@ -32,10 +42,10 @@ private:
     void DeAllocateGlobalVar(Grid *gridIn);
     void GetSurfaceCellNumber(Grid *gridIn, int &nWall, int &nCell);
     void ComputeFirstLayerGridHeight(Grid *gridIn, RDouble2D *firstLayerHeight);
-    
+
     void Primitive2Conservative(RDouble prim[5], RDouble q[5]);
     void Conservative2Primitive(RDouble q[5], RDouble prim[5]);
-    
+
     void InFlowBC3D(Grid *gridIn, StructBC *structBC);
     void OutFlowBC3D(Grid *gridIn, StructBC *structBC);
     void SymmetryBC3D(Grid *gridIn, StructBC *structBC);
@@ -43,7 +53,7 @@ private:
     void ViscousIsotropicWall(Grid *gridIn, StructBC *structBC);
     void FarFieldRiemannInvariants(Grid *gridIn, StructBC *structBC);
     void CornerPoint(Grid *gridIn);
-    
+
     void GetIndependentVariablesforStructHighOrder(Grid *gridIn);
     void GetDependentVariablesforStructHighOrder(Grid *gridIn);
     void ObtainBoundaryValue(Grid *gridIn);
@@ -51,27 +61,30 @@ private:
     void ObtainPressureFactor(Grid *gridIn);
     void ObtainViscousCoef(Grid *gridIn);
     void ObtainGradientCellCenter(Grid *gridIn);
-    
+
     void Boundary(Grid *gridIn);
     void ComputeGamaAndTemperature(Grid *gridIn);
     void CalPressureFactor(Grid *gridIn);
     void GetHeatTransferCoeff(Grid *gridIn);
     void ComputeViscousCoeff(Grid *gridIn);
     void ComputeViscousCoefficientWithoutChemical(Grid *gridIn);
-    
+
     void ZeroResiduals(Grid *grid);
     void InitFlowAsRestart();
     void InitLocalMemory(Grid *gridIn);
     void SetWeightedInterpolationCoef(Grid *gridIn);
-    
+
     int total_negative;
-    string solvername;//!WCNS,HDCS
-    double EPSILON;//! epsilon within weighted interpolation
+    string solvername;    //! WCNS,HDCS
+    double EPSILON;       //! epsilon within weighted interpolation
+    double CT;            //! control scale separation in WCNS-T/ST/STA schemes
+    int weightType;       //! weight type  : Linear, JS, ZType, TENO, STENO
+    int penaltyLevel;     //! penalty level : 0, power = 1; 1, power = 2
     string fluxname;
-    FieldProxy *CellfluxProxy;//! only used for HDCS
+    FieldProxy *CellfluxProxy;    //! only used for HDCS
 
     RDouble6D *WeightedInterpolationCoef;
-    
+
     string gradient_method;
     FieldProxy *UVWTproxy;
     FieldProxy *UVWTfaceIproxy;
@@ -80,9 +93,9 @@ private:
     FieldProxy *dqdxFaceProxy;
     FieldProxy *dqdyFaceProxy;
     FieldProxy *dqdzFaceProxy;
-    
+
     void InviscidFlux(Grid *grid);
-    
+
     void GetFaceVariable_WCNS(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, int nsurf);
     void GetFaceVariable_HDCS_firstlayerExplicit(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, int nsurf);
     void GetFaceVariable_HDCS_otherlayerImplicit(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, int nsurf);
@@ -94,14 +107,28 @@ private:
     RDouble LinearExplicitInterpolation5th(RDouble prim[5]);
     RDouble LinearImplicitInterpolation7th(RDouble prim[5]);
     void GetFaceVariableCorrectionAtPhysicalBoundary(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, int nsurf); 
-    
+
     void InterpolationRUVWP5th(RDouble Coef[30], RDouble PrimPlate[5][5], RDouble Primhalf[5]);
     void InterpolationRUVWP3rd(RDouble Prim[5][5], RDouble Primhalf[5]);
 
+    //! Fifth-Order interpolation based on Linear Weighting Function.
     RDouble BasicWeightedInterpolation5th(RDouble Coef[30], RDouble QmPlate[5]);
+
+    //! Fifth-Order interpolation based on JS Weighting Function.
+    RDouble BasicWeightedInterpolation5thJS(RDouble Coef[30], RDouble QmPlate[5]);
+
+    //! Fifth-Order interpolation based on  Z-Type Weighting Function.
+    RDouble BasicWeightedInterpolation5thZtype(RDouble Coef[30], RDouble QmPlate[5]);
+
+    //! Fifth-Order interpolation based on TENO Weighting Function.
+    RDouble BasicWeightedInterpolation5thTENO(RDouble Coef[30], RDouble QmPlate[5]);
+
+    //! Fifth-Order interpolation based on Smooth TENO Weighting Function.
+    RDouble BasicWeightedInterpolation5thSTENO(RDouble Coef[30], RDouble QmPlate[5]);
+
     RDouble BasicInterpolation3rd(RDouble Qp[5], int m);
     RDouble Limiter_ThirdSmooth(const RDouble &x, const RDouble &y);
-    
+
     void GetFaceInviscidFlux(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, FieldProxy *fluxProxy, int nsurf);
     void FluxSteger(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, FieldProxy *fluxProxy, int nsurf);
     void FluxRoe(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, FieldProxy *fluxProxy, int nsurf);
@@ -110,18 +137,18 @@ private:
     void FluxDifference_HDCS(Grid *gridIn, FieldProxy *fluxProxy, int nsurf);
     void GetCellInviscidFlux(Grid *gridIn, int nsurf);
     void GetCellViscousFlux(Grid *gridIn, int nsurf);
-    
+
     void GetUVWTproxy(Grid *gridIn);
     void GetUVWTfaceproxy(Grid *gridIn, int nsurf);
     void GetUVWTfaceproxy_HDCS(Grid *gridIn, int nsurf);
     void GetdqdkxietactaCellCenter(Grid *gridIn, int nsurf);
     void GetdqdkxietactaCellCenter_HDCS(Grid *gridIn, int nsurf);
     void ComputeGradientCellCenter(Grid *gridIn);
-    
+
     void ViscousFlux(Grid *gridIn);
     void GetFaceViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, int iSurface);
     void GetGradientAtFace(Grid *gridIn, int nSurface);
-    
+
     void GetGradientAtFaceconservation(Grid *gridIn, int nSurface);
     void GetGradientAtFaceconservation_HDCS(Grid *gridIn, int nSurface);
     void GetGradientAtFacechainrule(Grid *gridIn, int nSurface);

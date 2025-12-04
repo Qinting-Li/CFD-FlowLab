@@ -19,6 +19,7 @@
 #include "Constants.h"
 #include "Data_Param.h"
 #include "Data_Field.h"
+#include "ParticleBoundaryCondition.h"
 using namespace std;
 
 namespace PHSPACE
@@ -224,6 +225,9 @@ private:
     //! BC data pointers.
     Data_Field *bcFieldDataBase;
 
+    //! Particle BC type.
+    int parBcType;
+
 public:
     const string & GetBCName() const { return this->bcName; }
 
@@ -278,6 +282,18 @@ public:
     {
         return bcFieldDataBase->CheckDataExist(name);
     }
+
+    //! Set the current particle BC type.
+    void SetParticleBCType(int particleBCType)
+    {
+        this->parBcType = particleBCType;
+    }
+
+    //! Return the cuurent BC type for particle.
+    int GetParticleBCType() const
+    {
+        return this->parBcType;
+    }
 };
 
 //! @brief Global boundary conditions, all of the global boundary conditions are stored here.
@@ -286,8 +302,22 @@ class GlobalBoundaryCondition
 private:
     //! Warning: it has not been deleted!
     static vector<SimpleBC *> *globalBCList;
+
+    //! Note that the body concept does not refer to a block or zone, 
+    //! but rather to one of the components in a multi-component structure 
+    //! to facilitate post-processing of component aerodynamic integrals.
+
+    //! A map of (ibc,bodyindex).
+    //! ibc is the index of bc for all bc of globalBCList.
+    //! bodyindex is the index of bc for each body.
+    //! 
     static map <int, int> *bodyMap;
+    //! A string name of body for all boundary condition.
     static set <string> *bodyList;
+
+    //! Particle boundary condition.
+    static vector<ParticleBoundaryCondition*> *globalParticleBCList;
+
 
 private:
     GlobalBoundaryCondition();
@@ -341,8 +371,12 @@ public:
     //! Get global boundary conditions list.
     static vector<SimpleBC *> *GetGlobalBoundaryConditionList() { return globalBCList; }
 
+    static vector<ParticleBoundaryCondition*> *GetGlobalParticleBoundaryConditionList() { return globalParticleBCList; }
+
     //! Read global boundary conditions.
     static void ReadGlobalBoundaryCondition();
+
+    static void ReadGlobalParticleBoundaryCondition();
 
     static void SetGlobalBCByGlobalDataBase();
 
@@ -366,6 +400,7 @@ public:
 
     static void SetBCInitialValuesByPressure(Data_Param *bcParamDB, RDouble *primitiveVar);
 
+
     static void SetBCInitialValuesByTotalPressure(Data_Param *bcParamDB, RDouble *primitiveVar);
 
     static void SetBCInitialValuesByMachNumberTemperaturePressure(Data_Param *bcParamDB, RDouble *primitiveVar);
@@ -377,9 +412,13 @@ public:
     static void SetBCInitialValuesByMolecularWeightGama(Data_Param *bcParamDB, RDouble *primitiveVar);
 
     static void InitMassFlowBoundary();
+
+    static void SetParticleBCTypeByGlobalBC();
+
 private:
     static void ParseBCFromFile(fstream &file);
     static void BuildBodyMap();
+    static void ParseParticleBCFromFile(fstream& file);
 };
 
 //! Judge whether a boundary condition type number belongs to interface.

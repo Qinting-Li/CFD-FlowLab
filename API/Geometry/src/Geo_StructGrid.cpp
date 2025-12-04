@@ -257,7 +257,254 @@ LIB_EXPORT void StructGrid::GetSourceIndexIJK(int iFace, int ipos, int &i, int &
 {
     this->structBCSet->GetSourceIndexIJK(iFace, ipos, i, j, k);
 }
+LIB_EXPORT void StructGrid::GetCornerSourceIndexIJK(int *indexStr, set<int*> &indexCorner, int &iLayer)
+{
+    //! The cell index on current zone.
+    int nIndexCell[3];
+    nIndexCell[0] = this->GetNI() - 1;
+    nIndexCell[1] = this->GetNJ() - 1;
+    nIndexCell[2] = this->GetNK() - 1;
 
+    int nDimGlobal = GetDim();
+    int nCornerCell = pow(iLayer, nDimGlobal) - pow(iLayer - 1, nDimGlobal);
+    int nCornerCellPoint = 1;
+    int nCornerCellLine = (iLayer - 1) * nDimGlobal;
+    int nCornerCellPlane = pow(iLayer - 1, 2) * nDimGlobal;
+    if (nDimGlobal == TWO_D)
+    {
+        nCornerCellPlane = 0;
+        nIndexCell[2] = 1;
+    }
+
+    const int nDimVar = 3;
+
+    int indexS[3], indexE[3];
+    for (int iDim = 0; iDim < nDimVar; ++iDim)
+    {
+        indexS[iDim] = 1;
+        indexE[iDim] = 1;
+
+        if (indexStr[iDim] == 1)
+        {
+            indexS[iDim] = nIndexCell[iDim];
+            indexE[iDim] = nIndexCell[iDim] - (iLayer - 1);
+        }
+        else if (indexStr[iDim] == -1)
+        {
+            indexS[iDim] = 1;
+            indexE[iDim] = 1 + (iLayer - 1);
+        }
+    }
+
+    int indexDim[nDimVar][nDimVar];
+    indexDim[0][0] = 0;
+    indexDim[0][1] = 1;
+    indexDim[0][2] = 2;
+
+    indexDim[1][0] = 1;
+    indexDim[1][1] = 0;
+    indexDim[1][2] = 2;
+
+    indexDim[2][0] = 2;
+    indexDim[2][1] = 0;
+    indexDim[2][2] = 1;
+
+    //! Step 1: nCornerCellPoint
+    int *indexCornerPoint = new int[3];
+    for (int iDim = 0; iDim < nDimVar; ++iDim)
+    {
+        indexCornerPoint[iDim] = indexE[iDim];
+    }
+    if (nDimGlobal == TWO_D)
+    {
+        indexCornerPoint[nDimVar - 1] = 1;
+    }
+    indexCorner.insert(indexCornerPoint);
+
+    //! Step 2: nCornerCellLine
+    for (int iDim = 0; iDim < nDimGlobal; ++iDim)
+    {
+        for (int iCorner = 0; iCorner < iLayer - 1; ++iCorner)
+        {
+            int indexLine = indexS[iDim] - iCorner * indexStr[iDim];
+
+            int *indexCornerLine = new int[3];
+            indexCornerLine[indexDim[iDim][0]] = indexLine;
+            indexCornerLine[indexDim[iDim][1]] = indexE[indexDim[iDim][1]];
+            indexCornerLine[indexDim[iDim][2]] = indexE[indexDim[iDim][2]];
+
+            if (nDimGlobal == TWO_D)
+            {
+                indexCornerLine[nDimVar - 1] = 1;
+            }
+            indexCorner.insert(indexCornerLine);
+        }
+    }
+
+    //! Step 3: nCornerCellPlane
+    if (nDimGlobal != TWO_D)
+    {
+        for (int iDim = 0; iDim < nDimVar; ++iDim)
+        {
+            for (int iCornerI = 0; iCornerI < iLayer - 1; ++iCornerI)
+            {
+                for (int iCornerJ = 0; iCornerJ < iLayer - 1; ++iCornerJ)
+                {
+                    int *indexCornerPlane = new int[3];
+                    indexCornerPlane[indexDim[iDim][0]] = indexE[indexDim[iDim][0]];
+                    indexCornerPlane[indexDim[iDim][1]] = indexS[indexDim[iDim][1]] - iCornerI * indexStr[indexDim[iDim][1]];
+                    indexCornerPlane[indexDim[iDim][2]] = indexS[indexDim[iDim][2]] - iCornerJ * indexStr[indexDim[iDim][2]];
+                    if (nDimGlobal == TWO_D)
+                    {
+                        indexCornerPlane[nDimVar - 1] = 1;
+                    }
+                    indexCorner.insert(indexCornerPlane);
+                }
+            }
+        }
+    }
+
+    //! Check corner cell index and print to windows or log file.
+    using namespace PHMPI;
+    ostringstream ossLog;
+    ossLog << " --- Check Corner cell index on Zone For sent data --- " << "\n";
+    ossLog << " zone Global index : " << this->GetZoneID() << "\n";
+    int countCornerCell = 0;
+    for (set<int*>::iterator iterCorner = indexCorner.begin(); iterCorner != indexCorner.end(); ++iterCorner)
+    {
+        countCornerCell += 1;
+        ossLog << "  iCorner Cell : " << countCornerCell << "\n";
+        ossLog << "   Corner index ijk : ";
+        ossLog << (*iterCorner)[0] << " " << (*iterCorner)[1] << " " << (*iterCorner)[2] << "\n";
+    }
+    ossLog << endl;
+    bool writeEachProcessor = true;
+    WriteLogFile(ossLog, writeEachProcessor);
+}
+
+LIB_EXPORT void StructGrid::GetCornerTargetIndexIJK(int *indexStr, set<int*> &indexCorner, int &iLayer)
+{
+    int nIndexCell[3];
+    nIndexCell[0] = this->GetNI() - 1;
+    nIndexCell[1] = this->GetNJ() - 1;
+    nIndexCell[2] = this->GetNK() - 1;
+
+    int nDimGlobal = GetDim();
+    int nCornerCell = pow(iLayer, nDimGlobal) - pow(iLayer - 1, nDimGlobal);
+    int nCornerCellPoint = 1;
+    int nCornerCellLine = (iLayer - 1) * nDimGlobal;
+    int nCornerCellPlane = pow(iLayer - 1, 2) * nDimGlobal;
+    if (nDimGlobal == TWO_D)
+    {
+        nCornerCellPlane = 0;
+        nIndexCell[2] = 1;
+    }
+
+    const int nDimVar = 3;
+
+    int indexS[3], indexE[3];
+    for (int iDim = 0; iDim < nDimVar; ++iDim)
+    {
+        indexS[iDim] = 1;
+        indexE[iDim] = 1;
+
+        if (indexStr[iDim] == 1)
+        {
+            indexS[iDim] = nIndexCell[iDim] + 1;
+            indexE[iDim] = nIndexCell[iDim] + 1 + (iLayer - 1);
+        }
+        else if (indexStr[iDim] == -1)
+        {
+            indexS[iDim] = 1 - 1;
+            indexE[iDim] = 1 - 1 - (iLayer - 1);
+        }
+    }
+
+    int indexDim[nDimVar][nDimVar];
+    indexDim[0][0] = 0;
+    indexDim[0][1] = 1;
+    indexDim[0][2] = 2;
+
+    indexDim[1][0] = 1;
+    indexDim[1][1] = 0;
+    indexDim[1][2] = 2;
+
+    indexDim[2][0] = 2;
+    indexDim[2][1] = 0;
+    indexDim[2][2] = 1;
+
+    //! Step 1: nCornerCellPoint
+    int *indexCornerPoint = new int[3];
+    for (int iDim = 0; iDim < nDimVar; ++iDim)
+    {
+        indexCornerPoint[iDim] = indexE[iDim];
+    }
+    if (nDimGlobal == TWO_D)
+    {
+        indexCornerPoint[nDimVar - 1] = 1;
+    }
+    indexCorner.insert(indexCornerPoint);
+
+    //! Step 2: nCornerCellLine
+    for (int iDim = 0; iDim < nDimGlobal; ++iDim)
+    {
+        for (int iCorner = 0; iCorner < iLayer - 1; ++iCorner)
+        {
+            int indexLine = indexS[iDim] - iCorner * indexStr[iDim];
+
+            int *indexCornerLine = new int[3];
+            indexCornerLine[indexDim[iDim][0]] = indexLine;
+            indexCornerLine[indexDim[iDim][1]] = indexE[indexDim[iDim][1]];
+            indexCornerLine[indexDim[iDim][2]] = indexE[indexDim[iDim][2]];
+
+            if (nDimGlobal == TWO_D)
+            {
+                indexCornerLine[nDimVar - 1] = 1;
+            }
+            indexCorner.insert(indexCornerLine);
+        }
+    }
+
+    //! Step 3: nCornerCellPlane
+    if (nDimGlobal != TWO_D)
+    {
+        for (int iDim = 0; iDim < nDimVar; ++iDim)
+        {
+            for (int iCornerI = 0; iCornerI < iLayer - 1; ++iCornerI)
+            {
+                for (int iCornerJ = 0; iCornerJ < iLayer - 1; ++iCornerJ)
+                {
+                    int* indexCornerPlane = new int[3];
+                    indexCornerPlane[indexDim[iDim][0]] = indexE[indexDim[iDim][0]];
+                    indexCornerPlane[indexDim[iDim][1]] = indexS[indexDim[iDim][1]] - iCornerI * indexStr[indexDim[iDim][1]];
+                    indexCornerPlane[indexDim[iDim][2]] = indexS[indexDim[iDim][2]] - iCornerJ * indexStr[indexDim[iDim][2]];
+                    if (nDimGlobal == TWO_D)
+                    {
+                        indexCornerPlane[nDimVar - 1] = 1;
+                    }
+                    indexCorner.insert(indexCornerPlane);
+                }
+            }
+        }
+    }
+
+    //! Check corner cell index and print to windows or log file.
+    using namespace PHMPI;
+    ostringstream ossLog;
+    ossLog << " --- Check Corner cell index on Zone For sent data --- " << "\n";
+    ossLog << " zone Global index : " << this->GetZoneID() << "\n";
+    int countCornerCell = 0;
+    for (set<int*>::iterator iterCorner = indexCorner.begin(); iterCorner != indexCorner.end(); ++iterCorner)
+    {
+        countCornerCell += 1;
+        ossLog << "  iCorner Cell : " << countCornerCell << "\n";
+        ossLog << "   Corner index ijk : ";
+        ossLog << (*iterCorner)[0] << " " << (*iterCorner)[1] << " " << (*iterCorner)[2] << "\n";
+    }
+    ossLog << endl;
+    bool writeEachProcessor = true;
+    WriteLogFile(ossLog, writeEachProcessor);
+}
 
 LIB_EXPORT void StructGrid::GetSourceIndexIJK_Nsurf_LR(int iFace, int ipos, int &i, int &j, int &k, int &nsurf, int &s_lr)
 {
@@ -308,23 +555,26 @@ LIB_EXPORT void StructGrid::Action(ActionKey *actkey)
 {
     switch (actkey->action)
     {
-        case WRITE_WALL_DIST:
-            DumpWalldist(actkey);
-            break;
-        case COMMCELLCENTERDATA:
-            GetCellCenter(actkey);
-            break;
-        case COMMCELLIBLANK:
-            GetCellIBlank(actkey);
-            break;
-        case SIMPLE_ACTION:
-            SimpleAction(actkey);
-            break;
-        case ALLOCATE_WALL_DIST:
-            AllocateWalldist();
-            break;
-        default:
-            break;
+    case WRITE_WALL_DIST:
+        DumpWalldist(actkey);
+        break;
+    case COMMCELLCENTERDATA:
+        GetCellCenter(actkey);
+        break;
+    case COMMCELLIBLANK:
+        GetCellIBlank(actkey);
+        break;
+    case SIMPLE_ACTION:
+        SimpleAction(actkey);
+        break;
+    case ALLOCATE_WALL_DIST:
+        AllocateWalldist();
+        break;
+    case COMMCELLCENTERDATA_ON_CORNER:
+        GetCellCenterOnCorner(actkey);
+        break;
+    default:
+        break;
     }
 }
 
@@ -351,6 +601,10 @@ LIB_EXPORT void StructGrid::TranslateAction(ActionKey *actkey)
     else if (actkey->action == COMMCELLIBLANK)
     {
         TranslateCellIBlank(actkey);
+    }
+    else if (actkey->action == COMMCELLCENTERDATA_ON_CORNER)
+    {
+        TranslateCellCenterOnCorner(actkey);
     }
 }
 
@@ -4184,6 +4438,18 @@ void StructGrid::GetCellCenter(ActionKey *actkey)
 
     Int3D &cellType = *this->GetCellBoundaryType();
 
+#ifdef USE_LagrangianParticle
+    int iParticleModel = 0;
+    bool useParSolver = GlobalDataBase::IsExist("iParticleModel", PHINT, 1);
+    RDouble4D &xfv = *(this->GetFaceVectorX());
+    RDouble4D &yfv = *(this->GetFaceVectorY());
+    RDouble4D &zfv = *(this->GetFaceVectorZ());
+    if (useParSolver)
+    {
+        iParticleModel = GlobalDataBase::GetIntParaFromDB("iParticleModel");
+    }
+#endif
+
     int ineighbor = fiinfo->FindIthNeighbor(actkey->ipos);
     int *faceIndexForSend = fiinfo->GetFaceIndexForSend(ineighbor);
     int nIFaceOfNeighbor = fiinfo->GetNIFaceOfNeighbor(ineighbor);
@@ -4204,6 +4470,23 @@ void StructGrid::GetCellCenter(ActionKey *actkey)
         cdata->Write(&ycc(is, js, ks), sizeof(RDouble));
         cdata->Write(&zcc(is, js, ks), sizeof(RDouble));
         cdata->Write(&vol(is, js, ks), sizeof(RDouble));
+
+#ifdef USE_LagrangianParticle
+        if (iParticleModel == 1)
+        {
+            //! Because of the particle interpolation algorithm, 
+            //! we need the face center vector of the Ghost region
+            int nDim = 3;
+            for (int nsurf = 1; nsurf <= nDim; ++nsurf)
+            {
+                cdata->Write(&xfv(is, js, ks, nsurf), sizeof(RDouble));
+                cdata->Write(&yfv(is, js, ks, nsurf), sizeof(RDouble));
+                cdata->Write(&zfv(is, js, ks, nsurf), sizeof(RDouble));
+            }
+            //! For particles, we need accurate ghost information.
+            ifCommunicateNodeLocation = true;
+        }
+#endif
 
         if (!ifCommunicateNodeLocation)
         {
@@ -4239,6 +4522,106 @@ void StructGrid::GetCellCenter(ActionKey *actkey)
     }
 }
 
+void StructGrid::GetCellCenterOnCorner(ActionKey *actkey)
+{
+    InterfaceInfo *interfaceInfo = this->GetInterfaceInfo();
+    if (!interfaceInfo) return;
+
+    int iZoneToSend = this->GetZoneID();
+    int iZoneToRecv = actkey->ipos;
+
+    StructGrid *fgrid = StructGridCast(this->GetFinestGrid());
+    InterfaceInfo *fiinfo = fgrid->GetInterfaceInfo();
+
+    ZoneCorner *zoneCorner = zoneConnectivity->GetZoneCorner(iZoneToSend);
+    map<int, ZoneCornerIndex> cornerInfo = zoneCorner->GetCornerInfo();
+
+    int level = this->GetLevel();
+
+    RDouble3D& vol = *this->GetCellVolume();
+    RDouble3D& xcc = *this->GetCellCenterX();
+    RDouble3D& ycc = *this->GetCellCenterY();
+    RDouble3D& zcc = *this->GetCellCenterZ();
+
+    RDouble3D& xx = *this->GetStructX();
+    RDouble3D& yy = *this->GetStructY();
+    RDouble3D& zz = *this->GetStructZ();
+
+    RDouble4D& xfv = *(this->GetFaceVectorX());
+    RDouble4D& yfv = *(this->GetFaceVectorY());
+    RDouble4D& zfv = *(this->GetFaceVectorZ());
+
+    int *indexCornerGrid = 0;
+    map<int, ZoneCornerIndex>::iterator iterZoneCorner = cornerInfo.find(iZoneToRecv);
+    if (iterZoneCorner != cornerInfo.end())
+    {
+        ZoneCornerIndex zoneCornerIndex = iterZoneCorner->second;
+
+        if (iterZoneCorner->second.GetCornerZoneIndex() != iZoneToRecv)
+        {
+            ostringstream ossError;
+            ossError << " Error on iZoneToRecv " << "\n";
+            ossError << "iZoneToRecv in Action : " << iZoneToRecv << "\n";
+            ossError << "iZoneToRecv in cornerInfo : " << iterZoneCorner->second.GetCornerZoneIndex() << "\n";
+            ossError << endl;
+            TK_Exit::ExceptionExit(ossError);
+        }
+        indexCornerGrid = zoneCornerIndex.GetCornerGridIndex(PHSPACE::STRUCTGRID);
+    }
+    else
+    {
+        ostringstream ossError;
+        ossError << " Error on cornerInfo " << "\n";
+        ossError << " There is no iZoneToRecv  " << iZoneToRecv << "\n";
+        ossError << " the size of Corner : " << cornerInfo.size() << "\n";
+        for (map<int, ZoneCornerIndex>::iterator iter = cornerInfo.begin(); iter != cornerInfo.end(); ++iter)
+        {
+            ossError << " corner Zone index : " << iter->first << "\n";
+        }
+        ossError << endl;
+        TK_Exit::ExceptionExit(ossError);
+    }
+
+    DataContainer *cdata = actkey->GetData();
+    cdata->MoveToBegin();
+
+    int iCorner, jCorner, kCorner;
+    int nLayers = GetNumberOfGhostCellLayers();
+    bool ifCommunicateNodeLocation = CommunicateNodeLocation();
+    ifCommunicateNodeLocation = true;
+    for (int iLayer = 1; iLayer <= nLayers; ++iLayer)
+    {
+        set<int*> indexCorner;
+        GetCornerSourceIndexIJK(indexCornerGrid, indexCorner, iLayer);
+        int nCornerCell = indexCorner.size();
+        for (set<int*>::iterator iterCorner = indexCorner.begin(); iterCorner != indexCorner.end(); ++iterCorner)
+        {
+            int iCorner = (*iterCorner)[0];
+            int jCorner = (*iterCorner)[1];
+            int kCorner = (*iterCorner)[2];
+
+            cdata->Write(&xcc(iCorner, jCorner, kCorner), sizeof(RDouble));
+            cdata->Write(&ycc(iCorner, jCorner, kCorner), sizeof(RDouble));
+            cdata->Write(&zcc(iCorner, jCorner, kCorner), sizeof(RDouble));
+            cdata->Write(&vol(iCorner, jCorner, kCorner), sizeof(RDouble));
+
+            int nDim = 3;
+            for (int isurf = 1; isurf <= nDim; ++isurf)
+            {
+                cdata->Write(&xfv(iCorner, jCorner, kCorner, isurf), sizeof(RDouble));
+                cdata->Write(&yfv(iCorner, jCorner, kCorner, isurf), sizeof(RDouble));
+                cdata->Write(&zfv(iCorner, jCorner, kCorner, isurf), sizeof(RDouble));
+            }
+
+            cdata->Write(&xx(iCorner, jCorner, kCorner), sizeof(RDouble));
+            cdata->Write(&yy(iCorner, jCorner, kCorner), sizeof(RDouble));
+            cdata->Write(&zz(iCorner, jCorner, kCorner), sizeof(RDouble));
+        }
+
+        indexCorner.clear();
+    }
+}
+
 void StructGrid::TranslateCellCenter(ActionKey *actkey)
 {
     InterfaceInfo *interfaceInfo = this->GetInterfaceInfo();
@@ -4263,6 +4646,18 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
 
     Int3D &cellType = *this->GetCellBoundaryType();
 
+#ifdef USE_LagrangianParticle
+    int iParticleModel = 0;
+    bool useParSolver = GlobalDataBase::IsExist("iParticleModel", PHINT, 1);
+    RDouble4D& xfv = *(this->GetFaceVectorX());
+    RDouble4D& yfv = *(this->GetFaceVectorY());
+    RDouble4D& zfv = *(this->GetFaceVectorZ());
+    if (useParSolver)
+    {
+        iParticleModel = GlobalDataBase::GetIntParaFromDB("iParticleModel");
+    }
+#endif
+
     InterfaceInfo *fiinfo = fgrid->GetInterfaceInfo();
     int ineighbor = fiinfo->FindIthNeighbor(actkey->ipos);
     int nIFaceOfNeighbor = fiinfo->GetNIFaceOfNeighbor(ineighbor);
@@ -4285,6 +4680,23 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
         cdata->Read(&ycc(it, jt, kt), sizeof(RDouble));
         cdata->Read(&zcc(it, jt, kt), sizeof(RDouble));
         cdata->Read(&vol(it, jt, kt), sizeof(RDouble));
+
+#ifdef USE_LagrangianParticle
+        if (iParticleModel == 1)
+        {
+            //! Because of the particle interpolation algorithm, 
+            //! we need the face center vector of the Ghost region
+            int nDim = 3;
+            for (int nsurf = 1; nsurf <= nDim; ++nsurf)
+            {
+                cdata->Read(&xfv(it, jt, kt, nsurf), sizeof(RDouble));
+                cdata->Read(&yfv(it, jt, kt, nsurf), sizeof(RDouble));
+                cdata->Read(&zfv(it, jt, kt, nsurf), sizeof(RDouble));
+            }
+            //! For particles, we need accurate ghost information.
+            ifCommunicateNodeLocation = true;
+        }
+#endif
 
         int *ibcregions = structBCSet->GetIFaceInfo();
         int ibcregion = ibcregions[iFace];
@@ -4389,6 +4801,106 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
             yy(IJKofNodes_2nd_Layer[nodeID][0], IJKofNodes_2nd_Layer[nodeID][1], IJKofNodes_2nd_Layer[nodeID][2]) = Data_2nd_Layer[abcdID][1];
             zz(IJKofNodes_2nd_Layer[nodeID][0], IJKofNodes_2nd_Layer[nodeID][1], IJKofNodes_2nd_Layer[nodeID][2]) = Data_2nd_Layer[abcdID][2];
         }
+    }
+}
+
+void StructGrid::TranslateCellCenterOnCorner(ActionKey *actkey)
+{
+    InterfaceInfo *interfaceInfo = this->GetInterfaceInfo();
+    if (!interfaceInfo) return;
+
+    int iZoneToSend = actkey->ipos;
+    int iZoneToRecv = this->GetZoneID();
+
+    StructGrid *fgrid = StructGridCast(this->GetFinestGrid());
+    InterfaceInfo *fiinfo = fgrid->GetInterfaceInfo();
+
+    ZoneCorner *zoneCorner = zoneConnectivity->GetZoneCorner(iZoneToRecv);
+    map<int, ZoneCornerIndex> cornerInfo = zoneCorner->GetCornerInfo();
+
+    int level = this->GetLevel();
+
+    RDouble3D &vol = *this->GetCellVolume();
+    RDouble3D &xcc = *this->GetCellCenterX();
+    RDouble3D &ycc = *this->GetCellCenterY();
+    RDouble3D &zcc = *this->GetCellCenterZ();
+
+    RDouble3D &xx = *this->GetStructX();
+    RDouble3D &yy = *this->GetStructY();
+    RDouble3D &zz = *this->GetStructZ();
+
+    RDouble4D &xfv = *(this->GetFaceVectorX());
+    RDouble4D &yfv = *(this->GetFaceVectorY());
+    RDouble4D &zfv = *(this->GetFaceVectorZ());
+
+    int *indexCornerGrid = 0;
+    map<int, ZoneCornerIndex>::iterator iterZoneCorner = cornerInfo.find(iZoneToSend);
+    if (iterZoneCorner != cornerInfo.end())
+    {
+        ZoneCornerIndex zoneCornerIndex = iterZoneCorner->second;
+
+        if (iterZoneCorner->second.GetCornerZoneIndex() != iZoneToSend)
+        {
+            ostringstream ossError;
+            ossError << " Error on iZoneToRecv " << "\n";
+            ossError << "iZoneToRecv in Action : " << iZoneToRecv << "\n";
+            ossError << "iZoneToRecv in cornerInfo : " << iterZoneCorner->second.GetCornerZoneIndex() << "\n";
+            ossError << endl;
+            TK_Exit::ExceptionExit(ossError);
+        }
+        indexCornerGrid = zoneCornerIndex.GetCornerGridIndex(PHSPACE::STRUCTGRID);
+    }
+    else
+    {
+        ostringstream ossError;
+        ossError << " Error on cornerInfo " << "\n";
+        ossError << " There is no iZoneToRecv  " << iZoneToRecv << "\n";
+        ossError << " the size of Corner : " << cornerInfo.size() << "\n";
+        for (map<int, ZoneCornerIndex>::iterator iter = cornerInfo.begin(); iter != cornerInfo.end(); ++iter)
+        {
+            ossError << " corner Zone index : " << iter->first << "\n";
+        }
+        ossError << endl;
+        TK_Exit::ExceptionExit(ossError);
+    }
+
+    DataContainer *cdata = actkey->GetData();
+    cdata->MoveToBegin();
+
+    int iCorner, jCorner, kCorner;
+    int nLayers = GetNumberOfGhostCellLayers();
+    bool ifCommunicateNodeLocation = CommunicateNodeLocation();
+    ifCommunicateNodeLocation = true;
+    for (int iLayer = 1; iLayer <= nLayers; ++iLayer)
+    {
+        set<int*> indexCorner;
+        GetCornerTargetIndexIJK(indexCornerGrid, indexCorner, iLayer);
+        int nCornerCell = indexCorner.size();
+        for (set<int*>::iterator iterCorner = indexCorner.begin(); iterCorner != indexCorner.end(); ++iterCorner)
+        {
+            int iCorner = (*iterCorner)[0];
+            int jCorner = (*iterCorner)[1];
+            int kCorner = (*iterCorner)[2];
+
+            cdata->Read(&xcc(iCorner, jCorner, kCorner), sizeof(RDouble));
+            cdata->Read(&ycc(iCorner, jCorner, kCorner), sizeof(RDouble));
+            cdata->Read(&zcc(iCorner, jCorner, kCorner), sizeof(RDouble));
+            cdata->Read(&vol(iCorner, jCorner, kCorner), sizeof(RDouble));
+
+            int nDim = 3;
+            for (int isurf = 1; isurf <= nDim; ++isurf)
+            {
+                cdata->Read(&xfv(iCorner, jCorner, kCorner, isurf), sizeof(RDouble));
+                cdata->Read(&yfv(iCorner, jCorner, kCorner, isurf), sizeof(RDouble));
+                cdata->Read(&zfv(iCorner, jCorner, kCorner, isurf), sizeof(RDouble));
+            }
+
+            cdata->Read(&xx(iCorner, jCorner, kCorner), sizeof(RDouble));
+            cdata->Read(&yy(iCorner, jCorner, kCorner), sizeof(RDouble));
+            cdata->Read(&zz(iCorner, jCorner, kCorner), sizeof(RDouble));
+        }
+
+        indexCorner.clear();
     }
 }
 

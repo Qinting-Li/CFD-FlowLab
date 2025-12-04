@@ -50,11 +50,11 @@ CFDSolver::CFDSolver()
 
 CFDSolver::~CFDSolver()
 {
-    if (postVisualization != NULL)
+    if (postVisualization != nullptr)
     {
         FreePointer(postVisualization);
     }
-    if (postVisualWall != NULL)
+    if (postVisualWall != nullptr)
     {
         FreePointer(postVisualWall);
     }
@@ -258,6 +258,15 @@ LIB_EXPORT Param_CFDSolver * CFDSolver::GetControlParameters() const
     return controlParameters;
 }
 
+void CFDSolver::SolverMultiphaseFlow(FieldProxy *rhsProxy)
+{
+
+}
+
+void CFDSolver::CommunicateMultiphaseFlow(FieldProxy *rhsProxy)
+{
+
+}
 void CFDSolver::ComputePreconditionCoefficient(Grid *grid)
 {
 
@@ -460,7 +469,7 @@ void CFDSolver::ReadRestartH5(ActionKey *actkey)
 
 }
 
-void CFDSolver::InterpolateFromRestartH5(ActionKey* actkey)
+void CFDSolver::InterpolateFromRestartH5(ActionKey *actkey)
 {
 
 }
@@ -496,7 +505,7 @@ void CFDSolver::DeAllocateGlobalVariables()
         if (isOverset)
         {
             DeAllocateOversetInterfaceVar(grid);
-        }        
+        }
         grid = grid->GetCoarseGrid();
     }
 
@@ -528,12 +537,12 @@ void CFDSolver::AllocateGlobalVar(Grid *grid)
 
 void CFDSolver::DeAllocateGlobalVar(Grid *grid)
 {
-    if (postVisualization != 0)
+    if (postVisualization != nullptr)
     {
         FreePointer(postVisualization);
     }
 
-    if (postVisualWall != 0)
+    if (postVisualWall != nullptr)
     {
         FreePointer(postVisualWall);
     }
@@ -1011,7 +1020,6 @@ void UpdateInterfaceData()
             MainTaskBlocking(actkey);
         }
         //delete task;
-
         FreePointer(actkey);
     }
 }
@@ -1500,7 +1508,7 @@ void CFDSolver::GetInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *actkey,
                 qtmp[icount ++] = q[m][iFace];
             }
         }
-        cdata->Write(qtmp, nlen * sizeof(RDouble));
+        cdata->Write(qtmp, nlen * sizeof(RDouble));;
         DelPointer(qtmp);
     }
 }
@@ -3157,7 +3165,7 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
 
                 DelPointer(face2node);
             }
-
+;
             DelPointer(x);
             DelPointer(y);
             DelPointer(z);
@@ -3243,7 +3251,6 @@ void CFDSolver::DumpHeatFlux(ActionKey *actkey)
     {
         WriteHeatFluxASCII(actkey, HeatFlux);    //! Write data to file.
     }
-
     DelPointer(HeatFlux);
 }
 
@@ -3617,7 +3624,6 @@ void CFDSolver::DownloadInterfaceData()
                 solver->DownloadInterfaceData(actkey);
             }
         }
-
         FreePointer(actkey);
     }
 }
@@ -3648,7 +3654,6 @@ void CFDSolver::UploadInterfaceData(int iLevel)
             solver->UploadInterfaceData(actkey);
         }
     }
-
     FreePointer(actkey);
 }
 
@@ -3675,7 +3680,6 @@ void CFDSolver::UpdateInterfaceData(int iLevel)
     {
         MainTaskBlocking(actkey);
     }
-
     FreePointer(actkey);
 }
 
@@ -3705,7 +3709,6 @@ void CFDSolver::DownloadInterfaceData(int iLevel)
             solver->DownloadInterfaceData(actkey);
         }
     }
-
     FreePointer(actkey);
 }
 
@@ -3768,9 +3771,8 @@ void CFDSolver::UpdateInterpointData()
         {
             task->MainTaskBlocking(actkey);
         }
-
-        FreePointer(actkey);
         FreePointer(task);
+        FreePointer(actkey);
     }
 }
 
@@ -3803,7 +3805,6 @@ void CFDSolver::DownloadInterpointData()
                 solver->DownloadInterpointData(actkey);
             }
         }
-
         FreePointer(actkey);
     }
 }
@@ -3861,7 +3862,6 @@ void CFDSolver::UploadOversetData()
                 solver->UploadOversetData(actkey);
             }
         }
-
         FreePointer(actkey);
     }
 }

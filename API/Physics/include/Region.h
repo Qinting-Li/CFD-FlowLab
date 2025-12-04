@@ -188,6 +188,8 @@ private:
 
     void InitZoneNeighborsInformation();
 
+    void InitZoneCornerInformation();
+
     //! build the zone Neighbor information for point.
     void InitZoneNeighborsForPointInformation();
 
@@ -252,6 +254,7 @@ private:
     void ComputeGlobalGridCellSize(int level = 0);
 
     void CommunicateCellCenterData();
+    void CommunicateCellCenterDataOnCorner();
     void ComputeMetrics_BC();
     void ComputeMetricsandJacobinWithBCforStructHighOrder();
     void UpdateDiffOrderforStructHighOrder();

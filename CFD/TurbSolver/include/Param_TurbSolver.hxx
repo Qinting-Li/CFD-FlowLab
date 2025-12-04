@@ -13,6 +13,16 @@ inline int Param_TurbSolver::GetTransitionType() const
     return transitionType;
 }
 
+inline int Param_TurbSolver::GetSATESType() const
+{
+    return SATESType;
+}
+
+inline int Param_TurbSolver::GetSmagType() const
+{
+    return SmagType;
+}
+
 inline int Param_TurbSolver::GetSAProductType() const
 {
     return SAProductType;

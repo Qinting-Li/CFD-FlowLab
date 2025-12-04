@@ -69,7 +69,10 @@ if(NOT BUILD_LIBRARY_TYPE)
   set (BUILD_LIBRARY_TYPE "Static" CACHE STRING "The type of PHengLEI libraries" FORCE)
   SET_PROPERTY(CACHE BUILD_LIBRARY_TYPE PROPERTY STRINGS Shared Static)
 endif()
-
+if(USE_LagrangianParticle)
+  message(STATUS "USE_LagrangianParticle is turned on")
+  add_definitions(-DUSE_LagrangianParticle)
+endif()
 #3. set environment for MPICH and 3rdParty lib directory:
 if(WIN32)
   include_directories("${MSMPI_HOME_DIRECTORY}/Include")
@@ -351,6 +354,8 @@ ${Geometry_H_PATH}/FaceProxy.h
 ${Geometry_H_PATH}/Geo_SimpleVC.h
 ${Geometry_H_PATH}/Geo_StructMerge.h
 ${Geometry_H_PATH}/Geo_UnstructMerge.h
+${Geometry_H_PATH}/ParticleBoundaryCondition.h
+${Geometry_H_PATH}/ZoneCorner.h
 )
 source_group(Geometry\\include FILES ${Geometry_H_LIST})
 include_directories(${Geometry_H_PATH})
@@ -403,6 +408,8 @@ ${Geometry_CPP_PATH}/FaceProxy.cpp
 ${Geometry_CPP_PATH}/Geo_SimpleVC.cpp
 ${Geometry_CPP_PATH}/Geo_StructMerge.cpp
 ${Geometry_CPP_PATH}/Geo_UnstructMerge.cpp
+${Geometry_CPP_PATH}/ParticleBoundaryCondition.cpp
+${Geometry_CPP_PATH}/ZoneCorner.cpp
 )
 source_group(Geometry\\src FILES ${Geometry_CPP_LIST})
 
@@ -596,6 +603,40 @@ ${Common_CPP_PATH}/Glb_Dimension.cpp
 )
 source_group(Common\\src FILES ${Common_CPP_LIST})
 
+# set directory of LagrangianParticle:
+if(USE_LagrangianParticle)
+
+    set(LagrangianParticle_H_PATH LagrangianParticle/include)
+    set(LagrangianParticle_H_LIST
+    ${LagrangianParticle_H_PATH}/SimplePointer.h
+    ${LagrangianParticle_H_PATH}/OnePointVariable.h
+    ${LagrangianParticle_H_PATH}/ParticlePointGroup.h
+    ${LagrangianParticle_H_PATH}/IndexParticleOfCell.h
+    ${LagrangianParticle_H_PATH}/IndexCell.h
+    ${LagrangianParticle_H_PATH}/Interpolation.h
+    ${LagrangianParticle_H_PATH}/LagrangianVariable.h
+    ${LagrangianParticle_H_PATH}/RungeKuttaMethod.h
+    ${LagrangianParticle_H_PATH}/ParticleAnalysis.h
+    ${LagrangianParticle_H_PATH}/ParticleForceModel.h
+    )
+    source_group(LagrangianParticle\\include FILES ${LagrangianParticle_H_LIST})
+    include_directories(${LagrangianParticle_H_PATH})
+
+    set(LagrangianParticle_CPP_PATH LagrangianParticle/src)
+    set(LagrangianParticle_CPP_LIST
+    ${LagrangianParticle_CPP_PATH}/OnePointVariable.cpp
+    ${LagrangianParticle_CPP_PATH}/ParticlePointGroup.cpp
+    ${LagrangianParticle_CPP_PATH}/IndexParticleOfCell.cpp
+    ${LagrangianParticle_CPP_PATH}/IndexCell.cpp
+    ${LagrangianParticle_CPP_PATH}/Interpolation.cpp
+    ${LagrangianParticle_CPP_PATH}/RungeKuttaMethod.cpp
+    ${LagrangianParticle_CPP_PATH}/ParticleAnalysis.cpp
+    ${LagrangianParticle_CPP_PATH}/ParticleForceModel.cpp
+    )
+    source_group(LagrangianParticle\\src FILES ${LagrangianParticle_CPP_LIST})
+
+endif(USE_LagrangianParticle)
+
 #20.1 set header file list
 set(API_HEAD_LIST 
 ${DataStruct_H_LIST}
@@ -610,6 +651,9 @@ ${PreProcess_H_LIST}
 ${PostProcess_H_LIST}
 ${Common_H_LIST}
 )
+if(USE_LagrangianParticle)
+  list(APPEND API_HEAD_LIST  ${LagrangianParticle_H_LIST})
+endif()
 
 #20.2 set source file list:
 set(API_CPP_LIST 
@@ -625,6 +669,9 @@ ${PreProcess_CPP_LIST}
 ${PostProcess_CPP_LIST}
 ${Common_CPP_LIST}
 )
+if(USE_LagrangianParticle)
+  list(APPEND API_CPP_LIST  ${LagrangianParticle_CPP_LIST})
+endif()
 
 # set directory of MultiSpeciesGas.
 set(MultiSpecies_H_PATH MultiSpecies/include)

@@ -75,6 +75,10 @@ public:
     //! Get control parameters
     LIB_EXPORT Param_CFDSolver *GetControlParameters() const;
 
+    //! Solver Multiphase Flow.
+    virtual void SolverMultiphaseFlow(FieldProxy *rhsProxy);
+    virtual void CommunicateMultiphaseFlow(FieldProxy *rhsProxy);
+
     //! Compute pressure factor for entrop fix (Method 2 in Structure solver).
     virtual void CalPressureFactor(Grid *grid) {};
 

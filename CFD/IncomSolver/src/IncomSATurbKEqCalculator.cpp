@@ -3,6 +3,8 @@
 #include <cmath>
 #include "IncomSATurbKEqCalculator.h"
 
+#include "TK_Log.h"
+
 
 
 using namespace std;
@@ -11,7 +13,7 @@ namespace PHSPACE
 {
 IncomSATurbKEqCalculator::IncomSATurbKEqCalculator():IncomScalarEqCalculator()
 {
-    
+
 }
 
 IncomSATurbKEqCalculator::~IncomSATurbKEqCalculator()
@@ -108,7 +110,7 @@ void IncomSATurbKEqCalculator::IncompressibleInitial(Grid *gridIn)
     RDouble *fv1  = reinterpret_cast<RDouble *>(grid->GetDataPtr("fv1"));
     RDouble *rho  = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
 
-    RDouble delatv = 0.6666;
+    RDouble delatv = 2.0 / 3.0;
     RDouble Cb2    = 0.622;
     RDouble Cv1    = 7.1;
     RDouble Cb1    = 0.1355;
@@ -159,7 +161,7 @@ void IncomSATurbKEqCalculator::CalcOtherMatrixACoeff(Grid *gridIn)
     RDouble *wDist = reinterpret_cast<RDouble *>(grid->GetWallDist());
     RDouble *WD = reinterpret_cast<RDouble *>(grid->GetDataPtr("WD"));
 
-    RDouble delatv = 0.6666;
+    RDouble delatv = 2.0 / 3.0;
     RDouble Cb2    = 0.622;
     RDouble Cv1    = 7.1;
     RDouble Cb1    = 0.1355;
@@ -193,7 +195,7 @@ void IncomSATurbKEqCalculator::CalcOtherMatrixACoeff(Grid *gridIn)
         RDouble r = MIN((k[iCell]) / (S_ * kappa * kappa * wd * wd), 10.0);
 
         RDouble g = r + Cw2 * (pow(r, 6) - r);
-        RDouble fw = g * pow(((1+Cw3)/(pow(g,6)+pow(Cw3,6))),1.0/6.0);
+        RDouble fw = g * pow(((1 + pow(Cw3,6))/(pow(g,6) + pow(Cw3,6))), 1.0/6.0);
 
         des[iCell] = Cw1 * rho[iCell] * fw * (k[iCell] / wd) * (k[iCell] / wd);
 
@@ -235,7 +237,7 @@ void IncomSATurbKEqCalculator::CalcOtherbCoeff(Grid *gridIn, int iEquation)
     RDouble *fv1 = reinterpret_cast<RDouble *>(grid->GetDataPtr("fv1"));
     RDouble *wDist = reinterpret_cast<RDouble *>(grid->GetWallDist());
 
-    RDouble delatv = 0.6666;
+    RDouble delatv = 2.0 / 3.0;
     RDouble Cb2    = 0.622;
     RDouble Cv1    = 7.1;
     RDouble Cb1    = 0.1355;
@@ -328,13 +330,16 @@ void IncomSATurbKEqCalculator::calVelocityInletBC(Grid *gridIn, vector<int> *fac
             RDouble ay = DiffusionCoeff[solverIndex][re] * yfn[iFacelocal] * area[iFacelocal] - dy * area2;
             RDouble az = DiffusionCoeff[solverIndex][re] * zfn[iFacelocal] * area[iFacelocal] - dz * area2;
 
-            diagMatrixCoeff[le] += area2 * matrixCoeff;
-            bCoeff[le] += area2 * phi[re] + dphidx[le] * ax + dphidy[le] * ay + dphidz[le] * az;
+            diagMatrixCoeff[le] = diagMatrixCoeff[le] + area2 * matrixCoeff;
+            bCoeff[le] = bCoeff[le] + area2 * q[re] + dqdx[re] * ax + dqdy[re] * ay + dqdz[re] * az;
 
             if (FaceFlux[iFacelocal] < 0)
             {
-                diagMatrixCoeff[le] -= FaceFlux[iFacelocal] * matrixCoeff;
-                bCoeff[le] -= FaceFlux[iFacelocal] * phi[re];
+                bCoeff[le] = bCoeff[le] - FaceFlux[iFacelocal] * q[re];
+            }
+            else
+            {
+                diagMatrixCoeff[le] = diagMatrixCoeff[le] + FaceFlux[iFacelocal] * matrixCoeff;
             }
         }
         else
@@ -380,7 +385,7 @@ void IncomSATurbKEqCalculator::calPressureOutletBC(Grid *gridIn, vector<int> *fa
     RDouble *dphidz = reinterpret_cast<RDouble *>(grid->GetDataPtr("d" + varName + "dz"));
     RDouble *FaceFlux = reinterpret_cast<RDouble *>(grid->GetDataPtr("FaceFlux"));
     RDouble **DiffusionCoeff = reinterpret_cast<RDouble **>(GlobalDataBase::GetDataPtr("DiffusionCoeff"));
-    
+ 
     for (std::size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
     {
         if (bcData->IsExist("init" + varName, PHDOUBLE, 1))
@@ -389,23 +394,8 @@ void IncomSATurbKEqCalculator::calPressureOutletBC(Grid *gridIn, vector<int> *fa
             int le = leftCellOfFace[iFacelocal];
             int re = grid->GetRightCellOfFace()[iFacelocal];
 
-            RDouble dx = xfc[iFacelocal] - xcc[le];
-            RDouble dy = yfc[iFacelocal] - ycc[le];
-            RDouble dz = zfc[iFacelocal] - zcc[le];
-            RDouble area2 = DiffusionCoeff[solverIndex][re] * 
-                area[iFacelocal] / (xfn[iFacelocal] * dx + yfn[iFacelocal] * dy + zfn[iFacelocal] * dz);
-            RDouble ax = DiffusionCoeff[solverIndex][re] * xfn[iFacelocal] * area[iFacelocal] - dx * area2;
-            RDouble ay = DiffusionCoeff[solverIndex][re] * yfn[iFacelocal] * area[iFacelocal] - dy * area2;
-            RDouble az = DiffusionCoeff[solverIndex][re] * zfn[iFacelocal] * area[iFacelocal] - dz * area2;
-
-            diagMatrixCoeff[le] += area2 * matrixCoeff;
-            bCoeff[le] += area2 * phi[re] + dphidx[le] * ax + dphidy[le] * ay + dphidz[le] * az;
-
-            if (FaceFlux[iFacelocal] < 0)
-            {
-                diagMatrixCoeff[le] -= FaceFlux[iFacelocal] * matrixCoeff;
-                bCoeff[le] -= FaceFlux[iFacelocal] * phi[re];
-            }
+            //! Diffusion term has no contribution on Outflow condition.
+            diagMatrixCoeff[le] = diagMatrixCoeff[le] + FaceFlux[iFacelocal] * matrixCoeff;
         }
         else
         {
@@ -423,7 +413,7 @@ void IncomSATurbKEqCalculator::calPressureOutletBC(Grid *gridIn, vector<int> *fa
 
 
 void IncomSATurbKEqCalculator::calWallBC(Grid *gridIn, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
-    RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff)
+    RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff, int iVariable)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
@@ -440,7 +430,7 @@ void IncomSATurbKEqCalculator::calWallBC(Grid *gridIn, vector<int> *faceIndex, D
     RDouble *ycc = grid->GetCellCenterY();
     RDouble *zcc = grid->GetCellCenterZ();
     string *varNameIncom = reinterpret_cast<string *>(GlobalDataBase::GetDataPtr("varNameIncom"));
-    int solverIndex = GetSolverIndex();
+    int solverIndex = iVariable;
     string varName = varNameIncom[solverIndex];
 
     RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(varName));
@@ -466,7 +456,7 @@ void IncomSATurbKEqCalculator::calWallBC(Grid *gridIn, vector<int> *faceIndex, D
         RDouble az = DiffusionCoeff[solverIndex][re] * zfn[iFacelocal] * area[iFacelocal] - dz * area2;
 
         diagMatrixCoeff[le] += area2  * matrixCoeff;
-        bCoeff[le] += dphidx[le] * ax + dphidy[le] * ay + dphidz[le] * az;
+        bCoeff[le] += area2 * phi[re] + dphidx[re] * ax + dphidy[re] * ay + dphidz[re] * az;
     }
 }
 
@@ -645,6 +635,15 @@ void IncomSATurbKEqCalculator::UpdateBCValue(Grid *gridIn)
                 }
             }
         }
+        else if (bcType == PHENGLEI::SOLID_SURFACE)
+        {
+            for (std::size_t iFace = 0; iFace < faceIndex->size(); ++iFace)
+            {
+                int iFacelocal = (*faceIndex)[iFace];
+                int re = rightCellOfFace[iFacelocal];
+                phi[re] = 0.0;
+            }
+        }
         else 
         {
             for (size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
@@ -674,7 +673,7 @@ void IncomSATurbKEqCalculator::SetDiffusionCoeff(Grid *gridIn)
     RDouble *rho = reinterpret_cast<RDouble *>(grid->GetDataPtr("rho"));
     RDouble *rhoFace = reinterpret_cast<RDouble *>(grid->GetDataPtr("rhoFace"));
 
-    RDouble delatv = 0.6666;
+    RDouble delatv = 2.0 / 3.0;
     RDouble Cb2    = 0.622;
     RDouble Cv1    = 7.1;
     RDouble Cb1    = 0.1355;
@@ -693,7 +692,7 @@ void IncomSATurbKEqCalculator::SetDiffusionCoeff(Grid *gridIn)
     {
         int le = leftCellOfFace[iFace];
         int re = rightCellOfFace[iFace];
-        DiffusionCoeff[solverIndex][re] = (visl[le] + rhoFace[iFace] * k[le]) / delatv;
+        DiffusionCoeff[solverIndex][re] = (visl[re] + rhoFace[iFace] * k[re]) / delatv;
     }
     CommunicateAnInterfaceVar(DiffusionCoeff[solverIndex]);
 }
@@ -701,9 +700,12 @@ void IncomSATurbKEqCalculator::SetDiffusionCoeff(Grid *gridIn)
 void IncomSATurbKEqCalculator::CalcGrad(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn); 
-    GradientCalculation(grid, "U", "dUdx", "dUdy", "dUdz");
-    GradientCalculation(grid, "V", "dVdx", "dVdy", "dVdz");
-    GradientCalculation(grid, "W", "dWdx", "dWdy", "dWdz");
+
+    string GradCalcMethod = GlobalDataBase::GetStrParaFromDB("GradCalcMethod");
+
+    GradientCalculation(grid, "U", "dUdx", "dUdy", "dUdz", GradCalcMethod);
+    GradientCalculation(grid, "V", "dVdx", "dVdy", "dVdz", GradCalcMethod);
+    GradientCalculation(grid, "W", "dWdx", "dWdy", "dWdz", GradCalcMethod);
 
     RDouble *dudx  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdx"));
     RDouble *dudy  = reinterpret_cast<RDouble *>(grid->GetDataPtr("dUdy"));
@@ -765,16 +767,16 @@ void IncomSATurbKEqCalculator::UpdateAfterIterloop(Grid *gridIn)
         mu[re] = mu[le];
     }
 
-    UnstructBCSet* unstructBCSet = grid->GetUnstructBCSet();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
         if (bcType == 2)
         {
-            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            vector<int> *faceIndex = bcRegion->GetFaceIndex();
             for (std::size_t iFace = 0; iFace < faceIndex->size(); ++iFace)
             {
                 int iFacelocal = (*faceIndex)[iFace];

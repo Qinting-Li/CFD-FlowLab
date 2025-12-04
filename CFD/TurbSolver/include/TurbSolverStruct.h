@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      TurbSolverStruct.h
 //! @brief     turbulence solver for struct grid.
-//! @author    He Xin, He Kun, He Xianyao, Liu Jian, Zhang Zipei, Li peng, Ma Yankai.
+//! @author    He Xin, He Kun, He Xianyao, Liu Jian, Zhang Zipei, Li peng, Ma Yankai, Wu Wenchang.
 
 #pragma once
 #include "TurbSolver.h"
@@ -27,6 +27,11 @@ private:
     //! Length scale of XXDES, such as DES/DDES/IDDES.
     RDouble3D *DESLength;
     RDouble3D *SSTLength;
+
+    //! Resolved control fuction of SATESXXX, such as SATESSMAG.
+    RDouble3D *SATESFr;
+    RDouble3D *SATESCx;
+    RDouble3D *LESRate;
 
 public:
     TurbSolverStr();
@@ -447,6 +452,22 @@ private:
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
     void ComputeSSTLength(Grid *gridIn);
 
+    //! Interface: To define the fr for SATES simulation.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    void ComputeSATESFr(Grid *gridIn);
+
+    //! Interface: To define the model coefficient for SATES simulation.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    void ComputeSATESCx(Grid *gridIn);
+
+    //! Interface: To define the model coefficient of Smagorinsky model for SATES simulation.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    void ComputeSATESSMAG(Grid *gridIn);
+
+    //! Interface: To compute the modulus of symmetric tensors for SATES simulation.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    void ComputeSMAGRate(Grid *gridIn);
+
     //! To get the length scale for one equation model turbulent simulation.
     //! With DES: DES length scale.
     //! Without DES: wall diatance.
@@ -464,11 +485,24 @@ private:
     RDouble3D * GetSSTLength() { return this->SSTLength; }
     void SetDESLength(RDouble3D *length) { this->DESLength = length; }
     void SetSSTLength(RDouble3D *length) { this->SSTLength = length; }
+
+    //! To get the resolved control function for two equation model turbulent simulation.
+    RDouble3D *GetSATESFr() { return this->SATESFr; }
+    void SetSATESFr(RDouble3D *Fr) { this->SATESFr = Fr; }
+
+    //! To get the coefficient of cutoff length scale.
+    RDouble3D *GetSATESCx() { return this->SATESCx; }
+    void SetSATESCx(RDouble3D *Cx) { this->SATESCx = Cx; }
+
+    //! To get the coefficient of cutoff length scale.
+    RDouble3D *GetLESRate() { return this->LESRate; }
+    void SetLESRate(RDouble3D *Rate) { this->LESRate = Rate; }
 };
 
 void ComputeLESLengthofSA(Grid *gridIn, RDouble3D *LESLength, RDouble3D *lowReynoldsNumberCorrection, int DESType);
 void ComputeLESLengthofSST(Grid *gridIn, RDouble3D *LESLength, int DESType);
 void ComputeLowReynoldsNumberCorrection(Grid *gridIn, RDouble3D *lowReynoldsNumberCorrection);
+void ComputeSATESLength(Grid *gridIn, RDouble3D *SATESLength, int SATESType);
 
 }
 

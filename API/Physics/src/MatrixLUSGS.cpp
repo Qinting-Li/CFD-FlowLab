@@ -190,14 +190,14 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
                         }
                     }
                 }
-                
+
                 for (int m = 0; m < nEquation; ++ m)
                 {
                     rhsMatrix[m] = 0.0;
                     deltaQ[m]    = 0.0;
                     rhsMatrix[m] = dq(i, j, k, m) - Ux[m] - rhs0[m];
                 }
-                
+
                 for (int m = 0; m < nEquation; ++ m)
                 {
                     for (int n = 0; n < nEquation; ++ n)
@@ -286,7 +286,7 @@ void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProx
     RDouble *rhsMatrix = new RDouble[nEquation];
     RDouble *priml = new RDouble[nEquation];
     RDouble *primr = new RDouble[nEquation];
-    
+
     //! Allocate the memories.
     Range M(0, nEquation - 1);
     RDouble2D *diagonalMatrixD = new RDouble2D(M, M, fortranArray);
@@ -441,7 +441,7 @@ void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProx
                     deltaQ[m]    = 0.0;
                     rhsMatrix[m] = dq(i, j, k, m) - Lx[m] - rhs0[m];
                 }
-                
+
                 for (int m = 0; m < nEquation; ++ m)
                 {
                     for (int n = 0; n < nEquation; ++ n)

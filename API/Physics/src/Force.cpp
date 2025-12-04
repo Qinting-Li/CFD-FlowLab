@@ -130,7 +130,7 @@ Force::~Force()
     delete [] Cm_p;    Cm_p = NULL;
 
     delete [] hingeMoment;    hingeMoment = NULL;
-   
+
     delete [] CA_f_body;    CA_f_body = NULL;
     delete [] CN_f_body;    CN_f_body = NULL;
     delete [] CZ_f_body;    CZ_f_body = NULL;

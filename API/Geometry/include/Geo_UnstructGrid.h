@@ -706,11 +706,13 @@ public:
     void CompGradientGGNode_NEW(RDouble *q, RDouble *qnode, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGNodeWeight(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGCell(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, int setting = 0);
-    void CompGradientGGCell2(RDouble *q, RDouble *wfL, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
+    void CompGradientGGCellSIMPLE2(RDouble *q, RDouble *wfL, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
+    void CompGradientGGCellSIMPLE3(RDouble *q, RDouble *wfL, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGModified2(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGCellNew(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGCellW(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientLSQ   (RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
+    void CompGradientLSQSIMPLE1(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGNode(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
 
     void CompGradient(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
@@ -720,6 +722,7 @@ public:
     void CVGNorm(FieldProxy *q_1_proxy, FieldProxy *q_0_proxy, int neqn, RDouble &norm);
 
     void ComputeWeight();
+    void ComputeWeightSIMPLE1();
 
     //! Compute node bctype in each zone.
     LIB_EXPORT void ComputeNodeBCType();

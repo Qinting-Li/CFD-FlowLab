@@ -140,10 +140,10 @@ void IncomSpeciesEqCalculator::UpdateBCValue(Grid *gridIn)
     
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
-        vector<int>* faceIndex = bcRegion->GetFaceIndex();
-        Data_Param* bcData = bcRegion->GetBCParamDataBase();
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        Data_Param *bcData = bcRegion->GetBCParamDataBase();
 
         if (bcType == PHENGLEI::SOLID_SURFACE)
         {
@@ -527,6 +527,7 @@ void IncomSpeciesEqCalculator::UpdateProperties(Grid *gridIn)
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int numberOfSpeciesIncom = GlobalDataBase::GetIntParaFromDB("numberOfSpeciesIncom");
     int *localSolverIndex = reinterpret_cast <int *> (GlobalDataBase::GetDataPtr("localSolverIndex"));
+    RDouble *cRho = reinterpret_cast<RDouble *>(grid->GetDataPtr("cRho"));
     int solverIndex = GetSolverIndex();
     if (localSolverIndex[solverIndex] != numberOfSpeciesIncom - 1)
     {
@@ -546,6 +547,11 @@ void IncomSpeciesEqCalculator::UpdateProperties(Grid *gridIn)
 
     CommunicateAnInterfaceVar(Rg);
     CommunicateAnInterfaceVar(rho);
+
+    if (cRho != nullptr)
+    {
+        CommunicateAnInterfaceVar(cRho);
+    }
 }
 
 void IncomSpeciesEqCalculator::SetDiffusionCoeff(Grid *gridIn)

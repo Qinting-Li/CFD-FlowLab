@@ -28,6 +28,10 @@ LIB_EXPORT void Param_TurbSolver::Init()
 
     DESType = GlobalDataBase::GetIntParaFromDB("DESType");
 
+    SATESType = GlobalDataBase::GetIntParaFromDB("SATESType");
+
+    SmagType = GlobalDataBase::GetIntParaFromDB("SmagType");
+
     transitionType = GlobalDataBase::GetIntParaFromDB("transitionType");
 
     SAProductType = GlobalDataBase::GetIntParaFromDB("SAProductType");
@@ -42,6 +46,7 @@ LIB_EXPORT void Param_TurbSolver::Init()
 
     int originaltscheme = GlobalDataBase::GetIntParaFromDB("OriginalTscheme");
 
+
     inviscidSpectrumRadiusCoef = 1.0;
   
     SST_a1 = 0.31;
@@ -49,12 +54,12 @@ LIB_EXPORT void Param_TurbSolver::Init()
     freeStreamViscosity = GlobalDataBase::GetDoubleParaFromDB("freeStreamViscosity");
 
     using namespace IDX;
-    RDouble * prim_inf = reinterpret_cast< RDouble * > (GlobalDataBase::GetDataPtr("prim_inf" ));
+    RDouble *prim_inf = reinterpret_cast< RDouble * > (GlobalDataBase::GetDataPtr("prim_inf" ));
     RDouble reference_density_farfield = prim_inf[IR];
 
     RDouble refReNumber = 1.0e5;
     GlobalDataBase::GetData("refReNumber", &refReNumber, PHDOUBLE, 1);
-   
+
     RDouble muoo = 1.0e-1;
     GlobalDataBase::GetData("muoo", &muoo, PHDOUBLE, 1);
     RDouble kwoo = 1.0e-8;
@@ -258,11 +263,12 @@ LIB_EXPORT void Param_TurbSolver::Init()
     {
         RDouble kwoo1 = GlobalDataBase::GetDoubleParaFromDB("kwoo") / refReNumber;
         RDouble mutoo = 0.01;
+        //mutoo = freeStreamViscosity;
         RDouble keoo = mutoo * kwoo1 / (turb_cmu * reference_density_farfield);
 
         if (transitionType == IREGAMA)
         {
-            mutoo = GlobalDataBase::GetDoubleParaFromDB("freeStreamViscosity");
+            mutoo = freeStreamViscosity;
             turbulenceIntensity = GlobalDataBase::GetDoubleParaFromDB("turbIntensity");
             if (turbulenceIntensity >= SMALL)
             {

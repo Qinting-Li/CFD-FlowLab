@@ -70,7 +70,7 @@ void ShowWelcomeTitle()
         oss << "$#       Computational Aerodynamics Institute          #$" << endl;
         oss << "$#  China Aerodynamics Research and Development Center #$" << endl;
         oss << "$#            (C) Copyright, Since 2010                #$" << endl;
-        oss << "$#                  PHengLEI 2506                      #$" << endl;
+        oss << "$#                  PHengLEI 2512                      #$" << endl;
         oss << "$#                                                     #$" << endl;
         oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
 

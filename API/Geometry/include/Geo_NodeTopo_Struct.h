@@ -74,6 +74,12 @@ public:
     //! @param[in] z    z coordinates of all nodes.
     void SetArrayLayoutStructHighOrder(RDouble *x, RDouble *y, RDouble *z);
 
+    //! Set the three dimensional array of coodinates from one dimensional coordinates for particle interpolation of particle solver.
+    //! @param[in] x    x coordinates of all nodes.
+    //! @param[in] y    y coordinates of all nodes.
+    //! @param[in] z    z coordinates of all nodes.
+    void SetArrayLayoutStructOfParticleInterpolation(RDouble *x, RDouble *y, RDouble *z);
+
 private:
     void DeallocateAll();
 };

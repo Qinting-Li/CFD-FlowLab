@@ -31,6 +31,7 @@ namespace PHSPACE
 vector<SimpleBC *> * GlobalBoundaryCondition::globalBCList = 0;
 map < int, int > *GlobalBoundaryCondition::bodyMap = 0;
 set < string > * GlobalBoundaryCondition::bodyList = 0;
+vector<ParticleBoundaryCondition* >* GlobalBoundaryCondition::globalParticleBCList = 0;
 
 Data_Param * SimpleBC::GetBCParamDataBase()
 {
@@ -79,6 +80,278 @@ void GlobalBoundaryCondition::ReadGlobalBoundaryCondition()
     CloseFile(file);
 
     ChangeBCTypeByGlobalBC();
+}
+
+void GlobalBoundaryCondition::ReadGlobalParticleBoundaryCondition()
+{
+#ifdef USE_LagrangianParticle
+
+    bool useParSolver = GlobalDataBase::IsExist("iParticleModel", PHINT, 1);
+
+    if (useParSolver)
+    {
+        int iParticleModel = GlobalDataBase::GetIntParaFromDB("iParticleModel");
+        if (iParticleModel == 1)
+        {
+            string particleBCFileName = "./bin/particle_boundary_condition.hypara";
+
+            fstream file;
+            file.open(particleBCFileName.c_str(), ios_base::in);
+
+            if (!file)
+            {
+                TK_Exit::FileOpenErrorExit(particleBCFileName);
+            }
+
+            GlobalBoundaryCondition::ParseParticleBCFromFile(file);
+
+            file.close();
+            file.clear();
+        }
+    }
+
+#endif //! USE_LagrangianParticle
+}
+
+void GlobalBoundaryCondition::SetParticleBCTypeByGlobalBC()
+{
+
+#ifdef USE_LagrangianParticle
+
+    bool useParSolver = GlobalDataBase::IsExist("iParticleModel", PHINT, 1);
+    if (useParSolver)
+    {
+        int iParticleModel = GlobalDataBase::GetIntParaFromDB("iParticleModel");
+        if (iParticleModel == 1)
+        {
+            vector<SimpleBC*> *globalBCList = GlobalBoundaryCondition::GetGlobalBoundaryConditionList();
+            vector<ParticleBoundaryCondition*> *globalParticleBCList = GlobalBoundaryCondition::GetGlobalParticleBoundaryConditionList();
+
+            set< pair<string, int> > bcnameMapFlow;
+            for (vector<SimpleBC*>::iterator iterflow = globalBCList->begin(); iterflow != globalBCList->end(); ++iterflow)
+            {
+                SimpleBC *bc = *iterflow;
+
+                bcnameMapFlow.insert(pair<string, int>(bc->GetBCName(), bc->GetBCType()));
+            }
+
+            set< pair<string, int> > bcnameMapPar;
+            for (vector<ParticleBoundaryCondition*>::iterator iterpar = globalParticleBCList->begin(); iterpar != globalParticleBCList->end(); ++iterpar)
+            {
+                ParticleBoundaryCondition *parbc = *iterpar;
+
+                bcnameMapPar.insert(pair<string, int>(parbc->GetParticleBCName(), parbc->GetParticleBCType()));
+            }
+
+            using namespace PHMPI;
+
+            int nZones = PHMPI::GetNumberofGlobalZones();
+            int myid = PHMPI::GetCurrentProcessorID();
+
+            for (int iZone = 0; iZone < nZones; ++iZone)
+            {
+                int send_proc = GetZoneProcessorID(iZone);
+                int recv_proc = GetZoneFileID(iZone);
+
+                int procID = PHMPI::GetZoneProcessorID(iZone);
+
+                if (myid == procID)
+                {
+                    Grid *gridofThisProcessor = GetGrid(iZone, 0);
+
+                    int gridtype = gridofThisProcessor->Type();
+
+                    if (gridtype == PHSPACE::STRUCTGRID)
+                    {
+                        StructGrid *grid = StructGridCast(gridofThisProcessor);
+
+                        //! CompositeStructBC in 9198 is changed to StructBCSet
+                        StructBCSet *composite_bcregion = grid->GetStructBCSet();
+                        int nBCRegion = composite_bcregion->GetnBCRegion();
+                        for (int ibcregion = 0; ibcregion < nBCRegion; ++ibcregion)
+                        {
+                            StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                            string bcname = bcregion->GetBCName();
+
+                            for (set< pair<string, int> >::iterator iter = bcnameMapPar.begin(); iter != bcnameMapPar.end(); ++iter)
+                            {
+                                if ((*iter).first != bcname) continue;
+
+                                bcregion->SetParticleBCType((*iter).second);
+
+                                break;
+                            }
+
+                            int bcType = bcregion->GetBCType();
+                            if (bcType == PHENGLEI::INTERFACE)
+                            {
+                                bcregion->SetParticleBCType(bcType);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        UnstructGrid *grid = UnstructGridCast(gridofThisProcessor);
+
+                        UnstructBCSet **bcr = grid->GetBCRecord();
+
+                        int numberOfBCFaces = grid->GetNBoundFace();
+                        for (int iFace = 0; iFace < numberOfBCFaces; ++iFace)
+                        {
+                            string bcname = bcr[iFace]->GetBCName();
+
+                            for (set< pair<string, int> >::iterator iter = bcnameMapPar.begin(); iter != bcnameMapPar.end(); ++iter)
+                            {
+                                if ((*iter).first != bcname) continue;
+
+                                //! The particle bc type for unstruct grid , TODO next
+
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+#endif
+}
+
+void GlobalBoundaryCondition::ParseParticleBCFromFile(fstream &file)
+{
+#ifdef USE_LagrangianParticle
+    string line, keyword, name, word;
+    string *value;
+    //string separator  = " =\t\r\n#$,;\"";
+    //! \t is tab key.
+    string separator = " =\r\n\t#$,;\"";
+    //string bcNameSeparator  = "=\r\n\t#$,;\"";
+    string sep1 = "\r\n";
+    //string section    = "{}";
+    string::size_type npos = string::npos;
+
+    string errMsg = "error in particle boundary condition file";
+
+    map < string, int > keywordmap;
+
+    keywordmap.insert(pair<string, int>("int", PHINT));
+    keywordmap.insert(pair<string, int>("float", PHFLOAT));
+    keywordmap.insert(pair<string, int>("double", PHDOUBLE));
+    keywordmap.insert(pair<string, int>("string", PHSTRING));
+
+    int iBC = 0;
+
+    int nBoundaryConditons = 0;
+    while (!file.eof())
+    {
+        getline(file, line);
+        if (line == "") continue;
+        FindNextWord(line, word, sep1);
+        if (word.substr(0, 1) == "#" || word.substr(0, 2) == "//") continue;
+
+        line = FindNextWord(line, keyword, separator);
+        if (keyword == "") continue;
+
+        line = FindNextWord(line, name, separator);
+
+        int count = 0;
+        int arraysize = 1;
+        //! Do not consider array here, so count = 0.
+        if (count == 0)
+        {
+            value = new string[1];
+            if (name == "bcName")
+            {
+                //! For value of bcName, blank space is not used as separator!
+                string::size_type firstindex, nextindex;
+                firstindex = line.find_first_of("\"");
+                nextindex = line.find_last_of("\"");
+                value[0] = line.substr(firstindex + 1, nextindex - firstindex - 1);
+            }
+            else
+            {
+                line = FindNextWord(line, value[0], separator);
+            }
+        }
+        else
+        {
+            ostringstream oss;
+            oss << errMsg << "\n";
+            TK_Exit::ExceptionExit(oss.str(), true);
+        }
+
+        int type, size = arraysize;
+        type = keywordmap[keyword];
+        if (type == PHINT && name != "nBoundaryConditons")
+        {
+            TK_Exit::ExceptionExit("Error: the first line must be format \"int nBoundaryConditons = INTEGER\"!", true);
+        }
+        if (type == PHSTRING && name != "bcName")
+        {
+            TK_Exit::ExceptionExit("Error: BC name must be format string bcName = \" DownWall\" !", true);
+        }
+        if (type == PHINT)
+        {
+            int *data = new int[size];
+            for (int i = 0; i < size; ++i)
+            {
+                from_string< int >(data[i], value[i], std::dec);
+            }
+
+            nBoundaryConditons = data[0];
+            delete [] data; data = nullptr;
+
+            if (nBoundaryConditons == 0)
+            {
+                //! To compatible the old version.
+                break;
+            }
+            else
+            {
+                GlobalParticleBoundaryLink::InitGlobalParticleBoundaryLink(nBoundaryConditons);
+                globalParticleBCList = new vector<ParticleBoundaryCondition*>;
+            }
+        }
+        else if (type == PHSTRING)
+        {
+
+            //! Parse out the parameters into data base in each Boundary Condition for particle.
+            ParticleBoundaryCondition *particleBC = new ParticleBoundaryCondition();
+
+            Data_Param *bcParamDataBase = new Data_Param();
+            TK_Parse::ReadBasicData(file, bcParamDataBase);
+            particleBC->SetParticleBCParam(bcParamDataBase);
+            particleBC->SetParticleBCName(value[0]);
+
+            int particleBCType;
+            bcParamDataBase->GetData("particleBCType", &particleBCType, PHINT, 1);
+            particleBC->SetParticleBCTye(particleBCType);
+
+            if (particleBC->IsPeriodicBC())
+            {
+                if (bcParamDataBase->IsExist("periodicBC", PHSTRING, 1))
+                {
+                    string periodicBC;
+                    bcParamDataBase->GetData("periodicBC", &periodicBC, PHSTRING, 1);
+                    cout << "The periodic BC of particle on " << *value << " is " << periodicBC << endl;
+                    GlobalParticleBoundaryLink::AddBCLinkName(iBC, periodicBC);
+                }
+                else
+                {
+                    ostringstream oss;
+                    oss << "Error: There is no periodicBC condition " << endl;
+                    oss << "but with error type for particle" << endl;
+                    oss << "Current particle bc is : " << particleBC->GetParticleBCType() << endl;
+                    TK_Exit::ExceptionExit(oss);
+                }
+            }
+            globalParticleBCList->push_back(particleBC);
+            iBC++;
+        }
+        delete [] value;    value = nullptr;
+    }
+#endif
 }
 
 void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
@@ -496,7 +769,6 @@ void GlobalBoundaryCondition::InitMassFlowBoundary()
                 }
             }
 
-
             RDouble GLB_BCTotalArea;
             PH_AllReduce(&BCTotalArea, &GLB_BCTotalArea, 1, MPI_SUM);
             BCTotalArea = GLB_BCTotalArea;
@@ -567,6 +839,7 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
                 {
                     SetBCInitialValuesByWRFData(bcParamDB, prim_inf);
                 }
+
                 else if (inflowParaType == PRIMITIVE_VARIABLES)
                 {
                     SetBCInitialValuesByPrimitive(bcParamDB, prim_inf);
@@ -2279,7 +2552,7 @@ void GlobalBoundaryCondition::SetBCDataBaseByGlobalBC()
                         StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
                         string bcRegionName = bcregion->GetBCName();
                         int bcRegionType = bcregion->GetBCType();
-    
+
                         vector <SimpleBC *> :: iterator iter;
                         for (iter = globalBCList->begin(); iter != globalBCList->end(); iter ++)
                         {
@@ -2322,7 +2595,7 @@ void GlobalBoundaryCondition::SetBCDataBaseByGlobalBC()
                         }
                     }
 
-                } 
+                }
                 gridofThisProcessor = gridofThisProcessor->GetCoarseGrid();
             }
         }

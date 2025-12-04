@@ -83,6 +83,8 @@ public:
     //! and the steady relaxation sub-iterations are nested inside the real physical time step.
     LIB_EXPORT void SolveUnsteadyField();
 
+    //! The Multiphase flow solving module.
+    void SolverMultiphaseFlow(int iSolver, int level = 0);
     //! Update unsteady flow.
     //! The the flow field of n+1 physical time step is updated by using the last sub-iteration results.
     void UpdateUnsteadyFlow(int iSolver, int level = 0);
@@ -139,12 +141,17 @@ public:
     //! Set the boundary condition of flowfield on the level-th multigrid.
     void SetBoundaryValueOfField(int iSolver, int level);
 
+    bool IsNeedMorePreparationForHighOrder(int iSolver);
+
+    //! Compute flowfield value of Struct High-Order method on the level-th multigrid.
     void MixingPlaneBoundary(int iSolver, int level);
 
     void PreSolveforStructHighOrder(int iSolver, int level);
 
+    //! Compute value (such as gama/temperature/laminar viscous/gradient) of Struct High-Order  method on the level-th multigrid.
     void GetIndependentVariablesforStructHighOrder(int iSolver, int level);
 
+    //! Compute value (such as q/q_FD) of Struct High-Order (such as gama/temperature/laminar viscous/gradient) method on the level-th multigrid.
     void GetDependentVariablesforStructHighOrder(int iSolver, int level);
 
     //! Compute the gama and temperature of flowfield on the level-th multigrid.

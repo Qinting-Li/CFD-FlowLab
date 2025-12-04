@@ -108,6 +108,7 @@ private:
     void ZeroResidualOfSpecialCells(Grid *gridIn);    //! Added By Guo Yongheng 20160825.
     void ViscousFlux(Grid *gridIn);
     void DualTimeSource(Grid *gridIn);
+    void ParticleSource(Grid* gridIn);
 
     //! Compute the chemical source terms.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
@@ -363,6 +364,7 @@ public:
 
     void ComputeVorticitybyQCriteria(Grid *gridIn, RDouble3D *&vorticity_x, RDouble3D *&vorticity_y, RDouble3D *&vorticity_z, RDouble3D *&vorticityMagnitude,  RDouble3D *&strain_rate, RDouble3D *&Q_criteria);
     void ComputeCp(Grid *gridIn, RDouble4D *&cp);
+    void ComputeCpAverage(Grid *gridIn, RDouble4D *&cp);
 
     //! Compute the dimensional variables for density, pressure, temperature and the number density of electron.
     RDouble4D * ComputeDimensionalElectron(Grid *gridIn);

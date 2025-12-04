@@ -1,0 +1,72 @@
+# @file      particle_para.hypara
+# @brief    This hypara file is for Param_ParticleSolver, 
+#                which controls the IO of particle files.
+# @author    Lei Yinghaonan.
+
+ #########################################################################
+#                       Particle Solver module                          #
+#########################################################################
+// iParticleModel : The Solver for particle.
+//                  0 -- Do not use particle solver.
+//                  1 -- Particle Point Solver.
+//                  2 -- Particle Resolved Solver.
+int iParticleModel = 1;
+
+double particleHeatCD = 1380;
+
+double particleBackCoupingCoeff = 0.0;
+
+#########################################################################
+#                          File in and out                              #
+ #########################################################################
+// ifReadRestartParticle : If read restart particle field.
+//                         0 -- Init particle field by "initParticleFile".
+//                         1 -- Read particle field by "initParticleFile".
+int ifReadRestartParticle = 0;
+
+// initParticleFile : The filename of init particle file. It can be init of restart file.
+string initParticleFile = "./grid/particle_init.h5";
+
+int ifInitParticleBC = 3;
+string initParticleBCFile = "./grid/initParticleBCFile.h5";
+
+int initParticleBCPeriodicStep = 100000;
+
+// ifInitParticleBC : If use particle BC as REMOVE_PARTICLE_AS_INIT.
+//                    0 -- not use.
+//                    1 -- when remove particle bc as REMOVE_PARTICLE_AS_INIT.
+//                         reset particle as "initParticleBCFile".
+//                    2 -- reset particle only coordinate and cellID as "initParticleBCFile".
+// int ifInitParticleBC = 0;
+// string initParticleBCFile = "./grid/particle_init_BC.h5";
+
+// ifWirteRestartParticle : If write restart particle file.
+//                          0 -- Do not write restart particle file.
+//                          1 -- Write restart particle file.
+int ifWirteRestartParticle = 1;
+int intervalStepRestartParticle = 10;
+double version = 1.1;
+
+
+int ifInitParticleAsFlow = 0;
+int gridTypeForPreAndPost = 0;
+
+int particleRandomReleaseMode = 0;
+
+
+int particleRandomDiameterMode = 1;
+double randomDiameterMaxRatio =1.5; //Dpmax/Dp
+double randomDiameterMinRatio =0.5; //Dpmin/Dp
+
+//A Cone range ,this is angel of cone ,unit： degree
+double initParticleBCRandomDirectionalRatio = 10;
+
+// V normal beteen 0, Ratio*vnromal
+double initParticleBCRandomValueRatio = 1.1;
+
+double radiativeTemperature = 100;
+
+int enableRadiativeHeatTransfer = 0;
+
+int enableVariableDiameter = 0;
+double minimumParticleDiameter=1e-7;

@@ -33,10 +33,6 @@ namespace GAS_SPACE
     void IncomGas::InitCommonParameter()
     {
         PerfectGas::InitCommonParameter();
-
-           //! Operating Pressure
-           //! Operating Pressure
-        
     }
 
     void IncomGas::InitParameterForMu()

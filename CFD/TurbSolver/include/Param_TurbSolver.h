@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      Param_TurbSolver.h
 //! @brief     Record paramters of TurbSolver.
-//! @author    Bell, Zhang Jian, Wan Yunbo, Meng Liyuan.
+//! @author    Bell, Zhang Jian, Wan Yunbo, Meng Liyuan, Wu Wenchang.
 
 #pragma once
 #include "Param_CFDSolver.h"
@@ -35,6 +35,10 @@ public:
     int GetDESType() const;
 
     int GetTransitionType() const;
+
+    int GetSATESType() const;
+
+    int GetSmagType() const;
 
     int GetSAProductType() const;
 
@@ -101,13 +105,15 @@ private:
 
     int SSTProductType;
 
+    //! Turbulent paremeters for SATES method
+    int SATESType;
+    int SmagType;
+
     int nTurbulenceEquation;
 
     RDouble eddyViscosityLimit;
 
     int wallFunctionType;
-
-    int isTurbulenceModelCorrect;
 
     RDouble SST_a1;
 

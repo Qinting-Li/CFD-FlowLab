@@ -28,7 +28,7 @@ CGNSRawCoor::CGNSRawCoor()
 CGNSRawCoor::~CGNSRawCoor()
 {
     DeAllocateData();
-    delete [] type;
+    DelPointer(type);
 }
 
 void CGNSRawCoor::AllocateData(int icoor, cgsize_t nTotalNode, DataType_t type)
@@ -117,12 +117,12 @@ void CGNSRawCoor::DeAllocateData()
         if (type == RealSingle)
         {
             RDouble *data = static_cast<RDouble *>(coor[icoor]);
-            delete [] data;
+            DelPointer(data);
         }
         else
         {
             RDouble *data = static_cast<RDouble *>(coor[icoor]);
-            delete [] data;
+            DelPointer(data);
         }
     }
 }
@@ -175,7 +175,7 @@ MultiIndex & MultiIndex::operator = (const MultiIndex &rhs)
 
 MultiIndex::~MultiIndex()
 {
-    delete [] data;
+    DelPointer(data);
 }
 
 bool MultiIndex::operator < (const MultiIndex &rhs) const
@@ -210,8 +210,8 @@ BaseElement::BaseElement()
 
 BaseElement::~BaseElement()
 {
-    delete [] elementface;
-    delete [] elementpoint;
+    DelPointer(elementface);
+    DelPointer(elementpoint);
 };
 
 void BaseElement::InitElementPoint()
@@ -262,12 +262,12 @@ CElemFace::~CElemFace()
     {
         for (int i = 0; i < face_num; ++ i)
         {
-            delete [] face_id[i];
+            DelPointer(face_id[i]);
         }
     }
-    delete [] face_id;
-    delete [] face_clkwise;
-    delete [] facept_num;
+    DelPointer(face_id);
+    DelPointer(face_clkwise);
+    DelPointer(facept_num);
 }
 
 void CElemFace::Init(int elem_type)
@@ -836,60 +836,51 @@ Base_Grid_Conn::Base_Grid_Conn()
 
 Base_Grid_Conn::~Base_Grid_Conn()
 {
-    delete left_cell_of_face;
-    delete right_cell_of_face;
-    delete face_location;
-    delete node_number_of_each_face;
-    delete face2node ;
-    delete faceset;
-    delete node_number_of_each_cell;
-    delete cell2node;
-
+    FreePointer(left_cell_of_face);
+    FreePointer(right_cell_of_face);
+    FreePointer(face_location);
+    FreePointer(node_number_of_each_face);
+    FreePointer(face2node);
+    FreePointer(faceset);
+    FreePointer(node_number_of_each_cell);
+    FreePointer(cell2node);
     vector<CGNS_BCFace *>::iterator iter;
     for (iter = bcFace->begin(); iter != bcFace->end(); ++ iter)
     {
-        delete *iter;
+        FreePointer(*iter);
     }
-    delete bcFace;
+    FreePointer(bcFace);
 }
 
 void Base_Grid_Conn::FreeFaceSet()
 {
-    delete faceset;
-    faceset = 0;
+    FreePointer(faceset);
 }
 
 void Base_Grid_Conn::FreeFace2Node()
 {
-    delete face2node;
-    face2node = 0;
+    FreePointer(face2node);
 }
 
 void Base_Grid_Conn::FreeCell2Node()
 {
-    delete cell2node;
-    cell2node = 0;
+    FreePointer(cell2node);
 }
 
 void Base_Grid_Conn::FreeCellOfFace()
 {
-    delete left_cell_of_face;
-    left_cell_of_face = 0;
-
-    delete right_cell_of_face;
-    right_cell_of_face = 0;
+    FreePointer(left_cell_of_face);
+    FreePointer(right_cell_of_face);
 }
 
 void Base_Grid_Conn::FreeNodeNumberOfEachFace()
 {
-    delete node_number_of_each_face;
-    node_number_of_each_face = 0;
+    FreePointer(node_number_of_each_face);
 }
 
 void Base_Grid_Conn::FreeNodeNumberOfEachCell()
 {
-    delete node_number_of_each_cell;
-    node_number_of_each_cell = 0;
+    FreePointer(node_number_of_each_cell);
 }
 
 CGNSBase::CGNSBase()
@@ -918,63 +909,63 @@ CGNSBase::CGNSBase()
 
 CGNSBase::~CGNSBase()
 {
-    delete [] boundaryName;             boundaryName          = nullptr;
-    delete [] elementType;              elementType           = nullptr;
-    delete [] iStart;                   iStart                = nullptr;
-    delete [] iEnd;                     iEnd                  = nullptr;
-    delete [] nBCElem;                  nBCElem               = nullptr;
-    delete [] bcType;                   bcType                = nullptr;
-    delete [] elementDataSize;          elementDataSize       = nullptr;
-    delete [] nIFaceElem;               nIFaceElem            = nullptr;
-    delete [] interFaceType;            interFaceType         = nullptr;
-    delete [] interFaceElementType;     interFaceElementType  = nullptr;
-    delete [] interFaceGridLocation;    interFaceGridLocation = nullptr;
-    delete [] interFaceName;            interFaceName         = nullptr;
+    DelPointer(boundaryName);
+    DelPointer(elementType);
+    DelPointer(iStart);
+    DelPointer(iEnd);
+    DelPointer(nBCElem);
+    DelPointer(bcType);
+    DelPointer(elementDataSize);
+    DelPointer(nIFaceElem);
+    DelPointer(interFaceType);
+    DelPointer(interFaceElementType);
+    DelPointer(interFaceGridLocation);
+    DelPointer(interFaceName);
 
     if (connList)
     {
         for (int iSections = 0; iSections < nSections; ++ iSections)
         {
-            delete [] connList[iSections];    connList[iSections] = nullptr;
+            DelPointer(connList[iSections]);
         }
     }
-    delete [] connList;    connList = nullptr;
+    DelPointer(connList);
 
     if (mixedConnID)
     {
         for (int iSections = 0; iSections < nSections; ++ iSections)
         {
-            delete [] mixedConnID[iSections];    mixedConnID[iSections] = nullptr;
+            DelPointer(mixedConnID[iSections]);
         }
     }
-    delete [] mixedConnID;    mixedConnID = nullptr;
+    DelPointer(mixedConnID);
 
     if (bcConnList)
     {
         for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
         {
-            delete [] bcConnList[iBCRegion];    bcConnList[iBCRegion] = nullptr;
+            DelPointer(bcConnList[iBCRegion]);
         }
     }
-    delete [] bcConnList;    bcConnList = nullptr;
+    DelPointer(bcConnList);
 
     if (connectOffSet)
     {
         for (int iSection = 0; iSection < nSections; ++ iSection)
         {
-            delete [] connectOffSet[iSection];    connectOffSet[iSection] = nullptr;
+            DelPointer(connectOffSet[iSection]);
         }
     }
-    delete [] connectOffSet;    connectOffSet = nullptr;
+    DelPointer(connectOffSet);
 
     if (interFaceConnList)
     {
         for (int iIFaceRegion = 0; iIFaceRegion < nIFaceRegion; ++ iIFaceRegion)
         {
-            delete [] interFaceConnList[iIFaceRegion];    interFaceConnList[iIFaceRegion] = nullptr;
+            DelPointer(interFaceConnList[iIFaceRegion]);
         }
     }
-    delete [] interFaceConnList;    interFaceConnList = nullptr;
+    DelPointer(interFaceConnList);
 }
 
 void CGNSBase::CreateElement(int nSections)
@@ -1623,7 +1614,7 @@ void CGNSBase::ComputeCellToNode(Base_Grid_Conn *gConn, BaseElement *baseElem)
             DelPointer(connList[iSection]);
         }
     }
-    DelPointer2(connList);
+    DelPointer(connList);
 
     if (bcConnList)
     {
@@ -1634,6 +1625,8 @@ void CGNSBase::ComputeCellToNode(Base_Grid_Conn *gConn, BaseElement *baseElem)
     }
     DelPointer(bcConnList);
 
+    //delete []elementType;        elementType     = nullptr;
+    //delete []bcType;             bcType          = nullptr;
     DelPointer(iStart);
     DelPointer(iEnd);
     DelPointer(nBCElem);
@@ -2060,26 +2053,23 @@ CGNSFactory::CGNSFactory(int nBlocks)
 
 CGNSFactory::~CGNSFactory()
 {
-    delete baseElem;
-    delete fantasyBC;
-
+    FreePointer(baseElem);
+    FreePointer(fantasyBC);
     for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        delete baseConn[iZone];
+        FreePointer(baseConn[iZone]);
     }
-    delete [] baseConn;    baseConn = nullptr;
-
+    DelPointer(baseConn);
     for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        delete rawGrid[iZone];
+        FreePointer(rawGrid[iZone]);
     }
-    delete [] rawGrid;    rawGrid = nullptr;
-
+    DelPointer(rawGrid);
     //for (int iZone = 0; iZone < nBlocks; ++iZone)
     //{
     //    delete baseCGNS[iZone];
     //}
-    delete [] baseCGNS;    baseCGNS = nullptr;
+    DelPointer(baseCGNS);
 }
 
 void CGNSFactory::ConvertGrid2Fantasy()
@@ -2237,9 +2227,9 @@ void CGNS2UnsGrid(CGNSFactory *factoryCGNS, int iZone, UnstructGrid *grid)
         y[iNode] = yy[iNode];
         z[iNode] = zz[iNode];
     }
-    delete [] xx;    xx = nullptr;
-    delete [] yy;    yy = nullptr;
-    delete [] zz;    zz = nullptr;
+    DelPointer(xx);
+    DelPointer(yy);
+    DelPointer(zz);
 
     RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
     RDouble *gridTranslationVector = new RDouble[3]();

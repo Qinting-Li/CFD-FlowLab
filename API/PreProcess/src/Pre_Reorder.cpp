@@ -696,7 +696,6 @@ namespace Reorder
                 exit(1);
             }
         }
-        
     }
 
     void CallReorderCellLabel(Base_Grid_Conn * gconn)
@@ -842,8 +841,6 @@ namespace Reorder
                 GetCurrentLevel(rStart, nFaceOfEachCell, cell2Cell, offsetCell2Face, reorderCell, numSortCur, cellIDSortCur);
 
                 GetNextLevel(numSortCur, cellIDSortCur, nFaceOfEachCell, cell2Cell, offsetCell2Face, reorderCell, numSortNext, cellIDSortNext);
-                    
-                
             }
             printf("lCur = %d, lOld = %d, numSortNext=%d, rStart = %d\n", lCur, lOld, numSortNext ,rStart);
         }
@@ -1175,7 +1172,6 @@ namespace Reorder
                 numComp --;
             }
         }
-
     }
 
     void ReOrderLevelCur(const int numSortCur, const int *cellIDSortCur, int &numVertex, int *newCell)
@@ -1190,7 +1186,6 @@ namespace Reorder
                 newCell[cellID] = numVertex;
             }
         }
-
     }
 
     void GetNextLevelForReOrder(const int &numSortCur, const int *cellIDSortCur, const int *nFaceOfEachCell, const int *cell2Cell, const int *offsetCell2Cell, int *reorderCell, int & numSortNext, int *cellIDSortNext)
@@ -1338,7 +1333,6 @@ namespace Reorder
                 }
 
                 if (cellLabel != iCell) cell2Cell[offsetCellFace + iFace] = cellLabel;
-                
             }
         }
     }
@@ -1468,7 +1462,6 @@ namespace Reorder
         //! Check results
         CheckSwapFaceNumber(nTotalCell, orgCell, reflectCell, nSwapFaceOfEachCell, nNewFaceOfEachCell);
 
-        
     }
 
     //! Check results
@@ -1597,7 +1590,6 @@ namespace Reorder
                 printf("i = %d, percent = %f\n", i, percent);
             }
             delete [] diffCount;   diffCount = NULL;
-        
     }
     //!A caller for MetricLeftRightCellOfFace
     void CallMetricLeftRightCellOfFace(Base_Grid_Conn *gconn)

@@ -21,47 +21,57 @@
 
 namespace PHSPACE
 {
-    class UnstructGrid;
-    class MomEqCalculator : public IncomScalarEqCalculator
-    {
+class UnstructGrid;
+class MomEqCalculator : public IncomScalarEqCalculator
+{
 
-    public:
-        MomEqCalculator();
-        ~MomEqCalculator() {};
+public:
+    MomEqCalculator();
+    ~MomEqCalculator() {};
 
-    public:
+public:
 
-        void CalcGrad(Grid *grid);
-        void solveMomentumEquations(Grid *grid);
-        void solveScalarEquation(Grid *grid, int iEquation);
-        
-        void CalcVelocityRes(UnstructGrid *grid);
+    void CalcGrad(Grid *grid);
+    void CalcGradP(Grid *grid);
+    void solveMomentumEquations(Grid *grid);
+    void solveScalarEquation(Grid *grid, int iEquation);
 
-        void CoefPrepForPres(Grid *grid);
-        void CorrectFaceFlux(Grid *grid);
-        void calcFaceFlux(Grid *grid);
-        void updateBCValue(Grid *grid);
-        void pressureSourceTerm(Grid *grid, int iVariable);
-        void BulkVisSourceTerm(Grid *grid, int iVariable);
-        void GravitySourceTerm(Grid *grid, int iVariable);
+    void CalcVelocityRes(UnstructGrid *grid);
 
-        virtual void CalcOtherbCoeff(Grid *gridIn, int iVariable);
-        
-        void SolveExplicitVelocityEquations(Grid *grid);
-        void UpdateUnsteadyFlux(Grid *grid);
-        void IncompressibleInitial(Grid *grid);
-        void CalcWalldistOnWall(Grid *grid);
-        void UpdateBoundaryPressureAndVelocity(Grid *grid);
-        void InitFlowAsRestart(Grid *grid);
-        void AllocateGlobalVar(Grid *grid);
-        
-        void AllocateUnsteadyVar(Grid *grid);
-        void InitialUnsteadyVar(Grid *grid);
-        void UpdateUnsteadyProperties(Grid *grid);
-        void UpdateProperties(Grid *grid);
-        
-        void GetResidual(Grid *grid, vector<RDouble> &res);
-        void UpdateUnsteadyVariable(Grid *grid);
+    void CoefPrepForPres(Grid *grid, int iEquation);
+    void CorrectFaceFlux(Grid *grid);
+    void calcFaceFlux(Grid *grid);
+    void updateBCValue(Grid *grid);
+    void UpdateBCP(Grid *grid);
+    void pressureSourceTerm(Grid *grid, int iVariable);
+    void BulkVisSourceTerm(Grid *grid, int iVariable);
+    void GravitySourceTerm(Grid *grid, int iVariable);
+    void VisTransposeSourceTerm(Grid *grid, int iVariable);
+
+    virtual void CalcOtherbCoeff(Grid *gridIn, int iVariable);
+    void calWallBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+    RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff, int iVariable);
+
+    void calSymmetryBC(Grid *grid, vector<int> *faceIndex, Data_Param *bcData, RDouble *diagMatrixCoeff, RDouble *bCoeff, RDouble *q,
+    RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, RDouble *mu, RDouble matrixCoeff, int iVariable);
+
+    void SolveExplicitVelocityEquations(Grid *grid);
+    void UpdateUnsteadyFlux(Grid *grid);
+    void IncompressibleInitial(Grid *grid);
+    void CalcWalldistOnWall(Grid *grid);
+    void UpdateBoundaryPressureAndVelocity(Grid *grid);
+    void InitFlowAsRestart(Grid *grid);
+    void AllocateGlobalVar(Grid *grid);
+
+    void AllocateUnsteadyVar(Grid *grid);
+    void InitialUnsteadyVar(Grid *grid);
+    void UpdateUnsteadyProperties(Grid *grid);
+    void UpdateProperties(Grid *grid);
+
+    void GetResidual(Grid *grid, vector<RDouble> &res);
+    void UpdateUnsteadyVariable(Grid *grid);
+
+    void SecondUpWindSourceTerm(Grid *grid, int solverIndex);
     };
 
     void FlowFarField_GetBoundrayData(Grid *grid, Data_Param *bcData);

@@ -217,7 +217,7 @@ void TurbSolver::RegisterCFDSolverInterfaceField()
 {
     Param_TurbSolver *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
-    
+
     CFDSolver::RegisterInterfaceField("turb::q", PHDOUBLE, nTurbulenceEquation);
 
     CFDSolver::RegisterInterfaceField("turb::dq", PHDOUBLE, nTurbulenceEquation);
@@ -225,6 +225,13 @@ void TurbSolver::RegisterCFDSolverInterfaceField()
     CFDSolver::RegisterInterfaceField("turb::dqdx", PHDOUBLE, nTurbulenceEquation);
     CFDSolver::RegisterInterfaceField("turb::dqdy", PHDOUBLE, nTurbulenceEquation);
     CFDSolver::RegisterInterfaceField("turb::dqdz", PHDOUBLE, nTurbulenceEquation);
+
+    int SATESType = parameters->GetSATESType();
+    if (SATESType > NO_SATES)
+    {
+        CFDSolver::RegisterInterfaceField("SATES_Fr", PHDOUBLE, 1);
+        CFDSolver::RegisterInterfaceField("SATES_Cx", PHDOUBLE, 1);
+    }
 
     CFDSolver::RegisterInterfaceField("vist", PHDOUBLE, 1);
     CFDSolver::RegisterInterfaceField("blend", PHDOUBLE, 1);

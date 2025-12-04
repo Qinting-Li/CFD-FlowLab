@@ -95,6 +95,12 @@ const int DES   = 1;
 const int DDES  = 2;
 const int IDDES = 3;
 
+//! Constants of SATES method.
+const int NO_SATES      = 0;
+const int SATES_SMAG    = 1;
+const int SMAG_CONSTANT = 0;
+const int SMAG_DYNAMIC  = 1;
+
 //! Return the modified positive preserved working variable, if the SA nue is negative.
 //! @param[in] nueNegative     the input original negative nue.
 //! @param[in] viscousLaminar  the input original laminar viscous.

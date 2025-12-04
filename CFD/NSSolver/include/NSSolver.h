@@ -110,11 +110,14 @@ public:
     void DeAllocateOversetInterfaceVar(Data_ParamFieldSuite *dataStore);    
     void PrepareOversetInterfaceData(Data_ParamFieldSuite *dataStore, InterfaceDataProxy *interfaceDataProxy);
 
-    virtual void ZeroResidualOfSpecialCells(Grid * gridIn) {};
+    virtual void ZeroResidualOfSpecialCells(Grid  *gridIn) {};
 
 protected:
     //! Compute CFL number at each iteration.
     RDouble ComputeCFL(RDouble partialCFL = -1.0);
+
+    //! Source flux: compute the particle source.
+    virtual void ParticleSource(Grid *grid) {};
 
     //! Source flux, such as chemical source, unsteady source, volume force, etc.
     void SourceFlux(Grid *grid);
@@ -168,6 +171,11 @@ private:
     //! before each iteration.
     void InitDependentVariables();
 };
+
+//! Constants of cflNumber computing method.
+const int LINEAR_STANDARD = 0;
+const int LINEAR_QUICK = 1;
+const int EXPONENTIAL = 2;
 
 void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FaceProxy *face_proxy, Param_NSSolver *parameters);
 

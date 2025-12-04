@@ -2368,7 +2368,7 @@ LIB_EXPORT RDouble UnstructGrid::SkewnessSummary(ActionKey *actkey)
         oss <<  angleC[i] / (static_cast<RDouble>(total) + SMALL) * 100;
         oss <<  " Percent (";
         oss << setw(8)<< angleC[i] << ")\n";
-    }  
+    }
     oss << "====================================================" << "\n";
 
     //! It is necessary to reset, otherwise there will be some unexpected output elsewhere.
@@ -3283,7 +3283,7 @@ void UnstructGrid::CompGradientGGCell(RDouble *q, RDouble *dqdx, RDouble *dqdy, 
     }
 }
 
-void UnstructGrid::CompGradientGGCell2(RDouble *q, RDouble *wfL, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz)
+void UnstructGrid::CompGradientGGCellSIMPLE2(RDouble *q, RDouble *wfL, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz)
 {
     RDouble *nxs, *nys, *nzs, *ns, *vol;
 
@@ -3366,6 +3366,133 @@ void UnstructGrid::CompGradientGGCell2(RDouble *q, RDouble *wfL, RDouble *dqdx, 
         dqdy[re] = dqdy[le];
         dqdz[re] = dqdz[le];
     }
+}
+
+void UnstructGrid::CompGradientGGCellSIMPLE3(RDouble *q, RDouble *wfL, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz)
+{
+    RDouble *nxs = this->GetFaceNormalX();
+    RDouble *nys = this->GetFaceNormalY();
+    RDouble *nzs = this->GetFaceNormalZ();
+    RDouble *xfc = this->GetFaceCenterX();
+    RDouble *yfc = this->GetFaceCenterY();
+    RDouble *zfc = this->GetFaceCenterZ();
+    RDouble *xcc = this->GetCellCenterX();
+    RDouble *ycc = this->GetCellCenterY();
+    RDouble *zcc = this->GetCellCenterZ();
+    RDouble *ns = this->GetFaceArea();
+    RDouble *vol = this->GetCellVolume();
+
+    int *leftCellofFace = this->GetLeftCellOfFace();
+    int *rightCellofFace = this->GetRightCellOfFace();
+
+    int nTotalCell = this->GetNTotalCell();
+    int nTotalFace = this->GetNTotalFace();
+    int nBoundFace = this->GetNBoundFace();
+    int nTotal     = nTotalCell + nBoundFace;
+
+    RDouble *dqdx0 = new RDouble[nTotal];
+    RDouble *dqdy0 = new RDouble[nTotal];
+    RDouble *dqdz0 = new RDouble[nTotal];
+
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
+    {
+        dqdx0[iCell] = dqdx[iCell];
+        dqdy0[iCell] = dqdy[iCell];
+        dqdz0[iCell] = dqdz[iCell];
+    }
+
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        dqdx[iCell] = 0.0;
+        dqdy[iCell] = 0.0;
+        dqdz[iCell] = 0.0;
+    }
+
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        int le = leftCellofFace[iFace];
+        int re = iFace + nTotalCell;
+
+        RDouble qfc = q[re]; 
+        int bcType = bcr[iFace]->GetKey();
+        if (bcType == PHENGLEI::INTERFACE)
+        {
+            RDouble lx = xfc[iFace] - xcc[le];
+            RDouble ly = yfc[iFace] - ycc[le];
+            RDouble lz = zfc[iFace] - zcc[le];
+
+            RDouble rx = xfc[iFace] - xcc[re];
+            RDouble ry = yfc[iFace] - ycc[re];
+            RDouble rz = zfc[iFace] - zcc[re];
+
+            RDouble qfl = q[le] + dqdx0[le]*lx + dqdy0[le]*ly +dqdy0[le]*ly;
+            RDouble qfr = q[re] + dqdx0[re]*rx + dqdy0[re]*ry +dqdy0[re]*ry;
+
+            qfc = wfL[iFace] * qfl + (1.0 - wfL[iFace]) * qfr;
+        }
+        RDouble nx = nxs[iFace] * ns[iFace];
+        RDouble ny = nys[iFace] * ns[iFace];
+        RDouble nz = nzs[iFace] * ns[iFace];
+        dqdx[le] += qfc * nx;
+        dqdy[le] += qfc * ny;
+        dqdz[le] += qfc * nz;
+    }
+
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
+    {
+        int le = leftCellofFace[iFace];
+        int re = rightCellofFace[iFace];
+
+        RDouble nx = nxs[iFace] * ns[iFace];
+        RDouble ny = nys[iFace] * ns[iFace];
+        RDouble nz = nzs[iFace] * ns[iFace];
+
+        RDouble lx = xfc[iFace] - xcc[le];
+        RDouble ly = yfc[iFace] - ycc[le];
+        RDouble lz = zfc[iFace] - zcc[le];
+
+        RDouble rx = xfc[iFace] - xcc[re];
+        RDouble ry = yfc[iFace] - ycc[re];
+        RDouble rz = zfc[iFace] - zcc[re];
+
+        RDouble qfl = q[le] + dqdx0[le]*lx + dqdy0[le]*ly +dqdy0[le]*ly;
+        RDouble qfr = q[re] + dqdx0[re]*rx + dqdy0[re]*ry +dqdy0[re]*ry;
+
+        RDouble qfc = wfL[iFace] * qfl + (1.0 - wfL[iFace]) * qfr;
+        dqdx[le] += qfc * nx;
+        dqdy[le] += qfc * ny;
+        dqdz[le] += qfc * nz;
+        dqdx[re] -= qfc * nx;
+        dqdy[re] -= qfc * ny;
+        dqdz[re] -= qfc * nz;
+    }
+
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        RDouble ovol = one / vol[iCell];
+        dqdx[iCell] *= ovol;
+        dqdy[iCell] *= ovol;
+        dqdz[iCell] *= ovol;
+    }
+
+    UnstructBCSet **bcr = this->GetBCRecord();
+    for (int iFace = 0; iFace < nBoundFace; iFace++)
+    {
+        int bcType = bcr[iFace]->GetKey();
+        if (bcType == PHENGLEI::INTERFACE)
+        {
+            continue;
+        }
+        int le = leftCellofFace[iFace];
+        int re = rightCellofFace[iFace];
+        dqdx[re] = dqdx[le];
+        dqdy[re] = dqdy[le];
+        dqdz[re] = dqdz[le];
+    }
+
+    delete [] dqdx0; dqdx0 = nullptr;
+    delete [] dqdy0; dqdy0 = nullptr;
+    delete [] dqdz0; dqdz0 = nullptr;
 }
 
 void UnstructGrid::CompGradientGGCellNew(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz)
@@ -3948,6 +4075,206 @@ void UnstructGrid::ComputeWeight()
     }
 }
 
+void UnstructGrid::ComputeWeightSIMPLE1()
+{
+    int nTotalCell = this->GetNTotalCell();
+    int nBoundFace = this->GetNBoundFace();
+    int nTotalFace = this->GetNTotalFace();
+
+    RDouble *xcc = this->GetCellCenterX();
+    RDouble *ycc = this->GetCellCenterY();
+    RDouble *zcc = this->GetCellCenterZ();
+    RDouble *xfc = this->GetFaceCenterX();
+    RDouble *yfc = this->GetFaceCenterY();
+    RDouble *zfc = this->GetFaceCenterZ();
+
+    if (!this->GetLeastSquareIWT()) this->SetLeastSquareIWT(new RDouble [ nTotalFace ]);
+    if (!this->GetLeastSquareIXX()) this->SetLeastSquareIXX(new RDouble [ nTotalCell ]);
+    if (!this->GetLeastSquareIYY()) this->SetLeastSquareIYY(new RDouble [ nTotalCell ]);
+    if (!this->GetLeastSquareIZZ()) this->SetLeastSquareIZZ(new RDouble [ nTotalCell ]);
+    if (!this->GetLeastSquareIXY()) this->SetLeastSquareIXY(new RDouble [ nTotalCell ]);
+    if (!this->GetLeastSquareIXZ()) this->SetLeastSquareIXZ(new RDouble [ nTotalCell ]);
+    if (!this->GetLeastSquareIYZ()) this->SetLeastSquareIYZ(new RDouble [ nTotalCell ]);
+    if (!this->GetFaceMark()) this->SetFaceMark(new char [ nTotalFace ]);
+
+    RDouble *iwt   = this->GetLeastSquareIWT();
+    RDouble *ixx   = this->GetLeastSquareIXX();
+    RDouble *iyy   = this->GetLeastSquareIYY();
+    RDouble *izz   = this->GetLeastSquareIZZ();
+    RDouble *ixy   = this->GetLeastSquareIXY();
+    RDouble *ixz   = this->GetLeastSquareIXZ();
+    RDouble *iyz   = this->GetLeastSquareIYZ();
+    char    *fMark = this->GetFaceMark();
+
+    int *leftCellOfFace  = this->GetLeftCellOfFace();
+    int *rightCellOfFace = this->GetRightCellOfFace();
+ 
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
+    {
+        fMark[iFace] = 1;
+    }
+
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        ixx[iCell] = 0.0;
+        iyy[iCell] = 0.0;
+        izz[iCell] = 0.0;
+        ixy[iCell] = 0.0;
+        ixz[iCell] = 0.0;
+        iyz[iCell] = 0.0;
+    }
+
+    int le, re;
+
+    RDouble dx,dy,dz,txx,tyy,tzz,txy,txz,tyz;
+    RDouble ods;
+  
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        le = leftCellOfFace[iFace];
+        re = iFace + nTotalCell;
+
+        int bcType = bcr[iFace]->GetKey();
+        if (bcType == PHENGLEI::INTERFACE)
+        {
+            dx = (xcc[re] - xcc[le]) * fMark[iFace];
+            dy = (ycc[re] - ycc[le]) * fMark[iFace];
+            dz = (zcc[re] - zcc[le]) * fMark[iFace];
+        }
+        else
+        {
+            dx = (xfc[iFace] - xcc[le]) * fMark[iFace];
+            dy = (yfc[iFace] - ycc[le]) * fMark[iFace];
+            dz = (zfc[iFace] - zcc[le]) * fMark[iFace];
+        }
+
+        ods = one / (dx * dx + dy * dy + dz * dz + SMALL);
+
+        txx = ods * dx * dx;
+        tyy = ods * dy * dy;
+        tzz = ods * dz * dz;
+        txy = ods * dx * dy;
+        txz = ods * dx * dz;
+        tyz = ods * dy * dz;
+
+        iwt[iFace] = ods;
+        ixx[le] += txx;
+        iyy[le] += tyy;
+        izz[le] += tzz;
+        ixy[le] += txy;
+        ixz[le] += txz;
+        iyz[le] += tyz;
+    }
+
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
+    {
+        le = leftCellOfFace [ iFace ];
+        re = rightCellOfFace[ iFace ];
+
+        dx = (xcc[re] - xcc[le]) * fMark[iFace];
+        dy = (ycc[re] - ycc[le]) * fMark[iFace];
+        dz = (zcc[re] - zcc[le]) * fMark[iFace];
+
+        ods = one / (dx * dx + dy * dy + dz * dz + SMALL);
+
+        txx = ods * dx * dx;
+        tyy = ods * dy * dy;
+        tzz = ods * dz * dz;
+        txy = ods * dx * dy;
+        txz = ods * dx * dz;
+        tyz = ods * dy * dz;
+
+        iwt[iFace]  = ods;
+
+        ixx[le] += txx;
+        iyy[le] += tyy;
+        izz[le] += tzz;
+        ixy[le] += txy;
+        ixz[le] += txz;
+        iyz[le] += tyz;
+
+        ixx[re] += txx;
+        iyy[re] += tyy;
+        izz[re] += tzz;
+        ixy[re] += txy;
+        ixz[re] += txz;
+        iyz[re] += tyz;
+    }
+
+    RDouble delt = 0.0, odelt = 0.0;
+
+    if (this->GetDim() == THREE_D)
+    {
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+        {
+            txx = ixx[iCell];
+            tyy = iyy[iCell];
+            tzz = izz[iCell];
+            txy = ixy[iCell];
+            txz = ixz[iCell];
+            tyz = iyz[iCell];
+          
+            delt = (txx * tyy * tzz
+                  + 2.0 * txy * txz * tyz 
+                  - txx * tyz * tyz
+                  - tyy * txz * txz
+                  - tzz * txy * txy);
+
+            if (ABS(delt) < SMALL)
+            {
+                ixx[iCell] = 0.0;
+                iyy[iCell] = 0.0;
+                izz[iCell] = 0.0;
+                ixy[iCell] = 0.0;
+                ixz[iCell] = 0.0;
+                iyz[iCell] = 0.0;
+            }
+            else
+            {
+                odelt = one / delt;
+                ixx[iCell] = (tyy * tzz - tyz * tyz) * odelt;
+                iyy[iCell] = (txx * tzz - txz * txz) * odelt;
+                izz[iCell] = (txx * tyy - txy * txy) * odelt;
+                ixy[iCell] = (txz * tyz - txy * tzz) * odelt;
+                ixz[iCell] = (txy * tyz - txz * tyy) * odelt;
+                iyz[iCell] = (txy * txz - tyz * txx) * odelt;
+           }
+        }
+    }
+    else
+    {
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+        {
+            txx = ixx[iCell];
+            tyy = iyy[iCell];
+            txy = ixy[iCell];
+
+            delt = txx * tyy - txy * txy;
+
+            if (ABS(delt) < SMALL)
+            {
+                ixx[iCell] = 0.0;
+                iyy[iCell] = 0.0;
+                izz[iCell] = 0.0;
+                ixy[iCell] = 0.0;
+                ixz[iCell] = 0.0;
+                iyz[iCell] = 0.0;
+            }
+            else
+            {
+                odelt = one / delt;
+
+                ixx[iCell] = (  tyy) * odelt;
+                iyy[iCell] = (  txx) * odelt;
+                ixy[iCell] = (- txy) * odelt;
+                izz[iCell] = 0.0;
+                ixz[iCell] = 0.0;
+                iyz[iCell] = 0.0;
+            }
+        }
+    }
+}
+
 LIB_EXPORT void UnstructGrid::ComputeNodeBCType()
 {
     long long int *face2NodeSubscript = this->GetFace2NodeSubscript();
@@ -4072,6 +4399,257 @@ void UnstructGrid::CompGradientLSQ(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDo
         dqdx[iCell] = ixx[iCell] * tmpx + ixy[iCell] * tmpy + ixz[iCell] * tmpz;
         dqdy[iCell] = ixy[iCell] * tmpx + iyy[iCell] * tmpy + iyz[iCell] * tmpz;
         dqdz[iCell] = ixz[iCell] * tmpx + iyz[iCell] * tmpy + izz[iCell] * tmpz;
+    }
+
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        int le = leftCellOfFace[ iFace ];
+        int re = iFace + nTotalCell;
+        dqdx[re] = dqdx[le];
+        dqdy[re] = dqdy[le];
+        dqdz[re] = dqdz[le];
+    }
+}
+
+void UnstructGrid::CompGradientLSQSIMPLE1(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz)
+{
+    RDouble *xcc = this->GetCellCenterX();
+    RDouble *ycc = this->GetCellCenterY();
+    RDouble *zcc = this->GetCellCenterZ();
+    RDouble *xfc = this->GetFaceCenterX();
+    RDouble *yfc = this->GetFaceCenterY();
+    RDouble *zfc = this->GetFaceCenterZ();
+    RDouble *iwt = this->GetLeastSquareIWT();
+    RDouble *ixx = this->GetLeastSquareIXX();
+    RDouble *iyy = this->GetLeastSquareIYY();
+    RDouble *izz = this->GetLeastSquareIZZ();
+    RDouble *ixy = this->GetLeastSquareIXY();
+    RDouble *ixz = this->GetLeastSquareIXZ();
+    RDouble *iyz = this->GetLeastSquareIYZ();
+    char *fMark  = this->GetFaceMark();
+
+    int *leftCellOfFace = this->GetLeftCellOfFace();
+    int *rightCellOfFace = this->GetRightCellOfFace();
+
+    int nTotalCell = this->GetNTotalCell();
+    int nTotalFace = this->GetNTotalFace();
+    int nBoundFace = this->GetNBoundFace();
+    int nTotal = nTotalCell + nBoundFace;
+
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
+    {
+        dqdx[iCell] = 0.0;
+        dqdy[iCell] = 0.0;
+        dqdz[iCell] = 0.0;
+    }
+
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        int le = leftCellOfFace[ iFace ];
+        int re = iFace + nTotalCell;
+
+        int bcType = bcr[iFace]->GetKey();
+
+        RDouble dx = xfc[iFace] - xcc[le];
+        RDouble dy = yfc[iFace] - ycc[le];
+        RDouble dz = zfc[iFace] - zcc[le];
+
+        if (bcType == PHENGLEI::INTERFACE)
+        {
+            dx = xcc[re] - xcc[le];
+            dy = ycc[re] - ycc[le];
+            dz = zcc[re] - zcc[le];
+        }
+ 
+        RDouble dq   = iwt[iFace] * (q[re] - q[le]) * fMark[iFace];
+        RDouble tmpx = dq * dx;
+        RDouble tmpy = dq * dy;
+        RDouble tmpz = dq * dz;
+        dqdx[le] += tmpx;
+        dqdy[le] += tmpy;
+        dqdz[le] += tmpz;
+    }
+
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
+    {
+        int le = leftCellOfFace [ iFace ];
+        int re = rightCellOfFace[ iFace ];
+
+        RDouble dx = xcc[re] - xcc[le];
+        RDouble dy = ycc[re] - ycc[le];
+        RDouble dz = zcc[re] - zcc[le];
+ 
+        RDouble dq = iwt[iFace] * (q[re] - q[le]) * fMark[iFace];
+
+        RDouble tmpx = dq * dx;
+        RDouble tmpy = dq * dy;
+        RDouble tmpz = dq * dz;
+
+        dqdx[le] += tmpx;
+        dqdy[le] += tmpy;
+        dqdz[le] += tmpz;
+
+        dqdx[re] += tmpx;
+        dqdy[re] += tmpy;
+        dqdz[re] += tmpz;
+    }
+
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        RDouble tmpx    = dqdx[iCell];
+        RDouble tmpy    = dqdy[iCell];
+        RDouble tmpz    = dqdz[iCell];
+
+        dqdx[iCell] = ixx[iCell] * tmpx + ixy[iCell] * tmpy + ixz[iCell] * tmpz;
+        dqdy[iCell] = ixy[iCell] * tmpx + iyy[iCell] * tmpy + iyz[iCell] * tmpz;
+        dqdz[iCell] = ixz[iCell] * tmpx + iyz[iCell] * tmpy + izz[iCell] * tmpz;
+    }
+
+    string limiterNameOfSIMPLE = "vencat";
+    if(limiterNameOfSIMPLE == "vencat")
+    {
+        int le, re;
+        RDouble dx, dy, dz;
+        RDouble dqFace, tmp;
+        //! Find the maximum and minimum in the neighbor of each cell.
+        RDouble *dmin = new RDouble[nTotal];
+        RDouble *dmax = new RDouble[nTotal];
+        RDouble *limit = new RDouble[nTotal];
+        
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+        {
+            dmin[iCell] = q[iCell];
+            dmax[iCell] = q[iCell];
+            limit[iCell] = 1.0;
+        }
+
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+        {
+            le = leftCellOfFace[iFace];
+            re = rightCellOfFace[iFace];
+
+            int bcType = bcr[iFace]->GetKey();
+            if (bcType != PHENGLEI::INTERFACE)
+            {
+                continue;
+            }
+
+            dmin[le] = MIN(dmin[le], q[re]);
+            dmax[le] = MAX(dmax[le], q[re]);
+        }
+
+        for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
+        {
+            le = leftCellOfFace [iFace];
+            re = rightCellOfFace[iFace];
+            dmin[le] = MIN(dmin[le], q[re]);
+            dmax[le] = MAX(dmax[le], q[re]);
+
+            dmin[re] = MIN(dmin[re], q[le]);
+            dmax[re] = MAX(dmax[re], q[le]);
+        }
+
+        //! Get the maximum and the minimum difference.
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+        {
+            dmin[iCell] -= q[iCell];
+            dmax[iCell] -= q[iCell];
+        }
+
+        //! The following loop is to calculate the limiter coefficient of each cell on the boundary face.
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+        {
+            //! Get the left and right cell index of iFace.
+            le = leftCellOfFace [iFace];
+            re = rightCellOfFace[iFace];
+
+            //! Compute the vector from face to left cell center.
+            dx = xfc[iFace] - xcc[le];
+            dy = yfc[iFace] - ycc[le];
+            dz = zfc[iFace] - zcc[le];
+
+            //! Compute the dq from left cell center to face center.
+            dqFace  = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
+            if (dqFace > 0.0)
+            {
+                //! According to the vencat limiter of Theory manual.
+                tmp = (dmax[le]*dmax[le] + 2.0*dqFace*dmax[le])/(dmax[le]*dmax[le] + 2.0*dqFace*dqFace + dqFace*dmax[le]);
+                limit[le] = MIN(limit[le], tmp);
+            }
+            else if (dqFace < 0.0)
+            {
+                //! According to the vencat limiter of Theory manual.
+                tmp = (dmin[le]*dmin[le] + 2.0*dqFace*dmin[le])/(dmin[le]*dmin[le] + 2.0*dqFace*dqFace + dqFace*dmin[le]);
+                limit[le] = MIN(limit[le], tmp);
+            }
+            else
+            {
+                tmp = 1.0;
+                limit[le] = MIN(limit[le], tmp);
+            }
+        }
+
+        //! The following loop is to calculate the limiter coefficient of each interior cell.
+        for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
+        {
+            le = leftCellOfFace [iFace];
+            re = rightCellOfFace[iFace];
+
+            dx = xfc[iFace] - xcc[le];
+            dy = yfc[iFace] - ycc[le];
+            dz = zfc[iFace] - zcc[le];
+            dqFace = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
+            if (dqFace > 0.0)
+            {
+                //! According to the vencat limiter of Theory manual.
+                tmp = (dmax[le]*dmax[le] + 2.0*dqFace*dmax[le])/(dmax[le]*dmax[le] + 2.0*dqFace*dqFace + dqFace*dmax[le]);
+                limit[le] = MIN(limit[le], tmp);
+            }
+            else if (dqFace < 0.0)
+            {
+                //! According to the vencat limiter of Theory manual.
+                tmp = (dmin[le]*dmin[le] + 2.0*dqFace*dmin[le])/(dmin[le]*dmin[le] + 2.0*dqFace*dqFace + dqFace*dmin[le]);
+                limit[le] = MIN(limit[le], tmp);
+            }
+            else
+            {
+                tmp = 1.0;
+                limit[le] = MIN(limit[le], tmp);
+            }
+
+            dx = xfc[iFace] - xcc[re];
+            dy = yfc[iFace] - ycc[re];
+            dz = zfc[iFace] - zcc[re];
+            dqFace = dqdx[re] * dx + dqdy[re] * dy + dqdz[re] * dz;
+            if (dqFace > 0.0)
+            {
+                //! According to the vencat limiter of Theory manual.
+                tmp = (dmax[re]*dmax[re] + 2.0*dqFace*dmax[re])/(dmax[re]*dmax[re] + 2.0*dqFace*dqFace + dqFace*dmax[re]);
+                limit[re] = MIN(limit[re], tmp);
+            }
+            else if (dqFace < 0.0)
+            {
+                //! According to the vencat limiter of Theory manual.
+                tmp = (dmin[re]*dmin[re] + 2.0*dqFace*dmin[re])/(dmin[re]*dmin[re] + 2.0*dqFace*dqFace + dqFace*dmin[re]);
+                limit[re] = MIN(limit[re], tmp);
+            }
+            else
+            {
+                tmp = 1.0;
+                limit[re] = MIN(limit[re], tmp);
+            }
+        }
+
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+        {
+            dqdx[iCell] *= limit[iCell];
+            dqdy[iCell] *= limit[iCell];
+            dqdz[iCell] *= limit[iCell];
+        }
+
+        delete [] dmin; dmin = nullptr;
+        delete [] dmax; dmax = nullptr;
+        delete [] limit; limit = nullptr;
     }
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
@@ -4286,8 +4864,7 @@ void UnstructGrid::CompGradientGGNode_NEW(RDouble *q, RDouble *qnode, RDouble *d
         dqdx[re] -= qFace * nx;
         dqdy[re] -= qFace * ny;
         dqdz[re] -= qFace * nz;
-    } 
-
+    }
 
     //! Average volume.
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)

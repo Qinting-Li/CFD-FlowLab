@@ -1,17 +1,17 @@
 #!/bin/bash
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
-#          P   P  H   H  E      NN   N  G      L      E       I          +
-#          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
-#          P      H   H  E      N  N N  G   G  L      E       I          +
-#          P      H   H  EEEEE  N    N  GGGGG  LLLLL  EEEEE  III         +
-#------------------------------------------------------------------------+
-#          Platform for Hybrid Engineering Simulation of Flows           +
-#           China Aerodynamics Research and Development Center           +
-#                     (C) Copyright, Since 2010                          +
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-# File: hpc_build.sh
-# Purpose: Supercomputing Environment Deployment and Build Automation
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#                                                                             +
+#       Hybrid Platform for Engineering and Research of Flows (HyperFlow)     +
+#                        （C）Zhang Laiping and He Xin                        +
+#                    State Key Laboratory of Aerodynamics                     +
+#                    Computational Aerodynamics Institute                     +
+#            China Aerodynamics Research and Development Center               +
+#                                 Since 2007                                  +
+#                                                                             +
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#! @file      hpc_build.sh
+#! @brief     Supercomputing Environment Deployment and Build Automation.
 #! @author    Luo Junyi.
 
 ENV_FILE_NAME="env.sh"

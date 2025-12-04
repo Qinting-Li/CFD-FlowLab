@@ -475,6 +475,12 @@ void PerfectGas::InitGlobalParameterOfNSEquation()
     GlobalBoundaryCondition::InitMassFlowBoundary();
 
     GlobalBoundaryCondition::SetBCDataBaseByGlobalBC();
+
+    //! Init particle boundary condtion.
+    GlobalBoundaryCondition::ReadGlobalParticleBoundaryCondition();
+
+    GlobalBoundaryCondition::SetParticleBCTypeByGlobalBC();
+
 }
 
 void PerfectGas::InitNumberOfSpecies()
@@ -1386,8 +1392,8 @@ void PerfectGas::ComputeDensityWithReynoldsNumber()
 
     referenceParameterDimensional.SetDensity(refDimensionalDensity);
     GlobalDataBase::UpdateData("refDimensionalDensity", &refDimensionalDensity, PHDOUBLE, 1);
-    
-    //!for AleManager classs variables
+
+    //! for AleManager classs variables
     GlobalDataBase::UpdateData("referenceDensity", &refDimensionalDensity, PHDOUBLE, 1);
 }
 
@@ -1429,7 +1435,7 @@ void PerfectGas::ComputeReferenceVelocity()
         RDouble refDimensionalVelocity = refDimensionalSonicSpeed * refMachNumber;
         referenceParameterDimensional.SetVelocity(refDimensionalVelocity);
         GlobalDataBase::UpdateData("refDimensionalVelocity", &refDimensionalVelocity, PHDOUBLE, 1);
-        //!for AleManager classs variables
+        //! for AleManager classs variables
         GlobalDataBase::UpdateData("referenceVelocity", &refDimensionalVelocity, PHDOUBLE, 1);
     }
 }
@@ -1478,6 +1484,7 @@ void PerfectGas::ComputeReferenceViscosityDimensional()
         RDouble tsi  = 110.4;
         RDouble tsuth = tsi / T;
         GlobalDataBase::UpdateData("tsuth", &tsuth, PHDOUBLE, 1);
+        GlobalDataBase::UpdateData("refDynamicViscosityDimensional", &reference_viscosity_dimensional, PHDOUBLE, 1);
     }
     else
     {
@@ -1491,6 +1498,7 @@ void PerfectGas::ComputeReferenceViscosityDimensional()
 
         RDouble tsuth = tsi / refDimensionalTemperature;
         GlobalDataBase::UpdateData("tsuth", &tsuth, PHDOUBLE, 1);
+        GlobalDataBase::UpdateData("refDynamicViscosityDimensional", &reference_viscosity_dimensional, PHDOUBLE, 1);
     }
 }
 
