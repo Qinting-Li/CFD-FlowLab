@@ -1,9 +1,8 @@
-﻿/.vs
-/.vscode
-/API/bin/
-/CFD/bin/
-/GPU/bin/
-/Mesh/bin/
-/PHengLEI/build/
-/PHengLEI/3rdparty/eigen
-
+build/
+.vs/
+.vscode/
+*.user
+*.suo
+*.obj
+*.pdb
+*.exe
