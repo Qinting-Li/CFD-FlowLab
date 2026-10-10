@@ -1,0 +1,89 @@
+# @file      particle_point_para.hypara
+# @brief     This file is the parameter for particle track model
+# @author    Lei Yinghaonan.
+
+ #########################################################################
+ #             General Global Control Parameter of Simulation            #
+#########################################################################
+// simulationSplashFunction: The type of SplashFunction.
+//                        0 -- No Splash.
+//                        1 -- Use splash function on wall
+// simulationPointRotate: If use Rotate.
+//                        0 -- No Rotate.
+//                        1 -- Caculate the Rotate of point.
+// simulationParticleTemperature: If use particle temperature
+//                        0 -- No temperature.
+//                        1 -- Caculate particle temperature.
+// simulationParticleAcceleration : If use particle acceleration.
+//                        0 -- No acceleration.
+//                        1 -- Caculate particle acceleration.
+// simulationBackCouping: If use back-couping.
+//                        0 -- One way couping.
+//                        1 -- Caculate back force on flow.
+int simulationSplashFunction = 0;
+int simulationPointRotate = 0;
+int simulationParticleTemperature = 0;
+int simulationParticleAcceleration = 0;
+int simulationBackCouping = 0;
+
+#########################################################################
+#                       Particle Interpolation                          #
+#########################################################################
+// particleInterpolation_struct/unstruct : The scheme of particle interpolation for struct/unstruct grid.
+//             TrilinearInterpolation -- Trilinear Interpolation,which only for orthogonal structural grid.
+//             UDF -- The interface of user define function.
+//string particleInterpolation_struct = "TrilinearInterpolation";
+string particleInterpolation_struct = "Gimenez2019JCP";
+string particleInterpolation_unstruct = "";
+
+int nRK = 4;
+
+#########################################################################
+#                       Particle force model                            #
+#########################################################################
+// forceXXXType: Particle force model
+//               0 -- do not use XXX type.
+//               1~n -- force model.
+
+int forceGravityType = 0；
+
+// The quasi-steady force (steady-state resistance) force
+
+// 1- DRAG_STOKES;
+// 2- DRAG_SN_1933;
+// 3- DRAG_Xing_2015;
+// 4- DRAG_Hermsen_1979.
+int forceDragType = 3;
+
+// The lift force
+int forceMagnusType = 0;
+int forceSaffmanType =1;
+
+// The stress-gradient force.
+int forceFluidAccelerationType = 0;
+
+// The added-mass force.
+int forceAddedMassType =0 ;
+
+// The Basset history force.
+int forceBassetType =0 ;
+
+// The BrownianType force.
+int forceBrownianType =0;
+
+// The thermophoretic force.
+int forceThermophoreticType = 0;
+
+int particleTemperatureModel = 1;
+
+#########################################################################
+#                         Output Variable                               #
+#########################################################################
+// fileParticleOutput: Output file for particle.
+// fileParticleOutputType: Control which variable need to output.
+//                         0 -- No output.
+string fileParticleOutput = "./result/particleOutput.dat";
+int fileParticleOutputType = 0;
+
+// Domain of particle.
+double domainMesh = [0 1 0 1 0 1];

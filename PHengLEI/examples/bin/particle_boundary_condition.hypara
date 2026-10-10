@@ -1,0 +1,55 @@
+# @file      particle_boundary_condition.hypara
+# @brief     This hypara file controls Global boundary condition in "Simulation::InitGlobalBoundaryCondition()".
+#           Here controls the boundary condition for particle.
+# @author    Lei Yinghaonan.
+
+
+int nBoundaryConditons = 7;
+
+string bcName = "wall";
+{
+  string bodyName = "body";
+  int particleBCType = 1;
+}
+string bcName = "sys";
+{
+  string bodyName = "body";
+  int particleBCType = 2;
+}
+string bcName = "farfield";
+{
+  string bodyName = "body";
+  int particleBCType = 2;
+}
+string bcName = "inflow";
+{
+  int particleBCType = 2;
+}
+string bcName = "outflow";
+{
+  int particleBCType = 2;
+}
+
+# namespace PARTICLEBCSPACE
+# {
+# Interface as flow.
+# const int INTERFACE = -1;
+
+# No partcile boundary.
+# const int NO_PARTICLE_BC = 0;
+
+# Wall
+# const int FULLY_ELASTIC_COLLISION_WALL = 1;
+
+# For out particle remove.
+# const int REMOVE_PARTICLE = 2;
+
+# For out particle remove but reset as initFile.
+# const int REMOVE_PARTICLE_AS_INIT = 3;
+
+# For out particle remove but reset as initFile only coordinate (but others as flow).
+# const int REMOVE_PARTICLE_AS_INIT_ONLY_COORD = 4;
+
+# Periodic boundary condition (with link). 
+# const int PERIODIC = 4;
+# };
