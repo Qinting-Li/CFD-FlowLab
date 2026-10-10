@@ -156,6 +156,7 @@ const int ISCHEME_ROE_MODIFIED   = 13;
 const int ISCHEME_AUSMPW_PLUS    = 14;
 const int ISCHEME_GMRES_ROE      = 15;    //! GMRES modified Roe scheme for assembling Jacobian matrix using FD
 const int ISCHEME_GMRES_Steger   = 16;    //! GMRES modified Steger scheme  GMRES3D
+const int ISCHEME_ENTROPY_STABLE = 17;
 
 const int FIRST_ORDER            = 1;
 const int SECOND_ORDER           = 2;
@@ -480,4 +481,3 @@ const int WriteBoundary = 0;
 const int WriteBlock = 1;
 const int Writecomplete = 2;
 }
-

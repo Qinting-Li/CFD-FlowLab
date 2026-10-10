@@ -7,15 +7,12 @@
 //            30~70  thousands unstructured cells per CPU-Core is suggested.
 // original_grid_file:  Original grid file that want to be divided(PHengLEI type, *.fts).
 // partition_grid_file: Target partition grid file(PHengLEI type, *.fts).
-// numberOfMultifile: The number of partition grid files that want to be dumped out.
 
-int pgridtype = 0;
-int maxproc   = 4;
+int pgridtype = 1;
+int maxproc   = 1;
 
-string original_grid_file  = "./grid/rae2822_hybrid2d.fts";
-string partition_grid_file = "./grid/rae2822_hybrid2d__4.fts";
-
-int numberOfMultifile = 1;
+string original_grid_file  = "./grid/3dball.fts";
+string partition_grid_file = "./grid/3dball.fts";
 
 // numberOfMultigrid: Number of multi-grid levels, ONLY used for structured grid.
 //                    1 -- single level.

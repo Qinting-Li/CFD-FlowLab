@@ -1,0 +1,12 @@
+PHengLEI structured-grid smoke run; actual console-output excerpt
+Executable: %TEMP%\phenglei-full-build\PHengLEIv3d0\Release\PHengLEIv3d0.exe
+Configuration: copied 3dball hypersonic example; inviscidSchemeName = "entropy_stable"
+Temporary-only overrides: maxSimuStep = 2; intervalStepRes = 1
+Grid: 79,520 cells; Mach = 8.1; laminar; structured Minmod
+Exit code: 0
+
+Iter    averageRes        maxRes
+1       2.16698e-04       4.37414e-03
+2       2.09549e-04       4.25332e-03
+
+Job Done.

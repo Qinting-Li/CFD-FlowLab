@@ -196,7 +196,7 @@ double rotationAngle = 0.0;
 //            2 -- refine structured grid.
 // maxproc: The number of partition zones that want to be divided into.
 // numberOfMultifile: The number of partition grid files that want to be dumped out.
-int pgridtype = 0;
+int pgridtype = 1;
 int maxproc   = 4;
 int numberOfMultifile = 1;
 
@@ -397,6 +397,8 @@ double refMolecularWeight = 28.9644;          // unit of g/mol.
 //                     -- "vanleer", "steger", "hlle", "lax_f",
 //                     -- "roe", "modified_roe",
 //                     -- "ausm+", "ausm+w", "ausm+up", "ausmdv", "ausmpw", "ausmpw+".
+//                     -- "entropy_stable": structured, static, single-species
+//                        ideal-gas Euler flux; requires the "minmod" limiter.
 // isWennScheme: If using WENN Scheme of struct grid.
 //                   0 -- NO. (default)
 //                   1 -- Yes.

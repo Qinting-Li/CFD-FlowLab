@@ -14,14 +14,14 @@ string defaultParaFile = "./bin/cfd_para.hypara";
 //                 Grid repairing: repair the original grid in order to remove the negative volume cells.
 //            2 -- Wall distance computation for turb-solver.
 //            3 -- Grid partition.
-int ndim      = 2;
+int ndim      = 3;
 int nparafile = 1;
 
 int    nsimutask    = 0;
 //string parafilename = "./bin/cfd_para_subsonic.hypara";
-string parafilename = "./bin/cfd_para_transonic.hypara";
+//string parafilename = "./bin/cfd_para_transonic.hypara";
 //string parafilename = "./bin/cfd_para_supersonic.hypara";
-//string parafilename = "./bin/cfd_para_hypersonic.hypara";
+string parafilename = "./bin/cfd_para_hypersonic.hypara";
 //string parafilename = "./bin/cfd_para_incompressible.hypara";
 
 //int    nsimutask    = 1;

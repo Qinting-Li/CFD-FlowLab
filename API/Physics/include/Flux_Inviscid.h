@@ -36,6 +36,9 @@ INVScheme GetINVScheme(int scheme_id);
 //! This Roe scheme is coding by the conservative variable way, in which the DF is expressed by dH.
 void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara);
 
+//! Entropy-stable, single-species ideal-gas Euler flux for reconstructed primitive states.
+void EntropyStableEuler_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara);
+
 #ifdef USE_GMRESSOLVER
 //! GMRES, the flux is calculated in Cal_GMRES_Roe_Scheme_Flux 
 //! assembling the Jacobian matrix using primitive variables

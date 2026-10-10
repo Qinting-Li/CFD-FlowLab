@@ -9,7 +9,7 @@
 //             1 -- X-axis.
 //             2 -- Y-axis.
 //             3 -- Z-axis.
-// axisRotateAngles: axis rotating angles (degree), which are corresponding to the axis rotating order. 
+// axisRotateAngles: axis rotating angles (degree), which are corresponding to the axis rotating order.
 // from_gtype: Type of grid data type in grid conversion process.
 //            -1 -- MULTI_TYPE.
 //             1 -- PHengLEI, *.fts.
@@ -20,19 +20,16 @@
 //             6 -- Ustar, mgrid.in.
 //             7 -- Hybrid, include both of unstructured and structured grid, *.fts.
 //             8 -- GMSH, *.msh.
-//             9 -- Gridgen type of structured grid, *.dat/*.grd. 
-
-int gridtype   = 0;
-int axisup     = 1;
-int from_gtype = 5;
+int gridtype   = 1;
 int nAxisRotateTimes      = 0;
 int axisRotateOrder[]     = [1, 2, 3];
-double axisRotateAngles[] = [0.0, 0.0, 0.0]; 
+double axisRotateAngles[] = [0.0, 0.0, 0.0];
+int from_gtype = 2;
 
 #########################################################################
 #                           File path                                   #
 #########################################################################
 // from_gfile: path of original data file for unstructure grid convert from.
 // out_gfile:  path of target file for grid convert to, *.fts type of file usually.
-string from_gfile = "./grid/rae2822_hybrid2d.cas";
-string out_gfile  = "./grid/rae2822_hybrid2d.fts";
+string from_gfile = "./grid/3dball-otype-80000-dx2e-5-sym-average.cgns";
+string out_gfile  = "./grid/3dball-otype-80000-dx2e-5-sym-average.fts";

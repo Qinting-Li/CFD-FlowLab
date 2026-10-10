@@ -77,6 +77,12 @@ void NSSolverStruct::ReadParameter()
     string structLimiterName = GlobalDataBase::GetStrParaFromDB("str_limiter_name");
     int structLimiter = GetLimiterID(structLimiterName);
     GlobalDataBase::UpdateData("str_limiter", &structLimiter, PHINT, 1);
+    if (structScheme == ISCHEME_ENTROPY_STABLE && structLimiter != ILMT_MINMOD)
+    {
+        TK_Exit::ExceptionExit(
+            "The entropy-stable structured flux requires str_limiter_name = minmod.\n",
+            true);
+    }
 
     string unstructLimiterName = GlobalDataBase::GetStrParaFromDB("uns_limiter_name");
     int unstructLimiter = GetLimiterID(unstructLimiterName);
@@ -18056,6 +18062,7 @@ bool NSSolverStruct::GetInviscidFaceValue(Grid *gridIn, FaceProxy *faceProxy, St
 
     RDouble4D &ql = qlProxy->GetField_STR();
     RDouble4D &qr = qrProxy->GetField_STR();
+    RDouble4D &q = *reinterpret_cast<RDouble4D *>(grid->GetDataPtr("q"));
 
     RDouble4D &gxfn = *(grid->GetFaceNormalX());
     RDouble4D &gyfn = *(grid->GetFaceNormalY());
@@ -18091,6 +18098,8 @@ bool NSSolverStruct::GetInviscidFaceValue(Grid *gridIn, FaceProxy *faceProxy, St
 
     RDouble **face_ql = faceProxy->GetQL();
     RDouble **face_qr = faceProxy->GetQR();
+    RDouble **face_qlc = faceProxy->GetQLC();
+    RDouble **face_qrc = faceProxy->GetQRC();
 
     RDouble *lrtl = faceProxy->GetPressureCoefficientL();
     RDouble *lrtr = faceProxy->GetPressureCoefficientR();
@@ -18151,7 +18160,8 @@ bool NSSolverStruct::GetInviscidFaceValue(Grid *gridIn, FaceProxy *faceProxy, St
         {
             face_ql[m][ix] = ql(i, j, k, m);
             face_qr[m][ix] = qr(il, jl, kl, m);
-
+            face_qlc[m][ix] = q(i, j, k, m);
+            face_qrc[m][ix] = q(il, jl, kl, m);
             primitiveVarL[m] = face_ql[m][ix];
             primitiveVarR[m] = face_qr[m][ix];
         }
@@ -22179,5 +22189,3 @@ LIB_EXPORT Param_NSSolverStruct *NSSolverStruct::GetControlParameters() const
 }
 
 }
-
-

@@ -1,4 +1,5 @@
 #include "Flux_Inviscid.h"
+#include "EntropyStableEuler.h"
 #include "Constants.h"
 #include "TK_Exit.h"
 #include "Flux_RoeEntropyCorrection.h"
@@ -63,6 +64,10 @@ int GetSchemeID(const string &scheme_name)
     {
         scheme_id = ISCHEME_LAX_FRIEDRICHS;
     }
+    else if (scheme_name.substr(0,14) == "entropy_stable")
+    {
+        scheme_id = ISCHEME_ENTROPY_STABLE;
+    }
     //! GMRES
     else if (scheme_name.substr(0,8) == "GMRESRoe")
     {
@@ -109,6 +114,9 @@ INVScheme GetINVScheme(int scheme_id)
         case ISCHEME_HLLE:
             inv_scheme = Hlle_Scheme;
             break;
+        case ISCHEME_ENTROPY_STABLE:
+            inv_scheme = EntropyStableEuler_Scheme;
+            break;
         #ifdef USE_GMRESSOLVER
         case ISCHEME_GMRES_ROE:    //! GMRES
             inv_scheme = GMRES_INVScheme;    //! GMRES3D
@@ -123,6 +131,93 @@ INVScheme GetINVScheme(int scheme_id)
     }
 
     return inv_scheme;
+}
+
+void EntropyStableEuler_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara)
+{
+    const int nEquation = invSchemePara->GetNumberOfTotalEquation();
+    const int nLength = invSchemePara->GetLength();
+    const int nTemperatureModel = invSchemePara->GetNumberOfTemperatureModel();
+    const int nChemical = invSchemePara->GetNumberOfChemical();
+    const int nPrecondition = invSchemePara->GetIfPrecondition();
+    RDouble **qL = invSchemePara->GetLeftQ();
+    RDouble **qR = invSchemePara->GetRightQ();
+    RDouble *gammaL = invSchemePara->GetLeftGama();
+    RDouble *gammaR = invSchemePara->GetRightGama();
+    RDouble *normalX = invSchemePara->GetFaceNormalX();
+    RDouble *normalY = invSchemePara->GetFaceNormalY();
+    RDouble *normalZ = invSchemePara->GetFaceNormalZ();
+    RDouble *faceVelocity = invSchemePara->GetFaceVelocity();
+    RDouble **cellCenterL = invSchemePara->GetLeftQC();
+    RDouble **cellCenterR = invSchemePara->GetRightQC();
+    RDouble **flux = invSchemePara->GetFlux();
+
+    if (nEquation != 5 || nTemperatureModel != 1 || nChemical != 0 || nPrecondition != 0)
+    {
+        TK_Exit::ExceptionExit(
+            "Entropy-stable flux supports only single-species, five-equation, unpreconditioned ideal-gas Euler flow.\n",
+            true);
+        return;
+    }
+
+    using namespace IDX;
+    using EntropyStableEuler::State;
+
+    for (int iFace = 0; iFace < nLength; ++iFace)
+    {
+        const RDouble gamma = gammaL[iFace];
+        const RDouble gammaScale = MAX(1.0, MAX(ABS(gamma), ABS(gammaR[iFace])));
+        if (!std::isfinite(gamma) || !std::isfinite(gammaR[iFace]) || gamma <= 1.0
+            || ABS(gamma - gammaR[iFace]) > 1.0e-12 * gammaScale)
+        {
+            TK_Exit::ExceptionExit(
+                "Entropy-stable flux requires equal, finite left/right ideal-gas gamma values greater than one.\n",
+                true);
+            return;
+        }
+        if (!std::isfinite(faceVelocity[iFace]) || ABS(faceVelocity[iFace]) > 1.0e-12)
+        {
+            TK_Exit::ExceptionExit("Entropy-stable flux does not support moving-face ALE terms.\n", true);
+            return;
+        }
+
+        State<RDouble> left = {{qL[IR][iFace], qL[IU][iFace], qL[IV][iFace], qL[IW][iFace], qL[IP][iFace]}};
+        State<RDouble> right = {{qR[IR][iFace], qR[IU][iFace], qR[IV][iFace], qR[IW][iFace], qR[IP][iFace]}};
+        State<RDouble> rawLeft = {{cellCenterL[IR][iFace], cellCenterL[IU][iFace],
+            cellCenterL[IV][iFace], cellCenterL[IW][iFace], cellCenterL[IP][iFace]}};
+        State<RDouble> rawRight = {{cellCenterR[IR][iFace], cellCenterR[IU][iFace],
+            cellCenterR[IV][iFace], cellCenterR[IW][iFace], cellCenterR[IP][iFace]}};
+        bool finiteStates = true;
+        for (int iEquation = 0; iEquation < nEquation; ++iEquation)
+        {
+            finiteStates = finiteStates && std::isfinite(left[iEquation]) && std::isfinite(right[iEquation])
+                && std::isfinite(rawLeft[iEquation]) && std::isfinite(rawRight[iEquation]);
+        }
+        if (!finiteStates || left[0] <= 0.0 || left[4] <= 0.0 || right[0] <= 0.0 || right[4] <= 0.0
+            || rawLeft[0] <= 0.0 || rawLeft[4] <= 0.0 || rawRight[0] <= 0.0 || rawRight[4] <= 0.0)
+        {
+            TK_Exit::ExceptionExit(
+                "Entropy-stable flux received a non-positive or non-finite raw or reconstructed density/pressure.\n",
+                true);
+            return;
+        }
+
+        const RDouble normalMagnitude = sqrt(normalX[iFace] * normalX[iFace]
+            + normalY[iFace] * normalY[iFace] + normalZ[iFace] * normalZ[iFace]);
+        if (!std::isfinite(normalMagnitude) || normalMagnitude <= 1.0e-14)
+        {
+            TK_Exit::ExceptionExit("Entropy-stable flux received a zero or non-finite face normal.\n", true);
+            return;
+        }
+
+        const std::array<RDouble, 3> normal = {{normalX[iFace], normalY[iFace], normalZ[iFace]}};
+        const State<RDouble> faceFlux =
+            EntropyStableEuler::NumericalFlux(rawLeft, rawRight, left, right, normal, gamma);
+        for (int iEquation = 0; iEquation < nEquation; ++iEquation)
+        {
+            flux[iEquation][iFace] = faceFlux[iEquation];
+        }
+    }
 }
 
 void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara)
@@ -14206,4 +14301,3 @@ InviscidSchemeParameter::~InviscidSchemeParameter()
 
 
 }
-
